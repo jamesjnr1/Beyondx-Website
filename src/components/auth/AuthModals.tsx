@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode, type FormEvent, type InputHTMLAttributes } from 'react'
-import { X, ShieldCheck, ChevronLeft, Mail } from 'lucide-react'
+import { X, ShieldCheck, ChevronLeft, ChevronRight, Mail } from 'lucide-react'
 import Logo from '../Logo'
 import { useAuth, type AuthView } from './AuthContext'
 import { auth, session, referral, contact, ApiError } from '../../lib/api'
@@ -13,6 +13,17 @@ import { finishEmployerRegistration } from './employerVerification'
 const REGIONS = [
   'Greater Accra', 'Ashanti', 'Western', 'Central', 'Eastern',
   'Northern', 'Volta', 'Upper East', 'Upper West', 'Brong-Ahafo',
+]
+
+const INDUSTRIES = [
+  'Construction & Real Estate', 'Events & Hospitality', 'Agriculture & Farming',
+  'Retail & Trade', 'Logistics & Delivery', 'Cleaning & Facility Management',
+  'Healthcare & Social Services', 'Education', 'Manufacturing', 'Other',
+]
+
+const COMPANY_SIZES = [
+  '1–5 employees', '6–20 employees', '21–50 employees',
+  '51–200 employees', '200+ employees',
 ]
 const FACILITIES = [
   'Prefer not to say / Not applicable', 'Nsawam Medium Security Prison',
@@ -172,6 +183,38 @@ function WorkerLogin() {
   )
 }
 
+// ---------- employer account type ----------
+type EmployerType = 'individual' | 'enterprise'
+
+function EmployerTypeChoice({ onChoose }: { onChoose: (t: EmployerType) => void }) {
+  return (
+    <Modal title="Create Employer Account" subtitle="How are you hiring?">
+      <div className="grid gap-4">
+        {([
+          ['individual', 'Individual / Sole Trader', 'You hire workers for your home, personal business, or as a sole trader.', '🧑'],
+          ['enterprise', 'Business / Enterprise', 'You are registering on behalf of a registered company or organisation.', '🏢'],
+        ] as const).map(([type, label, desc, icon]) => (
+          <button
+            key={type}
+            type="button"
+            onClick={() => onChoose(type)}
+            className="group flex w-full items-start gap-4 rounded-xl border border-ink-900/12 bg-cream-50 p-5 text-left transition-all hover:border-forest-600/50 hover:bg-forest-600/4 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40 active:scale-[0.99]"
+          >
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-600/10 text-2xl">{icon}</span>
+            <span>
+              <span className="block font-serif text-base font-medium text-ink-900">{label}</span>
+              <span className="mt-0.5 block text-sm leading-relaxed text-ink-700">{desc}</span>
+            </span>
+            <ChevronRight size={18} aria-hidden="true" className="ml-auto mt-1 shrink-0 text-ink-700/40 transition-colors group-hover:text-forest-600" />
+          </button>
+        ))}
+      </div>
+      <Divider />
+      <SwitchLink prompt="Already have an account?" action="Sign In" to="employer-login" />
+    </Modal>
+  )
+}
+
 function EmployerLogin() {
   const { go } = useAuth()
   const [email, setEmail] = useState('')
@@ -210,58 +253,62 @@ function EmployerLogin() {
 
 function EmployerRegister() {
   const { open } = useAuth()
+  const [accountType, setAccountType] = useState<EmployerType | null>(null)
   const [step, setStep] = useState(1)
-  const [f, setF] = useState({ org: '', contact: '', phone: '', region: '', email: '', password: '' })
+  const [f, setF] = useState({
+    org: '', contact: '', phone: '', region: '', email: '', password: '',
+    // individual verification
+    ghanaCard: '',
+    // enterprise verification
+    businessReg: '', industry: '', companySize: '',
+  })
   const [fieldErr, setFieldErr] = useState<Record<string, string>>({})
   const [googleVerified, setGoogleVerified] = useState(false)
   const [awaitingCode, setAwaitingCode] = useState(false)
   const [code, setCode] = useState('')
   const [codeErr, setCodeErr] = useState<string | null>(null)
   const [resent, setResent] = useState(false)
-  const set = (k: keyof typeof f) => (v: string) => {
-    // Typing a new email by hand means it's no longer the Google-verified one.
+  const set = (k: keyof typeof f) => (vv: string) => {
     if (k === 'email' && googleVerified) setGoogleVerified(false)
-    setF({ ...f, [k]: v })
+    setF({ ...f, [k]: vv })
   }
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+
+  const totalSteps = 3  // 1: basic info, 2: verification, 3: email + password
+
   const validateStep = (n: number) => {
-    const errs = n === 1
-      ? v.check({ org: v.orgName(f.org), contact: v.fullName(f.contact), phone: v.phone(f.phone), region: v.required('Region')(f.region) })
-      : v.check({ email: v.email(f.email), password: v.password(f.password) })
-    setFieldErr(errs)
-    return Object.keys(errs).length === 0
+    if (n === 1) {
+      const errs = v.check({ org: v.orgName(f.org), contact: v.fullName(f.contact), phone: v.phone(f.phone), region: v.required('Region')(f.region) })
+      setFieldErr(errs); return Object.keys(errs).length === 0
+    }
+    if (n === 2) {
+      const errs = accountType === 'individual'
+        ? v.check({ ghanaCard: v.ghanaCard(f.ghanaCard) })
+        : v.check({ businessReg: v.businessReg(f.businessReg), industry: v.required('Industry')(f.industry), companySize: v.required('Company size')(f.companySize) })
+      setFieldErr(errs); return Object.keys(errs).length === 0
+    }
+    const errs = v.check({ email: v.email(f.email), password: v.password(f.password) })
+    setFieldErr(errs); return Object.keys(errs).length === 0
   }
 
   const sendCode = async () => {
     if (!supabase) return
-    // A verification code, independent of the password on the account —
-    // Supabase's job here is only to prove this email is real and reachable.
-    const { error } = await supabase.auth.signInWithOtp({
-      email: f.email.trim(),
-      options: { shouldCreateUser: true },
-    })
+    const { error } = await supabase.auth.signInWithOtp({ email: f.email.trim(), options: { shouldCreateUser: true } })
     if (error) throw new Error(error.message)
   }
 
   const next = async (e: FormEvent) => {
     e.preventDefault()
     if (!validateStep(step)) return
-    if (step < 2) { setStep(step + 1); return }
+    if (step < totalSteps) { setStep(step + 1); return }
     if (busy) return
     setErr(null); setBusy(true)
     try {
       if (googleVerified || !supabase) {
-        // Google already proved this email is real, so create the account
-        // immediately. If Supabase isn't configured on this deployment yet,
-        // fall back to the same immediate behaviour rather than blocking
-        // sign-ups on a feature that isn't set up.
-        await finishEmployerRegistration({ ...f })
+        await finishEmployerRegistration({ ...f }, accountType!, f.ghanaCard, f.businessReg)
         open('employer-onboarding')
       } else {
-        // Plain email + password: send a one-time code and hold here until
-        // it's typed back correctly, on this same screen — no email client,
-        // no separate tab, no link to click.
         await sendCode()
         setAwaitingCode(true)
       }
@@ -276,14 +323,10 @@ function EmployerRegister() {
     if (!supabase || busy) return
     setCodeErr(null); setBusy(true)
     try {
-      const { error } = await supabase.auth.verifyOtp({
-        email: f.email.trim(),
-        token: code.trim(),
-        type: 'email',
-      })
+      const { error } = await supabase.auth.verifyOtp({ email: f.email.trim(), token: code.trim(), type: 'email' })
       if (error) throw new Error(/expired|invalid/i.test(error.message) ? 'That code is incorrect or has expired.' : error.message)
-      await finishEmployerRegistration({ ...f })
-      await supabase.auth.signOut() // Railway's own token is the session now.
+      await finishEmployerRegistration({ ...f }, accountType!, f.ghanaCard, f.businessReg)
+      await supabase.auth.signOut()
       open('employer-onboarding')
     } catch (e2) {
       setCodeErr(e2 instanceof Error ? e2.message : 'Could not verify that code.')
@@ -291,6 +334,9 @@ function EmployerRegister() {
       setBusy(false)
     }
   }
+
+  // Choose account type first
+  if (!accountType) return <EmployerTypeChoice onChoose={(t) => { setAccountType(t); setStep(1) }} />
 
   if (awaitingCode) {
     return (
@@ -303,50 +349,72 @@ function EmployerRegister() {
             We sent a code to <span className="font-semibold text-ink-900">{f.email}</span>.
             Enter it below to finish creating your account.
           </p>
-          <input
-            value={code}
-            onChange={(e) => { setCode(e.target.value); setCodeErr(null) }}
+          <input value={code} onChange={(e) => { setCode(e.target.value); setCodeErr(null) }}
             onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); verifyCode() } }}
-            inputMode="numeric"
-            autoFocus
-            placeholder="Enter the code"
-            className="w-full rounded-lg border border-ink-900/15 bg-white px-4 py-3 text-center text-lg tracking-widest text-ink-900 outline-none focus:border-forest-500 focus:ring-2 focus:ring-forest-500/20"
-          />
+            inputMode="numeric" autoFocus placeholder="Enter the code"
+            className="w-full rounded-lg border border-ink-900/15 bg-white px-4 py-3 text-center text-lg tracking-widest text-ink-900 outline-none focus:border-forest-500 focus:ring-2 focus:ring-forest-500/20" />
           <FormError message={codeErr} />
-          <button
-            type="button"
-            disabled={busy || !code.trim()}
-            onClick={verifyCode}
-            className="w-full rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60"
-          >
+          <button type="button" disabled={busy || !code.trim()} onClick={verifyCode}
+            className="w-full rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
             {busy ? 'Verifying…' : 'Verify & Create Account'}
           </button>
           <p className="text-xs text-ink-700/70">Didn&rsquo;t get it? Check spam, or</p>
-          <button
-            type="button"
-            disabled={resent}
-            onClick={async () => {
-              try { await sendCode(); setResent(true) } catch { /* keep the screen as-is */ }
-            }}
-            className="text-sm font-medium text-forest-700 underline-offset-2 hover:underline disabled:text-ink-700/40 disabled:no-underline"
-          >
+          <button type="button" disabled={resent}
+            onClick={async () => { try { await sendCode(); setResent(true) } catch { /* keep screen */ } }}
+            className="text-sm font-medium text-forest-700 underline-offset-2 hover:underline disabled:text-ink-700/40 disabled:no-underline">
             {resent ? 'Sent again — check your inbox' : 'Resend the code'}
           </button>
         </div>
       </Modal>
     )
   }
+
+  const typeLabel = accountType === 'individual' ? 'Individual' : 'Business'
+
   return (
-    <Modal title="Create Employer Account" subtitle="Join BeyondX and start hiring verified workers">
-      <Stepper step={step} total={2} />
+    <Modal
+      title={`Create ${typeLabel} Account`}
+      subtitle={accountType === 'individual' ? 'Hire vetted workers for your home or business' : 'Set up your company on the BeyondX platform'}
+    >
+      <Stepper step={step} total={totalSteps} />
       <form onSubmit={next} className="space-y-4">
         {step === 1 && (<>
-          <Field label="Organisation Name" value={f.org} onChange={set('org')} error={fieldErr.org} />
-          <Field label="Contact Person" value={f.contact} onChange={set('contact')} error={fieldErr.contact} />
+          <Field label={accountType === 'individual' ? 'Your Name or Trading Name' : 'Company Name'} value={f.org} onChange={set('org')} error={fieldErr.org} placeholder={accountType === 'individual' ? 'e.g. Kofi Mensah Enterprises' : 'e.g. Accra Business Hub Ltd'} />
+          <Field label="Primary Contact Person" value={f.contact} onChange={set('contact')} error={fieldErr.contact} />
           <Field label="Phone Number" type="tel" placeholder="0241234567" value={f.phone} onChange={set('phone')} error={fieldErr.phone} />
           <Select label="Region" options={REGIONS} placeholder="Select a region" value={f.region} onChange={set('region')} error={fieldErr.region} />
+          <button type="button" onClick={() => { setAccountType(null); setStep(1) }} className="mt-1 flex items-center gap-1 text-xs text-ink-700/60 underline-offset-2 hover:text-ink-700 hover:underline">
+            ← Change account type
+          </button>
         </>)}
-        {step === 2 && (<>
+
+        {step === 2 && accountType === 'individual' && (<>
+          <div className="rounded-xl bg-forest-600/6 p-4 ring-1 ring-forest-600/15">
+            <p className="text-sm font-medium text-ink-900">Identity verification</p>
+            <p className="mt-1 text-xs leading-relaxed text-ink-700">
+              We collect your Ghana Card number to confirm you are a real, traceable individual.
+              Your card number is never shared with workers or third parties — it's used only to
+              verify your account before your first dispatch.
+            </p>
+          </div>
+          <Field label="Ghana Card Number" placeholder="GHA-123456789-0" value={f.ghanaCard} onChange={set('ghanaCard')} error={fieldErr.ghanaCard} />
+          <p className="text-xs text-ink-700/60">Format: GHA-XXXXXXXXX-X (shown on the front of your card)</p>
+        </>)}
+
+        {step === 2 && accountType === 'enterprise' && (<>
+          <div className="rounded-xl bg-forest-600/6 p-4 ring-1 ring-forest-600/15">
+            <p className="text-sm font-medium text-ink-900">Business verification</p>
+            <p className="mt-1 text-xs leading-relaxed text-ink-700">
+              We verify registered businesses through the Ghana Registrar General's records.
+              Your account will be marked as verified once confirmed — usually within 1 working day.
+            </p>
+          </div>
+          <Field label="Ghana Business Registration Number" placeholder="e.g. CS-12345" value={f.businessReg} onChange={set('businessReg')} error={fieldErr.businessReg} />
+          <Select label="Industry" options={INDUSTRIES} placeholder="Select your industry" value={f.industry} onChange={set('industry')} error={fieldErr.industry} />
+          <Select label="Company Size" options={COMPANY_SIZES} placeholder="Select size" value={f.companySize} onChange={set('companySize')} error={fieldErr.companySize} />
+        </>)}
+
+        {step === 3 && (<>
           <GoogleSignInButton
             onVerified={(profile) => {
               setF((prev) => ({ ...prev, email: profile.email, contact: prev.contact || profile.name }))
@@ -361,15 +429,8 @@ function EmployerRegister() {
             <span className="h-px flex-1 bg-ink-900/10" />
           </div>
           <div>
-            <Field
-              label="Email Address"
-              type="email"
-              placeholder="you@company.com"
-              value={f.email}
-              onChange={set('email')}
-              error={fieldErr.email}
-              disabled={googleVerified}
-            />
+            <Field label="Email Address" type="email" placeholder="you@company.com" value={f.email}
+              onChange={set('email')} error={fieldErr.email} disabled={googleVerified} />
             {googleVerified && (
               <p className="mt-1.5 flex items-center gap-1 text-xs font-medium text-forest-700">
                 <ShieldCheck size={13} aria-hidden="true" /> Verified by Google
@@ -378,15 +439,18 @@ function EmployerRegister() {
           </div>
           <Field label="Password" type="password" placeholder="At least 8 characters" value={f.password} onChange={set('password')} error={fieldErr.password} />
         </>)}
+
         <FormError message={err} />
         <div className="mt-5 flex items-center gap-3">
           {step > 1 && (
-            <button type="button" onClick={() => setStep(step - 1)} className="flex items-center gap-1 rounded-full border border-ink-900/15 px-4 py-3 text-sm font-medium text-ink-800 transition-colors hover:bg-ink-900/5">
+            <button type="button" onClick={() => setStep(step - 1)}
+              className="flex items-center gap-1 rounded-full border border-ink-900/15 px-4 py-3 text-sm font-medium text-ink-800 transition-colors hover:bg-ink-900/5">
               <ChevronLeft size={16} /> Back
             </button>
           )}
-          <button type="submit" disabled={busy} className="flex-1 rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-70">
-            {busy ? 'Creating…' : step < 2 ? 'Continue' : 'Create Account'}
+          <button type="submit" disabled={busy}
+            className="flex-1 rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-70">
+            {busy ? 'Creating…' : step < totalSteps ? 'Continue' : 'Create Account'}
           </button>
         </div>
       </form>

@@ -66,3 +66,19 @@ export function check(rules: Record<string, string | null>): Record<string, stri
   }
   return errors
 }
+
+/** Ghana Card number: GHA-XXXXXXXXX-X format */
+export function ghanaCard(value: string): string | null {
+  const v = value.trim().toUpperCase()
+  if (!v) return 'Ghana Card number is required.'
+  if (!/^GHA-\d{9}-\d$/.test(v)) return 'Enter a valid Ghana Card number, e.g. GHA-123456789-0.'
+  return null
+}
+
+/** Ghana Business Registration: format varies, require 5+ alphanumeric */
+export function businessReg(value: string): string | null {
+  const v = value.trim()
+  if (!v) return 'Business registration number is required.'
+  if (v.length < 5 || !/^[A-Z0-9\-/]+$/i.test(v)) return 'Enter a valid registration number (letters and numbers only).'
+  return null
+}

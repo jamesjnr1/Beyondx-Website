@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, Star, Send, Phone, Plus, X, ShieldCheck, CircleCheck, Info, RefreshCw, AlertCircle, Copy, Check } from 'lucide-react'
-import DashboardHeader from './DashboardHeader'
+import { ChevronLeft, ChevronRight, Star, Send, Phone, Plus, X, ShieldCheck, CircleCheck, Info, RefreshCw, AlertCircle } from 'lucide-react'
 import ProfileModal from '../components/ProfileModal'
 import Toast, { type ToastMsg } from '../components/Toast'
 import SupportPanel from '../components/SupportPanel'
 import LiveLocation from '../components/LiveLocation'
+import Notifications from '../components/Notifications'
+import { useAuth } from '../components/auth/AuthContext'
 import { tasks as tasksApi, workers as workersApi, employers as employersApi, contact, session, ApiError, type Task, type Worker, type Employer } from '../lib/api'
 import { DISPATCH_ENABLED, DISPATCH_PAUSED_MESSAGE } from '../lib/config'
 import { categories, remoteCategories, allCategories, TOOL_SURCHARGE_RATE, VEHICLE_SURCHARGES, logisticsRate } from '../data'
@@ -113,6 +114,7 @@ export default function EmployerDashboard() {
   const [dispatching, setDispatching] = useState<Worker | null>(null)
   const [rating, setRating] = useState<Task | null>(null)
   const [editing, setEditing] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const [workerList, setWorkerList] = useState<Worker[]>([])
   const [taskList, setTaskList] = useState<Task[]>([])
@@ -144,288 +146,316 @@ export default function EmployerDashboard() {
 
   const orgName = (profile?.orgName as string) || 'Your organisation'
   const logo = (profile?.logoUrl as string) || undefined
+  const activeTasks = taskList.filter((t) => ['open','offered','accepted'].includes(String(t.status)))
+  const pendingConfirm = taskList.filter((t) => t.status === 'pending_confirmation')
+  const { go, logout } = useAuth()
 
   const afterDispatch = () => {
     setDispatching(null)
     setAnnounce('Worker dispatched.')
-    setToast({ id: Date.now(), kind: 'success', title: 'Worker dispatched', detail: 'Payment is held by BeyondX. The worker will accept or decline shortly — track it under Dispatch History.' })
+    setToast({ id: Date.now(), kind: 'success', title: 'Worker dispatched', detail: 'Payment is held by BeyondX. Track it under Activity.' })
     load()
   }
   const afterConfirm = (worker: string) => {
     setRating(null)
     setAnnounce(`Work confirmed for ${worker}.`)
-    setToast({ id: Date.now(), kind: 'success', title: 'Work confirmed', detail: `BeyondX is now processing payment to ${worker}. It shows "Payment released" once done.` })
+    setToast({ id: Date.now(), kind: 'success', title: 'Work confirmed', detail: `BeyondX is now processing payment to ${worker}.` })
     load()
   }
 
+  const NAV = [
+    { id: 'hire' as const, label: 'Hire Workers', icon: Plus, badge: 0 },
+    { id: 'post' as const, label: 'Post a Task', icon: Send, badge: 0 },
+    { id: 'history' as const, label: 'Activity', icon: RefreshCw, badge: pendingConfirm.length },
+    { id: 'support' as const, label: 'Support', icon: Info, badge: 0 },
+  ]
+
   return (
-    <div className="min-h-screen bg-cream-100">
-      <DashboardHeader role="EMPLOYER" title="Employer Dashboard" name={orgName} avatar={logo} onEditProfile={() => setEditing(true)} tasks={taskList} />
-      <main id="main" className="mx-auto max-w-7xl px-4 py-6 sm:px-8 sm:py-8">
-        <p aria-live="polite" className="sr-only">{announce}</p>
-
-        {error && (
-          <div className="mb-4 flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="flex items-start gap-2 text-sm text-red-700"><AlertCircle size={16} aria-hidden="true" className="mt-0.5 shrink-0" /> {error}</p>
-            <button onClick={() => { setLoading(true); load() }} className="shrink-0 rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-cream-50 hover:bg-red-700">Try again</button>
-          </div>
-        )}
-
-        <div className="flex items-center gap-2 overflow-x-auto border-b border-ink-900/10 pb-px" role="tablist" aria-label="Employer sections">
-          {([['hire', 'Hire Workers'], ['post', 'Post a Task'], ['history', `Dispatch History (${taskList.length})`], ['support', 'Support']] as const).map(([id, label]) => (
-            <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
-              className={`shrink-0 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40 ${tab === id ? 'border-forest-600 text-forest-700' : 'border-transparent text-ink-700 hover:text-ink-900'}`}>
-              {label}
-            </button>
-          ))}
-          <button onClick={() => { setLoading(true); load() }} aria-label="Refresh" className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full border border-ink-900/15 px-3 py-1.5 text-xs font-medium text-ink-700 hover:bg-ink-900/5">
-            <RefreshCw size={13} aria-hidden="true" /> Refresh
+    <div className="flex h-screen flex-col overflow-hidden bg-cream-100">
+      {/* ── Top bar ─────────────────────────────────────────── */}
+      <header className="z-40 flex h-14 shrink-0 items-center gap-3 border-b border-ink-900/8 bg-cream-50 px-4 sm:px-6">
+        <button
+          className="mr-1 rounded-md p-1.5 text-ink-700 hover:bg-ink-900/5 lg:hidden"
+          onClick={() => setSidebarOpen((o) => !o)}
+          aria-label="Toggle navigation"
+        >
+          <Plus size={20} className="rotate-45" />
+        </button>
+        <button onClick={() => go('home')} aria-label="Home" className="shrink-0">
+          <img src="/beyondx-logo.png" alt="BeyondX" className="h-6" onError={(e) => { (e.target as HTMLImageElement).style.display='none' }} />
+        </button>
+        <span aria-hidden="true" className="hidden h-5 w-px bg-ink-900/12 sm:block" />
+        <span className="hidden text-sm font-medium text-ink-700 sm:block">Employer Portal</span>
+        <div className="ml-auto flex items-center gap-2">
+          <Notifications role="employer" tasks={taskList} />
+          <button
+            onClick={() => setEditing(true)}
+            className="flex items-center gap-2 rounded-full border border-ink-900/12 py-1 pl-1 pr-3 text-sm font-medium text-ink-800 transition-colors hover:bg-ink-900/5"
+          >
+            {logo
+              ? <img src={logo} alt="" className="h-6 w-6 rounded-full object-cover" />
+              : <span className="flex h-6 w-6 items-center justify-center rounded-full bg-forest-600 text-[11px] font-bold text-cream-50">
+                  {orgName.slice(0, 2).toUpperCase()}
+                </span>}
+            <span className="hidden max-w-[120px] truncate sm:inline">{orgName}</span>
+          </button>
+          <button
+            onClick={logout}
+            className="hidden items-center gap-1.5 rounded-full border border-ink-900/12 px-3 py-1.5 text-sm font-medium text-ink-700 hover:bg-ink-900/5 sm:flex"
+          >
+            <Phone size={13} aria-hidden="true" /> Log out
           </button>
         </div>
+      </header>
 
-        {tab === 'hire' && (
-          <div className="mt-6">
-            {!DISPATCH_ENABLED && (
-              <div className="mb-4 rounded-xl bg-clay-400/10 p-4 ring-1 ring-clay-400/25">
-                <p className="flex items-start gap-2 text-sm leading-relaxed text-ink-800">
-                  <Info size={16} aria-hidden="true" className="mt-0.5 shrink-0 text-clay-500" />
-                  <span><span className="font-semibold">Dispatch is paused for now.</span> {DISPATCH_PAUSED_MESSAGE}</span>
-                </p>
+      <div className="flex min-h-0 flex-1">
+        {/* ── Sidebar ──────────────────────────────────────── */}
+        <aside className={`fixed inset-y-0 left-0 z-30 mt-14 flex w-56 flex-col border-r border-ink-900/8 bg-cream-50 transition-transform lg:relative lg:mt-0 lg:inset-y-auto lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+          <div className="border-b border-ink-900/8 px-4 py-4">
+            <p className="truncate text-sm font-semibold text-ink-900">{orgName}</p>
+            <p className="mt-0.5 truncate text-xs text-ink-700/60">{(profile?.region as string) || 'Greater Accra'}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-px border-b border-ink-900/8 bg-ink-900/8">
+            {([{ label: 'Active jobs', value: activeTasks.length }, { label: 'Awaiting confirm', value: pendingConfirm.length }] as const).map(({ label, value }) => (
+              <div key={label} className="bg-cream-50 px-3 py-3">
+                <p className="font-serif text-xl font-semibold text-ink-900">{value}</p>
+                <p className="text-[11px] text-ink-700/70">{label}</p>
+              </div>
+            ))}
+          </div>
+          <nav className="flex-1 px-2 py-3">
+            {NAV.map(({ id, label, icon: Icon, badge }) => (
+              <button key={id} onClick={() => { setTab(id); setSidebarOpen(false) }}
+                className={`group mb-0.5 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${tab === id ? 'bg-forest-600/10 text-forest-800' : 'text-ink-700 hover:bg-ink-900/5 hover:text-ink-900'}`}>
+                <Icon size={16} aria-hidden="true" className={tab === id ? 'text-forest-600' : 'text-ink-700/60 group-hover:text-ink-800'} />
+                <span className="flex-1 text-left">{label}</span>
+                {badge > 0 && <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-cream-50">{badge}</span>}
+              </button>
+            ))}
+          </nav>
+          <div className="border-t border-ink-900/8 px-3 py-3 lg:hidden">
+            <button onClick={logout} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-700 hover:bg-ink-900/5">
+              <Phone size={14} aria-hidden="true" /> Log out
+            </button>
+          </div>
+        </aside>
+
+        {sidebarOpen && <div className="fixed inset-0 z-20 bg-ink-950/30 lg:hidden" onClick={() => setSidebarOpen(false)} />}
+
+        {/* ── Main content ──────────────────────────────────── */}
+        <main id="main" className="flex min-h-0 flex-1 flex-col overflow-y-auto">
+          <p aria-live="polite" className="sr-only">{announce}</p>
+
+          <div className="flex items-center justify-between border-b border-ink-900/8 bg-cream-50 px-6 py-4">
+            <div>
+              <h1 className="font-serif text-lg font-medium text-ink-900">{NAV.find((n) => n.id === tab)?.label}</h1>
+              {!DISPATCH_ENABLED && tab === 'hire' && (
+                <p className="mt-0.5 flex items-center gap-1.5 text-xs text-clay-600"><Info size={12} aria-hidden="true" /> {DISPATCH_PAUSED_MESSAGE}</p>
+              )}
+            </div>
+            <button onClick={() => { setLoading(true); load() }} aria-label="Refresh"
+              className="flex items-center gap-1.5 rounded-lg border border-ink-900/12 px-3 py-1.5 text-xs font-medium text-ink-700 hover:bg-ink-900/5">
+              <RefreshCw size={13} aria-hidden="true" /> Refresh
+            </button>
+          </div>
+
+          {error && (
+            <div className="mx-6 mt-4 flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+              <p className="flex items-center gap-2 text-sm text-red-700"><AlertCircle size={15} aria-hidden="true" /> {error}</p>
+              <button onClick={() => { setLoading(true); load() }} className="rounded-md bg-red-600 px-3 py-1.5 text-xs font-semibold text-cream-50 hover:bg-red-700">Retry</button>
+            </div>
+          )}
+
+          <div className="flex-1 px-6 py-5">
+
+            {/* Hire workers */}
+            {tab === 'hire' && (
+              <div>
+                {!pickedCategory ? (
+                  <>
+                    <div className="mb-5 flex items-center justify-between">
+                      <p className="text-sm text-ink-700">Select a work category to see available workers.</p>
+                      <div className="inline-flex rounded-lg border border-ink-900/12 bg-cream-50 p-0.5">
+                        {([['field', 'On the field'], ['remote', 'Remote']] as const).map(([id, label]) => (
+                          <button key={id} onClick={() => setWorkMode(id)}
+                            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${workMode === id ? 'bg-forest-600 text-cream-50 shadow-sm' : 'text-ink-700 hover:text-ink-900'}`}>
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                      {(workMode === 'field' ? categories : remoteCategories).map((c) => {
+                        const Icon = c.icon
+                        const count = workerList.filter((w) => wSkills(w).includes(c.title)).length
+                        return (
+                          <button key={c.title} onClick={() => setPickedCategory(c.title)}
+                            className="flex items-start gap-3.5 rounded-lg border border-ink-900/10 bg-cream-50 p-4 text-left transition-all hover:border-forest-600/40 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40">
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-forest-600/8 text-forest-600">
+                              <Icon size={17} aria-hidden="true" />
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block text-sm font-semibold text-ink-900">{c.title}</span>
+                              <span className="mt-0.5 block text-xs leading-snug text-ink-700/80">{c.description}</span>
+                              <span className="mt-2 flex items-center justify-between">
+                                <span className="text-xs font-medium text-forest-700">
+                                  {c.distancePricing ? `${cedis(40)} base` : c.skilledRate ? `${cedis(c.rate)}–${cedis(c.skilledRate)}` : cedis(c.rate)}
+                                  <span className="font-normal text-ink-700/60"> {c.distancePricing ? '+ dist.' : c.rateUnit || '/day'}</span>
+                                </span>
+                                <span className="text-xs text-ink-700/60">{count} worker{count !== 1 ? 's' : ''}</span>
+                              </span>
+                            </span>
+                            <ChevronRight size={16} aria-hidden="true" className="mt-1 shrink-0 text-ink-700/30" />
+                          </button>
+                        )
+                      })}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="mb-5 flex items-center gap-3">
+                      <button onClick={() => setPickedCategory(null)}
+                        className="flex items-center gap-1 text-sm font-medium text-forest-700 hover:underline">
+                        <ChevronLeft size={15} aria-hidden="true" /> All categories
+                      </button>
+                      <span className="h-4 w-px bg-ink-900/15" />
+                      <span className="text-sm font-semibold text-ink-900">{pickedCategory}</span>
+                    </div>
+
+                    {/* Risk flags */}
+                    <div className="mb-5 overflow-hidden rounded-lg border border-ink-900/10 bg-cream-50">
+                      <div className="border-b border-ink-900/8 px-4 py-2.5">
+                        <p className="text-[11px] font-semibold uppercase tracking-widest text-ink-700/50">Task screening — answer before seeing workers</p>
+                      </div>
+                      <div className="divide-y divide-ink-900/6">
+                        {([
+                          ['cashUnsupervised', 'Worker handles cash unsupervised'],
+                          ['vulnerableContact', 'Worker alone in private residence or with vulnerable people'],
+                          ['propertyAccess', 'Worker has unsupervised access to property or valuables'],
+                        ] as [keyof TaskFlags, string][]).map(([key, label]) => (
+                          <label key={key} className="flex cursor-pointer items-center justify-between px-4 py-3">
+                            <span className="text-sm text-ink-800">{label}</span>
+                            <input type="checkbox" checked={taskFlags[key]}
+                              onChange={(e) => setTaskFlags((f) => ({ ...f, [key]: e.target.checked }))}
+                              className="h-4 w-4 rounded border-ink-900/30 text-forest-600 focus:ring-forest-600/30" />
+                          </label>
+                        ))}
+                      </div>
+                      <div className={`px-4 py-2.5 text-xs font-medium ${isHighRisk(taskFlags) ? 'bg-clay-400/8 text-clay-700' : 'bg-forest-600/6 text-forest-700'}`}>
+                        {isHighRisk(taskFlags)
+                          ? 'Restricted — workers with background flags excluded'
+                          : (() => {
+                              const fl = sortWorkersForTask(workerList.filter((w) => wSkills(w).includes(pickedCategory!)), taskFlags).filter(isBackgroundFlagged).length
+                              return `Open — all vetted workers eligible${fl > 0 ? ` · ${fl} priority worker${fl > 1 ? 's' : ''} shown first` : ''}`
+                            })()}
+                      </div>
+                    </div>
+
+                    {loading ? <Skeleton /> : (() => {
+                      const matches = sortWorkersForTask(workerList.filter((w) => wSkills(w).includes(pickedCategory!)), taskFlags)
+                      const highRisk = isHighRisk(taskFlags)
+                      return matches.length ? (
+                        <div className="overflow-hidden rounded-lg border border-ink-900/10">
+                          <div className="hidden grid-cols-[auto_1fr_70px_60px_110px] items-center gap-4 border-b border-ink-900/8 bg-cream-100/60 px-4 py-2 sm:grid">
+                            {['Worker', '', 'Rating', 'Jobs', ''].map((h, i) => (
+                              <span key={i} className="text-[11px] font-semibold uppercase tracking-widest text-ink-700/50">{h}</span>
+                            ))}
+                          </div>
+                          {matches.map((w, i) => (
+                            <button key={String(w.id)} onClick={() => setViewing(w)} aria-label={`View ${wName(w)} profile`}
+                              className={`grid w-full grid-cols-[auto_1fr] gap-3 bg-cream-50 px-4 py-3.5 text-left transition-colors hover:bg-forest-600/4 focus:outline-none focus-visible:bg-forest-600/4 sm:grid-cols-[auto_1fr_70px_60px_110px] sm:items-center sm:gap-4 ${i > 0 ? 'border-t border-ink-900/6' : ''}`}>
+                              <span className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-forest-600 text-sm font-bold text-cream-50">
+                                {w.photoUrl ? <img src={w.photoUrl as string} alt="" className="h-9 w-9 rounded-full object-cover" /> : wInitials(w)}
+                              </span>
+                              <span className="min-w-0">
+                                <span className="flex flex-wrap items-center gap-1.5">
+                                  <span className="truncate text-sm font-semibold text-ink-900">{wName(w)}</span>
+                                  {isBackgroundFlagged(w) && !highRisk && (
+                                    <span className="rounded-full bg-forest-600/10 px-2 py-0.5 text-[10px] font-semibold text-forest-700">Priority match</span>
+                                  )}
+                                  {Boolean(w.isBusy) && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">On a job</span>}
+                                </span>
+                                <span className="mt-0.5 block text-xs text-ink-700/60 sm:hidden">
+                                  {Number(w.tasksCompleted ?? 0)} jobs · {w.rating && Number(w.rating) > 0 ? `★ ${Number(w.rating).toFixed(1)}` : 'New'}
+                                </span>
+                              </span>
+                              <span className="hidden text-sm text-ink-700 sm:block">
+                                {w.rating && Number(w.rating) > 0
+                                  ? <span className="inline-flex items-center gap-1"><Star size={11} className="fill-forest-600 text-forest-600" /> {Number(w.rating).toFixed(1)}</span>
+                                  : <span className="text-ink-700/40">—</span>}
+                              </span>
+                              <span className="hidden text-sm text-ink-700 sm:block">{Number(w.tasksCompleted ?? 0)}</span>
+                              <span className="hidden items-center justify-end gap-1 text-xs font-medium text-forest-700 sm:flex">
+                                View profile <ChevronRight size={14} aria-hidden="true" />
+                              </span>
+                            </button>
+                          ))}
+                        </div>
+                      ) : <Empty text={highRisk ? `No cleared workers for this task. Post a task to be matched.` : `No workers certified for ${pickedCategory} yet.`} />
+                    })()}
+                  </>
+                )}
               </div>
             )}
 
-            {/* Step 1 — what needs doing. Workers are then filtered to that work. */}
-            {!pickedCategory ? (
-              <>
-                <h2 className="font-serif text-xl font-medium text-ink-900">What do you need done?</h2>
-                <p className="mt-1 text-sm text-ink-700">
-                  Choose the type of work and we&rsquo;ll show you the workers certified for it.
-                </p>
+            {tab === 'post' && <PostTask onDone={(msg) => { setToast({ id: Date.now(), kind: 'success', title: 'Task posted', detail: msg }); load() }} />}
 
-                <div className="mt-4 inline-flex rounded-full bg-ink-900/5 p-1" role="tablist" aria-label="Work location">
-                  {([['field', 'On the field'], ['remote', 'Remote']] as const).map(([id, label]) => (
-                    <button
-                      key={id}
-                      role="tab"
-                      aria-selected={workMode === id}
-                      onClick={() => setWorkMode(id)}
-                      className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${workMode === id ? 'bg-cream-50 text-ink-900 shadow-sm' : 'text-ink-700 hover:text-ink-900'}`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
-
-                <ul className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {(workMode === 'field' ? categories : remoteCategories).map((c) => {
-                    const Icon = c.icon
-                    const count = workerList.filter((w) => wSkills(w).includes(c.title)).length
+            {tab === 'history' && (
+              loading ? <Skeleton /> : taskList.length ? (
+                <div className="overflow-hidden rounded-lg border border-ink-900/10">
+                  <div className="hidden grid-cols-[1fr_100px_150px_180px] gap-4 border-b border-ink-900/8 bg-cream-100/60 px-5 py-2.5 sm:grid">
+                    {['Task / Worker', 'Duration', 'Status', ''].map((h) => (
+                      <span key={h} className="text-[11px] font-semibold uppercase tracking-widest text-ink-700/50">{h}</span>
+                    ))}
+                  </div>
+                  {taskList.map((t, i) => {
+                    const s = st(t.status)
+                    const rev = t.reviews?.[0]?.rating
+                    const { workerName } = dispatchDetails(t)
                     return (
-                      <li key={c.title}>
-                        <button
-                          onClick={() => setPickedCategory(c.title)}
-                          aria-label={`${c.title} — ${count} worker${count === 1 ? '' : 's'} available`}
-                          className="flex h-full w-full flex-col rounded-xl bg-cream-50 p-4 text-left shadow-sm ring-1 ring-ink-900/5 transition-all hover:ring-forest-600/40 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40"
-                        >
-                          <span className="flex items-center gap-2.5">
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-forest-600/10 text-forest-600">
-                              <Icon size={18} aria-hidden="true" />
-                            </span>
-                            <span className="font-serif text-base font-medium leading-snug text-ink-900">{c.title}</span>
-                          </span>
-                          <span className="mt-2 block text-xs leading-relaxed text-ink-700">{c.description}</span>
-                          <span className="mt-3 flex items-center justify-between border-t border-ink-900/10 pt-2.5">
-                            <span className="text-sm text-ink-900">
-                              {c.distancePricing ? (
-                                <span className="font-semibold">{cedis(40)} <span className="text-xs font-normal text-ink-700">base + distance</span></span>
-                              ) : c.skilledRate ? (
-                                <span>
-                                  <span className="font-semibold">{cedis(c.rate)}</span>
-                                  <span className="mx-1 text-ink-700/50">–</span>
-                                  <span className="font-semibold">{cedis(c.skilledRate)}</span>
-                                  <span className="ml-1 text-xs font-normal text-ink-700">{c.rateUnit || 'per day'}</span>
-                                </span>
-                              ) : (
-                                <span>
-                                  <span className="font-semibold">{cedis(c.rate)}</span>
-                                  <span className="ml-1 text-xs font-normal text-ink-700">{c.rateUnit || 'per day'}</span>
-                                </span>
-                              )}
-                            </span>
-                            <span className="text-xs text-ink-700">{count} worker{count === 1 ? '' : 's'}</span>
-                          </span>
-                        </button>
-                      </li>
+                      <div key={String(t.id)}
+                        className={`grid grid-cols-1 gap-3 bg-cream-50 px-5 py-4 sm:grid-cols-[1fr_100px_150px_180px] sm:items-center sm:gap-4 ${i > 0 ? 'border-t border-ink-900/6' : ''}`}>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-ink-900">{t.taskType || 'Task'}</p>
+                          <p className="mt-0.5 text-xs text-ink-700/70">{workerName || '—'}{t.location ? ` · ${t.location}` : ''}</p>
+                          {rev && <div className="mt-1 flex items-center gap-1 text-xs text-ink-700/60">Your rating: <Stars n={Number(rev)} /></div>}
+                        </div>
+                        <span className="text-sm text-ink-700">{String(t.duration || '—')}</span>
+                        <span className={`inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${s.chip}`}>
+                          <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${s.dot}`} /> {s.label}
+                        </span>
+                        <div className="flex items-center gap-2">
+                          {t.status === 'pending_confirmation' && (
+                            <button onClick={() => setRating(t)}
+                              className="rounded-md bg-forest-600 px-3 py-1.5 text-xs font-semibold text-cream-50 hover:bg-forest-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40">
+                              Confirm & rate
+                            </button>
+                          )}
+                          {s.note && <p className="text-xs text-ink-700/60">{s.note}</p>}
+                        </div>
+                        {t.status === 'accepted' && <div className="col-span-full"><LiveLocation taskId={t.id} /></div>}
+                      </div>
                     )
                   })}
-                </ul>
-              </>
-            ) : (
-              <>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <button
-                      onClick={() => setPickedCategory(null)}
-                      className="mb-1.5 flex items-center gap-1 text-sm font-medium text-forest-700 hover:underline"
-                    >
-                      <ChevronLeft size={15} aria-hidden="true" /> All work types
-                    </button>
-                    <h2 className="font-serif text-xl font-medium text-ink-900">{pickedCategory}</h2>
-                  </div>
-                  {(() => {
-                    const cat = categories.find((c) => c.title === pickedCategory)
-                    return cat ? (
-                      <span className="shrink-0 rounded-xl bg-forest-600/10 px-4 py-2 text-sm font-semibold text-forest-800">
-                        {cedis(cat.rate)}{' '}
-                        <span className="font-normal text-forest-700">{cat.rateUnit || 'per day'}</span>
-                      </span>
-                    ) : null
-                  })()}
                 </div>
+              ) : <Empty text="No dispatches yet. Hire a worker to get started." />
+            )}
 
-                {loading ? <div className="mt-5"><Skeleton /></div> : (() => {
-                  const matches = sortWorkersForTask(
-                    workerList.filter((w) => wSkills(w).includes(pickedCategory)),
-                    taskFlags
-                  )
-                  const flagged = matches.filter(isBackgroundFlagged)
-                  const highRisk = isHighRisk(taskFlags)
-                  return (
-                    <>
-                      {/* Task attribute flags — answered before seeing the worker list so
-                          the routing decision is already made when results show. */}
-                      <div className="mt-5 rounded-xl bg-cream-50 p-4 ring-1 ring-ink-900/8 shadow-sm">
-                        <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-clay-500">
-                          <ShieldCheck size={13} aria-hidden="true" /> Task details
-                        </p>
-                        <p className="mb-3 text-xs leading-relaxed text-ink-700">
-                          Answer these quickly to make sure the right workers are matched to this job.
-                        </p>
-                        {([ 
-                          ['cashUnsupervised', 'Will the worker handle cash unsupervised?'],
-                          ['vulnerableContact', 'Will the worker be alone in a private residence or with vulnerable people?'],
-                          ['propertyAccess', 'Will the worker have unsupervised access to property or valuables?'],
-                        ] as [keyof TaskFlags, string][]).map(([key, label]) => (
-                          <label key={key} className="flex cursor-pointer items-start gap-3 py-2">
-                            <input
-                              type="checkbox"
-                              checked={taskFlags[key]}
-                              onChange={(e) => setTaskFlags((f) => ({ ...f, [key]: e.target.checked }))}
-                              className="mt-0.5 h-4 w-4 shrink-0 rounded border-ink-900/30 text-forest-600 focus:ring-forest-600/30"
-                            />
-                            <span className="text-sm text-ink-900">{label}</span>
-                          </label>
-                        ))}
-                        {highRisk ? (
-                          <p className="mt-2 rounded-lg bg-clay-400/10 px-3 py-2 text-xs leading-relaxed text-ink-800">
-                            <span className="font-semibold">Restricted task.</span> Workers with certain background flags are not matched to this job.
-                          </p>
-                        ) : (
-                          <p className="mt-2 rounded-lg bg-forest-600/8 px-3 py-2 text-xs leading-relaxed text-forest-800">
-                            <span className="font-semibold">Open task.</span> All vetted workers are eligible.
-                            {flagged.length > 0 && ` ${flagged.length} worker${flagged.length > 1 ? 's' : ''} with verified backgrounds prioritised first.`}
-                          </p>
-                        )}
-                      </div>
-
-                      {matches.length ? (
-                        <ul className="mt-4 divide-y divide-ink-900/10 overflow-hidden rounded-2xl bg-cream-50 shadow-sm ring-1 ring-ink-900/5">
-                          {matches.map((w) => (
-                            <li key={String(w.id)}>
-                              <button onClick={() => setViewing(w)} aria-label={`View ${wName(w)}'s profile`}
-                                className="flex w-full items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-forest-600/5 focus:outline-none focus-visible:bg-forest-600/5 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-forest-600/40 sm:px-5">
-                                {w.photoUrl ? <img src={w.photoUrl as string} alt="" className="h-11 w-11 shrink-0 rounded-full object-cover" />
-                                  : <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-forest-600 text-sm font-bold text-cream-50">{wInitials(w)}</span>}
-                                <span className="min-w-0 flex-1">
-                                  <span className="flex items-center gap-2">
-                                    <span className="block truncate font-serif text-base font-medium text-ink-900">{wName(w)}</span>
-                                    {isBackgroundFlagged(w) && !highRisk && (
-                                      <span className="shrink-0 rounded-full bg-forest-600/10 px-2 py-0.5 text-[10px] font-semibold text-forest-700">Priority</span>
-                                    )}
-                                  </span>
-                                  <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-700">
-                                    {w.rating && Number(w.rating) > 0
-                                      ? <span className="inline-flex items-center gap-0.5"><Star size={12} aria-hidden="true" className="fill-forest-600 text-forest-600" /> {Number(w.rating).toFixed(1)}</span>
-                                      : <span>New worker</span>}
-                                    <span>· {Number(w.tasksCompleted ?? 0)} task{Number(w.tasksCompleted ?? 0) === 1 ? '' : 's'} completed</span>
-                                    {w.isBusy ? <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-700">On a job</span> : null}
-                                  </span>
-                                </span>
-                                <span className="hidden shrink-0 text-sm font-medium text-forest-700 sm:inline">View profile</span>
-                                <ChevronRight size={18} aria-hidden="true" className="shrink-0 text-ink-700" />
-                              </button>
-                            </li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <div className="mt-4">
-                          <Empty text={
-                            highRisk
-                              ? `No workers cleared for this task type yet. Post a task and we'll match someone.`
-                              : `No workers are certified for ${pickedCategory} yet. Post a task instead and we'll match someone as soon as they join.`
-                          } />
-                        </div>
-                      )}
-                    </>
-                  )
-                })()}
-              </>
+            {tab === 'support' && (
+              <SupportPanel role="employer"
+                onSent={() => setToast({ id: Date.now(), kind: 'success', title: 'Message sent', detail: 'Our team will follow up shortly.' })}
+                onError={(m) => setToast({ id: Date.now(), kind: 'info', title: 'Could not send', detail: m })} />
             )}
           </div>
-        )}
-
-        {tab === 'support' && (
-          <SupportPanel
-            role="employer"
-            onSent={() => setToast({ id: Date.now(), kind: 'success', title: 'Message sent', detail: 'Our team will follow up with you shortly.' })}
-            onError={(m) => setToast({ id: Date.now(), kind: 'info', title: 'Could not send', detail: m })}
-          />
-        )}
-
-        {tab === 'post' && <PostTask onDone={(msg) => { setToast({ id: Date.now(), kind: 'success', title: 'Task posted', detail: msg }); load() }} />}
-
-        {tab === 'history' && (
-          <div className="mt-6 space-y-3">
-            {loading ? <Skeleton /> : taskList.length ? taskList.map((t) => {
-              const s = st(t.status)
-              const worker = typeof t.employer === 'string' ? t.employer : ''
-              const rev = t.reviews?.[0]?.rating
-              return (
-                <div key={String(t.id)} className="rounded-xl bg-cream-50 p-4 shadow-sm ring-1 ring-ink-900/5 sm:p-5">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0">
-                      <p className="font-serif text-base font-medium text-ink-900">{t.taskType || 'Task'}</p>
-                      <p className="mt-0.5 truncate text-sm text-ink-700">{t.description || worker}{t.location ? ` · ${t.location}` : ''}</p>
-                      {rev ? <div className="mt-1 flex items-center gap-2 text-xs text-ink-700">You rated <Stars n={Number(rev)} /></div> : null}
-                    </div>
-                    <div className="flex shrink-0 items-center gap-3">
-                      <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${s.chip}`}>
-                        <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${s.dot}`} /> {s.label}
-                      </span>
-                      {t.status === 'pending_confirmation' && (
-                        <button onClick={() => setRating(t)} className="shrink-0 rounded-full bg-forest-600 px-4 py-2 text-xs font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40">
-                          Confirm work &amp; rate
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  {t.status === 'accepted' && <LiveLocation taskId={t.id} />}
-                  {s.note && <p className="mt-3 flex items-start gap-2 border-t border-ink-900/10 pt-3 text-xs leading-relaxed text-ink-700"><Info size={13} aria-hidden="true" className="mt-0.5 shrink-0 text-clay-500" /> {s.note}</p>}
-                </div>
-              )
-            }) : <Empty text="No dispatches yet. Hire a worker to get started." />}
-          </div>
-        )}
-      </main>
+        </main>
+      </div>
 
       <Toast toast={toast} onClose={() => setToast(null)} />
-
       {viewing && <WorkerProfileModal worker={viewing} category={pickedCategory} onClose={() => setViewing(null)} onDispatch={() => { const w = viewing; setViewing(null); setDispatching(w) }} />}
       {dispatching && DISPATCH_ENABLED && <DispatchModal worker={dispatching} category={pickedCategory} onClose={() => setDispatching(null)} onDone={afterDispatch} onError={(m) => setToast({ id: Date.now(), kind: 'info', title: 'Dispatch failed', detail: m })} />}
       {rating && <RateModal task={rating} onClose={() => setRating(null)} onDone={afterConfirm} onError={(m) => setToast({ id: Date.now(), kind: 'info', title: 'Could not confirm', detail: m })} />}
       {editing && profile !== undefined && (
-        <ProfileModal
-          role="EMPLOYER"
+        <ProfileModal role="EMPLOYER"
           initial={{ avatar: logo, name: orgName, contact: (profile?.contactPerson as string) || '', phone: (profile?.phone as string) || '', region: (profile?.region as string) || '', bio: '' }}
           onClose={() => setEditing(false)}
           onSave={async (p) => {
@@ -441,16 +471,14 @@ export default function EmployerDashboard() {
             } catch (e) {
               setToast({ id: Date.now(), kind: 'info', title: 'Could not save profile', detail: e instanceof ApiError ? e.message : 'Please try again.' })
             }
-          }}
-        />
+          }} />
       )}
     </div>
   )
 }
 
-/** Plain text plus a copy button, instead of a tel: link. On desktop, clicking
- *  a bare tel: link throws up the OS's "which app should open this?" dialog —
- *  jarring and useless on a hiring dashboard nobody's using from a phone. */
+
+/** Plain text + copy button — avoids the OS "pick an app" dialog that a bare tel: link triggers on desktop. */
 function PhoneCopy({ phone }: { phone: string }) {
   const [copied, setCopied] = useState(false)
   const copy = async () => {
@@ -459,28 +487,18 @@ function PhoneCopy({ phone }: { phone: string }) {
         await navigator.clipboard.writeText(phone)
       } else {
         const el = document.createElement('textarea')
-        el.value = phone
-        el.style.position = 'fixed'
-        el.style.opacity = '0'
-        document.body.appendChild(el)
-        el.select()
-        document.execCommand('copy')
-        document.body.removeChild(el)
+        el.value = phone; el.style.position = 'fixed'; el.style.opacity = '0'
+        document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el)
       }
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1800)
-    } catch { /* clipboard unavailable — the number is still visible to copy by hand */ }
+      setCopied(true); setTimeout(() => setCopied(false), 1800)
+    } catch { /* clipboard unavailable */ }
   }
   return (
-    <button
-      type="button"
-      onClick={copy}
-      aria-label={`Copy phone number ${phone}`}
-      className="inline-flex items-center gap-2 rounded-lg px-1 py-0.5 text-sm font-medium text-ink-900 transition-colors hover:bg-ink-900/5 hover:text-forest-700"
-    >
+    <button type="button" onClick={copy} aria-label={`Copy phone number ${phone}`}
+      className="inline-flex items-center gap-2 rounded-lg px-1 py-0.5 text-sm font-medium text-ink-900 transition-colors hover:bg-ink-900/5 hover:text-forest-700">
       <Phone size={15} aria-hidden="true" className="text-forest-600" />
       {phone}
-      {copied ? <Check size={13} aria-hidden="true" className="text-forest-600" /> : <Copy size={13} aria-hidden="true" className="text-ink-700/50" />}
+      {copied ? '✓' : ''}
     </button>
   )
 }
@@ -553,14 +571,21 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch }: { worker:
 
             {skills.length ? (
               <div>
-                <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-widest text-clay-500">Certified Skills</h3>
+                <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-widest text-clay-500">Skills</h3>
                 <ul className="overflow-hidden rounded-xl ring-1 ring-ink-900/10">
                   {skills.map((sk, i) => {
                     const c = rateFor(sk)
                     const isPicked = category === sk
+                    // A skill is BeyondX-verified if the worker has the verifiedSkills
+                    // field set (admin-controlled after completed job + review), or if
+                    // they have a non-zero tasksCompleted and a rating — proxy until
+                    // the backend adds an explicit verifiedSkills field.
+                    const verifiedSkills: string[] = (worker.verifiedSkills as string[]) || []
+                    const isVerified = verifiedSkills.includes(sk) ||
+                      (Number(worker.tasksCompleted ?? 0) > 0 && Number(worker.rating ?? 0) >= 4)
                     return (
                       <li key={sk} className={`flex items-center gap-2.5 px-3.5 py-2.5 ${isPicked ? 'bg-forest-600/10' : i % 2 ? 'bg-cream-100/60' : 'bg-cream-50'}`}>
-                        <CircleCheck size={15} aria-hidden="true" className="shrink-0 text-forest-600" />
+                        <CircleCheck size={15} aria-hidden="true" className={`shrink-0 ${isVerified ? 'text-forest-600' : 'text-ink-900/30'}`} />
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-medium text-ink-900">{sk}</span>
                           {c && (
@@ -569,11 +594,25 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch }: { worker:
                             </span>
                           )}
                         </span>
-                        <span className="shrink-0 rounded-full bg-forest-600/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-forest-700">Certified</span>
+                        {isVerified ? (
+                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-forest-600/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-forest-700">
+                            <ShieldCheck size={10} aria-hidden="true" /> BeyondX Verified
+                          </span>
+                        ) : (
+                          <span className="shrink-0 rounded-full bg-ink-900/8 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-ink-700">Registered</span>
+                        )}
                       </li>
                     )
                   })}
                 </ul>
+                {skills.some((sk) => {
+                  const verifiedSkills: string[] = (worker.verifiedSkills as string[]) || []
+                  return !verifiedSkills.includes(sk) && !(Number(worker.tasksCompleted ?? 0) > 0 && Number(worker.rating ?? 0) >= 4)
+                }) && (
+                  <p className="mt-2 text-[11px] leading-snug text-ink-700/60">
+                    Skills are marked <span className="font-semibold">BeyondX Verified</span> once a worker completes their first rated job in that category.
+                  </p>
+                )}
               </div>
             ) : null}
           </div>
