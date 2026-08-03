@@ -25,11 +25,6 @@ const COMPANY_SIZES = [
   '1–5 employees', '6–20 employees', '21–50 employees',
   '51–200 employees', '200+ employees',
 ]
-const FACILITIES = [
-  'Prefer not to say / Not applicable', 'Nsawam Medium Security Prison',
-  'Kumasi Central Prison', 'James Fort Prison', 'Ankaful Maximum Security Prison',
-  'Sunyani Central Prison', 'Ho Central Prison', 'Tamale Central Prison',
-]
 const FIELD_SKILLS = categories.map((c) => c.title)
 const REMOTE_SKILLS = remoteCategories.map((c) => c.title)
 const RELATIONSHIPS = [
@@ -462,7 +457,7 @@ function EmployerRegister() {
 function WorkerRegister() {
   const { open } = useAuth()
   const [step, setStep] = useState(1)
-  const [f, setF] = useState({ name: '', phone: '', facility: '', gName: '', gPhone: '', relationship: '', pin: '' })
+  const [f, setF] = useState({ name: '', phone: '', gName: '', gPhone: '', relationship: '', pin: '' })
   // Google sign-up is optional for workers — most authenticate by phone+PIN
   // alone. If used, it just verifies an email to attach to the account.
   const [googleEmail, setGoogleEmail] = useState<string | null>(null)
@@ -475,11 +470,8 @@ function WorkerRegister() {
   const [phoneBusy, setPhoneBusy] = useState(false)
   const [phoneErr, setPhoneErr] = useState<string | null>(null)
   const [phoneResent, setPhoneResent] = useState(false)
-  // Remote work is not offered on accounts that name a facility.
-  const remoteLocked = Boolean(f.facility)
-  useEffect(() => {
-    if (remoteLocked) setSkills((prev) => prev.filter((sk) => !REMOTE_SKILLS.includes(sk)))
-  }, [remoteLocked])
+  // Remote-skill lock is now admin-controlled (set on account by BeyondX team)
+  // rather than self-reported at registration. No dropdown shown to workers.
   const [fieldErr, setFieldErr] = useState<Record<string, string>>({})
   const [skills, setSkills] = useState<string[]>([])
   const set = (k: keyof typeof f) => (v: string) => {
@@ -562,7 +554,7 @@ function WorkerRegister() {
     setErr(null); setBusy(true)
     try {
       const base = {
-        fullName: f.name.trim(), phone: f.phone.trim(), prisonFacility: f.facility,
+        fullName: f.name.trim(), phone: f.phone.trim(), prisonFacility: '',  // set by admin after background verification
         skills, pin: f.pin.trim(), guarantorName: f.gName.trim(),
         guarantorPhone: f.gPhone.trim(), guarantorRelationship: f.relationship,
       }
@@ -664,7 +656,6 @@ function WorkerRegister() {
           )}
           <FormError message={phoneErr} />
 
-          <Select label="Prison Facility (optional)" options={FACILITIES} placeholder="Not applicable" value={f.facility} onChange={set('facility')} />
 
           <div className="flex items-center gap-3 pt-1 text-xs text-ink-700/50">
             <span className="h-px flex-1 bg-ink-900/10" />
@@ -703,12 +694,6 @@ function WorkerRegister() {
             </div>
 
             <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-clay-500">Remote</p>
-            {remoteLocked ? (
-              <p className="rounded-lg bg-ink-900/5 p-3 text-xs leading-relaxed text-ink-700">
-                Remote work isn&rsquo;t open on your account yet. You can take on any of the
-                on-the-field work above, and we&rsquo;ll be in touch as more options become available.
-              </p>
-            ) : (
               <div className="grid grid-cols-2 gap-2">
                 {REMOTE_SKILLS.map((sk) => {
                   const active = skills.includes(sk)
@@ -719,7 +704,6 @@ function WorkerRegister() {
                   )
                 })}
               </div>
-            )}
           </div>
         )}
         {step === 3 && (<>

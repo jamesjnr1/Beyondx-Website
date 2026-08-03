@@ -16,8 +16,30 @@ const wInitials = (w: Worker) => wName(w).split(' ').map((p) => p[0]).slice(0, 2
 const wSkills = (w: Worker): string[] => (Array.isArray(w.skills) ? (w.skills as string[]) : (w.cats as string[]) || [])
 const wCharge = (w: Worker): number => Number((w.dailyCharge as string) ?? (w.charge as number) ?? 0) || 0
 
-/** A worker is "background-flagged" if they registered with a prison facility. */
-const isBackgroundFlagged = (w: Worker) => Boolean(w.prisonFacility)
+/** A worker is "background-flagged" only if they explicitly named a real
+ *  prison facility at registration. Any opt-out phrasing, empty value, or
+ *  the placeholder "Not applicable" means they are a civilian.
+ *
+ *  Emmanuel Wilson is currently the only confirmed background-flagged account.
+ *  If the prisonFacility field ever contains just noise (e.g. a typo or a test
+ *  value), it must be added to NON_FACILITY_VALUES rather than silently
+ *  flagging a civilian. */
+const REAL_FACILITIES = new Set([
+  'nsawam medium security prison',
+  'kumasi central prison',
+  'james fort prison',
+  'ankaful maximum security prison',
+  'sunyani central prison',
+  'ho central prison',
+  'tamale central prison',
+])
+const isBackgroundFlagged = (w: Worker) => {
+  const f = String(w.prisonFacility ?? '').trim().toLowerCase()
+  // Only flag if the value matches a known real facility name.
+  // Anything else — empty, null, "not applicable", "prefer not to say",
+  // "n/a", "none", or any other opt-out — is treated as civilian.
+  return REAL_FACILITIES.has(f)
+}
 
 /** Task-attribute risk flags. When all three are "no", background-flagged
  *  workers are eligible for the task and should be surfaced first by default. */
@@ -109,8 +131,12 @@ export default function EmployerDashboard() {
   const [workMode, setWorkMode] = useState<'field' | 'remote'>('field')
   const [pickedCategory, setPickedCategory] = useState<string | null>(null)
   const [taskFlags, setTaskFlags] = useState<TaskFlags>(DEFAULT_FLAGS)
+  const [screeningDone, setScreeningDone] = useState(false)
+  const [screeningAnswers, setScreeningAnswers] = useState<ScreeningAnswers>(DEFAULT_SCREENING)
+  const [selectedWorkers, setSelectedWorkers] = useState<Set<string | number>>(new Set())
   const [viewing, setViewing] = useState<Worker | null>(null)
   const [dispatching, setDispatching] = useState<Worker | null>(null)
+  const [dispatchQueue, setDispatchQueue] = useState<Worker[]>([])
   const [rating, setRating] = useState<Task | null>(null)
   const [editing, setEditing] = useState(false)
 
@@ -145,8 +171,35 @@ export default function EmployerDashboard() {
   const orgName = (profile?.orgName as string) || 'Your organisation'
   const logo = (profile?.logoUrl as string) || undefined
 
+  const pickCategory = (title: string) => {
+    setPickedCategory(title)
+    setTaskFlags(DEFAULT_FLAGS)
+    setScreeningDone(false)
+    setScreeningAnswers(DEFAULT_SCREENING)
+    setSelectedWorkers(new Set())
+  }
+  const clearCategory = () => {
+    setPickedCategory(null)
+    setTaskFlags(DEFAULT_FLAGS)
+    setScreeningDone(false)
+    setScreeningAnswers(DEFAULT_SCREENING)
+    setSelectedWorkers(new Set())
+  }
+
   const afterDispatch = () => {
-    setDispatching(null)
+    // If there's a queue (multi-dispatch), move to the next worker.
+    // Clear the dispatched worker from the queue first, then open the
+    // modal for whoever is next. When the queue empties, close everything.
+    setDispatchQueue((prev) => {
+      const remaining = prev.slice(1)
+      if (remaining.length > 0) {
+        setDispatching(remaining[0])
+      } else {
+        setDispatching(null)
+        setSelectedWorkers(new Set())
+      }
+      return remaining
+    })
     setAnnounce('Worker dispatched.')
     setToast({ id: Date.now(), kind: 'success', title: 'Worker dispatched', detail: 'Payment is held by BeyondX. The worker will accept or decline shortly — track it under Dispatch History.' })
     load()
@@ -223,7 +276,7 @@ export default function EmployerDashboard() {
                     return (
                       <li key={c.title}>
                         <button
-                          onClick={() => setPickedCategory(c.title)}
+                          onClick={() => pickCategory(c.title)}
                           aria-label={`${c.title} — ${count} worker${count === 1 ? '' : 's'} available`}
                           className="flex h-full w-full flex-col rounded-xl bg-cream-50 p-4 text-left shadow-sm ring-1 ring-ink-900/5 transition-all hover:ring-forest-600/40 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40"
                         >
@@ -265,7 +318,7 @@ export default function EmployerDashboard() {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <button
-                      onClick={() => setPickedCategory(null)}
+                      onClick={() => clearCategory()}
                       className="mb-1.5 flex items-center gap-1 text-sm font-medium text-forest-700 hover:underline"
                     >
                       <ChevronLeft size={15} aria-hidden="true" /> All work types
@@ -284,85 +337,130 @@ export default function EmployerDashboard() {
                 </div>
 
                 {loading ? <div className="mt-5"><Skeleton /></div> : (() => {
+                  // Step 1 — screening questions before seeing workers
+                  if (!screeningDone) {
+                    return (
+                      <TaskScreening
+                        category={pickedCategory!}
+                        screening={screeningAnswers}
+                        onUpdate={(s) => {
+                          setScreeningAnswers(s)
+                          setTaskFlags(s.flags)
+                        }}
+                        onDone={() => setScreeningDone(true)}
+                      />
+                    )
+                  }
+
                   const matches = sortWorkersForTask(
                     workerList.filter((w) => wSkills(w).includes(pickedCategory)),
                     taskFlags
                   )
                   const flagged = matches.filter(isBackgroundFlagged)
                   const highRisk = isHighRisk(taskFlags)
+
                   return (
                     <>
-                      {/* Task attribute flags — answered before seeing the worker list so
-                          the routing decision is already made when results show. */}
-                      <div className="mt-5 rounded-xl bg-cream-50 p-4 ring-1 ring-ink-900/8 shadow-sm">
-                        <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-clay-500">
-                          <ShieldCheck size={13} aria-hidden="true" /> Task details
+                      {/* Result banner with Edit answers */}
+                      <div className={`mt-5 mb-4 flex items-center justify-between rounded-xl px-4 py-2.5 ring-1 ${highRisk ? 'bg-clay-400/10 ring-clay-400/30' : 'bg-forest-600/8 ring-forest-600/20'}`}>
+                        <p className={`flex items-center gap-2 text-sm font-medium ${highRisk ? 'text-clay-700' : 'text-forest-800'}`}>
+                          <ShieldCheck size={15} aria-hidden="true" />
+                          {highRisk
+                            ? 'Restricted task — some workers excluded based on your answers'
+                            : `Open task — all vetted workers eligible${flagged.length > 0 ? ` · ${flagged.length} prioritised first` : ''}`}
                         </p>
-                        <p className="mb-3 text-xs leading-relaxed text-ink-700">
-                          Answer these quickly to make sure the right workers are matched to this job.
-                        </p>
-                        {([ 
-                          ['cashUnsupervised', 'Will the worker handle cash unsupervised?'],
-                          ['vulnerableContact', 'Will the worker be alone in a private residence or with vulnerable people?'],
-                          ['propertyAccess', 'Will the worker have unsupervised access to property or valuables?'],
-                        ] as [keyof TaskFlags, string][]).map(([key, label]) => (
-                          <label key={key} className="flex cursor-pointer items-start gap-3 py-2">
-                            <input
-                              type="checkbox"
-                              checked={taskFlags[key]}
-                              onChange={(e) => setTaskFlags((f) => ({ ...f, [key]: e.target.checked }))}
-                              className="mt-0.5 h-4 w-4 shrink-0 rounded border-ink-900/30 text-forest-600 focus:ring-forest-600/30"
-                            />
-                            <span className="text-sm text-ink-900">{label}</span>
-                          </label>
-                        ))}
-                        {highRisk ? (
-                          <p className="mt-2 rounded-lg bg-clay-400/10 px-3 py-2 text-xs leading-relaxed text-ink-800">
-                            <span className="font-semibold">Restricted task.</span> Workers with certain background flags are not matched to this job.
-                          </p>
-                        ) : (
-                          <p className="mt-2 rounded-lg bg-forest-600/8 px-3 py-2 text-xs leading-relaxed text-forest-800">
-                            <span className="font-semibold">Open task.</span> All vetted workers are eligible.
-                            {flagged.length > 0 && ` ${flagged.length} worker${flagged.length > 1 ? 's' : ''} with verified backgrounds prioritised first.`}
-                          </p>
-                        )}
+                        <button onClick={() => setScreeningDone(false)}
+                          className="ml-3 shrink-0 text-xs font-medium underline underline-offset-2 opacity-60 hover:opacity-100">
+                          Edit answers
+                        </button>
                       </div>
 
+                      {/* Multi-dispatch bar */}
+                      {selectedWorkers.size > 0 && (
+                        <div className="mb-3 flex items-center justify-between rounded-xl bg-forest-600 px-4 py-3">
+                          <span className="text-sm font-semibold text-cream-50">
+                            {selectedWorkers.size} worker{selectedWorkers.size > 1 ? 's' : ''} selected
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => setSelectedWorkers(new Set())}
+                              className="rounded-full bg-cream-50/15 px-3 py-1.5 text-xs font-medium text-cream-50 hover:bg-cream-50/25"
+                            >
+                              Clear
+                            </button>
+                            <button
+                              onClick={() => {
+                                const queue = matches.filter((w) => selectedWorkers.has(String(w.id)))
+                                setDispatchQueue(queue)
+                                setDispatching(queue[0])
+                              }}
+                              className="rounded-full bg-cream-50 px-4 py-1.5 text-xs font-semibold text-forest-700 hover:bg-cream-100"
+                            >
+                              <Send size={12} className="mr-1.5 inline" aria-hidden="true" />
+                              Dispatch all
+                            </button>
+                          </div>
+                        </div>
+                      )}
+
                       {matches.length ? (
-                        <ul className="mt-4 divide-y divide-ink-900/10 overflow-hidden rounded-2xl bg-cream-50 shadow-sm ring-1 ring-ink-900/5">
-                          {matches.map((w) => (
-                            <li key={String(w.id)}>
-                              <button onClick={() => setViewing(w)} aria-label={`View ${wName(w)}'s profile`}
-                                className="flex w-full items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-forest-600/5 focus:outline-none focus-visible:bg-forest-600/5 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-forest-600/40 sm:px-5">
-                                {w.photoUrl ? <img src={w.photoUrl as string} alt="" className="h-11 w-11 shrink-0 rounded-full object-cover" />
-                                  : <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-forest-600 text-sm font-bold text-cream-50">{wInitials(w)}</span>}
-                                <span className="min-w-0 flex-1">
-                                  <span className="flex items-center gap-2">
-                                    <span className="block truncate font-serif text-base font-medium text-ink-900">{wName(w)}</span>
-                                    {isBackgroundFlagged(w) && !highRisk && (
-                                      <span className="shrink-0 rounded-full bg-forest-600/10 px-2 py-0.5 text-[10px] font-semibold text-forest-700">Priority</span>
-                                    )}
-                                  </span>
-                                  <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-700">
-                                    {w.rating && Number(w.rating) > 0
-                                      ? <span className="inline-flex items-center gap-0.5"><Star size={12} aria-hidden="true" className="fill-forest-600 text-forest-600" /> {Number(w.rating).toFixed(1)}</span>
-                                      : <span>New worker</span>}
-                                    <span>· {Number(w.tasksCompleted ?? 0)} task{Number(w.tasksCompleted ?? 0) === 1 ? '' : 's'} completed</span>
-                                    {w.isBusy ? <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-700">On a job</span> : null}
-                                  </span>
-                                </span>
-                                <span className="hidden shrink-0 text-sm font-medium text-forest-700 sm:inline">View profile</span>
-                                <ChevronRight size={18} aria-hidden="true" className="shrink-0 text-ink-700" />
-                              </button>
-                            </li>
-                          ))}
+                        <ul className="mt-1 divide-y divide-ink-900/10 overflow-hidden rounded-2xl bg-cream-50 shadow-sm ring-1 ring-ink-900/5">
+                          {matches.map((w) => {
+                            const wid = String(w.id)
+                            const isSelected = selectedWorkers.has(wid)
+                            return (
+                              <li key={wid} className={isSelected ? 'bg-forest-600/5' : ''}>
+                                <div className="flex w-full items-center gap-3 px-4 py-4 sm:px-5">
+                                  {/* Checkbox for multi-dispatch */}
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={() => {
+                                      setSelectedWorkers((prev) => {
+                                        const next = new Set(prev)
+                                        if (next.has(wid)) next.delete(wid)
+                                        else next.add(wid)
+                                        return next
+                                      })
+                                    }}
+                                    aria-label={`Select ${wName(w)} for dispatch`}
+                                    className="h-4 w-4 shrink-0 rounded border-ink-900/30 text-forest-600 focus:ring-forest-600/30"
+                                  />
+                                  <button onClick={() => setViewing(w)} aria-label={`View ${wName(w)}'s profile`}
+                                    className="flex flex-1 items-center gap-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-forest-600/40">
+                                    {w.photoUrl ? <img src={w.photoUrl as string} alt="" className="h-11 w-11 shrink-0 rounded-full object-cover" />
+                                      : <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-forest-600 text-sm font-bold text-cream-50">{wInitials(w)}</span>}
+                                    <span className="min-w-0 flex-1">
+                                      <span className="flex items-center gap-2">
+                                        <span className="block truncate font-serif text-base font-medium text-ink-900">{wName(w)}</span>
+                                        {isBackgroundFlagged(w) && !highRisk && (
+                                          <span className="shrink-0 rounded-full bg-forest-600/10 px-2 py-0.5 text-[10px] font-semibold text-forest-700">Priority</span>
+                                        )}
+                                        {Boolean(w.hasTools) && (
+                                          <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">Has tools</span>
+                                        )}
+                                      </span>
+                                      <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-700">
+                                        {w.rating && Number(w.rating) > 0
+                                          ? <span className="inline-flex items-center gap-0.5"><Star size={12} aria-hidden="true" className="fill-forest-600 text-forest-600" /> {Number(w.rating).toFixed(1)}</span>
+                                          : <span>New worker</span>}
+                                        <span>· {Number(w.tasksCompleted ?? 0)} task{Number(w.tasksCompleted ?? 0) === 1 ? '' : 's'} completed</span>
+                                        {Boolean(w.isBusy) && <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-700">On a job</span>}
+                                      </span>
+                                    </span>
+                                    <span className="hidden shrink-0 text-sm font-medium text-forest-700 sm:inline">View profile</span>
+                                    <ChevronRight size={18} aria-hidden="true" className="shrink-0 text-ink-700" />
+                                  </button>
+                                </div>
+                              </li>
+                            )
+                          })}
                         </ul>
                       ) : (
                         <div className="mt-4">
-                          <Empty text={
-                            highRisk
-                              ? `No workers cleared for this task type yet. Post a task and we'll match someone.`
-                              : `No workers are certified for ${pickedCategory} yet. Post a task instead and we'll match someone as soon as they join.`
+                          <Empty text={highRisk
+                            ? `No workers cleared for this task type yet. Post a task and we'll match someone.`
+                            : `No workers are certified for ${pickedCategory} yet. Post a task instead and we'll match someone as soon as they join.`
                           } />
                         </div>
                       )}
@@ -421,7 +519,7 @@ export default function EmployerDashboard() {
       <Toast toast={toast} onClose={() => setToast(null)} />
 
       {viewing && <WorkerProfileModal worker={viewing} category={pickedCategory} onClose={() => setViewing(null)} onDispatch={() => { const w = viewing; setViewing(null); setDispatching(w) }} />}
-      {dispatching && DISPATCH_ENABLED && <DispatchModal worker={dispatching} category={pickedCategory} onClose={() => setDispatching(null)} onDone={afterDispatch} onError={(m) => setToast({ id: Date.now(), kind: 'info', title: 'Dispatch failed', detail: m })} />}
+      {dispatching && DISPATCH_ENABLED && <DispatchModal worker={dispatching} category={pickedCategory} screening={screeningAnswers} dispatchQueue={dispatchQueue} onClose={() => { setDispatching(null); setDispatchQueue([]); setSelectedWorkers(new Set()) }} onDone={afterDispatch} onError={(m) => setToast({ id: Date.now(), kind: 'info', title: 'Dispatch failed', detail: m })} />}
       {rating && <RateModal task={rating} onClose={() => setRating(null)} onDone={afterConfirm} onError={(m) => setToast({ id: Date.now(), kind: 'info', title: 'Could not confirm', detail: m })} />}
       {editing && profile !== undefined && (
         <ProfileModal
@@ -482,6 +580,283 @@ function PhoneCopy({ phone }: { phone: string }) {
       {phone}
       {copied ? <Check size={13} aria-hidden="true" className="text-forest-600" /> : <Copy size={13} aria-hidden="true" className="text-ink-700/50" />}
     </button>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Task Screening — one question at a time, before the worker list is shown.
+// Three groups:
+//   A. Risk flags (cash / vulnerable / property) — determine worker eligibility
+//   B. Tools — needed? who provides them? — feeds the dispatch pricing
+//   C. Complexity — basic or technical? — feeds the tier selector in dispatch
+// ---------------------------------------------------------------------------
+
+type ToolAnswer = 'none' | 'employer' | 'worker'
+type TierAnswer = 'basic' | 'skilled'
+
+export interface ScreeningAnswers {
+  flags: TaskFlags
+  toolsNeeded: boolean
+  toolProvider: ToolAnswer   // only meaningful when toolsNeeded = true
+  tier: TierAnswer
+}
+
+export const DEFAULT_SCREENING: ScreeningAnswers = {
+  flags: { cashUnsupervised: false, vulnerableContact: false, propertyAccess: false },
+  toolsNeeded: false,
+  toolProvider: 'employer',
+  tier: 'basic',
+}
+
+// Category-specific examples shown alongside the basic/technical question
+const TIER_EXAMPLES: Record<string, { basic: string; skilled: string }> = {
+  'Facility & Cleaning':            { basic: 'General sweeping, mopping, surface wiping', skilled: 'Drain clearing, chemical cleaning agents, pressure washing' },
+  'Construction, Maintenance & Repairs': { basic: 'Site labour, carrying materials, clearing debris', skilled: 'Tiling, plumbing, electrical support, plastering' },
+  'Event & Hospitality':            { basic: 'Chair & table setup, serving food and drinks', skilled: 'AV equipment setup, electrical rigging, event lighting' },
+  'Agriculture & Environment':      { basic: 'Weeding by hand, harvesting, clearing land', skilled: 'Applying weedicide or pesticides, operating sprayers, pest identification' },
+  'Retail & Trade Support':         { basic: 'General shelf stocking, packing, bagging', skilled: 'Cold store operation, stock management systems, inventory counting' },
+  'Logistics & Delivery':           { basic: 'Carrying goods, loading and offloading', skilled: 'Inventory documentation, route management, goods verification' },
+  'Community Services':             { basic: 'Waste collection, public space sweeping', skilled: 'Drainage maintenance, hazardous waste handling' },
+}
+
+// Categories where tools are relevant (tool modifier applies in pricing)
+const TOOL_CATEGORIES = new Set(['Agriculture & Environment', 'Construction, Maintenance & Repairs', 'Facility & Cleaning'])
+
+// All screening questions in sequence
+type ScreeningStep =
+  | { type: 'risk'; key: keyof TaskFlags; question: string; hint: string }
+  | { type: 'tools-needed'; question: string; hint: string }
+  | { type: 'tool-provider'; question: string; hint: string }
+  | { type: 'tier'; question: string; basicLabel: string; skilledLabel: string; basicExample: string; skilledExample: string }
+
+function buildSteps(category: string): ScreeningStep[] {
+  const steps: ScreeningStep[] = [
+    { type: 'risk', key: 'cashUnsupervised', question: 'Will the worker handle cash unsupervised?', hint: 'e.g. collecting payments, operating a till, handling a float' },
+    { type: 'risk', key: 'vulnerableContact', question: 'Will the worker be alone in a private home or with vulnerable people?', hint: 'e.g. working inside a private residence, caring for children or elderly' },
+    { type: 'risk', key: 'propertyAccess', question: 'Will the worker have unsupervised access to valuables or property?', hint: 'e.g. access to a storeroom, safe, vehicle, or high-value goods without supervision' },
+  ]
+
+  if (TOOL_CATEGORIES.has(category)) {
+    steps.push({ type: 'tools-needed', question: 'Will tools or equipment be needed for this task?', hint: 'e.g. cleaning equipment, construction tools, agricultural sprayers' })
+    // tool-provider is added conditionally after tools-needed = yes
+  }
+
+  const examples = TIER_EXAMPLES[category]
+  if (examples) {
+    steps.push({
+      type: 'tier',
+      question: 'Is this basic work or does it require technical skill?',
+      basicLabel: 'Basic',
+      skilledLabel: 'Technical / Skilled',
+      basicExample: examples.basic,
+      skilledExample: examples.skilled,
+    })
+  }
+
+  return steps
+}
+
+function TaskScreening({
+  category,
+  screening,
+  onUpdate,
+  onDone,
+}: {
+  category: string
+  screening: ScreeningAnswers
+  onUpdate: (s: ScreeningAnswers) => void
+  onDone: () => void
+}) {
+  const baseSteps = buildSteps(category)
+  // Insert the tool-provider question right after tools-needed = yes
+  const steps: ScreeningStep[] = []
+  for (const s of baseSteps) {
+    steps.push(s)
+    if (s.type === 'tools-needed' && screening.toolsNeeded) {
+      steps.push({ type: 'tool-provider', question: 'Who will provide the tools?', hint: 'This affects the price — workers who bring their own tools receive a 15% surcharge' })
+    }
+  }
+
+  const [stepIdx, setStepIdx] = useState(0)
+  const [showResult, setShowResult] = useState(false)
+
+  // Reset when category changes
+  useEffect(() => { setStepIdx(0); setShowResult(false) }, [category])
+
+  const current = steps[stepIdx]
+  const progress = Math.round((stepIdx / steps.length) * 100)
+
+  const next = () => {
+    if (stepIdx + 1 < steps.length) {
+      setStepIdx(stepIdx + 1)
+    } else {
+      setShowResult(true)
+    }
+  }
+
+  const answerRisk = (key: keyof TaskFlags, yes: boolean) => {
+    onUpdate({ ...screening, flags: { ...screening.flags, [key]: yes } })
+    next()
+  }
+
+  const answerToolsNeeded = (yes: boolean) => {
+    onUpdate({ ...screening, toolsNeeded: yes, toolProvider: yes ? 'employer' : 'none' })
+    // rebuild steps next render, then advance
+    setStepIdx((i) => i + 1)
+  }
+
+  const answerToolProvider = (v: ToolAnswer) => {
+    onUpdate({ ...screening, toolProvider: v })
+    next()
+  }
+
+  const answerTier = (t: TierAnswer) => {
+    onUpdate({ ...screening, tier: t })
+    next()
+  }
+
+  const highRisk = isHighRisk(screening.flags)
+
+  if (showResult) {
+    return (
+      <div className="mt-6">
+        <div className={`rounded-2xl p-6 text-center ring-2 ${highRisk ? 'bg-clay-400/8 ring-clay-400/40' : 'bg-forest-600/8 ring-forest-600/30'}`}>
+          <div className={`mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full text-2xl ${highRisk ? 'bg-clay-400/20' : 'bg-forest-600/15'}`}>
+            {highRisk ? '⚠️' : '✅'}
+          </div>
+          <p className={`font-serif text-xl font-medium ${highRisk ? 'text-clay-800' : 'text-forest-900'}`}>
+            {highRisk ? 'Restricted task' : 'Open to all workers'}
+          </p>
+          <p className={`mt-2 text-sm leading-relaxed ${highRisk ? 'text-clay-700' : 'text-forest-800'}`}>
+            {highRisk
+              ? 'Workers with background flags will not be matched to this job.'
+              : 'All vetted workers are eligible. Workers with verified background records appear first.'}
+          </p>
+          {screening.toolsNeeded && (
+            <p className="mt-2 text-sm text-ink-700">
+              <span className="font-medium">Tools:</span> {screening.toolProvider === 'employer' ? 'You will provide — standard rate applies.' : 'Worker brings tools — 15% surcharge added to rate.'}
+            </p>
+          )}
+          <p className="mt-1 text-sm text-ink-700">
+            <span className="font-medium">Complexity:</span> {screening.tier === 'basic' ? 'Basic' : 'Technical / Skilled'}
+          </p>
+          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
+            <button onClick={onDone}
+              className={`rounded-full px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:scale-[1.02] active:scale-[0.98] ${highRisk ? 'bg-clay-600 hover:bg-clay-500' : 'bg-forest-600 hover:bg-forest-500'}`}>
+              See available workers →
+            </button>
+            <button onClick={() => { setStepIdx(0); setShowResult(false); onUpdate(DEFAULT_SCREENING) }}
+              className="rounded-full border border-ink-900/15 px-6 py-3 text-sm font-medium text-ink-700 hover:bg-ink-900/5">
+              Start over
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!current) return null
+
+  return (
+    <div className="mt-6">
+      {/* Progress bar */}
+      <div className="mb-5">
+        <div className="mb-1.5 flex items-center justify-between text-xs text-ink-700/60">
+          <span>Question {stepIdx + 1} of {steps.length}</span>
+          <span>{progress}% complete</span>
+        </div>
+        <div className="h-1.5 w-full rounded-full bg-ink-900/8">
+          <div className="h-1.5 rounded-full bg-forest-600 transition-all duration-300" style={{ width: `${progress}%` }} />
+        </div>
+      </div>
+
+      {/* Question card */}
+      <div className="rounded-2xl bg-cream-50 p-6 shadow-sm ring-1 ring-ink-900/8">
+
+        {/* Risk questions */}
+        {(current.type === 'risk' || current.type === 'tools-needed') && (
+          <>
+            <p className="font-serif text-lg font-medium leading-snug text-ink-900">{current.question}</p>
+            <p className="mt-1.5 text-sm leading-relaxed text-ink-700/70">{current.hint}</p>
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <button onClick={() => current.type === 'risk' ? answerRisk(current.key, true) : answerToolsNeeded(true)}
+                className="flex flex-col items-center gap-1 rounded-xl border-2 border-clay-400/30 bg-clay-400/8 px-4 py-4 text-center font-semibold text-clay-700 transition-all hover:border-clay-500/60 hover:bg-clay-400/15 active:scale-[0.97]">
+                <span className="text-xl">✓ Yes</span>
+                <span className="text-xs font-normal text-clay-600/80">This applies</span>
+              </button>
+              <button onClick={() => current.type === 'risk' ? answerRisk(current.key, false) : answerToolsNeeded(false)}
+                className="flex flex-col items-center gap-1 rounded-xl border-2 border-forest-600/30 bg-forest-600/8 px-4 py-4 text-center font-semibold text-forest-700 transition-all hover:border-forest-600/60 hover:bg-forest-600/15 active:scale-[0.97]">
+                <span className="text-xl">✗ No</span>
+                <span className="text-xs font-normal text-forest-600/80">Doesn't apply</span>
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Who provides tools */}
+        {current.type === 'tool-provider' && (
+          <>
+            <p className="font-serif text-lg font-medium leading-snug text-ink-900">{current.question}</p>
+            <p className="mt-1.5 text-sm leading-relaxed text-ink-700/70">{current.hint}</p>
+            <div className="mt-5 grid grid-cols-2 gap-3">
+              <button onClick={() => answerToolProvider('employer')}
+                className="flex flex-col items-center gap-1 rounded-xl border-2 border-forest-600/30 bg-forest-600/8 px-4 py-4 text-center transition-all hover:border-forest-600/60 hover:bg-forest-600/15 active:scale-[0.97]">
+                <span className="text-xl">🏢</span>
+                <span className="font-semibold text-forest-700">I will provide them</span>
+                <span className="text-xs text-forest-600/80">Standard rate</span>
+              </button>
+              <button onClick={() => answerToolProvider('worker')}
+                className="flex flex-col items-center gap-1 rounded-xl border-2 border-clay-400/30 bg-clay-400/8 px-4 py-4 text-center transition-all hover:border-clay-500/60 hover:bg-clay-400/15 active:scale-[0.97]">
+                <span className="text-xl">👷</span>
+                <span className="font-semibold text-clay-700">Worker brings tools</span>
+                <span className="text-xs text-clay-600/80">+15% surcharge</span>
+              </button>
+            </div>
+          </>
+        )}
+
+        {/* Basic vs Technical */}
+        {current.type === 'tier' && (
+          <>
+            <p className="font-serif text-lg font-medium leading-snug text-ink-900">{current.question}</p>
+            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <button onClick={() => answerTier('basic')}
+                className="flex flex-col gap-2 rounded-xl border-2 border-forest-600/30 bg-forest-600/8 p-4 text-left transition-all hover:border-forest-600/60 hover:bg-forest-600/15 active:scale-[0.97]">
+                <span className="font-semibold text-forest-800">{current.basicLabel}</span>
+                <span className="text-xs leading-relaxed text-forest-700/80">{current.basicExample}</span>
+              </button>
+              <button onClick={() => answerTier('skilled')}
+                className="flex flex-col gap-2 rounded-xl border-2 border-clay-400/30 bg-clay-400/8 p-4 text-left transition-all hover:border-clay-500/60 hover:bg-clay-400/15 active:scale-[0.97]">
+                <span className="font-semibold text-clay-800">{current.skilledLabel}</span>
+                <span className="text-xs leading-relaxed text-clay-700/80">{current.skilledExample}</span>
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Running summary of previous answers */}
+      {stepIdx > 0 && (
+        <div className="mt-3 space-y-1">
+          {steps.slice(0, stepIdx).map((s, i) => {
+            let label = ''
+            if (s.type === 'risk') label = screening.flags[s.key] ? 'Yes' : 'No'
+            else if (s.type === 'tools-needed') label = screening.toolsNeeded ? 'Yes' : 'No'
+            else if (s.type === 'tool-provider') label = screening.toolProvider === 'employer' ? 'You provide' : 'Worker brings (+15%)'
+            else if (s.type === 'tier') label = screening.tier === 'basic' ? 'Basic' : 'Technical'
+            const isYes = label === 'Yes' || label.includes('+15%') || label === 'Technical'
+            return (
+              <div key={i} className="flex items-center justify-between rounded-lg bg-cream-50 px-3.5 py-2 ring-1 ring-ink-900/8">
+                <span className="text-xs text-ink-700">{s.question}</span>
+                <span className={`ml-3 shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${isYes ? 'bg-clay-400/15 text-clay-700' : 'bg-forest-600/10 text-forest-700'}`}>
+                  {label}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -604,7 +979,7 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch }: { worker:
   )
 }
 
-function DispatchModal({ worker, category, onClose, onDone, onError }: { worker: Worker; category?: string | null; onClose: () => void; onDone: () => void; onError: (m: string) => void }) {
+function DispatchModal({ worker, category, screening, dispatchQueue, onClose, onDone, onError }: { worker: Worker; category?: string | null; screening?: ScreeningAnswers; dispatchQueue?: Worker[]; onClose: () => void; onDone: () => void; onError: (m: string) => void }) {
   useEsc(onClose)
   const [days, setDays] = useState(1)
   const [location, setLocation] = useState('')
@@ -613,11 +988,10 @@ function DispatchModal({ worker, category, onClose, onDone, onError }: { worker:
   const [method, setMethod] = useState('')
   const [busy, setBusy] = useState(false)
   const cat = allCategories.find((c) => c.title === taskType)
-
-  // Complexity tier (basic vs skilled)
-  const [tier, setTier] = useState<'basic' | 'skilled'>('basic')
-  // Tool provision (worker brings tools = +15%)
-  const [workerProvidesTools, setWorkerProvidesTools] = useState(false)
+  // Pre-fill tier and tool answers from screening if provided
+  const [tier, setTier] = useState<'basic' | 'skilled'>(screening?.tier ?? 'basic')
+  const [workerProvidesTools, setWorkerProvidesTools] = useState(screening?.toolProvider === 'worker')
+  useEffect(() => { setTier(screening?.tier ?? 'basic'); setWorkerProvidesTools(screening?.toolProvider === 'worker') }, [screening])
   // Logistics: distance + vehicle
   const [distanceKm, setDistanceKm] = useState(3)
   const [vehicle, setVehicle] = useState(0)   // surcharge value from VEHICLE_SURCHARGES
@@ -657,7 +1031,14 @@ function DispatchModal({ worker, category, onClose, onDone, onError }: { worker:
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/50 p-4" onClick={onClose}>
       <div role="dialog" aria-modal="true" aria-labelledby="dp-title" className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-cream-50 p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="mb-1 flex items-center justify-between">
-          <h2 id="dp-title" className="font-serif text-xl font-medium text-ink-900">Dispatch {wName(worker).split(' ')[0]}</h2>
+          <h2 id="dp-title" className="font-serif text-xl font-medium text-ink-900">
+            Dispatch {wName(worker).split(' ')[0]}
+            {screening && dispatchQueue && dispatchQueue.length > 1 && (
+              <span className="ml-2 rounded-full bg-forest-600/10 px-2 py-0.5 text-sm font-medium text-forest-700">
+                {dispatchQueue.findIndex((w) => String(w.id) === String(worker.id)) + 1} of {dispatchQueue.length}
+              </span>
+            )}
+          </h2>
           <button onClick={onClose} aria-label="Cancel dispatch" className="rounded-lg p-1 text-ink-700 hover:bg-ink-900/5"><X size={18} aria-hidden="true" /></button>
         </div>
         <p className="mb-4 text-sm text-ink-700">Pay {wName(worker)} via mobile money, then enter your payment reference below. BeyondX holds the payment and releases it once you confirm the work.</p>
