@@ -23,12 +23,23 @@ export interface Category {
   description: string
   image: string
   tasks: string[]
-  /** Standard BeyondX rate in GH₵. */
+  /** Standard BeyondX rate in GH₵. Used for remote and single-tier categories. */
   rate: number
   /** What the rate covers, when it is not simply a day's work. */
   rateUnit?: string
   /** On-site work, or work done from anywhere. Defaults to 'field'. */
   mode?: WorkMode
+  /** Skilled tier rate, where complexity warrants a different rate. */
+  skilledRate?: number
+  /** Short label describing what the skilled tier covers. */
+  skilledLabel?: string
+  /** If true, a tool-provision surcharge (+15%) applies when the worker provides tools.
+   *  Applies to Agriculture, Construction, Facility & Cleaning. */
+  toolModifier?: boolean
+  /** Logistics & Delivery only — uses distance-based pricing instead of a flat day rate. */
+  distancePricing?: boolean
+  /** Minimum booking in days (Agriculture = 2). */
+  minDays?: number
 }
 
 export const categories: Category[] = [
@@ -39,6 +50,9 @@ export const categories: Category[] = [
     image: '/categories/general-labour.jpg',
     tasks: ['Office cleaning', 'School compound sweeping', 'Hospital ward cleaning', 'Gutter & drain clearing'],
     rate: 100,
+    skilledRate: 140,
+    skilledLabel: 'drain clearing',
+    toolModifier: true,
   },
   {
     icon: Truck,
@@ -46,7 +60,9 @@ export const categories: Category[] = [
     description: 'Warehouse, port, and market goods handling.',
     image: '/categories/logistics.jpg',
     tasks: ['Warehouse stock sorting', 'Goods offloading — Tema Port', 'Supermarket shelf stocking', 'Market porter'],
-    rate: 90,
+    rate: 40,           // base fee 0-3km (delivery runs). Warehouse/port stays on tier above.
+    rateUnit: 'base (0–3km)',
+    distancePricing: true,
   },
   {
     icon: PaintRoller,
@@ -54,7 +70,10 @@ export const categories: Category[] = [
     description: 'Construction, painting, tiling, plumbing support, and site labour.',
     image: '/categories/painting.jpg',
     tasks: ['Painting & touch-up work', 'Tiling assistance', 'Plumbing support', 'Building site labourer'],
-    rate: 180,
+    rate: 130,
+    skilledRate: 220,
+    skilledLabel: 'tiling, plumbing',
+    toolModifier: true,
   },
   {
     icon: ShoppingCart,
@@ -63,6 +82,8 @@ export const categories: Category[] = [
     image: '/categories/hospitality.jpg',
     tasks: ['Chair & table setup', 'Catering assistant', 'Food serving at events', 'Venue decoration setup'],
     rate: 100,
+    skilledRate: 200,
+    skilledLabel: 'electricals, AV',
   },
   {
     icon: Leaf,
@@ -70,8 +91,10 @@ export const categories: Category[] = [
     description: 'Farming, landscaping, and green space upkeep.',
     image: '/categories/landscaping.jpg',
     tasks: ['Farm weeding & harvesting', 'Grass cutting & landscaping', 'Tree planting', 'Community garden maintenance'],
-    rate: 120,
-    rateUnit: 'per 0.5 acre',
+    rate: 90,
+    rateUnit: 'per day',
+    toolModifier: true,
+    minDays: 2,
   },
   {
     icon: Wrench,
@@ -80,6 +103,8 @@ export const categories: Category[] = [
     image: '/categories/electrical.jpg',
     tasks: ['Shop attendant', 'Packing and bagging', 'Loading & offloading trucks', 'Cold store assistant'],
     rate: 80,
+    skilledRate: 110,
+    skilledLabel: 'cold store, stock handling',
   },
   {
     icon: Hammer,
@@ -88,6 +113,7 @@ export const categories: Category[] = [
     image: '/categories/construction.jpg',
     tasks: ['Neighbourhood waste collection', 'School painting', 'Street drain maintenance', 'Public park upkeep'],
     rate: 140,
+    // Low variance — stays flat, no skilled tier
   },
 ]
 
@@ -154,6 +180,44 @@ export const allCategories: Category[] = [...categories, ...remoteCategories]
 export const isRemote = (title: string) =>
   remoteCategories.some((c) => c.title === title)
 
+// ---------------------------------------------------------------------------
+// Logistics & Delivery pricing helpers
+// ---------------------------------------------------------------------------
+
+export const LOGISTICS_BASE_KM = 3          // km included in base fee
+export const LOGISTICS_BASE_FEE = 40        // GHS
+export const LOGISTICS_PER_KM = 10          // GHS per km beyond 3km
+export const LOGISTICS_SKILLED_ADDON = 30   // GHS for inventory handling / documentation
+export const LOGISTICS_LONGHAUL_CAP = 210   // GHS flat cap beyond 20km (pending final sign-off)
+export const LOGISTICS_LONGHAUL_KM = 20     // km threshold for the cap
+
+export const VEHICLE_SURCHARGES: { label: string; value: number; note?: string }[] = [
+  { label: 'On foot / handcart', value: 0, note: '≤3km only' },
+  { label: 'Bicycle', value: 15 },
+  { label: 'Motorbike', value: 30 },
+  { label: 'Car / van', value: 50 },
+]
+
+/**
+ * Calculate the total logistics rate for a delivery run.
+ * - distanceKm: GPS-derived pickup-to-dropoff distance
+ * - skilled: inventory handling, documentation, etc.
+ * - vehicleSurcharge: one of VEHICLE_SURCHARGES[].value
+ */
+export function logisticsRate(distanceKm: number, skilled: boolean, vehicleSurcharge: number): number {
+  const distanceFee = distanceKm <= LOGISTICS_BASE_KM
+    ? LOGISTICS_BASE_FEE
+    : Math.min(
+        LOGISTICS_BASE_FEE + (distanceKm - LOGISTICS_BASE_KM) * LOGISTICS_PER_KM,
+        distanceKm > LOGISTICS_LONGHAUL_KM ? LOGISTICS_LONGHAUL_CAP : Infinity
+      )
+  const skilledAddon = skilled ? LOGISTICS_SKILLED_ADDON : 0
+  return Math.round(distanceFee + skilledAddon + vehicleSurcharge)
+}
+
+// Tool-provision surcharge — applies to Agriculture, Construction, Facility & Cleaning
+export const TOOL_SURCHARGE_RATE = 0.15   // +15% when worker provides tools
+
 export interface Step {
   number: string
   title: string
@@ -170,8 +234,7 @@ export const steps: Step[] = [
   {
     number: '02',
     title: 'We match and confirm',
-    description:
-      'We confirm the skill match and agree on timing.',
+    description: 'We confirm the skill match and agree on timing.',
   },
   {
     number: '03',
@@ -187,10 +250,7 @@ export const steps: Step[] = [
   },
 ]
 
-export interface Pillar {
-  title: string
-  description: string
-}
+export interface Pillar { title: string; description: string }
 
 export const pillars: Pillar[] = [
   {
@@ -210,10 +270,7 @@ export const pillars: Pillar[] = [
   },
 ]
 
-export interface Stat {
-  value: string
-  label: string
-}
+export interface Stat { value: string; label: string }
 
 export const stats: Stat[] = [
   { value: '15%', label: 'Service fee per completed job' },
@@ -222,12 +279,7 @@ export const stats: Stat[] = [
   { value: '100%', label: 'GPS-verified attendance' },
 ]
 
-export interface Story {
-  tag: string
-  title: string
-  excerpt: string
-  image: string
-}
+export interface Story { tag: string; title: string; excerpt: string; image: string }
 
 export const stories: Story[] = [
   {
@@ -244,16 +296,13 @@ export const stories: Story[] = [
   },
   {
     tag: 'Stories',
-    title: 'Kwame\'s story: from release to head of site team in eight months',
+    title: "Kwame's story: from release to head of site team in eight months",
     excerpt: 'How a construction certification and a GPS-verified work record opened new doors.',
     image: 'https://images.pexels.com/photos/8961342/pexels-photo-8961342.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
 ]
 
-export interface InstagramPost {
-  image: string
-  caption: string
-}
+export interface InstagramPost { image: string; caption: string }
 
 export const instagramPosts: InstagramPost[] = [
   {

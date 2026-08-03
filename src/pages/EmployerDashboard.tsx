@@ -7,7 +7,7 @@ import SupportPanel from '../components/SupportPanel'
 import LiveLocation from '../components/LiveLocation'
 import { tasks as tasksApi, workers as workersApi, employers as employersApi, contact, session, ApiError, type Task, type Worker, type Employer } from '../lib/api'
 import { DISPATCH_ENABLED, DISPATCH_PAUSED_MESSAGE } from '../lib/config'
-import { categories, remoteCategories, allCategories } from '../data'
+import { categories, remoteCategories, allCategories, TOOL_SURCHARGE_RATE, VEHICLE_SURCHARGES, logisticsRate } from '../data'
 import { PLATFORM_FEE } from '../lib/payments'
 
 const cedis = (n?: number | string) => `GH\u20b5 ${Number(n || 0).toLocaleString()}`
@@ -15,6 +15,33 @@ const wName = (w: Worker) => (w.fullName as string) || (w.name as string) || 'Wo
 const wInitials = (w: Worker) => wName(w).split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
 const wSkills = (w: Worker): string[] => (Array.isArray(w.skills) ? (w.skills as string[]) : (w.cats as string[]) || [])
 const wCharge = (w: Worker): number => Number((w.dailyCharge as string) ?? (w.charge as number) ?? 0) || 0
+
+/** A worker is "background-flagged" if they registered with a prison facility. */
+const isBackgroundFlagged = (w: Worker) => Boolean(w.prisonFacility)
+
+/** Task-attribute risk flags. When all three are "no", background-flagged
+ *  workers are eligible for the task and should be surfaced first by default. */
+export interface TaskFlags {
+  cashUnsupervised: boolean        // Will the worker handle cash unsupervised?
+  vulnerableContact: boolean       // Will the worker be alone with vulnerable people / in a private residence?
+  propertyAccess: boolean          // Will the worker have unsupervised access to property/valuables?
+}
+const DEFAULT_FLAGS: TaskFlags = { cashUnsupervised: false, vulnerableContact: false, propertyAccess: false }
+const isHighRisk = (f: TaskFlags) => f.cashUnsupervised || f.vulnerableContact || f.propertyAccess
+
+/** Sort workers so background-flagged profiles float to the top when the task
+ *  is low-risk (all flags "no"). This gives them priority matching rather than
+ *  being hidden, while keeping them off high-risk tasks. */
+function sortWorkersForTask(workers: Worker[], flags: TaskFlags): Worker[] {
+  if (isHighRisk(flags)) {
+    // High-risk task → exclude background-flagged workers entirely
+    return workers.filter((w) => !isBackgroundFlagged(w))
+  }
+  // Low-risk task → background-flagged workers first, then the rest
+  const flagged = workers.filter(isBackgroundFlagged)
+  const other = workers.filter((w) => !isBackgroundFlagged(w))
+  return [...flagged, ...other]
+}
 
 const STATUS: Record<string, { label: string; dot: string; chip: string; note?: string }> = {
   open: { label: 'Awaiting worker', dot: 'bg-clay-500', chip: 'bg-clay-400/15 text-clay-600', note: 'Waiting for a worker to accept.' },
@@ -81,6 +108,7 @@ export default function EmployerDashboard() {
   const [tab, setTab] = useState<'hire' | 'post' | 'history' | 'support'>('hire')
   const [workMode, setWorkMode] = useState<'field' | 'remote'>('field')
   const [pickedCategory, setPickedCategory] = useState<string | null>(null)
+  const [taskFlags, setTaskFlags] = useState<TaskFlags>(DEFAULT_FLAGS)
   const [viewing, setViewing] = useState<Worker | null>(null)
   const [dispatching, setDispatching] = useState<Worker | null>(null)
   const [rating, setRating] = useState<Task | null>(null)
@@ -207,13 +235,24 @@ export default function EmployerDashboard() {
                           </span>
                           <span className="mt-2 block text-xs leading-relaxed text-ink-700">{c.description}</span>
                           <span className="mt-3 flex items-center justify-between border-t border-ink-900/10 pt-2.5">
-                            <span className="text-sm font-semibold text-ink-900">
-                              {cedis(c.rate)}
-                              <span className="ml-1 text-xs font-normal text-ink-700">{c.rateUnit || 'per day'}</span>
+                            <span className="text-sm text-ink-900">
+                              {c.distancePricing ? (
+                                <span className="font-semibold">{cedis(40)} <span className="text-xs font-normal text-ink-700">base + distance</span></span>
+                              ) : c.skilledRate ? (
+                                <span>
+                                  <span className="font-semibold">{cedis(c.rate)}</span>
+                                  <span className="mx-1 text-ink-700/50">–</span>
+                                  <span className="font-semibold">{cedis(c.skilledRate)}</span>
+                                  <span className="ml-1 text-xs font-normal text-ink-700">{c.rateUnit || 'per day'}</span>
+                                </span>
+                              ) : (
+                                <span>
+                                  <span className="font-semibold">{cedis(c.rate)}</span>
+                                  <span className="ml-1 text-xs font-normal text-ink-700">{c.rateUnit || 'per day'}</span>
+                                </span>
+                              )}
                             </span>
-                            <span className="text-xs text-ink-700">
-                              {count} worker{count === 1 ? '' : 's'}
-                            </span>
+                            <span className="text-xs text-ink-700">{count} worker{count === 1 ? '' : 's'}</span>
                           </span>
                         </button>
                       </li>
@@ -245,35 +284,89 @@ export default function EmployerDashboard() {
                 </div>
 
                 {loading ? <div className="mt-5"><Skeleton /></div> : (() => {
-                  const matches = workerList.filter((w) => wSkills(w).includes(pickedCategory))
-                  return matches.length ? (
-                    <ul className="mt-5 divide-y divide-ink-900/10 overflow-hidden rounded-2xl bg-cream-50 shadow-sm ring-1 ring-ink-900/5">
-                      {matches.map((w) => (
-                        <li key={String(w.id)}>
-                          <button onClick={() => setViewing(w)} aria-label={`View ${wName(w)}'s profile`}
-                            className="flex w-full items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-forest-600/5 focus:outline-none focus-visible:bg-forest-600/5 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-forest-600/40 sm:px-5">
-                            {w.photoUrl ? <img src={w.photoUrl as string} alt="" className="h-11 w-11 shrink-0 rounded-full object-cover" />
-                              : <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-forest-600 text-sm font-bold text-cream-50">{wInitials(w)}</span>}
-                            <span className="min-w-0 flex-1">
-                              <span className="block truncate font-serif text-base font-medium text-ink-900">{wName(w)}</span>
-                              <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-700">
-                                {w.rating && Number(w.rating) > 0
-                                  ? <span className="inline-flex items-center gap-0.5"><Star size={12} aria-hidden="true" className="fill-forest-600 text-forest-600" /> {Number(w.rating).toFixed(1)}</span>
-                                  : <span>New worker</span>}
-                                <span>· {Number(w.tasksCompleted ?? 0)} task{Number(w.tasksCompleted ?? 0) === 1 ? '' : 's'} completed</span>
-                                {w.isBusy ? <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-700">On a job</span> : null}
-                              </span>
-                            </span>
-                            <span className="hidden shrink-0 text-sm font-medium text-forest-700 sm:inline">View profile</span>
-                            <ChevronRight size={18} aria-hidden="true" className="shrink-0 text-ink-700" />
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <div className="mt-5">
-                      <Empty text={`No workers are certified for ${pickedCategory} yet. Post a task instead and we'll match someone as soon as they join.`} />
-                    </div>
+                  const matches = sortWorkersForTask(
+                    workerList.filter((w) => wSkills(w).includes(pickedCategory)),
+                    taskFlags
+                  )
+                  const flagged = matches.filter(isBackgroundFlagged)
+                  const highRisk = isHighRisk(taskFlags)
+                  return (
+                    <>
+                      {/* Task attribute flags — answered before seeing the worker list so
+                          the routing decision is already made when results show. */}
+                      <div className="mt-5 rounded-xl bg-cream-50 p-4 ring-1 ring-ink-900/8 shadow-sm">
+                        <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-clay-500">
+                          <ShieldCheck size={13} aria-hidden="true" /> Task details
+                        </p>
+                        <p className="mb-3 text-xs leading-relaxed text-ink-700">
+                          Answer these quickly to make sure the right workers are matched to this job.
+                        </p>
+                        {([ 
+                          ['cashUnsupervised', 'Will the worker handle cash unsupervised?'],
+                          ['vulnerableContact', 'Will the worker be alone in a private residence or with vulnerable people?'],
+                          ['propertyAccess', 'Will the worker have unsupervised access to property or valuables?'],
+                        ] as [keyof TaskFlags, string][]).map(([key, label]) => (
+                          <label key={key} className="flex cursor-pointer items-start gap-3 py-2">
+                            <input
+                              type="checkbox"
+                              checked={taskFlags[key]}
+                              onChange={(e) => setTaskFlags((f) => ({ ...f, [key]: e.target.checked }))}
+                              className="mt-0.5 h-4 w-4 shrink-0 rounded border-ink-900/30 text-forest-600 focus:ring-forest-600/30"
+                            />
+                            <span className="text-sm text-ink-900">{label}</span>
+                          </label>
+                        ))}
+                        {highRisk ? (
+                          <p className="mt-2 rounded-lg bg-clay-400/10 px-3 py-2 text-xs leading-relaxed text-ink-800">
+                            <span className="font-semibold">Restricted task.</span> Workers with certain background flags are not matched to this job.
+                          </p>
+                        ) : (
+                          <p className="mt-2 rounded-lg bg-forest-600/8 px-3 py-2 text-xs leading-relaxed text-forest-800">
+                            <span className="font-semibold">Open task.</span> All vetted workers are eligible.
+                            {flagged.length > 0 && ` ${flagged.length} worker${flagged.length > 1 ? 's' : ''} with verified backgrounds prioritised first.`}
+                          </p>
+                        )}
+                      </div>
+
+                      {matches.length ? (
+                        <ul className="mt-4 divide-y divide-ink-900/10 overflow-hidden rounded-2xl bg-cream-50 shadow-sm ring-1 ring-ink-900/5">
+                          {matches.map((w) => (
+                            <li key={String(w.id)}>
+                              <button onClick={() => setViewing(w)} aria-label={`View ${wName(w)}'s profile`}
+                                className="flex w-full items-center gap-3 px-4 py-4 text-left transition-colors hover:bg-forest-600/5 focus:outline-none focus-visible:bg-forest-600/5 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-forest-600/40 sm:px-5">
+                                {w.photoUrl ? <img src={w.photoUrl as string} alt="" className="h-11 w-11 shrink-0 rounded-full object-cover" />
+                                  : <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-forest-600 text-sm font-bold text-cream-50">{wInitials(w)}</span>}
+                                <span className="min-w-0 flex-1">
+                                  <span className="flex items-center gap-2">
+                                    <span className="block truncate font-serif text-base font-medium text-ink-900">{wName(w)}</span>
+                                    {isBackgroundFlagged(w) && !highRisk && (
+                                      <span className="shrink-0 rounded-full bg-forest-600/10 px-2 py-0.5 text-[10px] font-semibold text-forest-700">Priority</span>
+                                    )}
+                                  </span>
+                                  <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-700">
+                                    {w.rating && Number(w.rating) > 0
+                                      ? <span className="inline-flex items-center gap-0.5"><Star size={12} aria-hidden="true" className="fill-forest-600 text-forest-600" /> {Number(w.rating).toFixed(1)}</span>
+                                      : <span>New worker</span>}
+                                    <span>· {Number(w.tasksCompleted ?? 0)} task{Number(w.tasksCompleted ?? 0) === 1 ? '' : 's'} completed</span>
+                                    {w.isBusy ? <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-700">On a job</span> : null}
+                                  </span>
+                                </span>
+                                <span className="hidden shrink-0 text-sm font-medium text-forest-700 sm:inline">View profile</span>
+                                <ChevronRight size={18} aria-hidden="true" className="shrink-0 text-ink-700" />
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <div className="mt-4">
+                          <Empty text={
+                            highRisk
+                              ? `No workers cleared for this task type yet. Post a task and we'll match someone.`
+                              : `No workers are certified for ${pickedCategory} yet. Post a task instead and we'll match someone as soon as they join.`
+                          } />
+                        </div>
+                      )}
+                    </>
                   )
                 })()}
               </>
@@ -520,12 +613,33 @@ function DispatchModal({ worker, category, onClose, onDone, onError }: { worker:
   const [method, setMethod] = useState('')
   const [busy, setBusy] = useState(false)
   const cat = allCategories.find((c) => c.title === taskType)
-  // BeyondX sets a standard rate per work type — not per worker.
-  const rate = cat ? cat.rate : wCharge(worker)
-  const workerGets = rate * days
+
+  // Complexity tier (basic vs skilled)
+  const [tier, setTier] = useState<'basic' | 'skilled'>('basic')
+  // Tool provision (worker brings tools = +15%)
+  const [workerProvidesTools, setWorkerProvidesTools] = useState(false)
+  // Logistics: distance + vehicle
+  const [distanceKm, setDistanceKm] = useState(3)
+  const [vehicle, setVehicle] = useState(0)   // surcharge value from VEHICLE_SURCHARGES
+
+  // Reset tier/tool when category changes
+  useEffect(() => { setTier('basic'); setWorkerProvidesTools(false) }, [taskType])
+
+  // ---------- Rate calculation ----------
+  const baseRate = (() => {
+    if (!cat) return wCharge(worker)
+    if (cat.distancePricing) return logisticsRate(distanceKm, tier === 'skilled', vehicle)
+    const flat = (tier === 'skilled' && cat.skilledRate) ? cat.skilledRate : cat.rate
+    if (cat.toolModifier && workerProvidesTools) return Math.round(flat * (1 + TOOL_SURCHARGE_RATE))
+    return flat
+  })()
+
+  const isPerDay = !cat?.distancePricing && cat?.mode !== 'remote'
+  const effectiveDays = cat?.distancePricing ? 1 : (cat?.minDays ? Math.max(days, cat.minDays) : days)
+  const workerGets = isPerDay ? baseRate * effectiveDays : baseRate
   const fee = Math.round(workerGets * PLATFORM_FEE)
   const pay = workerGets + fee
-  const duration = days === 0.5 ? 'Half Day' : days === 1 ? '1 Day' : `${days} Days`
+  const duration = effectiveDays === 0.5 ? 'Half Day' : effectiveDays === 1 ? '1 Day' : `${effectiveDays} Days`
 
   const submit = async () => {
     if (!payRef.trim() || !method || busy) return
@@ -548,34 +662,115 @@ function DispatchModal({ worker, category, onClose, onDone, onError }: { worker:
         </div>
         <p className="mb-4 text-sm text-ink-700">Pay {wName(worker)} via mobile money, then enter your payment reference below. BeyondX holds the payment and releases it once you confirm the work.</p>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
+          {/* Task type */}
           <label className="block">
             <span className="mb-1 block text-xs font-medium text-ink-700">Task type</span>
             <select value={taskType} onChange={(e) => setTaskType(e.target.value)} className="w-full rounded-xl border border-ink-900/15 bg-white px-3 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/30">
               {allCategories.map((c) => <option key={c.title}>{c.title}</option>)}
             </select>
-            <span className="mt-1 block text-xs text-ink-700">
-              Standard rate {cedis(rate)} {cat?.rateUnit || 'per day'}
-            </span>
           </label>
+
+          {/* Complexity tier */}
+          {cat?.skilledRate && (
+            <div>
+              <span className="mb-1.5 block text-xs font-medium text-ink-700">Complexity tier</span>
+              <div className="grid grid-cols-2 gap-2">
+                {([['basic', `Basic — ${cedis(cat.rate)}/day`], ['skilled', `Skilled — ${cedis(cat.skilledRate)}/day`]] as const).map(([t, label]) => (
+                  <button key={t} type="button" onClick={() => setTier(t)}
+                    className={`rounded-xl border px-3 py-2.5 text-left text-xs transition-all ${tier === t ? 'border-forest-600 bg-forest-600/8 font-semibold text-forest-800 ring-2 ring-forest-600/20' : 'border-ink-900/15 text-ink-700 hover:border-forest-500/40'}`}>
+                    {label}
+                    {t === 'skilled' && cat.skilledLabel && <span className="block mt-0.5 font-normal text-ink-700/70">e.g. {cat.skilledLabel}</span>}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Logistics distance + vehicle */}
+          {cat?.distancePricing && (
+            <div className="space-y-3 rounded-xl bg-cream-100 p-4 ring-1 ring-ink-900/8">
+              <p className="text-xs font-semibold uppercase tracking-widest text-clay-500">Logistics pricing</p>
+              <label className="block">
+                <span className="mb-1 block text-xs font-medium text-ink-700">Distance (GPS pickup → drop-off)</span>
+                <div className="flex items-center gap-3">
+                  <input type="range" min={1} max={30} step={1} value={distanceKm}
+                    onChange={(e) => setDistanceKm(Number(e.target.value))}
+                    className="flex-1 accent-forest-600" />
+                  <span className="w-14 shrink-0 text-right text-sm font-semibold text-ink-900">{distanceKm} km</span>
+                </div>
+                <p className="mt-1 text-xs text-ink-700/70">Distance is pulled from GPS check-in — enter an estimate for now.</p>
+              </label>
+              <div>
+                <span className="mb-1.5 block text-xs font-medium text-ink-700">Worker's vehicle</span>
+                <div className="grid grid-cols-2 gap-2">
+                  {VEHICLE_SURCHARGES.map((v) => (
+                    <button key={v.label} type="button" onClick={() => setVehicle(v.value)}
+                      className={`rounded-xl border px-3 py-2 text-left text-xs transition-all ${vehicle === v.value ? 'border-forest-600 bg-forest-600/8 font-semibold text-forest-800 ring-2 ring-forest-600/20' : 'border-ink-900/15 text-ink-700 hover:border-forest-500/40'}`}>
+                      {v.label}
+                      <span className="block mt-0.5 font-normal text-ink-700/70">{v.value === 0 ? 'No surcharge' : `+${cedis(v.value)}`}{v.note ? ` · ${v.note}` : ''}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {tier === 'skilled' && (
+                <p className="text-xs text-ink-700">Skilled tier (inventory handling / documentation): +{cedis(30)}</p>
+              )}
+            </div>
+          )}
+
+          {/* Tool modifier */}
+          {cat?.toolModifier && (
+            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-ink-900/10 bg-cream-100 p-3.5">
+              <input type="checkbox" checked={workerProvidesTools} onChange={(e) => setWorkerProvidesTools(e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 rounded border-ink-900/30 text-forest-600 focus:ring-forest-600/30" />
+              <span>
+                <span className="block text-sm font-medium text-ink-900">Worker provides their own tools</span>
+                <span className="block text-xs text-ink-700/80">+15% surcharge on the base rate ({cedis(Math.round((((tier === 'skilled' && cat.skilledRate) ? cat.skilledRate : cat.rate)) * TOOL_SURCHARGE_RATE))} extra)</span>
+              </span>
+            </label>
+          )}
+
+          {/* Agriculture minimum-day notice */}
+          {cat?.minDays && days < cat.minDays && (
+            <p className="rounded-xl bg-clay-400/10 px-3 py-2.5 text-xs leading-relaxed text-ink-800 ring-1 ring-clay-400/20">
+              <span className="font-semibold">Minimum {cat.minDays}-day booking</span> for {cat.title}. Duration adjusted automatically.
+            </p>
+          )}
+
+          {/* Location */}
           {cat?.mode === 'remote' ? (
             <p className="rounded-xl bg-forest-600/5 p-3 text-xs leading-relaxed text-ink-700 ring-1 ring-forest-600/15">
               This is remote work — the worker completes it from wherever they are, so no job site is needed.
             </p>
-          ) : (
+          ) : !cat?.distancePricing ? (
             <label className="block">
               <span className="mb-1 block text-xs font-medium text-ink-700">Location</span>
               <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Tema" className="w-full rounded-xl border border-ink-900/15 bg-white px-3 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/30" />
             </label>
+          ) : (
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-ink-700">Pickup location</span>
+              <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Makola Market" className="w-full rounded-xl border border-ink-900/15 bg-white px-3 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/30" />
+            </label>
           )}
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-ink-700">Duration</span>
-            <select value={days} onChange={(e) => setDays(Number(e.target.value))} className="w-full rounded-xl border border-ink-900/15 bg-white px-3 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/30">
-              <option value={0.5}>Half Day</option><option value={1}>1 Day</option><option value={2}>2 Days</option><option value={3}>3 Days</option><option value={5}>5 Days</option>
-            </select>
-          </label>
+
+          {/* Duration (not for logistics or remote) */}
+          {!cat?.distancePricing && cat?.mode !== 'remote' && (
+            <label className="block">
+              <span className="mb-1 block text-xs font-medium text-ink-700">Duration</span>
+              <select value={days} onChange={(e) => setDays(Number(e.target.value))} className="w-full rounded-xl border border-ink-900/15 bg-white px-3 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/30">
+                {cat?.minDays === 2 ? null : <option value={0.5}>Half Day</option>}
+                <option value={1}>1 Day</option>
+                <option value={2}>2 Days</option>
+                <option value={3}>3 Days</option>
+                <option value={5}>5 Days</option>
+              </select>
+            </label>
+          )}
         </div>
 
+        {/* Price breakdown */}
         <div className="mt-4 flex items-center justify-between rounded-xl bg-forest-600/5 p-4 ring-1 ring-forest-600/15">
           <span className="min-w-0 text-sm text-ink-700">
             Amount to pay
@@ -587,7 +782,9 @@ function DispatchModal({ worker, category, onClose, onDone, onError }: { worker:
           <span className="shrink-0 text-right">
             <span className="block font-serif text-lg font-semibold text-ink-900">{cedis(pay)}</span>
             <span className="block text-[11px] text-ink-700/80">
-              {cedis(rate)} {cat?.rateUnit || 'per day'} &times; {days === 0.5 ? 'half day' : `${days} day${days === 1 ? '' : 's'}`}
+              {cat?.distancePricing
+                ? `${distanceKm}km delivery`
+                : `${cedis(baseRate)}/day × ${effectiveDays === 0.5 ? 'half day' : `${effectiveDays} day${effectiveDays === 1 ? '' : 's'}`}`}
             </span>
           </span>
         </div>
@@ -596,15 +793,8 @@ function DispatchModal({ worker, category, onClose, onDone, onError }: { worker:
           <span className="mb-2 block text-xs font-medium text-ink-700">How did you pay?</span>
           <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Payment method">
             {PAYMENT_METHODS.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                role="radio"
-                aria-checked={method === m.id}
-                aria-label={m.alt}
-                onClick={() => setMethod(m.id)}
-                className={`flex h-16 items-center justify-center rounded-xl border bg-white p-2 transition-all ${method === m.id ? 'border-forest-600 ring-2 ring-forest-600/30' : 'border-ink-900/15 hover:border-forest-500/50'}`}
-              >
+              <button key={m.id} type="button" role="radio" aria-checked={method === m.id} aria-label={m.alt} onClick={() => setMethod(m.id)}
+                className={`flex h-16 items-center justify-center rounded-xl border bg-white p-2 transition-all ${method === m.id ? 'border-forest-600 ring-2 ring-forest-600/30' : 'border-ink-900/15 hover:border-forest-500/50'}`}>
                 <img src={m.logo} alt={m.alt} className="max-h-9 w-auto object-contain" />
               </button>
             ))}
@@ -692,6 +882,7 @@ function RateModal({ task, onClose, onDone, onError }: { task: Task; onClose: ()
   )
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function PostTask({ onDone }: { onDone: (msg: string) => void }) {
   const [taskType, setTaskType] = useState(allCategories[0].title)
   const [description, setDescription] = useState('')
