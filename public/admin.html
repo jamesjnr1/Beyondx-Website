@@ -751,7 +751,18 @@ function rm(){
 function rmForm(){
   const box=document.getElementById('smsFormBox');
   if(!box) return;
-  box.innerHTML=`<div class="tc" style="margin-bottom:16px;">
+  box.innerHTML=`<div class="tc" style="margin-bottom:12px;">
+    <div class="tc-h"><span class="tc-ht">Quick Broadcasts</span></div>
+    <div style="padding:12px 16px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button type="button" onclick="quickBroadcast('tools')" style="padding:7px 14px;border-radius:8px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:var(--f);border:1.5px solid var(--g2);background:var(--g2);color:#fff;">
+        🔧 Ask workers: Do you have tools?
+      </button>
+      <button type="button" onclick="quickBroadcast('profile')" style="padding:7px 14px;border-radius:8px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:var(--f);border:1.5px solid var(--b);background:transparent;color:var(--ink3);">
+        👤 Ask workers to update profile
+      </button>
+    </div>
+  </div>
+  <div class="tc" style="margin-bottom:16px;">
     <div class="tc-h"><span class="tc-ht">Send Custom SMS</span></div>
     <div style="padding:16px;">
       <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
@@ -850,6 +861,24 @@ async function sendCustomSms(){
   checkSmsBadge();
   rm();
 }
+
+function quickBroadcast(type){
+  const messages={
+    tools: `Hi! This is BeyondX. We need to update your profile.\n\nDo you bring your own tools to work (e.g. cleaning supplies, construction tools, or farming equipment)?\n\nPlease open your BeyondX Worker Dashboard at beyondxco.com, go to your profile, and tap Yes or No under "Do you have your own tools?"\n\nThis helps us match you to the right jobs and may increase your earnings. Thank you!`,
+    profile: `Hi! This is BeyondX. Please take a moment to update your worker profile at beyondxco.com.\n\nYou can add your skills, update your photo, and let us know if you have your own tools. A complete profile helps employers find you and increases your chances of being dispatched. Thank you!`,
+  };
+  const msg=messages[type];
+  if(!msg)return;
+  smsDraftMessage=msg;
+  smsBroadcastMode='workers';
+  rmForm();
+  // Scroll to the compose box
+  setTimeout(()=>{
+    const el=document.getElementById('smsFormBox');
+    if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+  },100);
+}
+
 function rt(){
   const paid = tasks.filter(t=>t.status==='completed');
   const totalRev = paid.reduce((s,t)=>s+parseFloat(t.pay),0);

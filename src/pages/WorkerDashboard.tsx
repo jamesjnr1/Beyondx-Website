@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
-import { MapPin, Calendar, Check, X, Star, RotateCcw, Info, RefreshCw, AlertCircle } from 'lucide-react'
+import { MapPin, Calendar, Check, X, Star, RotateCcw, Info, RefreshCw, AlertCircle, Wrench } from 'lucide-react'
 import DashboardHeader from './DashboardHeader'
 import ReferralCard from '../components/ReferralCard'
 import ProfileModal, { type Profile } from '../components/ProfileModal'
@@ -8,6 +8,99 @@ import SupportPanel from '../components/SupportPanel'
 import LocationShare from '../components/LocationShare'
 import { tasks as tasksApi, workers as workersApi, contact, session, ApiError, type Task, type Worker } from '../lib/api'
 import { isRemote } from '../data'
+
+// ---------------------------------------------------------------------------
+// Tools Status Card
+// Lets a worker declare which skill categories they have their own tools for.
+// Employers see a "Has tools" badge on their profile, and it feeds the tool
+// modifier pricing in the dispatch modal. Workers are asked to fill this in
+// via a broadcast SMS — this is the screen they land on when they do.
+// ---------------------------------------------------------------------------
+const TOOL_RELEVANT = ['Agriculture & Environment', 'Construction, Maintenance & Repairs', 'Facility & Cleaning']
+
+function ToolsStatusCard({ worker, onSaved }: { worker: Worker | null; onSaved: (patch: Record<string, unknown>) => void }) {
+  const mySkills = (Array.isArray(worker?.skills) ? worker!.skills as string[] : [])
+    .filter((s) => TOOL_RELEVANT.includes(s))
+
+  const [hasTools, setHasTools] = useState<boolean>(Boolean(worker?.hasTools))
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+
+  // Keep in sync if worker loads after initial render
+  useEffect(() => { setHasTools(Boolean(worker?.hasTools)) }, [worker?.hasTools])
+
+  if (mySkills.length === 0) return null   // only show if relevant to their skills
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      const patch = { hasTools }
+      await workersApi.updateMe(patch)
+      onSaved(patch)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+    } catch { /* toast is handled by parent if needed */ }
+    finally { setSaving(false) }
+  }
+
+  return (
+    <div className="mt-4 rounded-2xl border border-ink-900/8 bg-cream-50 p-4 shadow-sm sm:p-5">
+      <div className="flex items-start gap-3">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-forest-600/10 text-forest-600">
+          <Wrench size={17} aria-hidden="true" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-serif text-base font-medium text-ink-900">Do you have your own tools?</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-ink-700/80">
+            Workers who bring their own tools to {mySkills.join(', ')} jobs earn a 15% surcharge on the base rate.
+            Employers can also see this on your profile when matching you to a task.
+          </p>
+
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setHasTools(true)}
+                className={`flex-1 rounded-xl border-2 px-4 py-3 text-sm font-semibold transition-all sm:flex-none sm:px-5 ${
+                  hasTools
+                    ? 'border-forest-600 bg-forest-600/8 text-forest-800'
+                    : 'border-ink-900/15 text-ink-700 hover:border-forest-500/40'
+                }`}
+              >
+                ✓ Yes, I bring my own tools
+              </button>
+              <button
+                type="button"
+                onClick={() => setHasTools(false)}
+                className={`flex-1 rounded-xl border-2 px-4 py-3 text-sm font-semibold transition-all sm:flex-none sm:px-5 ${
+                  !hasTools
+                    ? 'border-ink-900 bg-ink-900/5 text-ink-900'
+                    : 'border-ink-900/15 text-ink-700 hover:border-ink-900/30'
+                }`}
+              >
+                ✗ No, employer provides
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={save}
+              disabled={saving}
+              className="rounded-full bg-forest-600 px-5 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60 sm:ml-auto"
+            >
+              {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save'}
+            </button>
+          </div>
+
+          {saved && (
+            <p className="mt-2 text-xs text-forest-700">
+              Updated — employers searching for workers with tools will now see this on your profile.
+            </p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const cedis = (n?: number | string) => `GH\u20b5 ${Number(n || 0).toLocaleString()}`
 
@@ -218,6 +311,8 @@ export default function WorkerDashboard() {
         </div>
 
         <ReferralCard code={(me?.workerId as string) || 'BX-—'} referrals={0} />
+
+        <ToolsStatusCard worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
 
         <div className="mt-8 flex items-center gap-2 overflow-x-auto border-b border-ink-900/10 pb-px" role="tablist" aria-label="Worker sections">
           {tabs.map((t) => (
