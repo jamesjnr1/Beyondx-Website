@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, Star, Send, Phone, Plus, X, ShieldCheck, CircleCheck, Info, RefreshCw, AlertCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Star, Send, Menu, X, ShieldCheck, CircleCheck, Info, RefreshCw, AlertCircle, LogOut, Users, ClipboardList, LayoutDashboard, Headphones } from 'lucide-react'
 import ProfileModal from '../components/ProfileModal'
 import Toast, { type ToastMsg } from '../components/Toast'
 import SupportPanel from '../components/SupportPanel'
@@ -164,28 +164,28 @@ export default function EmployerDashboard() {
   }
 
   const NAV = [
-    { id: 'hire' as const, label: 'Hire Workers', icon: Plus, badge: 0 },
-    { id: 'post' as const, label: 'Post a Task', icon: Send, badge: 0 },
-    { id: 'history' as const, label: 'Activity', icon: RefreshCw, badge: pendingConfirm.length },
-    { id: 'support' as const, label: 'Support', icon: Info, badge: 0 },
+    { id: 'hire' as const, label: 'Hire Workers', icon: Users, badge: 0 },
+    { id: 'post' as const, label: 'Post a Task', icon: ClipboardList, badge: 0 },
+    { id: 'history' as const, label: 'Activity', icon: LayoutDashboard, badge: pendingConfirm.length },
+    { id: 'support' as const, label: 'Support', icon: Headphones, badge: 0 },
   ]
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-cream-100">
       {/* ── Top bar ─────────────────────────────────────────── */}
-      <header className="z-40 flex h-14 shrink-0 items-center gap-3 border-b border-ink-900/8 bg-cream-50 px-4 sm:px-6">
+      <header className="z-40 flex h-14 shrink-0 items-center gap-3 border-b border-ink-900/12 bg-cream-50 px-4 sm:px-6">
         <button
-          className="mr-1 rounded-md p-1.5 text-ink-700 hover:bg-ink-900/5 lg:hidden"
+          className="mr-1 rounded-md p-1.5 text-ink-700 hover:bg-ink-900/8 lg:hidden"
           onClick={() => setSidebarOpen((o) => !o)}
           aria-label="Toggle navigation"
         >
-          <Plus size={20} className="rotate-45" />
+          <Menu size={20} />
         </button>
-        <button onClick={() => go('home')} aria-label="Home" className="shrink-0">
-          <img src="/beyondx-logo.png" alt="BeyondX" className="h-6" onError={(e) => { (e.target as HTMLImageElement).style.display='none' }} />
+        <button onClick={() => go('home')} aria-label="BeyondX home" className="shrink-0">
+          <img src="/beyondx-logo.png" alt="BeyondX" className="h-7" onError={(e) => { (e.target as HTMLImageElement).style.display='none' }} />
         </button>
         <span aria-hidden="true" className="hidden h-5 w-px bg-ink-900/12 sm:block" />
-        <span className="hidden text-sm font-medium text-ink-700 sm:block">Employer Portal</span>
+        <span className="hidden text-xs font-semibold uppercase tracking-widest text-ink-700/50 sm:block">Employer Portal</span>
         <div className="ml-auto flex items-center gap-2">
           <Notifications role="employer" tasks={taskList} />
           <button
@@ -193,54 +193,87 @@ export default function EmployerDashboard() {
             className="flex items-center gap-2 rounded-full border border-ink-900/12 py-1 pl-1 pr-3 text-sm font-medium text-ink-800 transition-colors hover:bg-ink-900/5"
           >
             {logo
-              ? <img src={logo} alt="" className="h-6 w-6 rounded-full object-cover" />
-              : <span className="flex h-6 w-6 items-center justify-center rounded-full bg-forest-600 text-[11px] font-bold text-cream-50">
+              ? <img src={logo} alt="" className="h-7 w-7 rounded-full object-cover" />
+              : <span className="flex h-7 w-7 items-center justify-center rounded-full bg-forest-600 text-xs font-bold text-cream-50">
                   {orgName.slice(0, 2).toUpperCase()}
                 </span>}
-            <span className="hidden max-w-[120px] truncate sm:inline">{orgName}</span>
+            <span className="hidden max-w-[140px] truncate sm:inline text-sm">{orgName}</span>
           </button>
           <button
             onClick={logout}
             className="hidden items-center gap-1.5 rounded-full border border-ink-900/12 px-3 py-1.5 text-sm font-medium text-ink-700 hover:bg-ink-900/5 sm:flex"
           >
-            <Phone size={13} aria-hidden="true" /> Log out
+            <LogOut size={14} aria-hidden="true" /> Log out
           </button>
         </div>
       </header>
 
       <div className="flex min-h-0 flex-1">
-        {/* ── Sidebar ──────────────────────────────────────── */}
-        <aside className={`fixed inset-y-0 left-0 z-30 mt-14 flex w-56 flex-col border-r border-ink-900/8 bg-cream-50 transition-transform lg:relative lg:mt-0 lg:inset-y-auto lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-          <div className="border-b border-ink-900/8 px-4 py-4">
-            <p className="truncate text-sm font-semibold text-ink-900">{orgName}</p>
-            <p className="mt-0.5 truncate text-xs text-ink-700/60">{(profile?.region as string) || 'Greater Accra'}</p>
+        {/* ── Sidebar — dark, authoritative ────────────────── */}
+        <aside className={`fixed inset-y-0 left-0 z-30 mt-14 flex w-60 flex-col bg-ink-900 transition-transform lg:relative lg:mt-0 lg:inset-y-auto lg:translate-x-0 ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+
+          {/* Org identity */}
+          <div className="border-b border-cream-50/10 px-5 py-4">
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-forest-600 text-sm font-bold text-cream-50">
+                {orgName.slice(0, 2).toUpperCase()}
+              </span>
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-cream-50">{orgName}</p>
+                <p className="truncate text-[11px] text-cream-200/50">{(profile?.region as string) || 'Greater Accra'}</p>
+              </div>
+            </div>
           </div>
-          <div className="grid grid-cols-2 gap-px border-b border-ink-900/8 bg-ink-900/8">
-            {([{ label: 'Active jobs', value: activeTasks.length }, { label: 'Awaiting confirm', value: pendingConfirm.length }] as const).map(({ label, value }) => (
-              <div key={label} className="bg-cream-50 px-3 py-3">
-                <p className="font-serif text-xl font-semibold text-ink-900">{value}</p>
-                <p className="text-[11px] text-ink-700/70">{label}</p>
+
+          {/* Live metrics */}
+          <div className="grid grid-cols-2 gap-px border-b border-cream-50/10 bg-cream-50/5">
+            {[
+              { label: 'Active jobs', value: activeTasks.length },
+              { label: 'Need confirm', value: pendingConfirm.length },
+            ].map(({ label, value }) => (
+              <div key={label} className="bg-ink-900 px-4 py-3">
+                <p className={`font-serif text-2xl font-semibold ${value > 0 ? 'text-forest-400' : 'text-cream-50/40'}`}>{value}</p>
+                <p className="text-[11px] text-cream-200/40">{label}</p>
               </div>
             ))}
           </div>
-          <nav className="flex-1 px-2 py-3">
+
+          {/* Nav */}
+          <nav className="flex-1 px-3 py-4 space-y-0.5">
             {NAV.map(({ id, label, icon: Icon, badge }) => (
-              <button key={id} onClick={() => { setTab(id); setSidebarOpen(false) }}
-                className={`group mb-0.5 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${tab === id ? 'bg-forest-600/10 text-forest-800' : 'text-ink-700 hover:bg-ink-900/5 hover:text-ink-900'}`}>
-                <Icon size={16} aria-hidden="true" className={tab === id ? 'text-forest-600' : 'text-ink-700/60 group-hover:text-ink-800'} />
+              <button
+                key={id}
+                onClick={() => { setTab(id); setSidebarOpen(false) }}
+                className={`flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
+                  tab === id
+                    ? 'bg-forest-600 text-cream-50 shadow-md shadow-forest-900/40'
+                    : 'text-cream-200/60 hover:bg-cream-50/8 hover:text-cream-50'
+                }`}
+              >
+                <Icon size={16} aria-hidden="true" className={tab === id ? 'text-cream-50' : 'text-cream-200/40'} />
                 <span className="flex-1 text-left">{label}</span>
-                {badge > 0 && <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-cream-50">{badge}</span>}
+                {badge > 0 && (
+                  <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-400 px-1.5 text-[10px] font-bold text-ink-900">
+                    {badge}
+                  </span>
+                )}
               </button>
             ))}
           </nav>
-          <div className="border-t border-ink-900/8 px-3 py-3 lg:hidden">
-            <button onClick={logout} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-ink-700 hover:bg-ink-900/5">
-              <Phone size={14} aria-hidden="true" /> Log out
+
+          {/* Bottom — logout */}
+          <div className="border-t border-cream-50/10 px-3 py-4">
+            <button
+              onClick={logout}
+              className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-cream-200/50 transition-all hover:bg-cream-50/8 hover:text-cream-200"
+            >
+              <LogOut size={15} aria-hidden="true" />
+              <span>Log out</span>
             </button>
           </div>
         </aside>
 
-        {sidebarOpen && <div className="fixed inset-0 z-20 bg-ink-950/30 lg:hidden" onClick={() => setSidebarOpen(false)} />}
+        {sidebarOpen && <div className="fixed inset-0 z-20 bg-ink-950/50 backdrop-blur-sm lg:hidden" onClick={() => setSidebarOpen(false)} />}
 
         {/* ── Main content ──────────────────────────────────── */}
         <main id="main" className="flex min-h-0 flex-1 flex-col overflow-y-auto">
@@ -496,7 +529,7 @@ function PhoneCopy({ phone }: { phone: string }) {
   return (
     <button type="button" onClick={copy} aria-label={`Copy phone number ${phone}`}
       className="inline-flex items-center gap-2 rounded-lg px-1 py-0.5 text-sm font-medium text-ink-900 transition-colors hover:bg-ink-900/5 hover:text-forest-700">
-      <Phone size={15} aria-hidden="true" className="text-forest-600" />
+      <span aria-hidden="true" className="text-forest-600">📞</span>
       {phone}
       {copied ? '✓' : ''}
     </button>
@@ -988,7 +1021,7 @@ function PostTask({ onDone }: { onDone: (msg: string) => void }) {
           </div>
           {err && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">{err}</p>}
           <button onClick={submit} disabled={busy} className="flex w-full items-center justify-center gap-1.5 rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40">
-            <Plus size={16} aria-hidden="true" /> {busy ? 'Posting…' : 'Post task'}
+            <Send size={16} aria-hidden="true" /> {busy ? 'Posting…' : 'Post task'}
           </button>
         </div>
       </div>
