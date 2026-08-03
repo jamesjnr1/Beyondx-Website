@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, Star, Send, Phone, X, ShieldCheck, CircleCheck, Info, RefreshCw, AlertCircle, Copy, Check } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Star, Send, Phone, Plus, X, ShieldCheck, CircleCheck, Info, RefreshCw, AlertCircle, Copy, Check } from 'lucide-react'
 import DashboardHeader from './DashboardHeader'
 import ProfileModal from '../components/ProfileModal'
 import Toast, { type ToastMsg } from '../components/Toast'
@@ -109,7 +109,6 @@ export default function EmployerDashboard() {
   const [workMode, setWorkMode] = useState<'field' | 'remote'>('field')
   const [pickedCategory, setPickedCategory] = useState<string | null>(null)
   const [taskFlags, setTaskFlags] = useState<TaskFlags>(DEFAULT_FLAGS)
-  const [screeningDone, setScreeningDone] = useState(false)
   const [viewing, setViewing] = useState<Worker | null>(null)
   const [dispatching, setDispatching] = useState<Worker | null>(null)
   const [rating, setRating] = useState<Task | null>(null)
@@ -146,18 +145,8 @@ export default function EmployerDashboard() {
   const orgName = (profile?.orgName as string) || 'Your organisation'
   const logo = (profile?.logoUrl as string) || undefined
 
-  const pickCategory = (title: string) => {
-    setPickedCategory(title)
-    setTaskFlags(DEFAULT_FLAGS)
-    setScreeningDone(false)
-  }
-  const clearCategory = () => {
-    setPickedCategory(null)
-    setTaskFlags(DEFAULT_FLAGS)
-    setScreeningDone(false)
-  }
-
   const afterDispatch = () => {
+    setDispatching(null)
     setAnnounce('Worker dispatched.')
     setToast({ id: Date.now(), kind: 'success', title: 'Worker dispatched', detail: 'Payment is held by BeyondX. The worker will accept or decline shortly — track it under Dispatch History.' })
     load()
@@ -171,7 +160,7 @@ export default function EmployerDashboard() {
 
   return (
     <div className="min-h-screen bg-cream-100">
-      <DashboardHeader role="EMPLOYER" title={orgName} name={orgName} avatar={logo} onEditProfile={() => setEditing(true)} tasks={taskList} />
+      <DashboardHeader role="EMPLOYER" title="Employer Dashboard" name={orgName} avatar={logo} onEditProfile={() => setEditing(true)} tasks={taskList} />
       <main id="main" className="mx-auto max-w-7xl px-4 py-6 sm:px-8 sm:py-8">
         <p aria-live="polite" className="sr-only">{announce}</p>
 
@@ -182,19 +171,15 @@ export default function EmployerDashboard() {
           </div>
         )}
 
-        <div className="flex items-center justify-between border-b border-ink-900/10 pb-0">
-          <div className="flex items-center gap-0 overflow-x-auto" role="tablist" aria-label="Employer sections">
-            {([['hire', 'Hire Workers'], ['post', 'Post a Task'], ['history', `Activity (${taskList.length})`], ['support', 'Support']] as const).map(([id, label]) => (
-              <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
-                className={`relative shrink-0 px-4 py-3 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-forest-600/40 ${tab === id ? 'text-forest-700' : 'text-ink-700/70 hover:text-ink-900'}`}>
-                {label}
-                {tab === id && <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-forest-600" />}
-              </button>
-            ))}
-          </div>
-          <button onClick={() => { setLoading(true); load() }} aria-label="Refresh"
-            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-ink-900/12 px-3 py-1.5 text-xs font-medium text-ink-700 hover:bg-ink-900/5">
-            <RefreshCw size={12} aria-hidden="true" /> Refresh
+        <div className="flex items-center gap-2 overflow-x-auto border-b border-ink-900/10 pb-px" role="tablist" aria-label="Employer sections">
+          {([['hire', 'Hire Workers'], ['post', 'Post a Task'], ['history', `Dispatch History (${taskList.length})`], ['support', 'Support']] as const).map(([id, label]) => (
+            <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
+              className={`shrink-0 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40 ${tab === id ? 'border-forest-600 text-forest-700' : 'border-transparent text-ink-700 hover:text-ink-900'}`}>
+              {label}
+            </button>
+          ))}
+          <button onClick={() => { setLoading(true); load() }} aria-label="Refresh" className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full border border-ink-900/15 px-3 py-1.5 text-xs font-medium text-ink-700 hover:bg-ink-900/5">
+            <RefreshCw size={13} aria-hidden="true" /> Refresh
           </button>
         </div>
 
@@ -238,18 +223,18 @@ export default function EmployerDashboard() {
                     return (
                       <li key={c.title}>
                         <button
-                          onClick={() => pickCategory(c.title)}
+                          onClick={() => setPickedCategory(c.title)}
                           aria-label={`${c.title} — ${count} worker${count === 1 ? '' : 's'} available`}
-                          className="group flex h-full w-full flex-col rounded-xl border border-ink-900/10 bg-cream-50 p-4 text-left transition-all hover:border-forest-600/50 hover:bg-forest-600/[0.02] active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40"
+                          className="flex h-full w-full flex-col rounded-xl bg-cream-50 p-4 text-left shadow-sm ring-1 ring-ink-900/5 transition-all hover:ring-forest-600/40 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40"
                         >
                           <span className="flex items-center gap-2.5">
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-forest-600/10 text-forest-600 transition-colors group-hover:bg-forest-600/15">
-                              <Icon size={16} aria-hidden="true" />
+                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-forest-600/10 text-forest-600">
+                              <Icon size={18} aria-hidden="true" />
                             </span>
-                            <span className="font-serif text-base font-semibold leading-snug text-ink-900">{c.title}</span>
+                            <span className="font-serif text-base font-medium leading-snug text-ink-900">{c.title}</span>
                           </span>
-                          <span className="mt-1.5 block text-[11.5px] leading-relaxed text-ink-700/75">{c.description}</span>
-                          <span className="mt-3 flex items-center justify-between border-t border-ink-900/8 pt-2.5">
+                          <span className="mt-2 block text-xs leading-relaxed text-ink-700">{c.description}</span>
+                          <span className="mt-3 flex items-center justify-between border-t border-ink-900/10 pt-2.5">
                             <span className="text-sm text-ink-900">
                               {c.distancePricing ? (
                                 <span className="font-semibold">{cedis(40)} <span className="text-xs font-normal text-ink-700">base + distance</span></span>
@@ -280,7 +265,7 @@ export default function EmployerDashboard() {
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <button
-                      onClick={() => clearCategory()}
+                      onClick={() => setPickedCategory(null)}
                       className="mb-1.5 flex items-center gap-1 text-sm font-medium text-forest-700 hover:underline"
                     >
                       <ChevronLeft size={15} aria-hidden="true" /> All work types
@@ -299,41 +284,48 @@ export default function EmployerDashboard() {
                 </div>
 
                 {loading ? <div className="mt-5"><Skeleton /></div> : (() => {
-                  // Show the screening questions first, then the worker list.
-                  if (!screeningDone) {
-                    return (
-                      <TaskScreening
-                        category={pickedCategory!}
-                        flags={taskFlags}
-                        onChangeFlags={setTaskFlags}
-                        onDone={() => setScreeningDone(true)}
-                      />
-                    )
-                  }
-
                   const matches = sortWorkersForTask(
                     workerList.filter((w) => wSkills(w).includes(pickedCategory)),
                     taskFlags
                   )
                   const flagged = matches.filter(isBackgroundFlagged)
                   const highRisk = isHighRisk(taskFlags)
-
                   return (
                     <>
-                      {/* Compact summary of answers after screening — tap to revise */}
-                      <div className={`mb-4 mt-5 flex items-center justify-between rounded-xl px-4 py-2.5 ring-1 ${highRisk ? 'bg-clay-400/10 ring-clay-400/30' : 'bg-forest-600/8 ring-forest-600/20'}`}>
-                        <p className={`flex items-center gap-2 text-sm font-medium ${highRisk ? 'text-clay-700' : 'text-forest-800'}`}>
-                          <ShieldCheck size={15} aria-hidden="true" />
-                          {highRisk
-                            ? 'Restricted task — some workers excluded based on your answers'
-                            : `Open task — all vetted workers eligible${flagged.length > 0 ? ` · ${flagged.length} prioritised first` : ''}`}
+                      {/* Task attribute flags — answered before seeing the worker list so
+                          the routing decision is already made when results show. */}
+                      <div className="mt-5 rounded-xl bg-cream-50 p-4 ring-1 ring-ink-900/8 shadow-sm">
+                        <p className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-clay-500">
+                          <ShieldCheck size={13} aria-hidden="true" /> Task details
                         </p>
-                        <button
-                          onClick={() => setScreeningDone(false)}
-                          className="ml-3 shrink-0 text-xs font-medium underline underline-offset-2 opacity-60 hover:opacity-100"
-                        >
-                          Edit answers
-                        </button>
+                        <p className="mb-3 text-xs leading-relaxed text-ink-700">
+                          Answer these quickly to make sure the right workers are matched to this job.
+                        </p>
+                        {([ 
+                          ['cashUnsupervised', 'Will the worker handle cash unsupervised?'],
+                          ['vulnerableContact', 'Will the worker be alone in a private residence or with vulnerable people?'],
+                          ['propertyAccess', 'Will the worker have unsupervised access to property or valuables?'],
+                        ] as [keyof TaskFlags, string][]).map(([key, label]) => (
+                          <label key={key} className="flex cursor-pointer items-start gap-3 py-2">
+                            <input
+                              type="checkbox"
+                              checked={taskFlags[key]}
+                              onChange={(e) => setTaskFlags((f) => ({ ...f, [key]: e.target.checked }))}
+                              className="mt-0.5 h-4 w-4 shrink-0 rounded border-ink-900/30 text-forest-600 focus:ring-forest-600/30"
+                            />
+                            <span className="text-sm text-ink-900">{label}</span>
+                          </label>
+                        ))}
+                        {highRisk ? (
+                          <p className="mt-2 rounded-lg bg-clay-400/10 px-3 py-2 text-xs leading-relaxed text-ink-800">
+                            <span className="font-semibold">Restricted task.</span> Workers with certain background flags are not matched to this job.
+                          </p>
+                        ) : (
+                          <p className="mt-2 rounded-lg bg-forest-600/8 px-3 py-2 text-xs leading-relaxed text-forest-800">
+                            <span className="font-semibold">Open task.</span> All vetted workers are eligible.
+                            {flagged.length > 0 && ` ${flagged.length} worker${flagged.length > 1 ? 's' : ''} with verified backgrounds prioritised first.`}
+                          </p>
+                        )}
                       </div>
 
                       {matches.length ? (
@@ -490,171 +482,6 @@ function PhoneCopy({ phone }: { phone: string }) {
       {phone}
       {copied ? <Check size={13} aria-hidden="true" className="text-forest-600" /> : <Copy size={13} aria-hidden="true" className="text-ink-700/50" />}
     </button>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Task screening — shown when an employer picks a category, before they see
-// any workers. One question at a time, large tappable Yes/No buttons, clear
-// result at the end. Category-specific questions appear where relevant.
-// ---------------------------------------------------------------------------
-
-const UNIVERSAL_QUESTIONS: { key: keyof TaskFlags; question: string; yesHint: string }[] = [
-  {
-    key: 'cashUnsupervised',
-    question: 'Will the worker handle cash unsupervised?',
-    yesHint: 'e.g. collecting payments, operating a till, handling a float',
-  },
-  {
-    key: 'vulnerableContact',
-    question: 'Will the worker be alone in a private home or with vulnerable people?',
-    yesHint: 'e.g. working in a private residence, caring for children or the elderly',
-  },
-  {
-    key: 'propertyAccess',
-    question: 'Will the worker have unsupervised access to valuables or property?',
-    yesHint: 'e.g. access to a storeroom, safe, vehicle, or high-value goods without supervision',
-  },
-]
-
-// Some categories almost never involve these risks — surface them but note
-// that "No" is the expected answer, so employers aren't confused.
-const LOWER_RISK_CATEGORIES = ['Facility & Cleaning', 'Agriculture & Environment', 'Community Services', 'Logistics & Delivery']
-
-function TaskScreening({
-  category,
-  flags,
-  onChangeFlags,
-  onDone,
-}: {
-  category: string
-  flags: TaskFlags
-  onChangeFlags: (f: TaskFlags) => void
-  onDone: () => void
-}) {
-  const [step, setStep] = useState(0)           // current question index
-  const [answered, setAnswered] = useState<boolean[]>([]) // answers in order
-  const [showResult, setShowResult] = useState(false)
-  const isLowerRisk = LOWER_RISK_CATEGORIES.includes(category)
-  const questions = UNIVERSAL_QUESTIONS
-
-  const answer = (yes: boolean) => {
-    const next = [...answered, yes]
-    setAnswered(next)
-
-    // Update the flags immediately so the worker list is ready
-    const updatedFlags = { ...flags }
-    updatedFlags[questions[step].key] = yes
-    onChangeFlags(updatedFlags)
-
-    if (step + 1 < questions.length) {
-      setStep(step + 1)
-    } else {
-      setShowResult(true)
-    }
-  }
-
-  const highRisk = flags.cashUnsupervised || flags.vulnerableContact || flags.propertyAccess
-
-  if (showResult) {
-    return (
-      <div className="mt-6">
-        <div className={`rounded-2xl p-6 text-center ring-2 ${highRisk ? 'bg-clay-400/8 ring-clay-400/40' : 'bg-forest-600/8 ring-forest-600/30'}`}>
-          <div className={`mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full text-2xl ${highRisk ? 'bg-clay-400/20' : 'bg-forest-600/15'}`}>
-            {highRisk ? '⚠️' : '✅'}
-          </div>
-          <p className={`font-serif text-xl font-medium ${highRisk ? 'text-clay-800' : 'text-forest-900'}`}>
-            {highRisk ? 'This is a restricted task' : 'This task is open to all workers'}
-          </p>
-          <p className={`mt-2 text-sm leading-relaxed ${highRisk ? 'text-clay-700' : 'text-forest-800'}`}>
-            {highRisk
-              ? 'Based on your answers, workers with certain background flags will not be matched to this job. Only standard-vetted workers will appear.'
-              : 'All vetted workers on the platform are eligible for this job. Workers with verified background records will appear first.'}
-          </p>
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:justify-center">
-            <button
-              onClick={onDone}
-              className={`rounded-full px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:scale-[1.02] active:scale-[0.98] ${highRisk ? 'bg-clay-600 hover:bg-clay-500' : 'bg-forest-600 hover:bg-forest-500'}`}
-            >
-              See available workers →
-            </button>
-            <button
-              onClick={() => { setStep(0); setAnswered([]); onChangeFlags({ cashUnsupervised: false, vulnerableContact: false, propertyAccess: false }); setShowResult(false) }}
-              className="rounded-full border border-ink-900/15 px-6 py-3 text-sm font-medium text-ink-700 hover:bg-ink-900/5"
-            >
-              Review my answers
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  const current = questions[step]
-  const progress = ((step) / questions.length) * 100
-
-  return (
-    <div className="mt-6">
-      {/* Progress */}
-      <div className="mb-6">
-        <div className="mb-2 flex items-center justify-between text-xs text-ink-700/60">
-          <span>Question {step + 1} of {questions.length}</span>
-          <span>{Math.round(progress)}% complete</span>
-        </div>
-        <div className="h-1.5 w-full rounded-full bg-ink-900/8">
-          <div
-            className="h-1.5 rounded-full bg-forest-600 transition-all duration-300"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
-
-      {/* Question card */}
-      <div className="rounded-2xl bg-cream-50 p-6 shadow-sm ring-1 ring-ink-900/8">
-        {isLowerRisk && step === 0 && (
-          <p className="mb-4 rounded-lg bg-forest-600/6 px-3 py-2 text-xs leading-relaxed text-forest-800">
-            Most <span className="font-semibold">{category}</span> tasks are low-risk by nature. Answer honestly — if you're unsure, answer No.
-          </p>
-        )}
-        <p className="font-serif text-lg font-medium leading-snug text-ink-900">
-          {current.question}
-        </p>
-        <p className="mt-1.5 text-sm leading-relaxed text-ink-700/70">
-          {current.yesHint}
-        </p>
-
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          <button
-            onClick={() => answer(true)}
-            className="flex flex-col items-center gap-1.5 rounded-xl border-2 border-clay-400/30 bg-clay-400/8 px-4 py-4 text-center font-semibold text-clay-700 transition-all hover:border-clay-500/60 hover:bg-clay-400/15 active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-clay-500/50"
-          >
-            <span className="text-2xl">✓ Yes</span>
-            <span className="text-xs font-normal text-clay-600/80">This applies to the task</span>
-          </button>
-          <button
-            onClick={() => answer(false)}
-            className="flex flex-col items-center gap-1.5 rounded-xl border-2 border-forest-600/30 bg-forest-600/8 px-4 py-4 text-center font-semibold text-forest-700 transition-all hover:border-forest-600/60 hover:bg-forest-600/15 active:scale-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/50"
-          >
-            <span className="text-2xl">✗ No</span>
-            <span className="text-xs font-normal text-forest-600/80">This doesn't apply</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Previous answers */}
-      {answered.length > 0 && (
-        <div className="mt-4 space-y-1.5">
-          {answered.map((ans, i) => (
-            <div key={i} className="flex items-center justify-between rounded-lg bg-cream-50 px-3.5 py-2.5 ring-1 ring-ink-900/8">
-              <span className="text-xs leading-snug text-ink-700">{questions[i].question}</span>
-              <span className={`ml-3 shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${ans ? 'bg-clay-400/15 text-clay-700' : 'bg-forest-600/10 text-forest-700'}`}>
-                {ans ? 'Yes' : 'No'}
-              </span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
   )
 }
 
@@ -1122,7 +949,7 @@ function PostTask({ onDone }: { onDone: (msg: string) => void }) {
           </div>
           {err && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">{err}</p>}
           <button onClick={submit} disabled={busy} className="flex w-full items-center justify-center gap-1.5 rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40">
-            <Send size={16} aria-hidden="true" /> {busy ? 'Posting…' : 'Post task'}
+            <Plus size={16} aria-hidden="true" /> {busy ? 'Posting…' : 'Post task'}
           </button>
         </div>
       </div>

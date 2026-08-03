@@ -1,17 +1,17 @@
 import {
-  Brush,           // Facility & Cleaning
-  Truck,           // Logistics & Delivery
-  HardHat,         // Construction, Maintenance & Repairs
-  UtensilsCrossed, // Event & Hospitality
-  Sprout,          // Agriculture & Environment
-  Package,         // Retail & Trade Support
-  Building2,       // Community Services
-  Keyboard,        // Data Entry
-  Headphones,      // Customer Support
-  BarChart3,       // Social Media & Content
-  Languages,       // Transcription & Translation
-  Telescope,       // Online Research
-  CalendarCheck,   // Virtual Assistance
+  Hammer,
+  Truck,
+  PaintRoller,
+  ShoppingCart,
+  Wrench,
+  Sparkles,
+  Leaf,
+  Keyboard,
+  Headset,
+  Megaphone,
+  Languages,
+  Search,
+  CalendarClock,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -44,7 +44,7 @@ export interface Category {
 
 export const categories: Category[] = [
   {
-    icon: Brush,
+    icon: Sparkles,
     title: 'Facility & Cleaning',
     description: 'Office, school, and hospital cleaning plus drain clearing.',
     image: '/categories/general-labour.jpg',
@@ -65,7 +65,7 @@ export const categories: Category[] = [
     distancePricing: true,
   },
   {
-    icon: HardHat,
+    icon: PaintRoller,
     title: 'Construction, Maintenance & Repairs',
     description: 'Construction, painting, tiling, plumbing support, and site labour.',
     image: '/categories/painting.jpg',
@@ -76,7 +76,7 @@ export const categories: Category[] = [
     toolModifier: true,
   },
   {
-    icon: UtensilsCrossed,
+    icon: ShoppingCart,
     title: 'Event & Hospitality',
     description: 'Setup, catering support, and venue preparation.',
     image: '/categories/hospitality.jpg',
@@ -86,7 +86,7 @@ export const categories: Category[] = [
     skilledLabel: 'electricals, AV',
   },
   {
-    icon: Sprout,
+    icon: Leaf,
     title: 'Agriculture & Environment',
     description: 'Farming, landscaping, and green space upkeep.',
     image: '/categories/landscaping.jpg',
@@ -97,7 +97,7 @@ export const categories: Category[] = [
     minDays: 2,
   },
   {
-    icon: Package,
+    icon: Wrench,
     title: 'Retail & Trade Support',
     description: 'Shop, packing, and cold store assistance.',
     image: '/categories/electrical.jpg',
@@ -107,7 +107,7 @@ export const categories: Category[] = [
     skilledLabel: 'cold store, stock handling',
   },
   {
-    icon: Building2,
+    icon: Hammer,
     title: 'Community Services',
     description: 'Waste collection and public space maintenance.',
     image: '/categories/construction.jpg',
@@ -128,7 +128,7 @@ export const remoteCategories: Category[] = [
     mode: 'remote',
   },
   {
-    icon: Headphones,
+    icon: Headset,
     title: 'Customer Support',
     description: 'Answering calls, WhatsApp, and messages for small businesses.',
     image: '/categories/hospitality.jpg',
@@ -137,7 +137,7 @@ export const remoteCategories: Category[] = [
     mode: 'remote',
   },
   {
-    icon: BarChart3,
+    icon: Megaphone,
     title: 'Social Media & Content',
     description: 'Posting, replying to comments, and simple content for local brands.',
     image: '/categories/logistics.jpg',
@@ -155,7 +155,7 @@ export const remoteCategories: Category[] = [
     mode: 'remote',
   },
   {
-    icon: Telescope,
+    icon: Search,
     title: 'Online Research & Listings',
     description: 'Finding suppliers, building contact lists, and price checks.',
     image: '/categories/electrical.jpg',
@@ -164,7 +164,7 @@ export const remoteCategories: Category[] = [
     mode: 'remote',
   },
   {
-    icon: CalendarCheck,
+    icon: CalendarClock,
     title: 'Virtual Assistance',
     description: 'Scheduling, reminders, and day-to-day admin for busy owners.',
     image: '/categories/construction.jpg',
