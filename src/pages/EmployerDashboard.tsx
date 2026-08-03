@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, Star, Send, Phone, Plus, X, ShieldCheck, CircleCheck, Info, RefreshCw, AlertCircle, Copy, Check } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Star, Send, Phone, X, ShieldCheck, CircleCheck, Info, RefreshCw, AlertCircle, Copy, Check } from 'lucide-react'
 import DashboardHeader from './DashboardHeader'
 import ProfileModal from '../components/ProfileModal'
 import Toast, { type ToastMsg } from '../components/Toast'
@@ -171,7 +171,7 @@ export default function EmployerDashboard() {
 
   return (
     <div className="min-h-screen bg-cream-100">
-      <DashboardHeader role="EMPLOYER" title="Employer Dashboard" name={orgName} avatar={logo} onEditProfile={() => setEditing(true)} tasks={taskList} />
+      <DashboardHeader role="EMPLOYER" title={orgName} name={orgName} avatar={logo} onEditProfile={() => setEditing(true)} tasks={taskList} />
       <main id="main" className="mx-auto max-w-7xl px-4 py-6 sm:px-8 sm:py-8">
         <p aria-live="polite" className="sr-only">{announce}</p>
 
@@ -182,15 +182,19 @@ export default function EmployerDashboard() {
           </div>
         )}
 
-        <div className="flex items-center gap-2 overflow-x-auto border-b border-ink-900/10 pb-px" role="tablist" aria-label="Employer sections">
-          {([['hire', 'Hire Workers'], ['post', 'Post a Task'], ['history', `Dispatch History (${taskList.length})`], ['support', 'Support']] as const).map(([id, label]) => (
-            <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
-              className={`shrink-0 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40 ${tab === id ? 'border-forest-600 text-forest-700' : 'border-transparent text-ink-700 hover:text-ink-900'}`}>
-              {label}
-            </button>
-          ))}
-          <button onClick={() => { setLoading(true); load() }} aria-label="Refresh" className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full border border-ink-900/15 px-3 py-1.5 text-xs font-medium text-ink-700 hover:bg-ink-900/5">
-            <RefreshCw size={13} aria-hidden="true" /> Refresh
+        <div className="flex items-center justify-between border-b border-ink-900/10 pb-0">
+          <div className="flex items-center gap-0 overflow-x-auto" role="tablist" aria-label="Employer sections">
+            {([['hire', 'Hire Workers'], ['post', 'Post a Task'], ['history', `Activity (${taskList.length})`], ['support', 'Support']] as const).map(([id, label]) => (
+              <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
+                className={`relative shrink-0 px-4 py-3 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-forest-600/40 ${tab === id ? 'text-forest-700' : 'text-ink-700/70 hover:text-ink-900'}`}>
+                {label}
+                {tab === id && <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-forest-600" />}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => { setLoading(true); load() }} aria-label="Refresh"
+            className="flex shrink-0 items-center gap-1.5 rounded-lg border border-ink-900/12 px-3 py-1.5 text-xs font-medium text-ink-700 hover:bg-ink-900/5">
+            <RefreshCw size={12} aria-hidden="true" /> Refresh
           </button>
         </div>
 
@@ -236,16 +240,16 @@ export default function EmployerDashboard() {
                         <button
                           onClick={() => pickCategory(c.title)}
                           aria-label={`${c.title} — ${count} worker${count === 1 ? '' : 's'} available`}
-                          className="flex h-full w-full flex-col rounded-xl bg-cream-50 p-4 text-left shadow-sm ring-1 ring-ink-900/5 transition-all hover:ring-forest-600/40 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40"
+                          className="group flex h-full w-full flex-col rounded-xl border border-ink-900/10 bg-cream-50 p-4 text-left transition-all hover:border-forest-600/50 hover:bg-forest-600/[0.02] active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40"
                         >
                           <span className="flex items-center gap-2.5">
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-forest-600/10 text-forest-600">
-                              <Icon size={18} aria-hidden="true" />
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-forest-600/10 text-forest-600 transition-colors group-hover:bg-forest-600/15">
+                              <Icon size={16} aria-hidden="true" />
                             </span>
-                            <span className="font-serif text-base font-medium leading-snug text-ink-900">{c.title}</span>
+                            <span className="font-serif text-base font-semibold leading-snug text-ink-900">{c.title}</span>
                           </span>
-                          <span className="mt-2 block text-xs leading-relaxed text-ink-700">{c.description}</span>
-                          <span className="mt-3 flex items-center justify-between border-t border-ink-900/10 pt-2.5">
+                          <span className="mt-1.5 block text-[11.5px] leading-relaxed text-ink-700/75">{c.description}</span>
+                          <span className="mt-3 flex items-center justify-between border-t border-ink-900/8 pt-2.5">
                             <span className="text-sm text-ink-900">
                               {c.distancePricing ? (
                                 <span className="font-semibold">{cedis(40)} <span className="text-xs font-normal text-ink-700">base + distance</span></span>
@@ -1118,7 +1122,7 @@ function PostTask({ onDone }: { onDone: (msg: string) => void }) {
           </div>
           {err && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">{err}</p>}
           <button onClick={submit} disabled={busy} className="flex w-full items-center justify-center gap-1.5 rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40">
-            <Plus size={16} aria-hidden="true" /> {busy ? 'Posting…' : 'Post task'}
+            <Send size={16} aria-hidden="true" /> {busy ? 'Posting…' : 'Post task'}
           </button>
         </div>
       </div>
