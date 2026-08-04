@@ -606,12 +606,10 @@ export default function WorkerDashboard() {
                         className="inline-flex items-center gap-1.5 rounded-full bg-forest-600 px-5 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
                         <Check size={15} aria-hidden="true" /> {busyId === t.id ? 'Accepting…' : 'Accept'}
                       </button>
-                      {t.status === 'offered' && (
-                        <button onClick={() => declineOffer(t)} disabled={busyId === t.id}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-700 transition-colors hover:bg-ink-900/5 disabled:opacity-60">
-                          Decline
-                        </button>
-                      )}
+                      <button onClick={() => declineOffer(t)} disabled={busyId === t.id}
+                        className="inline-flex items-center gap-1.5 rounded-full border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-700 transition-colors hover:bg-ink-900/5 disabled:opacity-60">
+                        Decline
+                      </button>
                     </div>
                   </div>
                 </div>
