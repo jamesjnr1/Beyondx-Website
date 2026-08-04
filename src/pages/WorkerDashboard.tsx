@@ -461,7 +461,7 @@ export default function WorkerDashboard() {
     setLocationErr(null)
   }
 
-  const doAccept = async () => {
+  const doAccept = async (skipLocation = false) => {
     if (!locationTask || locationBusy) return
     setLocationBusy(true)
     setLocationErr(null)
@@ -475,7 +475,6 @@ export default function WorkerDashboard() {
         } else {
           await tasksApi.accept(t.id)
         }
-        // If we got coordinates, send them to the backend
         if (lat !== undefined && lng !== undefined) {
           tasksApi.updateLocation?.(t.id, lat, lng).catch(() => null)
         }
@@ -490,21 +489,21 @@ export default function WorkerDashboard() {
       }
     }
 
-    if (!navigator.geolocation) {
-      // No geolocation API — just accept without location
+    if (skipLocation || !navigator.geolocation) {
       await performAccept()
       setLocationBusy(false)
       return
     }
 
+    // Geolocation must be requested synchronously inside the click handler —
+    // the browser blocks the permission prompt if called after any await.
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         await performAccept(pos.coords.latitude, pos.coords.longitude)
         setLocationBusy(false)
       },
-      async (err) => {
-        // If denied or unavailable, still accept — just without location
-        console.warn('Geolocation error:', err.message)
+      async () => {
+        // Denied or unavailable — accept anyway without coordinates
         await performAccept()
         setLocationBusy(false)
       },
@@ -774,7 +773,7 @@ export default function WorkerDashboard() {
                   Cancel
                 </button>
                 <button
-                  onClick={doAccept}
+                  onClick={() => doAccept(false)}
                   disabled={locationBusy}
                   className="flex-1 rounded-full bg-forest-600 px-4 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60"
                 >
@@ -782,7 +781,7 @@ export default function WorkerDashboard() {
                 </button>
               </div>
               <button
-                onClick={doAccept}
+                onClick={() => doAccept(true)}
                 disabled={locationBusy}
                 className="mt-2 w-full text-center text-xs text-ink-700/50 hover:text-ink-900"
               >
