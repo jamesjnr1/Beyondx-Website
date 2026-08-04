@@ -26,7 +26,7 @@ export default function DashboardHeader({
         <h1 className="min-w-0 truncate font-serif text-base font-medium text-ink-900 sm:text-lg">{title}</h1>
 
         {/* Right cluster */}
-        <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
+        <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
           <Notifications role={role === 'WORKER' ? 'worker' : 'employer'} tasks={tasks} />
           {onEditProfile && (
             <button onClick={onEditProfile} aria-label="Edit your profile"
@@ -38,8 +38,9 @@ export default function DashboardHeader({
             </button>
           )}
           <button onClick={logout} aria-label="Log out and return home"
-            className="flex items-center gap-1.5 rounded-full border border-ink-900/15 px-3 py-1.5 text-sm font-medium text-ink-800 transition-colors hover:bg-ink-900/5 active:scale-[0.98]">
-            <LogOut size={15} aria-hidden="true" /> <span className="hidden sm:inline">Log Out</span>
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-ink-900/15 text-ink-700 transition-colors hover:bg-ink-900/5 active:scale-[0.98] sm:w-auto sm:gap-1.5 sm:px-3">
+            <LogOut size={15} aria-hidden="true" />
+            <span className="hidden sm:inline text-sm font-medium text-ink-800">Log Out</span>
           </button>
         </div>
       </div>

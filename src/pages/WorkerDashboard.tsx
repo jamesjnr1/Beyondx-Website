@@ -315,98 +315,6 @@ function WorkExperienceCard({
 // modifier pricing in the dispatch modal. Workers are asked to fill this in
 // via a broadcast SMS — this is the screen they land on when they do.
 // ---------------------------------------------------------------------------
-const TOOL_RELEVANT = ['Agriculture & Environment', 'Construction, Maintenance & Repairs', 'Facility & Cleaning']
-
-function ToolsStatusCard({ worker, onSaved }: { worker: Worker | null; onSaved: (patch: Record<string, unknown>) => void }) {
-  const mySkills = (Array.isArray(worker?.skills) ? worker!.skills as string[] : [])
-    .filter((s) => TOOL_RELEVANT.includes(s))
-
-  // hasToolsSet: true if the worker has explicitly answered (field exists and is boolean)
-  const hasToolsSet = worker != null && 'hasTools' in worker && typeof (worker as Record<string,unknown>).hasTools === 'boolean'
-  const serverValue = Boolean(worker?.hasTools)
-
-  const [selected, setSelected] = useState<boolean>(serverValue)
-  const [editing, setEditing] = useState(!hasToolsSet)   // start editing only if never answered
-  const [saving, setSaving] = useState(false)
-  const [saveErr, setSaveErr] = useState<string | null>(null)
-
-  useEffect(() => {
-    setSelected(Boolean(worker?.hasTools))
-    if (hasToolsSet) setEditing(false)
-  }, [worker?.hasTools])  // eslint-disable-line react-hooks/exhaustive-deps
-
-  if (mySkills.length === 0) return null
-
-  const dirty = selected !== serverValue
-
-  const save = async () => {
-    if (saving) return
-    setSaving(true)
-    setSaveErr(null)
-    try {
-      const patch = { hasTools: selected }
-      await workersApi.updateMe(patch)
-      onSaved(patch)
-      setEditing(false)
-    } catch (e) {
-      setSaveErr(e instanceof Error ? e.message : 'Could not save. Please try again.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  // Collapsed read-only state
-  if (!editing) {
-    return (
-      <div className="mt-4 flex items-center justify-between rounded-2xl border border-ink-900/8 bg-cream-50 px-5 py-3.5 shadow-sm">
-        <div>
-          <p className="text-sm font-medium text-ink-900">Tools</p>
-          <p className="text-xs text-ink-700/60">{serverValue ? 'You bring your own tools (+15% surcharge)' : 'Employer provides tools'}</p>
-        </div>
-        <button onClick={() => setEditing(true)} className="text-xs font-medium text-ink-700/50 underline underline-offset-2 hover:text-ink-900">
-          Change
-        </button>
-      </div>
-    )
-  }
-
-  // Editing state
-  return (
-    <div className="mt-4 rounded-2xl border border-ink-900/8 bg-cream-50 p-5 shadow-sm">
-      <p className="text-sm font-semibold text-ink-900">Do you have your own tools?</p>
-      <p className="mt-1 text-xs leading-relaxed text-ink-700/60">
-        Workers who bring their own tools to {mySkills.join(' & ')} jobs earn a 15% surcharge on the base rate.
-      </p>
-      <div className="mt-3 flex flex-wrap items-center gap-2">
-        <button type="button" onClick={() => setSelected(true)}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${selected ? 'bg-forest-600 text-white' : 'border border-ink-900/15 text-ink-700 hover:border-ink-900/30'}`}>
-          Yes, I have tools
-        </button>
-        <button type="button" onClick={() => setSelected(false)}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${!selected ? 'bg-ink-900 text-cream-50' : 'border border-ink-900/15 text-ink-700 hover:border-ink-900/30'}`}>
-          No, employer provides
-        </button>
-        {dirty && (
-          <button type="button" onClick={save} disabled={saving}
-            className="ml-auto rounded-lg bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 hover:bg-forest-500 disabled:opacity-60">
-            {saving ? 'Saving…' : 'Save'}
-          </button>
-        )}
-        {hasToolsSet && (
-          <button onClick={() => { setSelected(serverValue); setEditing(false) }}
-            className="text-xs text-ink-700/40 hover:text-ink-900">
-            Cancel
-          </button>
-        )}
-      </div>
-      {saveErr && (
-        <p className="mt-2 flex items-center gap-1.5 text-xs text-red-700">
-          <AlertCircle size={13} aria-hidden="true" /> {saveErr}
-        </p>
-      )}
-    </div>
-  )
-}
 
 const cedis = (n?: number | string) => `GH\u20b5 ${Number(n || 0).toLocaleString()}`
 
@@ -621,6 +529,7 @@ export default function WorkerDashboard() {
     experience: '',
     skills: Array.isArray(me?.skills) ? (me?.skills as string[]).join(', ') : '',
     bio: '',
+    hasTools: 'hasTools' in (me || {}) ? Boolean((me as Record<string,unknown>)?.hasTools) : undefined,
   }
 
   const tabs = [
@@ -655,8 +564,6 @@ export default function WorkerDashboard() {
         </div>
 
         <ReferralCard code={(me?.workerId as string) || 'BX-—'} referrals={0} />
-
-        <ToolsStatusCard worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
 
         <WorkExperienceCard worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
 
@@ -696,12 +603,12 @@ export default function WorkerDashboard() {
                     <TaskCard task={t}>{null}</TaskCard>
                     <div className="mt-4 flex gap-2">
                       <button onClick={() => (t.status === 'offered' ? acceptOffer(t) : acceptOpen(t))} disabled={busyId === t.id}
-                        className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-forest-600 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
-                        <Check size={16} aria-hidden="true" /> {busyId === t.id ? 'Accepting…' : 'Accept this job'}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-forest-600 px-5 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
+                        <Check size={15} aria-hidden="true" /> {busyId === t.id ? 'Accepting…' : 'Accept'}
                       </button>
                       {t.status === 'offered' && (
                         <button onClick={() => declineOffer(t)} disabled={busyId === t.id}
-                          className="rounded-xl border border-ink-900/15 px-5 py-3 text-sm font-medium text-ink-700 transition-colors hover:bg-ink-900/5 disabled:opacity-60">
+                          className="inline-flex items-center gap-1.5 rounded-full border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-700 transition-colors hover:bg-ink-900/5 disabled:opacity-60">
                           Decline
                         </button>
                       )}
@@ -821,10 +728,10 @@ export default function WorkerDashboard() {
             setEditing(false)
             try {
               const skills = p.skills ? p.skills.split(',').map((x) => x.trim()).filter(Boolean) : []
-              // Only send the photo when it is a stored URL, never a local preview.
               const photoUrl = p.avatar && /^https?:\/\//.test(p.avatar) ? p.avatar : undefined
               const patch: Record<string, unknown> = { skills }
               if (photoUrl && photoUrl !== me?.photoUrl) patch.photoUrl = photoUrl
+              if (p.hasTools !== undefined) patch.hasTools = p.hasTools
               await workersApi.updateMe(patch)
               session.patchWorker(patch)
               setMe((m) => ({ ...(m || {}), ...patch }))
