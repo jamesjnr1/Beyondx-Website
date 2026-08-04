@@ -666,20 +666,15 @@ function PhoneCopy({ phone }: { phone: string }) {
 //   C. Complexity — basic or technical? — feeds the tier selector in dispatch
 // ---------------------------------------------------------------------------
 
-type ToolAnswer = 'none' | 'employer' | 'worker'
 type TierAnswer = 'basic' | 'skilled'
 
 export interface ScreeningAnswers {
   flags: TaskFlags
-  toolsNeeded: boolean
-  toolProvider: ToolAnswer   // only meaningful when toolsNeeded = true
   tier: TierAnswer
 }
 
 export const DEFAULT_SCREENING: ScreeningAnswers = {
   flags: { cashUnsupervised: false, vulnerableContact: false, propertyAccess: false },
-  toolsNeeded: false,
-  toolProvider: 'employer',
   tier: 'basic',
 }
 
@@ -694,14 +689,9 @@ const TIER_EXAMPLES: Record<string, { basic: string; skilled: string }> = {
   'Community Services':             { basic: 'Waste collection, public space sweeping', skilled: 'Drainage maintenance, hazardous waste handling' },
 }
 
-// Categories where tools are relevant (tool modifier applies in pricing)
-const TOOL_CATEGORIES = new Set(['Agriculture & Environment', 'Construction, Maintenance & Repairs', 'Facility & Cleaning'])
-
 // All screening questions in sequence
 type ScreeningStep =
   | { type: 'risk'; key: keyof TaskFlags; question: string; hint: string }
-  | { type: 'tools-needed'; question: string; hint: string }
-  | { type: 'tool-provider'; question: string; hint: string }
   | { type: 'tier'; question: string; basicLabel: string; skilledLabel: string; basicExample: string; skilledExample: string }
 
 function buildSteps(category: string): ScreeningStep[] {
@@ -710,11 +700,6 @@ function buildSteps(category: string): ScreeningStep[] {
     { type: 'risk', key: 'vulnerableContact', question: 'Will the worker be alone in a private home or with vulnerable people?', hint: 'e.g. working inside a private residence, caring for children or elderly' },
     { type: 'risk', key: 'propertyAccess', question: 'Will the worker have unsupervised access to valuables or property?', hint: 'e.g. access to a storeroom, safe, vehicle, or high-value goods without supervision' },
   ]
-
-  if (TOOL_CATEGORIES.has(category)) {
-    steps.push({ type: 'tools-needed', question: 'Will tools or equipment be needed for this task?', hint: 'e.g. cleaning equipment, construction tools, agricultural sprayers' })
-    // tool-provider is added conditionally after tools-needed = yes
-  }
 
   const examples = TIER_EXAMPLES[category]
   if (examples) {
@@ -742,15 +727,7 @@ function TaskScreening({
   onUpdate: (s: ScreeningAnswers) => void
   onDone: () => void
 }) {
-  const baseSteps = buildSteps(category)
-  // Insert the tool-provider question right after tools-needed = yes
-  const steps: ScreeningStep[] = []
-  for (const s of baseSteps) {
-    steps.push(s)
-    if (s.type === 'tools-needed' && screening.toolsNeeded) {
-      steps.push({ type: 'tool-provider', question: 'Who will provide the tools?', hint: 'This affects the price — workers who bring their own tools receive a 15% surcharge' })
-    }
-  }
+  const steps = buildSteps(category)
 
   const [stepIdx, setStepIdx] = useState(0)
   const [showResult, setShowResult] = useState(false)
@@ -771,17 +748,6 @@ function TaskScreening({
 
   const answerRisk = (key: keyof TaskFlags, yes: boolean) => {
     onUpdate({ ...screening, flags: { ...screening.flags, [key]: yes } })
-    next()
-  }
-
-  const answerToolsNeeded = (yes: boolean) => {
-    onUpdate({ ...screening, toolsNeeded: yes, toolProvider: yes ? 'employer' : 'none' })
-    // rebuild steps next render, then advance
-    setStepIdx((i) => i + 1)
-  }
-
-  const answerToolProvider = (v: ToolAnswer) => {
-    onUpdate({ ...screening, toolProvider: v })
     next()
   }
 
@@ -807,11 +773,6 @@ function TaskScreening({
               ? 'Workers with background flags will not be matched to this job.'
               : 'All vetted workers are eligible. Workers with verified background records appear first.'}
           </p>
-          {screening.toolsNeeded && (
-            <p className="mt-2 text-sm text-ink-700">
-              <span className="font-medium">Tools:</span> {screening.toolProvider === 'employer' ? 'You will provide — standard rate applies.' : 'Worker brings tools — 15% surcharge added to rate.'}
-            </p>
-          )}
           <p className="mt-1 text-sm text-ink-700">
             <span className="font-medium">Complexity:</span> {screening.tier === 'basic' ? 'Basic' : 'Technical / Skilled'}
           </p>
@@ -849,17 +810,17 @@ function TaskScreening({
       <div className="rounded-2xl bg-cream-50 p-6 shadow-sm ring-1 ring-ink-900/8">
 
         {/* Risk questions */}
-        {(current.type === 'risk' || current.type === 'tools-needed') && (
+        {current.type === 'risk' && (
           <>
             <p className="font-serif text-lg font-medium leading-snug text-ink-900">{current.question}</p>
             <p className="mt-1.5 text-sm leading-relaxed text-ink-700/70">{current.hint}</p>
             <div className="mt-5 grid grid-cols-2 gap-3">
-              <button onClick={() => current.type === 'risk' ? answerRisk(current.key, true) : answerToolsNeeded(true)}
+              <button onClick={() => answerRisk(current.key, true)}
                 className="flex flex-col items-center gap-1 rounded-xl border-2 border-clay-400/30 bg-clay-400/8 px-4 py-4 text-center font-semibold text-clay-700 transition-all hover:border-clay-500/60 hover:bg-clay-400/15 active:scale-[0.97]">
                 <span className="text-base font-semibold">Yes</span>
                 <span className="text-xs font-normal text-clay-600/80">This applies</span>
               </button>
-              <button onClick={() => current.type === 'risk' ? answerRisk(current.key, false) : answerToolsNeeded(false)}
+              <button onClick={() => answerRisk(current.key, false)}
                 className="flex flex-col items-center gap-1 rounded-xl border-2 border-forest-600/30 bg-forest-600/8 px-4 py-4 text-center font-semibold text-forest-700 transition-all hover:border-forest-600/60 hover:bg-forest-600/15 active:scale-[0.97]">
                 <span className="text-base font-semibold">No</span>
                 <span className="text-xs font-normal text-forest-600/80">Doesn't apply</span>
@@ -868,27 +829,6 @@ function TaskScreening({
           </>
         )}
 
-        {/* Who provides tools */}
-        {current.type === 'tool-provider' && (
-          <>
-            <p className="font-serif text-lg font-medium leading-snug text-ink-900">{current.question}</p>
-            <p className="mt-1.5 text-sm leading-relaxed text-ink-700/70">{current.hint}</p>
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              <button onClick={() => answerToolProvider('employer')}
-                className="flex flex-col items-center gap-1 rounded-xl border-2 border-forest-600/30 bg-forest-600/8 px-4 py-4 text-center transition-all hover:border-forest-600/60 hover:bg-forest-600/15 active:scale-[0.97]">
-                <span className="text-xl">🏢</span>
-                <span className="font-semibold text-forest-700">I will provide them</span>
-                <span className="text-xs text-forest-600/80">Standard rate</span>
-              </button>
-              <button onClick={() => answerToolProvider('worker')}
-                className="flex flex-col items-center gap-1 rounded-xl border-2 border-clay-400/30 bg-clay-400/8 px-4 py-4 text-center transition-all hover:border-clay-500/60 hover:bg-clay-400/15 active:scale-[0.97]">
-                <span className="text-xl">👷</span>
-                <span className="font-semibold text-clay-700">Worker brings tools</span>
-                <span className="text-xs text-clay-600/80">+15% surcharge</span>
-              </button>
-            </div>
-          </>
-        )}
 
         {/* Basic vs Technical */}
         {current.type === 'tier' && (
@@ -916,8 +856,6 @@ function TaskScreening({
           {steps.slice(0, stepIdx).map((s, i) => {
             let label = ''
             if (s.type === 'risk') label = screening.flags[s.key] ? 'Yes' : 'No'
-            else if (s.type === 'tools-needed') label = screening.toolsNeeded ? 'Yes' : 'No'
-            else if (s.type === 'tool-provider') label = screening.toolProvider === 'employer' ? 'You provide' : 'Worker brings (+15%)'
             else if (s.type === 'tier') label = screening.tier === 'basic' ? 'Basic' : 'Technical'
             const isYes = label === 'Yes' || label.includes('+15%') || label === 'Technical'
             return (
@@ -1101,16 +1039,17 @@ function DispatchModal({ worker, category, screening, dispatchQueue, onClose, on
   const [method, setMethod] = useState('')
   const [busy, setBusy] = useState(false)
   const cat = allCategories.find((c) => c.title === taskType)
-  // Pre-fill tier and tool answers from screening if provided
+  // Pre-fill tier from screening
   const [tier, setTier] = useState<'basic' | 'skilled'>(screening?.tier ?? 'basic')
-  const [workerProvidesTools, setWorkerProvidesTools] = useState(screening?.toolProvider === 'worker')
-  useEffect(() => { setTier(screening?.tier ?? 'basic'); setWorkerProvidesTools(screening?.toolProvider === 'worker') }, [screening])
+  useEffect(() => { setTier(screening?.tier ?? 'basic') }, [screening])
+  // Tool surcharge comes from the WORKER's profile (hasTools), not asked again here
+  const workerProvidesTools = Boolean(worker.hasTools)
   // Logistics: distance + vehicle
   const [distanceKm, setDistanceKm] = useState(3)
   const [vehicle, setVehicle] = useState(0)   // surcharge value from VEHICLE_SURCHARGES
 
-  // Reset tier/tool when category changes
-  useEffect(() => { setTier('basic'); setWorkerProvidesTools(false) }, [taskType])
+  // Reset tier when category changes
+  useEffect(() => { setTier('basic') }, [taskType])
 
   // ---------- Rate calculation ----------
   const baseRate = (() => {
@@ -1225,16 +1164,17 @@ function DispatchModal({ worker, category, screening, dispatchQueue, onClose, on
             </div>
           )}
 
-          {/* Tool modifier */}
+          {/* Tool modifier — derived from worker's profile, not asked again */}
           {cat?.toolModifier && (
-            <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-ink-900/10 bg-cream-100 p-3.5">
-              <input type="checkbox" checked={workerProvidesTools} onChange={(e) => setWorkerProvidesTools(e.target.checked)}
-                className="mt-0.5 h-4 w-4 shrink-0 rounded border-ink-900/30 text-forest-600 focus:ring-forest-600/30" />
-              <span>
-                <span className="block text-sm font-medium text-ink-900">Worker provides their own tools</span>
-                <span className="block text-xs text-ink-700/80">+15% surcharge on the base rate ({cedis(Math.round((((tier === 'skilled' && cat.skilledRate) ? cat.skilledRate : cat.rate)) * TOOL_SURCHARGE_RATE))} extra)</span>
-              </span>
-            </label>
+            <div className="rounded-xl border border-ink-900/10 bg-cream-100 px-3.5 py-3">
+              <p className="text-sm text-ink-900">
+                <span className="font-medium">Tools: </span>
+                {workerProvidesTools
+                  ? <span className="text-forest-700">Worker brings their own (+{cedis(Math.round((((tier === 'skilled' && cat.skilledRate) ? cat.skilledRate : cat.rate)) * TOOL_SURCHARGE_RATE))} surcharge applied)</span>
+                  : <span className="text-ink-700/70">Employer provides — no surcharge</span>}
+              </p>
+              <p className="mt-0.5 text-xs text-ink-700/60">Based on {wName(worker).split(' ')[0]}'s profile settings</p>
+            </div>
           )}
 
           {/* Agriculture minimum-day notice */}
