@@ -451,8 +451,69 @@ export default function WorkerDashboard() {
     }
   }
 
-  const acceptOffer = (t: Task) => act(t, () => tasksApi.acceptOffer(t.id), 'Offer accepted', `${t.taskType || 'The task'} is now in My Tasks.`)
-  const acceptOpen = (t: Task) => act(t, () => tasksApi.accept(t.id), 'Task accepted', `${t.taskType || 'The task'} is now in My Tasks.`)
+  const [locationTask, setLocationTask] = useState<Task | null>(null)
+  const [locationBusy, setLocationBusy] = useState(false)
+  const [locationErr, setLocationErr] = useState<string | null>(null)
+
+  // Called when worker taps Accept — shows the location modal first
+  const promptAccept = (t: Task) => {
+    setLocationTask(t)
+    setLocationErr(null)
+  }
+
+  const doAccept = async () => {
+    if (!locationTask || locationBusy) return
+    setLocationBusy(true)
+    setLocationErr(null)
+
+    const performAccept = async (lat?: number, lng?: number) => {
+      const t = locationTask
+      setBusyId(t.id)
+      try {
+        if (t.status === 'offered') {
+          await tasksApi.acceptOffer(t.id)
+        } else {
+          await tasksApi.accept(t.id)
+        }
+        // If we got coordinates, send them to the backend
+        if (lat !== undefined && lng !== undefined) {
+          tasksApi.updateLocation?.(t.id, lat, lng).catch(() => null)
+        }
+        setLocationTask(null)
+        setToast({ id: Date.now(), kind: 'success', title: 'Job accepted', detail: `${t.taskType || 'The task'} is now in My Tasks.` })
+        setAnnounce('Job accepted')
+        await load()
+      } catch (e) {
+        setToast({ id: Date.now(), kind: 'info', title: 'That did not go through', detail: e instanceof ApiError ? e.message : 'Please try again.' })
+      } finally {
+        setBusyId(null)
+      }
+    }
+
+    if (!navigator.geolocation) {
+      // No geolocation API — just accept without location
+      await performAccept()
+      setLocationBusy(false)
+      return
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        await performAccept(pos.coords.latitude, pos.coords.longitude)
+        setLocationBusy(false)
+      },
+      async (err) => {
+        // If denied or unavailable, still accept — just without location
+        console.warn('Geolocation error:', err.message)
+        await performAccept()
+        setLocationBusy(false)
+      },
+      { timeout: 10000, maximumAge: 60000 }
+    )
+  }
+
+  const acceptOffer = (t: Task) => promptAccept(t)
+  const acceptOpen  = (t: Task) => promptAccept(t)
   const markDone = (t: Task) =>
     act(
       t,
@@ -685,6 +746,52 @@ export default function WorkerDashboard() {
       </main>
 
       <Toast toast={toast} onClose={() => setToast(null)} />
+
+      {locationTask && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink-950/60 p-4 sm:items-center">
+          <div role="dialog" aria-modal="true" className="w-full max-w-sm rounded-2xl bg-cream-50 shadow-xl overflow-hidden">
+            <div className="bg-forest-700 px-6 py-5 text-center">
+              <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-cream-50/15">
+                <MapPin size={22} aria-hidden="true" className="text-cream-50" />
+              </div>
+              <h2 className="font-serif text-lg font-semibold text-cream-50">Share your location</h2>
+              <p className="mt-1 text-xs text-forest-200/80">{locationTask.taskType}{locationTask.location ? ` · ${locationTask.location}` : ''}</p>
+            </div>
+            <div className="p-6">
+              <p className="text-sm leading-relaxed text-ink-700">
+                BeyondX uses your location to verify you're on-site when you start the job. Your location is only shared with BeyondX — not the employer.
+              </p>
+              {locationErr && (
+                <p className="mt-3 flex items-center gap-1.5 text-xs text-red-700">
+                  <AlertCircle size={13} aria-hidden="true" /> {locationErr}
+                </p>
+              )}
+              <div className="mt-5 flex gap-2">
+                <button
+                  onClick={() => setLocationTask(null)}
+                  className="flex-1 rounded-full border border-ink-900/15 px-4 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-900/5"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={doAccept}
+                  disabled={locationBusy}
+                  className="flex-1 rounded-full bg-forest-600 px-4 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60"
+                >
+                  {locationBusy ? 'Accepting…' : 'Allow & accept'}
+                </button>
+              </div>
+              <button
+                onClick={doAccept}
+                disabled={locationBusy}
+                className="mt-2 w-full text-center text-xs text-ink-700/50 hover:text-ink-900"
+              >
+                Accept without sharing location
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {confirmDeclineTask && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/60 p-4">

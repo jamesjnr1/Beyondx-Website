@@ -240,6 +240,8 @@ export const tasks = {
     request<unknown>(`/api/tasks/${id}/decline-offer`, { method: 'PATCH', token }),
   accept: (id: string | number, token = session.workerToken()) =>
     request<unknown>(`/api/tasks/${id}/accept`, { method: 'PATCH', token }),
+  updateLocation: (id: string | number, lat: number, lng: number, token = session.workerToken()) =>
+    request<unknown>(`/api/tasks/${id}/location`, { method: 'PATCH', body: { lat, lng }, token }),
   workerDone: (id: string | number, token = session.workerToken()) =>
     request<unknown>(`/api/tasks/${id}/worker-done`, { method: 'PATCH', token }),
 
