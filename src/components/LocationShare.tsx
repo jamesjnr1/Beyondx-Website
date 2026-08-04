@@ -7,6 +7,8 @@ type Props = {
   taskId: string | number
   workerId?: string
   workerName?: string
+  /** Start sharing immediately — worker already granted permission in the accept modal */
+  autoStart?: boolean
   /** Remote work has no job site, so there is nothing to track. */
   disabled?: boolean
 }
@@ -18,7 +20,7 @@ type Props = {
  * on, it stops the moment they turn it off or leave the dashboard, and the
  * stored position is deleted rather than kept as history.
  */
-export default function LocationShare({ taskId, workerId, workerName, disabled }: Props) {
+export default function LocationShare({ taskId, workerId, workerName, disabled, autoStart }: Props) {
   const [sharing, setSharing] = useState(false)
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -105,41 +107,56 @@ export default function LocationShare({ taskId, workerId, workerName, disabled }
   // Never keep sharing after the worker navigates away.
   useEffect(() => () => { stop(false) }, [])   // eslint-disable-line react-hooks/exhaustive-deps
 
+  // If the worker already granted permission in the accept modal, start immediately
+  useEffect(() => {
+    if (autoStart && !sharing && !busy) start()
+  }, [autoStart])   // eslint-disable-line react-hooks/exhaustive-deps
+
   if (disabled) return null
 
+  // If already sharing (auto-started from accept), just show the live status quietly
+  // without the "Share location" button prompt
+  if (sharing) {
+    return (
+      <div className="mt-3 border-t border-ink-900/10 pt-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="flex items-center gap-2 text-xs text-ink-700">
+            <MapPin size={13} aria-hidden="true" className="shrink-0 text-forest-600" />
+            <span>
+              Location sharing active.{' '}
+              {lastSent && <span className="text-ink-700/60">Updated {lastSent.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}.</span>}
+            </span>
+          </p>
+          <button
+            onClick={() => stop()}
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-ink-900/15 px-3.5 py-1.5 text-xs font-semibold text-ink-800 transition-all hover:bg-ink-900/5 active:scale-[0.98]"
+          >
+            Stop sharing
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Not yet sharing — show the prompt
   return (
     <div className="mt-3 border-t border-ink-900/10 pt-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="flex items-start gap-2 text-xs leading-relaxed text-ink-700">
-          {sharing
-            ? <MapPin size={14} aria-hidden="true" className="mt-0.5 shrink-0 text-forest-600" />
-            : <MapPinOff size={14} aria-hidden="true" className="mt-0.5 shrink-0 text-ink-700/60" />}
-          <span>
-            {sharing
-              ? <>Your employer can see where you are. {lastSent && <span className="text-ink-700/70">Updated {lastSent.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}.</span>}</>
-              : 'Share your location so your employer knows you are on the way.'}
-          </span>
+          <MapPinOff size={14} aria-hidden="true" className="mt-0.5 shrink-0 text-ink-700/60" />
+          <span>Share your location so BeyondX can verify you are on-site.</span>
         </p>
         <button
-          onClick={() => (sharing ? stop() : start())}
+          onClick={start}
           disabled={busy}
-          aria-pressed={sharing}
-          className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all active:scale-[0.98] disabled:opacity-60 ${
-            sharing
-              ? 'border border-ink-900/15 text-ink-800 hover:bg-ink-900/5'
-              : 'bg-forest-600 text-cream-50 hover:bg-forest-500'
-          }`}
+          aria-pressed={false}
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-forest-600 px-3.5 py-1.5 text-xs font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60"
         >
           {busy && <LoaderCircle size={13} aria-hidden="true" className="animate-spin" />}
-          {busy ? 'Starting…' : sharing ? 'Stop sharing' : 'Share location'}
+          {busy ? 'Starting…' : 'Share location'}
         </button>
       </div>
       {error && <p role="alert" className="mt-1.5 text-xs text-red-700">{error}</p>}
-      {sharing && (
-        <p className="mt-1.5 text-[11px] leading-relaxed text-ink-700/70">
-          Only for this job, and only while you leave it on. Turning it off deletes your position.
-        </p>
-      )}
     </div>
   )
 }

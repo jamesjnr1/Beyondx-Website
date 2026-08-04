@@ -454,6 +454,7 @@ export default function WorkerDashboard() {
   const [locationTask, setLocationTask] = useState<Task | null>(null)
   const [locationBusy, setLocationBusy] = useState(false)
   const [locationErr, setLocationErr] = useState<string | null>(null)
+  const [autoShareTaskId, setAutoShareTaskId] = useState<string | number | null>(null)
 
   // Called when worker taps Accept — shows the location modal first
   const promptAccept = (t: Task) => {
@@ -500,6 +501,7 @@ export default function WorkerDashboard() {
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         await performAccept(pos.coords.latitude, pos.coords.longitude)
+        setAutoShareTaskId(locationTask.id)
         setLocationBusy(false)
       },
       async () => {
@@ -700,6 +702,7 @@ export default function WorkerDashboard() {
                           taskId={t.id}
                           workerId={(me?.workerId as string) || undefined}
                           workerName={displayName}
+                          autoStart={autoShareTaskId === t.id}
                           disabled={t.status === 'pending_confirmation' || isRemote(t.taskType || '')}
                         />
                       </div>
