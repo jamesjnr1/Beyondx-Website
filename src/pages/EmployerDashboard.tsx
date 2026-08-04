@@ -66,6 +66,7 @@ function sortWorkersForTask(workers: Worker[], flags: TaskFlags): Worker[] {
 }
 
 const STATUS: Record<string, { label: string; dot: string; chip: string; note?: string }> = {
+  payment_pending: { label: 'Awaiting payment verification', dot: 'bg-amber-400', chip: 'bg-amber-100 text-amber-800', note: 'BeyondX is verifying your payment reference. The worker will be notified once confirmed.' },
   open: { label: 'Awaiting worker', dot: 'bg-clay-500', chip: 'bg-clay-400/15 text-clay-600', note: 'Waiting for a worker to accept.' },
   offered: { label: 'Awaiting worker response', dot: 'bg-clay-500', chip: 'bg-clay-400/15 text-clay-600', note: 'The worker will accept or decline shortly.' },
   accepted: { label: 'On the job', dot: 'bg-forest-500', chip: 'bg-forest-600/10 text-forest-700', note: 'Attendance is GPS-verified. Confirm once the work is finished.' },
@@ -201,7 +202,7 @@ export default function EmployerDashboard() {
       return remaining
     })
     setAnnounce('Worker dispatched.')
-    setToast({ id: Date.now(), kind: 'success', title: 'Worker dispatched', detail: 'Payment is held by BeyondX. The worker will accept or decline shortly — track it under Dispatch History.' })
+    setToast({ id: Date.now(), kind: 'success', title: 'Payment submitted for review', detail: 'BeyondX will verify your payment reference and notify the worker once confirmed. Track the status under Dispatch History.' })
     load()
   }
   const afterConfirm = (worker: string) => {
@@ -1057,7 +1058,17 @@ function DispatchModal({ worker, category, screening, dispatchQueue, onClose, on
     if (!payRef.trim() || !method || busy) return
     setBusy(true)
     try {
-      await tasksApi.dispatch({ worker, taskType, location: cat?.mode === 'remote' ? 'Remote' : location, duration, pay: workerGets, paymentRef: `${method} ${payRef.trim()}` })
+      // Creates the task with status 'payment_pending' — the worker is NOT
+      // notified yet. BeyondX team reviews the payment reference in the admin
+      // console and manually advances it to 'offered' once confirmed received.
+      await tasksApi.dispatch({
+        worker,
+        taskType,
+        location: cat?.mode === 'remote' ? 'Remote' : location,
+        duration,
+        pay: workerGets,
+        paymentRef: `${method} ${payRef.trim()}`,
+      })
       onDone()
     } catch (e) {
       onError(e instanceof ApiError ? e.message : 'Please try again.')
@@ -1079,7 +1090,12 @@ function DispatchModal({ worker, category, screening, dispatchQueue, onClose, on
           </h2>
           <button onClick={onClose} aria-label="Cancel dispatch" className="rounded-lg p-1 text-ink-700 hover:bg-ink-900/5"><X size={18} aria-hidden="true" /></button>
         </div>
-        <p className="mb-4 text-sm text-ink-700">Pay {wName(worker)} via mobile money, then enter your payment reference below. BeyondX holds the payment and releases it once you confirm the work.</p>
+        <p className="mb-4 text-sm text-ink-700">
+          Send your payment via mobile money first, then enter the reference number below.
+          <span className="mt-1.5 block rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 ring-1 ring-amber-200">
+            BeyondX will verify your payment before the worker is notified. This usually takes a few hours on business days.
+          </span>
+        </p>
 
         <div className="space-y-4">
           {/* Task type */}
@@ -1226,9 +1242,11 @@ function DispatchModal({ worker, category, screening, dispatchQueue, onClose, on
         </label>
 
         <button onClick={submit} disabled={!payRef.trim() || !method || busy} className="mt-5 flex w-full items-center justify-center gap-1.5 rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40">
-          <ShieldCheck size={16} aria-hidden="true" /> {busy ? 'Dispatching…' : 'Confirm & dispatch'}
+          <ShieldCheck size={16} aria-hidden="true" /> {busy ? 'Submitting…' : 'Submit for BeyondX review'}
         </button>
-        <p className="mt-2 text-center text-xs text-ink-700">The worker is notified once your payment reference is recorded.</p>
+        <p className="mt-2 text-center text-xs text-ink-700/70">
+          The worker will only be contacted after BeyondX confirms your payment.
+        </p>
       </div>
     </div>
   )

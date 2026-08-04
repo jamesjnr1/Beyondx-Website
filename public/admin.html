@@ -222,6 +222,7 @@ tr:hover td{background:var(--bg);}
       <div class="sb-grp">Site</div>
       <div class="sb-a" onclick="nav('analytics',this)">Site Analytics</div>
       <div class="sb-grp">Tasks</div>
+      <div class="sb-a" onclick="nav('verify',this)">Verify Payments <span class="sb-bdg" id="verifyBadge" style="display:none">0</span></div>
       <div class="sb-a" onclick="nav('active',this)">In Progress</div>
       <div class="sb-a" onclick="nav('open',this)">Open Tasks</div>
       <div class="sb-a" onclick="nav('completed',this)">Completed</div>
@@ -283,6 +284,12 @@ tr:hover td{background:var(--bg);}
           <div class="tc"><div class="tc-h"><span class="tc-ht">Top Employers</span></div><table><thead><tr><th>Organisation</th><th>Tasks</th><th>Spent</th></tr></thead><tbody id="empT"></tbody></table></div>
         </div>
         <div class="tc"><div class="tc-h"><span class="tc-ht">Recent Activity</span><span class="tc-hm">Live feed</span></div><div id="feed"></div></div>
+      </div>
+      <div class="sec" id="sec-verify">
+        <div class="tc">
+          <div class="tc-h"><span class="tc-ht">Verify Payments</span><span class="tc-hm" id="vpCount"></span></div>
+          <div id="vl"></div>
+        </div>
       </div>
       <div class="sec" id="sec-payouts"><div id="pl"></div></div>
       <div class="sec" id="sec-active"><div id="al"></div></div>
@@ -448,7 +455,7 @@ function showMoreHtml(remaining,onclick){
 function login(){
   pass=document.getElementById('adminPass').value;
   Promise.all([fetch(API+'/admin/all',{headers:{'x-admin-password':pass}}).then(r=>{if(!r.ok)throw new Error();return r.json();}),fetch(API+'/admin/workers',{headers:{'x-admin-password':pass}}).then(r=>r.json()),fetch(API+'/admin/sms-logs',{headers:{'x-admin-password':pass}}).then(r=>r.json()).catch(()=>({logs:[]}))])
-  .then(([td,wd,sd])=>{tasks=td.tasks;workers=wd.workers||[];smsLogs=sd.logs||[];loadEmployers();document.getElementById('loginScreen').style.display='none';document.getElementById('app').style.display='flex';checkSmsBadge();inBadge();render();})
+  .then(([td,wd,sd])=>{tasks=td.tasks;workers=wd.workers||[];smsLogs=sd.logs||[];loadEmployers();document.getElementById('loginScreen').style.display='none';document.getElementById('app').style.display='flex';checkSmsBadge();checkVerifyBadge();inBadge();render();})
   .catch(()=>document.getElementById('err').style.display='block');
 }
 async function load(){
@@ -513,7 +520,7 @@ function nav(id,el){
   document.querySelectorAll('.sb-a').forEach(n=>n.classList.remove('on'));
   document.getElementById('sec-'+id).classList.add('on');
   el.classList.add('on');
-  const T={overview:'Overview',payouts:'Pay Now',active:'In Progress',open:'Open Tasks',completed:'Completed Tasks',all:'All Tasks',workers:'Workers',employers:'Employers',history:'Work History',transactions:'Transactions',messages:'SMS Log',analytics:'Site Analytics',payconfirm:'Payment Confirmations',notify:'Send Notification',inbox:'Support & Reports'};
+  const T={overview:'Overview',verify:'Verify Payments',payouts:'Pay Now',active:'In Progress',open:'Open Tasks',completed:'Completed Tasks',all:'All Tasks',workers:'Workers',employers:'Employers',history:'Work History',transactions:'Transactions',messages:'SMS Log',analytics:'Site Analytics',payconfirm:'Payment Confirmations',notify:'Send Notification',inbox:'Support & Reports'};
   document.getElementById('pageTitle').textContent=T[id]||id;
   if(id==='inbox'){ inLoad(); return; }
   if(id==='notify'){ ntChars(); ntLoad(); return; }
@@ -574,9 +581,14 @@ function ro(){
   document.getElementById('feed').innerHTML=recent.length?recent.map(t=>{const[color,verb]=fm[t.status]||['#7a9a7e','updated the'];const who=t.acceptedBy?.fullName||t.employer?.orgName||'Someone';return`<div class="feed-row"><div class="feed-dot" style="background:${color}"></div><div class="feed-txt"><b>${who}</b> ${verb} <b>${t.taskType}</b> task in ${t.location}</div><div class="feed-t">${new Date(t.createdAt).toLocaleString()}</div></div>`;}).join(''):`<div class="empty">No activity yet</div>`;
 }
 function rs(id){
-  const m={active:'accepted',open:'open',completed:'completed'};
-  const ids={payouts:'pl',active:'al',open:'ol',completed:'cl',all:'xl'};
-  if(id==='payouts'){const py=tasks.filter(t=>t.status==='employer_confirmed');document.getElementById('pl').innerHTML=py.length?py.map(pc).join(''):`<div class="empty">No pending payouts &mdash; all clear</div>`;}
+  const m={active:'accepted',open:'open',completed:'completed',verify:'payment_pending'};
+  const ids={payouts:'pl',active:'al',open:'ol',completed:'cl',all:'xl',verify:'vl'};
+  if(id==='verify'){
+    const pp=tasks.filter(t=>t.status==='payment_pending');
+    const vpc=document.getElementById('vpCount'); if(vpc) vpc.textContent=pp.length?' '+pp.length+' pending':'All clear';
+    document.getElementById('vl').innerHTML=pp.length?pp.map(vpCard).join(''):`<div class="empty">No payments awaiting verification &mdash; all clear</div>`;
+  }
+  else if(id==='payouts'){const py=tasks.filter(t=>t.status==='employer_confirmed');document.getElementById('pl').innerHTML=py.length?py.map(pc).join(''):`<div class="empty">No pending payouts &mdash; all clear</div>`;}
   else if(m[id])document.getElementById(ids[id]).innerHTML=tl(tasks.filter(t=>t.status===m[id]));
   else if(id==='all'){
     const q=(document.getElementById('xSearch')?.value||'').toLowerCase();
@@ -714,6 +726,78 @@ function re(){
   document.getElementById('etMore').innerHTML=showMoreHtml(emps.length-etShown,'etShown+=20;re();');
 }
 function eSearchInput(){etShown=20;re();}
+
+function checkVerifyBadge(){
+  const n=tasks.filter(t=>t.status==='payment_pending').length;
+  const b=document.getElementById('verifyBadge');
+  if(!b)return;
+  if(n>0){b.textContent=n;b.style.display='';}else{b.style.display='none';}
+}
+
+function vpCard(t){
+  const w=workers.find(x=>String(x.id)===String(t.workerId));
+  const wp=(parseFloat(t.pay)||0).toFixed(2);
+  const ref=t.paymentRef||'—';
+  return`<div class="tsk">
+    <div class="tsk-tp">
+      <div>
+        <div class="tsk-n">${t.taskType}</div>
+        <div class="tsk-m">${t.location||''} &middot; ${t.duration||''} &middot; ${new Date(t.createdAt).toLocaleDateString()}</div>
+      </div>
+      <span class="badge bc-of">Awaiting verification</span>
+    </div>
+    <div class="tsk-b">
+      <div class="tr"><span class="tr-k">Employer</span><span class="tr-v">${t.employer?.orgName||'&mdash;'}</span></div>
+      <div class="tr"><span class="tr-k">Worker</span><span class="tr-v">${w?.fullName||'Unassigned'}</span></div>
+      <div class="tr"><span class="tr-k">Amount</span><span class="tr-v">GH&#8373; ${(parseFloat(t.pay)*1.15).toFixed(2)} total (GH&#8373; ${wp} to worker)</span></div>
+      <div class="tr"><span class="tr-k">Payment ref</span><span class="tr-v" style="font-weight:600;color:var(--ink)">${anEsc(ref)}</span></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="btn-ps" style="flex:1;" onclick="verifyPayment('${t.id}','${w?.fullName||''}')">
+        ✓ Confirm payment received — release to worker
+      </button>
+      <button onclick="rejectPayment('${t.id}')" style="padding:10px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--f);border:1.5px solid var(--b);background:transparent;color:var(--ink3);">
+        ✗ Reject
+      </button>
+    </div>
+  </div>`;
+}
+
+async function verifyPayment(taskId, workerName){
+  if(!confirm('Confirm you have received the payment for this task. This will notify the worker and offer them the job.')) return;
+  try{
+    const r=await fetch(API+'/admin/tasks/'+taskId+'/verify-payment',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-admin-password':pass},
+      body:JSON.stringify({action:'approve'})
+    });
+    if(!r.ok) throw new Error('Server error '+r.status);
+    showToast('Payment verified — '+workerName+' has been notified.');
+    const td=await fetch(API+'/admin/all',{headers:{'x-admin-password':pass}}).then(r=>r.json()).catch(()=>({tasks:[]}));
+    tasks=td.tasks||[];
+    checkVerifyBadge();
+    rs('verify');
+  }catch(e){showToast('Could not verify payment: '+e.message);}
+}
+
+async function rejectPayment(taskId){
+  const reason=prompt('Reason for rejection (shown to employer):','Payment reference not found or amount incorrect.');
+  if(!reason) return;
+  try{
+    const r=await fetch(API+'/admin/tasks/'+taskId+'/verify-payment',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-admin-password':pass},
+      body:JSON.stringify({action:'reject',reason})
+    });
+    if(!r.ok) throw new Error('Server error '+r.status);
+    showToast('Payment rejected — employer will be notified.');
+    const td=await fetch(API+'/admin/all',{headers:{'x-admin-password':pass}}).then(r=>r.json()).catch(()=>({tasks:[]}));
+    tasks=td.tasks||[];
+    checkVerifyBadge();
+    rs('verify');
+  }catch(e){showToast('Could not reject payment: '+e.message);}
+}
+
 async function mkp(id,name,amount){
   if(!confirm('Confirm you sent GH₵'+amount+' to '+name+'?'))return;
   try{const r=await fetch(API+'/admin/tasks/'+id+'/paid',{method:'PATCH',headers:{'x-admin-password':pass}});if(r.ok){showToast(name+' marked as paid');await load();}else showToast('Failed. Try again.');}catch(e){showToast('Connection error');}
@@ -862,6 +946,7 @@ async function sendCustomSms(){
   const sd=await fetch(API+'/admin/sms-logs',{headers:{'x-admin-password':pass}}).then(r=>r.json()).catch(()=>({logs:[]}));
   smsLogs=sd.logs||[];
   checkSmsBadge();
+  checkVerifyBadge();
   rm();
 }
 

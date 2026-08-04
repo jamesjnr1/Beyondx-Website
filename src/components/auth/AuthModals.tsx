@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode, type FormEvent, type InputHTMLAttributes } from 'react'
-import { X, ShieldCheck, ChevronLeft, ChevronRight, Mail } from 'lucide-react'
+import { X, ShieldCheck, ChevronLeft, ChevronRight, Mail, UserRound, Building2 } from 'lucide-react'
 import Logo from '../Logo'
 import { useAuth, type AuthView } from './AuthContext'
 import { auth, session, referral, contact, ApiError } from '../../lib/api'
@@ -182,25 +182,28 @@ function WorkerLogin() {
 type EmployerType = 'individual' | 'enterprise'
 
 function EmployerTypeChoice({ onChoose }: { onChoose: (t: EmployerType) => void }) {
+  const options: { type: EmployerType; label: string; desc: string; Icon: typeof UserRound }[] = [
+    { type: 'individual', label: 'Individual / Sole Trader', desc: 'You hire workers for your home, personal business, or as a sole trader.', Icon: UserRound },
+    { type: 'enterprise', label: 'Business / Enterprise', desc: 'You are registering on behalf of a registered company or organisation.', Icon: Building2 },
+  ]
   return (
     <Modal title="Create Employer Account" subtitle="How are you hiring?">
-      <div className="grid gap-4">
-        {([
-          ['individual', 'Individual / Sole Trader', 'You hire workers for your home, personal business, or as a sole trader.', '🧑'],
-          ['enterprise', 'Business / Enterprise', 'You are registering on behalf of a registered company or organisation.', '🏢'],
-        ] as const).map(([type, label, desc, icon]) => (
+      <div className="grid gap-3">
+        {options.map(({ type, label, desc, Icon }) => (
           <button
             key={type}
             type="button"
             onClick={() => onChoose(type)}
-            className="group flex w-full items-start gap-4 rounded-xl border border-ink-900/12 bg-cream-50 p-5 text-left transition-all hover:border-forest-600/50 hover:bg-forest-600/4 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40 active:scale-[0.99]"
+            className="group flex w-full items-center gap-4 rounded-xl border border-ink-900/12 bg-cream-50 p-5 text-left transition-all hover:border-forest-600/50 hover:bg-forest-600/4 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40 active:scale-[0.99]"
           >
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-600/10 text-2xl">{icon}</span>
-            <span>
-              <span className="block font-serif text-base font-medium text-ink-900">{label}</span>
-              <span className="mt-0.5 block text-sm leading-relaxed text-ink-700">{desc}</span>
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-600/10 text-forest-700">
+              <Icon size={22} aria-hidden="true" strokeWidth={1.5} />
             </span>
-            <ChevronRight size={18} aria-hidden="true" className="ml-auto mt-1 shrink-0 text-ink-700/40 transition-colors group-hover:text-forest-600" />
+            <span className="min-w-0 flex-1">
+              <span className="block font-serif text-base font-medium text-ink-900">{label}</span>
+              <span className="mt-0.5 block text-sm leading-relaxed text-ink-700/80">{desc}</span>
+            </span>
+            <ChevronRight size={18} aria-hidden="true" className="shrink-0 text-ink-700/30 transition-colors group-hover:text-forest-600" />
           </button>
         ))}
       </div>
