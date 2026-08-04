@@ -352,54 +352,39 @@ export default function EmployerDashboard() {
                 </div>
 
                 {loading ? <div className="mt-5"><Skeleton /></div> : (() => {
-                  // Step 1 — screening questions before seeing workers
-                  if (!screeningDone) {
-                    return (
+                  const matches = sortWorkersForTask(
+                    workerList.filter((w) => wSkills(w).includes(pickedCategory)),
+                    taskFlags
+                  )
+                  const highRisk = isHighRisk(taskFlags)
+
+                  return (
+                    <>
+                      {/* Screening questions — always shown above worker list */}
                       <TaskScreening
                         category={pickedCategory!}
                         screening={screeningAnswers}
                         onUpdate={(s) => {
                           setScreeningAnswers(s)
                           setTaskFlags(s.flags)
+                          setScreeningDone(false)
                         }}
                         onDone={() => setScreeningDone(true)}
+                        done={screeningDone}
                       />
-                    )
-                  }
 
-                  const matches = sortWorkersForTask(
-                    workerList.filter((w) => wSkills(w).includes(pickedCategory)),
-                    taskFlags
-                  )
-                  const flagged = matches.filter(isBackgroundFlagged)
-                  const highRisk = isHighRisk(taskFlags)
-
-                  return (
-                    <>
-                      {/* Result banner with Edit answers */}
-                      <div className={`mt-5 mb-4 flex items-center justify-between rounded-xl px-4 py-2.5 ring-1 ${highRisk ? 'bg-clay-400/10 ring-clay-400/30' : 'bg-forest-600/8 ring-forest-600/20'}`}>
-                        <p className={`flex items-center gap-2 text-sm font-medium ${highRisk ? 'text-clay-700' : 'text-forest-800'}`}>
-                          <ShieldCheck size={15} aria-hidden="true" />
-                          {highRisk
-                            ? 'Restricted task — some workers excluded based on your answers'
-                            : `Open task — all vetted workers eligible${flagged.length > 0 ? ` · ${flagged.length} prioritised first` : ''}`}
-                        </p>
-                        <button onClick={() => setScreeningDone(false)}
-                          className="ml-3 shrink-0 text-xs font-medium underline underline-offset-2 opacity-60 hover:opacity-100">
-                          Edit answers
-                        </button>
-                      </div>
-
-                      {/* Multi-dispatch bar */}
+                      {/* Worker list — shown once screening complete */}
+                      {screeningDone && (
+                        <>
                       {selectedWorkers.size > 0 && (
-                        <div className="mb-3 flex items-center justify-between rounded-xl bg-forest-600 px-4 py-3">
+                        <div className="mt-4 mb-3 flex items-center justify-between rounded-xl bg-forest-600 px-4 py-3">
                           <span className="text-sm font-semibold text-cream-50">
                             {selectedWorkers.size} worker{selectedWorkers.size > 1 ? 's' : ''} selected
                           </span>
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => setSelectedWorkers(new Set())}
-                              className="rounded-full bg-cream-50/15 px-3 py-1.5 text-xs font-medium text-cream-50 hover:bg-cream-50/25"
+                              className="rounded-lg bg-cream-50/15 px-3 py-1.5 text-xs font-medium text-cream-50 hover:bg-cream-50/25"
                             >
                               Clear
                             </button>
@@ -409,7 +394,7 @@ export default function EmployerDashboard() {
                                 setDispatchQueue(queue)
                                 setDispatching(queue[0])
                               }}
-                              className="rounded-full bg-cream-50 px-4 py-1.5 text-xs font-semibold text-forest-700 hover:bg-cream-100"
+                              className="rounded-lg bg-cream-50 px-4 py-1.5 text-xs font-semibold text-forest-700 hover:bg-cream-100"
                             >
                               <Send size={12} className="mr-1.5 inline" aria-hidden="true" />
                               Dispatch all
@@ -419,7 +404,7 @@ export default function EmployerDashboard() {
                       )}
 
                       {matches.length ? (
-                        <ul className="mt-1 divide-y divide-ink-900/10 overflow-hidden rounded-2xl bg-cream-50 shadow-sm ring-1 ring-ink-900/5">
+                        <ul className="mt-3 divide-y divide-ink-900/10 overflow-hidden rounded-2xl bg-cream-50 shadow-sm ring-1 ring-ink-900/8">
                           {matches.map((w) => {
                             const wid = String(w.id)
                             const isSelected = selectedWorkers.has(wid)
@@ -449,22 +434,22 @@ export default function EmployerDashboard() {
                                       <span className="flex items-center gap-2">
                                         <span className="block truncate font-serif text-base font-medium text-ink-900">{wName(w)}</span>
                                         {isBackgroundFlagged(w) && !highRisk && (
-                                          <span className="shrink-0 rounded-full bg-forest-600/10 px-2 py-0.5 text-[10px] font-semibold text-forest-700">Priority</span>
+                                          <span className="shrink-0 text-[11px] font-semibold text-forest-700">Priority</span>
                                         )}
                                         {Boolean(w.hasTools) && (
-                                          <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">Has tools</span>
+                                          <span className="shrink-0 text-[11px] font-medium text-amber-700">Has tools</span>
                                         )}
                                       </span>
-                                      <span className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-ink-700">
+                                      <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-700">
                                         {w.rating && Number(w.rating) > 0
                                           ? <span className="inline-flex items-center gap-0.5"><Star size={12} aria-hidden="true" className="fill-forest-600 text-forest-600" /> {Number(w.rating).toFixed(1)}</span>
                                           : <span>New worker</span>}
-                                        <span>· {Number(w.tasksCompleted ?? 0)} task{Number(w.tasksCompleted ?? 0) === 1 ? '' : 's'} completed</span>
-                                        {Boolean(w.isBusy) && <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-700">On a job</span>}
+                                        <span>{Number(w.tasksCompleted ?? 0)} task{Number(w.tasksCompleted ?? 0) === 1 ? '' : 's'} completed</span>
+                                        {Boolean(w.isBusy) && <span className="font-medium text-amber-700">On a job</span>}
                                       </span>
                                     </span>
                                     <span className="hidden shrink-0 text-sm font-medium text-forest-700 sm:inline">View profile</span>
-                                    <ChevronRight size={18} aria-hidden="true" className="shrink-0 text-ink-700" />
+                                    <ChevronRight size={18} aria-hidden="true" className="shrink-0 text-ink-700/40" />
                                   </button>
                                 </div>
                               </li>
@@ -478,6 +463,8 @@ export default function EmployerDashboard() {
                             : `No workers are certified for ${pickedCategory} yet. Post a task instead and we'll match someone as soon as they join.`
                           } />
                         </div>
+                      )}
+                        </>
                       )}
                     </>
                   )
@@ -721,154 +708,150 @@ function TaskScreening({
   screening,
   onUpdate,
   onDone,
+  done = false,
 }: {
   category: string
   screening: ScreeningAnswers
   onUpdate: (s: ScreeningAnswers) => void
   onDone: () => void
+  done?: boolean
 }) {
   const steps = buildSteps(category)
-
-  const [stepIdx, setStepIdx] = useState(0)
-  const [showResult, setShowResult] = useState(false)
+  const [answered, setAnswered] = useState<Set<number>>(new Set())
 
   // Reset when category changes
-  useEffect(() => { setStepIdx(0); setShowResult(false) }, [category])
+  useEffect(() => { setAnswered(new Set()) }, [category])
 
-  const current = steps[stepIdx]
-  const progress = Math.round((stepIdx / steps.length) * 100)
-
-  const next = () => {
-    if (stepIdx + 1 < steps.length) {
-      setStepIdx(stepIdx + 1)
-    } else {
-      setShowResult(true)
-    }
-  }
-
-  const answerRisk = (key: keyof TaskFlags, yes: boolean) => {
-    onUpdate({ ...screening, flags: { ...screening.flags, [key]: yes } })
-    next()
-  }
-
-  const answerTier = (t: TierAnswer) => {
-    onUpdate({ ...screening, tier: t })
-    next()
-  }
-
+  const allAnswered = steps.every((_, i) => answered.has(i))
   const highRisk = isHighRisk(screening.flags)
 
-  if (showResult) {
+  // When all answered, auto-call onDone once
+  useEffect(() => {
+    if (allAnswered && !done) onDone()
+  }, [allAnswered]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const answerRisk = (idx: number, key: keyof TaskFlags, yes: boolean) => {
+    onUpdate({ ...screening, flags: { ...screening.flags, [key]: yes } })
+    setAnswered((prev) => new Set(prev).add(idx))
+  }
+
+  const answerTier = (idx: number, t: TierAnswer) => {
+    onUpdate({ ...screening, tier: t })
+    setAnswered((prev) => new Set(prev).add(idx))
+  }
+
+  // Collapsed summary once done
+  if (done) {
     return (
-      <div className="mt-6">
-        <div className={`rounded-2xl p-6 text-center ring-2 ${highRisk ? 'bg-clay-400/8 ring-clay-400/40' : 'bg-forest-600/8 ring-forest-600/30'}`}>
-          <div className={`mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full text-2xl ${highRisk ? 'bg-clay-400/20' : 'bg-forest-600/15'}`}>
-            {highRisk ? <AlertCircle size={22} aria-hidden="true" /> : <ShieldCheck size={22} aria-hidden="true" />}
-          </div>
-          <p className={`font-serif text-xl font-medium ${highRisk ? 'text-clay-800' : 'text-forest-900'}`}>
-            {highRisk ? 'Restricted task' : 'Open to all workers'}
-          </p>
-          <p className={`mt-2 text-sm leading-relaxed ${highRisk ? 'text-clay-700' : 'text-forest-800'}`}>
-            {highRisk
-              ? 'Workers with background flags will not be matched to this job.'
-              : 'All vetted workers are eligible. Workers with verified background records appear first.'}
-          </p>
-          <p className="mt-1 text-sm text-ink-700">
-            <span className="font-medium">Complexity:</span> {screening.tier === 'basic' ? 'Basic' : 'Technical / Skilled'}
-          </p>
-          <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
-            <button onClick={onDone}
-              className={`rounded-full px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:scale-[1.02] active:scale-[0.98] ${highRisk ? 'bg-clay-600 hover:bg-clay-500' : 'bg-forest-600 hover:bg-forest-500'}`}>
-              See available workers →
-            </button>
-            <button onClick={() => { setStepIdx(0); setShowResult(false); onUpdate(DEFAULT_SCREENING) }}
-              className="rounded-full border border-ink-900/15 px-6 py-3 text-sm font-medium text-ink-700 hover:bg-ink-900/5">
-              Start over
-            </button>
-          </div>
-        </div>
+      <div className="mt-5 flex items-center justify-between rounded-xl border border-ink-900/10 bg-cream-50 px-4 py-3">
+        <p className="text-sm text-ink-700">
+          {highRisk
+            ? <span className="font-medium text-red-700">Restricted — some workers excluded</span>
+            : <span className="font-medium text-forest-700">Open to all vetted workers</span>}
+          <span className="ml-2 text-ink-700/50">· {screening.tier === 'skilled' ? 'Technical rate' : 'Standard rate'}</span>
+        </p>
+        <button
+          onClick={() => { onUpdate({ ...screening }); setAnswered(new Set()) }}
+          className="ml-4 shrink-0 text-xs font-medium text-ink-700/60 underline underline-offset-2 hover:text-ink-900"
+        >
+          Edit
+        </button>
       </div>
     )
   }
 
-  if (!current) return null
-
   return (
-    <div className="mt-6">
-      {/* Progress bar */}
-      <div className="mb-5">
-        <div className="mb-1.5 flex items-center justify-between text-xs text-ink-700/60">
-          <span>Question {stepIdx + 1} of {steps.length}</span>
-          <span>{progress}% complete</span>
+    <div className="mt-5">
+      <div className="divide-y divide-ink-900/8 overflow-hidden rounded-2xl border border-ink-900/10 bg-cream-50">
+
+        {/* Header */}
+        <div className="px-5 py-4">
+          <p className="text-sm font-semibold text-ink-900">A few quick questions about this job</p>
+          <p className="mt-0.5 text-xs text-ink-700/60">Helps us match the right workers and set the correct rate</p>
         </div>
-        <div className="h-1.5 w-full rounded-full bg-ink-900/8">
-          <div className="h-1.5 rounded-full bg-forest-600 transition-all duration-300" style={{ width: `${progress}%` }} />
-        </div>
-      </div>
 
-      {/* Question card */}
-      <div className="rounded-2xl bg-cream-50 p-6 shadow-sm ring-1 ring-ink-900/8">
+        {/* Questions */}
+        {steps.map((step, idx) => {
+          const isAnswered = answered.has(idx)
 
-        {/* Risk questions */}
-        {current.type === 'risk' && (
-          <>
-            <p className="font-serif text-lg font-medium leading-snug text-ink-900">{current.question}</p>
-            <p className="mt-1.5 text-sm leading-relaxed text-ink-700/70">{current.hint}</p>
-            <div className="mt-5 grid grid-cols-2 gap-3">
-              <button onClick={() => answerRisk(current.key, true)}
-                className="flex flex-col items-center gap-1 rounded-xl border-2 border-clay-400/30 bg-clay-400/8 px-4 py-4 text-center font-semibold text-clay-700 transition-all hover:border-clay-500/60 hover:bg-clay-400/15 active:scale-[0.97]">
-                <span className="text-base font-semibold">Yes</span>
-                <span className="text-xs font-normal text-clay-600/80">This applies</span>
-              </button>
-              <button onClick={() => answerRisk(current.key, false)}
-                className="flex flex-col items-center gap-1 rounded-xl border-2 border-forest-600/30 bg-forest-600/8 px-4 py-4 text-center font-semibold text-forest-700 transition-all hover:border-forest-600/60 hover:bg-forest-600/15 active:scale-[0.97]">
-                <span className="text-base font-semibold">No</span>
-                <span className="text-xs font-normal text-forest-600/80">Doesn't apply</span>
-              </button>
-            </div>
-          </>
-        )}
-
-
-        {/* Basic vs Technical */}
-        {current.type === 'tier' && (
-          <>
-            <p className="font-serif text-lg font-medium leading-snug text-ink-900">{current.question}</p>
-            <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <button onClick={() => answerTier('basic')}
-                className="flex flex-col gap-2 rounded-xl border-2 border-forest-600/30 bg-forest-600/8 p-4 text-left transition-all hover:border-forest-600/60 hover:bg-forest-600/15 active:scale-[0.97]">
-                <span className="font-semibold text-forest-800">{current.basicLabel}</span>
-                <span className="text-xs leading-relaxed text-forest-700/80">{current.basicExample}</span>
-              </button>
-              <button onClick={() => answerTier('skilled')}
-                className="flex flex-col gap-2 rounded-xl border-2 border-clay-400/30 bg-clay-400/8 p-4 text-left transition-all hover:border-clay-500/60 hover:bg-clay-400/15 active:scale-[0.97]">
-                <span className="font-semibold text-clay-800">{current.skilledLabel}</span>
-                <span className="text-xs leading-relaxed text-clay-700/80">{current.skilledExample}</span>
-              </button>
-            </div>
-          </>
-        )}
-      </div>
-
-      {/* Running summary of previous answers */}
-      {stepIdx > 0 && (
-        <div className="mt-3 space-y-1">
-          {steps.slice(0, stepIdx).map((s, i) => {
-            let label = ''
-            if (s.type === 'risk') label = screening.flags[s.key] ? 'Yes' : 'No'
-            else if (s.type === 'tier') label = screening.tier === 'basic' ? 'Basic' : 'Technical'
-            const isYes = label === 'Yes' || label.includes('+15%') || label === 'Technical'
+          if (step.type === 'risk') {
+            const flagVal = screening.flags[step.key]
             return (
-              <div key={i} className="flex items-center justify-between rounded-lg bg-cream-50 px-3.5 py-2 ring-1 ring-ink-900/8">
-                <span className="text-xs text-ink-700">{s.question}</span>
-                <span className={`ml-3 shrink-0 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${isYes ? 'bg-clay-400/15 text-clay-700' : 'bg-forest-600/10 text-forest-700'}`}>
-                  {label}
-                </span>
+              <div key={idx} className="px-5 py-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-ink-900">{step.question}</p>
+                    {step.hint && <p className="mt-0.5 text-xs text-ink-700/60">{step.hint}</p>}
+                  </div>
+                  <div className="flex shrink-0 gap-1.5">
+                    <button
+                      onClick={() => answerRisk(idx, step.key, true)}
+                      className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-all ${
+                        isAnswered && flagVal
+                          ? 'bg-red-600 text-white'
+                          : 'border border-ink-900/15 text-ink-700 hover:border-ink-900/30 hover:bg-ink-900/4'
+                      }`}
+                    >
+                      Yes
+                    </button>
+                    <button
+                      onClick={() => answerRisk(idx, step.key, false)}
+                      className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-all ${
+                        isAnswered && !flagVal
+                          ? 'bg-forest-600 text-white'
+                          : 'border border-ink-900/15 text-ink-700 hover:border-ink-900/30 hover:bg-ink-900/4'
+                      }`}
+                    >
+                      No
+                    </button>
+                  </div>
+                </div>
               </div>
             )
-          })}
-        </div>
-      )}
+          }
+
+          if (step.type === 'tier') {
+            return (
+              <div key={idx} className="px-5 py-4">
+                <p className="mb-3 text-sm font-medium text-ink-900">{step.question}</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    onClick={() => answerTier(idx, 'basic')}
+                    className={`rounded-xl border p-3.5 text-left transition-all ${
+                      isAnswered && screening.tier === 'basic'
+                        ? 'border-ink-900 bg-ink-900 text-cream-50'
+                        : 'border-ink-900/15 text-ink-700 hover:border-ink-900/30'
+                    }`}
+                  >
+                    <span className="block text-sm font-semibold">{step.basicLabel}</span>
+                    <span className="mt-0.5 block text-[11px] leading-snug opacity-70">{step.basicExample}</span>
+                  </button>
+                  <button
+                    onClick={() => answerTier(idx, 'skilled')}
+                    className={`rounded-xl border p-3.5 text-left transition-all ${
+                      isAnswered && screening.tier === 'skilled'
+                        ? 'border-ink-900 bg-ink-900 text-cream-50'
+                        : 'border-ink-900/15 text-ink-700 hover:border-ink-900/30'
+                    }`}
+                  >
+                    <span className="block text-sm font-semibold">{step.skilledLabel}</span>
+                    <span className="mt-0.5 block text-[11px] leading-snug opacity-70">{step.skilledExample}</span>
+                  </button>
+                </div>
+              </div>
+            )
+          }
+
+          return null
+        })}
+
+        {/* Footer — shown once all answered but before auto-advancing */}
+        {allAnswered && (
+          <div className="px-5 py-3 text-xs text-ink-700/50">
+            All questions answered — showing available workers below
+          </div>
+        )}
+      </div>
     </div>
   )
 }
