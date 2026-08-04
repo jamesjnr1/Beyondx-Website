@@ -737,9 +737,11 @@ function checkVerifyBadge(){
 function vpCard(t){
   const w=workers.find(x=>String(x.id)===String(t.workerId));
   const wp=(parseFloat(t.pay)||0).toFixed(2);
-  // paymentRef may be in the paymentRef field or embedded in description
+  // paymentRef is now its own field; fall back to parsing legacy description
   const descRef=(t.description||'').match(/Payment Ref:\s*(.+?)$/i)?.[1]?.trim();
   const ref=t.paymentRef||descRef||'—';
+  // job description — new field; skip legacy Worker:/Payment Ref: strings
+  const jobDesc=t.description&&!t.description.startsWith('Worker:')?t.description:null;
   return`<div class="tsk">
     <div class="tsk-tp">
       <div>
@@ -751,6 +753,7 @@ function vpCard(t){
     <div class="tsk-b">
       <div class="tr"><span class="tr-k">Employer</span><span class="tr-v">${t.employer?.orgName||'&mdash;'}</span></div>
       <div class="tr"><span class="tr-k">Worker</span><span class="tr-v">${w?.fullName||'Unassigned'}</span></div>
+      ${jobDesc?`<div class="tr"><span class="tr-k">Description</span><span class="tr-v" style="max-width:400px">${anEsc(jobDesc)}</span></div>`:''}
       <div class="tr"><span class="tr-k">Amount</span><span class="tr-v">GH&#8373; ${(parseFloat(t.pay)*1.15).toFixed(2)} total (GH&#8373; ${wp} to worker)</span></div>
       <div class="tr"><span class="tr-k">Payment ref</span><span class="tr-v" style="font-weight:600;color:var(--ink)">${anEsc(ref)}</span></div>
     </div>

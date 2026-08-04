@@ -122,6 +122,7 @@ function BookingForm({ state, onDone, onError }: {
 
   const [days, setDays] = useState(1)
   const [location, setLocation] = useState('')
+  const [jobDescription, setJobDescription] = useState('')
   const [taskType, setTaskType] = useState(category || (Array.isArray(worker.skills) ? (worker.skills as string[])[0] : '') || 'General Task')
   const [payRef, setPayRef] = useState('')
   const [method, setMethod] = useState('')
@@ -151,12 +152,13 @@ function BookingForm({ state, onDone, onError }: {
   const duration = effectiveDays === 0.5 ? 'Half Day' : effectiveDays === 1 ? '1 Day' : `${effectiveDays} Days`
 
   const submit = async () => {
-    if (!payRef.trim() || !method || busy) return
+    if (!payRef.trim() || !method || !jobDescription.trim() || busy) return
     setBusy(true)
     try {
       await tasksApi.dispatch({
         worker,
         taskType,
+        jobDescription: jobDescription.trim(),
         location: cat?.mode === 'remote' ? 'Remote' : location,
         duration,
         pay: workerGets,
@@ -270,6 +272,22 @@ function BookingForm({ state, onDone, onError }: {
           </div>
         )}
 
+        {/* Job description — required */}
+        <div>
+          <label htmlFor="bw-desc" className="mb-1.5 block text-sm font-medium text-ink-900">
+            Job description <span className="text-red-500">*</span>
+          </label>
+          <textarea
+            id="bw-desc"
+            value={jobDescription}
+            onChange={(e) => setJobDescription(e.target.value)}
+            rows={3}
+            placeholder="Describe exactly what needs to be done. The worker will see this in their SMS and dashboard."
+            className={`${inp} resize-none`}
+          />
+          <p className="mt-1 text-xs text-ink-700/50">Be specific — include any special instructions, equipment needed, or access details.</p>
+        </div>
+
         {/* Duration */}
         {!cat?.distancePricing && cat?.mode !== 'remote' && (
           <div>
@@ -313,7 +331,7 @@ function BookingForm({ state, onDone, onError }: {
         <input id="bw-ref" value={payRef} onChange={(e) => setPayRef(e.target.value)} placeholder="e.g. 1234567890" className={inp} />
       </div>
 
-      <button onClick={submit} disabled={!payRef.trim() || !method || busy}
+      <button onClick={submit} disabled={!payRef.trim() || !method || !jobDescription.trim() || busy}
         className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-ink-900 px-6 py-4 text-sm font-semibold text-cream-50 transition-all hover:bg-ink-800 active:scale-[0.98] disabled:opacity-40">
         {busy ? 'Submitting…' : `Submit booking — ${cedis(pay)}`}
       </button>

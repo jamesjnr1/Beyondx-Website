@@ -45,13 +45,20 @@ async function sendSms(phone, message) {
 
 function buildSms(task) {
   const emp = task.employer || {}
+  // description is now the employer's job description
+  // paymentRef is stored separately (or may be embedded in legacy description)
+  const jobDesc = task.description && !task.description.startsWith('Worker:')
+    ? task.description
+    : null
+
   const lines = [
     'Hi! You have a new job offer from BeyondX.',
     '',
     `Job: ${task.taskType || 'Task'}`,
-    task.location  ? `Location: ${task.location}` : null,
-    task.duration  ? `Duration: ${task.duration}` : null,
-    task.pay       ? `Your pay: GH₵ ${Number(task.pay).toFixed(0)}` : null,
+    jobDesc         ? `Details: ${jobDesc}` : null,
+    task.location   ? `Location: ${task.location}` : null,
+    task.duration   ? `Duration: ${task.duration}` : null,
+    task.pay        ? `Your pay: GH\u20b5 ${Number(task.pay).toFixed(0)}` : null,
     '',
     `Employer: ${emp.orgName || emp.name || 'BeyondX employer'}`,
     emp.contactPerson ? `Contact: ${emp.contactPerson}` : null,
