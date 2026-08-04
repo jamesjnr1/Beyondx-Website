@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
-import { MapPin, Calendar, Check, X, Star, RotateCcw, Info, RefreshCw, AlertCircle, Wrench, Award, Briefcase, Camera, Plus, Trash2, Phone, Building2, AlertTriangle } from 'lucide-react'
+import { MapPin, Calendar, Check, Star, RotateCcw, Info, RefreshCw, AlertCircle, Wrench, Award, Briefcase, Camera, Plus, Trash2, Phone, Building2, AlertTriangle } from 'lucide-react'
 import DashboardHeader from './DashboardHeader'
 import ReferralCard from '../components/ReferralCard'
 import ProfileModal, { type Profile } from '../components/ProfileModal'
@@ -701,19 +701,32 @@ export default function WorkerDashboard() {
           {tab === 'support' ? null : loading ? <Skeleton /> : (
             <>
               {tab === 'available' && (available.length ? available.map((t) => (
-                <TaskCard key={t.id} task={t}>
-                  <button onClick={() => (t.status === 'offered' ? acceptOffer(t) : acceptOpen(t))} disabled={busyId === t.id} aria-label={`Accept ${t.taskType || 'task'}`}
-                    className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60 sm:flex-none">
-                    <Check size={16} aria-hidden="true" /> {busyId === t.id ? 'Working…' : 'Accept'}
-                  </button>
+                <div key={t.id} className={`rounded-2xl bg-cream-50 shadow-sm ring-1 overflow-hidden ${t.status === 'offered' ? 'ring-forest-600/30' : 'ring-ink-900/8'}`}>
                   {t.status === 'offered' && (
-                    <button onClick={() => declineOffer(t)} disabled={busyId === t.id} aria-label={`Decline ${t.taskType || 'task'}`}
-                      className="flex flex-1 items-center justify-center gap-1.5 rounded-full border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-700 transition-colors hover:bg-ink-900/5 disabled:opacity-60 sm:flex-none">
-                      <X size={16} aria-hidden="true" /> Decline
-                    </button>
+                    <div className="bg-forest-600 px-4 py-2 text-xs font-semibold text-cream-50 flex items-center gap-1.5">
+                      <span className="flex h-1.5 w-1.5 rounded-full bg-cream-50 animate-pulse" />
+                      New job offer — respond to lock it in
+                    </div>
                   )}
-                </TaskCard>
-              )) : <Empty text="No tasks available right now. Check back soon." />)}
+                  <div className="p-4 sm:p-5">
+                    <TaskCard task={t}>
+                      {null}
+                    </TaskCard>
+                    <div className="mt-4 flex gap-2.5">
+                      <button onClick={() => (t.status === 'offered' ? acceptOffer(t) : acceptOpen(t))} disabled={busyId === t.id}
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-forest-600 px-4 py-3 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
+                        <Check size={16} aria-hidden="true" /> {busyId === t.id ? 'Accepting…' : 'Accept this job'}
+                      </button>
+                      {t.status === 'offered' && (
+                        <button onClick={() => declineOffer(t)} disabled={busyId === t.id}
+                          className="rounded-full border border-ink-900/15 px-4 py-3 text-sm font-medium text-ink-700 transition-colors hover:bg-ink-900/5 disabled:opacity-60">
+                          Decline
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )) : <Empty text="No jobs available right now. Check back soon." />)}
 
               {tab === 'mine' && (
                 <>

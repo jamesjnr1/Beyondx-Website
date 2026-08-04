@@ -65,14 +65,15 @@ function sortWorkersForTask(workers: Worker[], flags: TaskFlags): Worker[] {
   return [...flagged, ...other]
 }
 
-const STATUS: Record<string, { label: string; dot: string; chip: string; note?: string }> = {
-  payment_pending: { label: 'Awaiting payment verification', dot: 'bg-amber-400', chip: 'bg-amber-100 text-amber-800', note: 'BeyondX is verifying your payment reference. The worker will be notified once confirmed.' },
-  open: { label: 'Awaiting worker', dot: 'bg-clay-500', chip: 'bg-clay-400/15 text-clay-600', note: 'Waiting for a worker to accept.' },
-  offered: { label: 'Awaiting worker response', dot: 'bg-clay-500', chip: 'bg-clay-400/15 text-clay-600', note: 'The worker will accept or decline shortly.' },
-  accepted: { label: 'On the job', dot: 'bg-forest-500', chip: 'bg-forest-600/10 text-forest-700', note: 'Attendance is GPS-verified. Confirm once the work is finished.' },
-  pending_confirmation: { label: 'Worker marked done', dot: 'bg-amber-500', chip: 'bg-amber-100 text-amber-700', note: 'Confirm the work to release payment through BeyondX.' },
-  employer_confirmed: { label: 'Confirmed — with BeyondX', dot: 'bg-ink-700', chip: 'bg-ink-900/10 text-ink-800', note: 'BeyondX is processing the payment release to the worker.' },
-  completed: { label: 'Payment released', dot: 'bg-forest-600', chip: 'bg-forest-600/15 text-forest-800', note: 'BeyondX released the payment to the worker.' },
+const STATUS: Record<string, { label: string; dot: string; chip: string; note?: string; urgent?: boolean }> = {
+  payment_pending: { label: 'Verifying payment', dot: 'bg-amber-400', chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200', note: 'We received your payment details and are confirming the transaction. The worker will be notified once verified — usually within a few minutes.' },
+  offered:         { label: 'Worker notified', dot: 'bg-blue-400', chip: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200', note: 'The worker has been sent a job offer via SMS and is reviewing the details.' },
+  open:            { label: 'Finding a worker', dot: 'bg-clay-400', chip: 'bg-clay-400/12 text-clay-700', note: 'We are matching a worker to this job.' },
+  accepted:        { label: 'Worker is on the job', dot: 'bg-forest-500', chip: 'bg-forest-600/10 text-forest-700 ring-1 ring-forest-600/20', note: 'Work is underway. You will be notified when the worker marks it complete.' },
+  pending_confirmation: { label: 'Ready to confirm', dot: 'bg-amber-500', chip: 'bg-amber-50 text-amber-800 ring-1 ring-amber-300', note: 'The worker has marked the job as done. Confirm below to release their payment through BeyondX.', urgent: true },
+  employer_confirmed: { label: 'Payment processing', dot: 'bg-ink-500', chip: 'bg-ink-900/8 text-ink-700', note: 'BeyondX is releasing the worker\'s payment. This usually completes within a few hours.' },
+  completed:       { label: 'Complete', dot: 'bg-forest-600', chip: 'bg-forest-600/12 text-forest-800 ring-1 ring-forest-600/20', note: 'Payment has been released to the worker. Thank you for using BeyondX.' },
+  payment_rejected: { label: 'Payment not verified', dot: 'bg-red-400', chip: 'bg-red-50 text-red-700 ring-1 ring-red-200', note: 'We could not verify this payment. Please contact BeyondX to resolve.' },
 }
 const st = (s?: string) => STATUS[s || 'open'] || STATUS.open
 
@@ -226,7 +227,7 @@ export default function EmployerDashboard() {
         )}
 
         <div className="flex items-center gap-2 overflow-x-auto border-b border-ink-900/10 pb-px" role="tablist" aria-label="Employer sections">
-          {([['hire', 'Hire Workers'], ['post', 'Post a Task'], ['history', `Dispatch History (${taskList.length})`], ['support', 'Support']] as const).map(([id, label]) => (
+          {([['hire', 'Hire Workers'], ['post', 'Post a Task'], ['history', `My Jobs${taskList.filter(t => t.status === 'pending_confirmation').length > 0 ? ` · ${taskList.filter(t => t.status === 'pending_confirmation').length} need action` : taskList.length > 0 ? ` (${taskList.length})` : ''}`], ['support', 'Support']] as const).map(([id, label]) => (
             <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
               className={`shrink-0 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40 ${tab === id ? 'border-forest-600 text-forest-700' : 'border-transparent text-ink-700 hover:text-ink-900'}`}>
               {label}
@@ -484,35 +485,102 @@ export default function EmployerDashboard() {
         {tab === 'post' && <PostTask onDone={(msg) => { setToast({ id: Date.now(), kind: 'success', title: 'Task posted', detail: msg }); load() }} />}
 
         {tab === 'history' && (
-          <div className="mt-6 space-y-3">
-            {loading ? <Skeleton /> : taskList.length ? taskList.map((t) => {
-              const s = st(t.status)
-              const worker = typeof t.employer === 'string' ? t.employer : ''
-              const rev = t.reviews?.[0]?.rating
-              return (
-                <div key={String(t.id)} className="rounded-xl bg-cream-50 p-4 shadow-sm ring-1 ring-ink-900/5 sm:p-5">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="min-w-0">
-                      <p className="font-serif text-base font-medium text-ink-900">{t.taskType || 'Task'}</p>
-                      <p className="mt-0.5 truncate text-sm text-ink-700">{t.description || worker}{t.location ? ` · ${t.location}` : ''}</p>
-                      {rev ? <div className="mt-1 flex items-center gap-2 text-xs text-ink-700">You rated <Stars n={Number(rev)} /></div> : null}
-                    </div>
-                    <div className="flex shrink-0 items-center gap-3">
-                      <span className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${s.chip}`}>
-                        <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${s.dot}`} /> {s.label}
-                      </span>
-                      {t.status === 'pending_confirmation' && (
-                        <button onClick={() => setRating(t)} className="shrink-0 rounded-full bg-forest-600 px-4 py-2 text-xs font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40">
-                          Confirm work &amp; rate
-                        </button>
+          <div className="mt-6">
+            {loading ? <Skeleton /> : taskList.length ? (() => {
+              const urgent = taskList.filter((t) => t.status === 'pending_confirmation')
+              const active = taskList.filter((t) => ['payment_pending', 'offered', 'accepted'].includes(String(t.status)))
+              const done = taskList.filter((t) => ['employer_confirmed', 'completed', 'payment_rejected'].includes(String(t.status)))
+
+              const TaskItem = ({ t }: { t: Task }) => {
+                const s = st(t.status)
+                const { workerName } = dispatchDetails(t)
+                const rev = t.reviews?.[0]?.rating
+                const isUrgent = t.status === 'pending_confirmation'
+
+                return (
+                  <div className={`rounded-2xl bg-cream-50 p-5 shadow-sm ring-1 ${isUrgent ? 'ring-amber-300' : 'ring-ink-900/8'}`}>
+                    {/* Header row */}
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-serif text-base font-semibold text-ink-900">{t.taskType || 'Task'}</span>
+                          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${s.chip}`}>
+                            <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
+                            {s.label}
+                          </span>
+                        </div>
+                        <p className="mt-0.5 text-sm text-ink-700">
+                          {workerName && <span className="font-medium text-ink-800">{workerName}</span>}
+                          {workerName && t.location ? ' · ' : ''}
+                          {t.location || ''}
+                          {t.duration ? ` · ${t.duration}` : ''}
+                        </p>
+                      </div>
+                      {rev && (
+                        <div className="flex items-center gap-1.5 text-xs text-ink-700">
+                          <span>Your rating:</span><Stars n={Number(rev)} />
+                        </div>
                       )}
                     </div>
+
+                    {/* Urgent confirm action */}
+                    {isUrgent && (
+                      <div className="mt-4 rounded-xl bg-amber-50 p-4 ring-1 ring-amber-200">
+                        <p className="text-sm font-medium text-amber-900">The worker has marked this job as complete.</p>
+                        <p className="mt-0.5 text-xs text-amber-700">Confirming releases their payment through BeyondX. You can also leave a rating.</p>
+                        <button
+                          onClick={() => setRating(t)}
+                          className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-amber-500 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50"
+                        >
+                          <ShieldCheck size={15} aria-hidden="true" /> Confirm work & release payment
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Live location for active jobs */}
+                    {t.status === 'accepted' && <LiveLocation taskId={t.id} />}
+
+                    {/* Status note */}
+                    {s.note && !isUrgent && (
+                      <p className="mt-3 flex items-start gap-2 border-t border-ink-900/8 pt-3 text-xs leading-relaxed text-ink-700/80">
+                        <Info size={12} aria-hidden="true" className="mt-0.5 shrink-0 text-ink-700/50" />
+                        {s.note}
+                      </p>
+                    )}
                   </div>
-                  {t.status === 'accepted' && <LiveLocation taskId={t.id} />}
-                  {s.note && <p className="mt-3 flex items-start gap-2 border-t border-ink-900/10 pt-3 text-xs leading-relaxed text-ink-700"><Info size={13} aria-hidden="true" className="mt-0.5 shrink-0 text-clay-500" /> {s.note}</p>}
+                )
+              }
+
+              return (
+                <div className="space-y-6">
+                  {urgent.length > 0 && (
+                    <section>
+                      <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-amber-700">
+                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-amber-600 text-[9px] font-bold text-white">{urgent.length}</span>
+                        Need your confirmation
+                      </h2>
+                      <div className="space-y-3">{urgent.map((t) => <TaskItem key={String(t.id)} t={t} />)}</div>
+                    </section>
+                  )}
+
+                  {active.length > 0 && (
+                    <section>
+                      <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-ink-700/50">In progress</h2>
+                      <div className="space-y-3">{active.map((t) => <TaskItem key={String(t.id)} t={t} />)}</div>
+                    </section>
+                  )}
+
+                  {done.length > 0 && (
+                    <section>
+                      <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-ink-700/50">Completed</h2>
+                      <div className="space-y-3">{done.map((t) => <TaskItem key={String(t.id)} t={t} />)}</div>
+                    </section>
+                  )}
                 </div>
               )
-            }) : <Empty text="No dispatches yet. Hire a worker to get started." />}
+            })() : (
+              <Empty text="No jobs yet. Go to Hire Workers to dispatch your first worker." />
+            )}
           </div>
         )}
       </main>
@@ -1081,21 +1149,30 @@ function DispatchModal({ worker, category, screening, dispatchQueue, onClose, on
       <div role="dialog" aria-modal="true" aria-labelledby="dp-title" className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-cream-50 p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="mb-1 flex items-center justify-between">
           <h2 id="dp-title" className="font-serif text-xl font-medium text-ink-900">
-            Dispatch {wName(worker).split(' ')[0]}
+            Book {wName(worker).split(' ')[0]}
             {screening && dispatchQueue && dispatchQueue.length > 1 && (
               <span className="ml-2 rounded-full bg-forest-600/10 px-2 py-0.5 text-sm font-medium text-forest-700">
                 {dispatchQueue.findIndex((w) => String(w.id) === String(worker.id)) + 1} of {dispatchQueue.length}
               </span>
             )}
           </h2>
-          <button onClick={onClose} aria-label="Cancel dispatch" className="rounded-lg p-1 text-ink-700 hover:bg-ink-900/5"><X size={18} aria-hidden="true" /></button>
+          <button onClick={onClose} aria-label="Cancel" className="rounded-lg p-1 text-ink-700 hover:bg-ink-900/5"><X size={18} aria-hidden="true" /></button>
         </div>
-        <p className="mb-4 text-sm text-ink-700">
-          Send your payment via mobile money first, then enter the reference number below.
-          <span className="mt-1.5 block rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 ring-1 ring-amber-200">
-            BeyondX will verify your payment before the worker is notified. This usually takes a few minutes during business hours.
-          </span>
-        </p>
+
+        {/* How it works — 3 clear steps */}
+        <ol className="mb-5 mt-3 flex gap-0 overflow-hidden rounded-xl border border-ink-900/10">
+          {[
+            ['1', 'Set details & pay', 'Fill in the job below and send payment via MoMo'],
+            ['2', 'We verify', 'BeyondX confirms your payment — takes a few minutes'],
+            ['3', 'Worker starts', 'Worker receives a job SMS and accepts the offer'],
+          ].map(([n, title, desc]) => (
+            <li key={n} className="flex-1 border-r border-ink-900/10 bg-cream-50 px-3 py-2.5 last:border-r-0">
+              <span className="block text-[10px] font-bold uppercase tracking-widest text-forest-600">{n}</span>
+              <span className="block text-[11px] font-semibold text-ink-900">{title}</span>
+              <span className="block text-[10px] leading-snug text-ink-700/70">{desc}</span>
+            </li>
+          ))}
+        </ol>
 
         <div className="space-y-4">
           {/* Task type */}
@@ -1205,47 +1282,54 @@ function DispatchModal({ worker, category, screening, dispatchQueue, onClose, on
           )}
         </div>
 
-        {/* Price breakdown */}
-        <div className="mt-4 flex items-center justify-between rounded-xl bg-forest-600/5 p-4 ring-1 ring-forest-600/15">
-          <span className="min-w-0 text-sm text-ink-700">
-            Amount to pay
-            <span className="mt-1 block text-xs leading-relaxed text-ink-700/80">
-              {cedis(workerGets)} to the worker
-              <span className="block">+ {cedis(fee)} BeyondX service fee</span>
-            </span>
-          </span>
-          <span className="shrink-0 text-right">
-            <span className="block font-serif text-lg font-semibold text-ink-900">{cedis(pay)}</span>
-            <span className="block text-[11px] text-ink-700/80">
-              {cat?.distancePricing
-                ? `${distanceKm}km delivery`
-                : `${cedis(baseRate)}/day × ${effectiveDays === 0.5 ? 'half day' : `${effectiveDays} day${effectiveDays === 1 ? '' : 's'}`}`}
-            </span>
-          </span>
-        </div>
-
-        <div className="mt-4">
-          <span className="mb-2 block text-xs font-medium text-ink-700">How did you pay?</span>
-          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Payment method">
-            {PAYMENT_METHODS.map((m) => (
-              <button key={m.id} type="button" role="radio" aria-checked={method === m.id} aria-label={m.alt} onClick={() => setMethod(m.id)}
-                className={`flex h-16 items-center justify-center rounded-xl border bg-white p-2 transition-all ${method === m.id ? 'border-forest-600 ring-2 ring-forest-600/30' : 'border-ink-900/15 hover:border-forest-500/50'}`}>
-                <img src={m.logo} alt={m.alt} className="max-h-9 w-auto object-contain" />
-              </button>
-            ))}
+        {/* Price breakdown — prominent */}
+        <div className="mt-5 overflow-hidden rounded-2xl border border-ink-900/12">
+          <div className="bg-forest-700 px-5 py-4 text-center">
+            <p className="text-xs font-medium uppercase tracking-widest text-forest-200">Total to pay</p>
+            <p className="mt-1 font-serif text-4xl font-semibold text-cream-50">{cedis(pay)}</p>
+            <p className="mt-1 text-xs text-forest-200/80">
+              {cedis(workerGets)} to the worker · {cedis(fee)} BeyondX service fee
+            </p>
+          </div>
+          <div className="bg-cream-50 px-5 py-3 text-center text-[11px] text-ink-700/70">
+            {cat?.distancePricing
+              ? `${distanceKm} km delivery`
+              : `${cedis(baseRate)}/day × ${effectiveDays === 0.5 ? 'half day' : `${effectiveDays} day${effectiveDays === 1 ? '' : 's'}`}`}
           </div>
         </div>
 
-        <label className="mt-4 block">
-          <span className="mb-1 block text-xs font-medium text-ink-700">Payment reference / transaction ID</span>
-          <input value={payRef} onChange={(e) => setPayRef(e.target.value)} placeholder="e.g. 1234567890" className="w-full rounded-xl border border-ink-900/15 bg-white px-3 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/30" />
+        {/* Pay via MoMo instruction */}
+        <div className="mt-4 rounded-xl bg-amber-50 px-4 py-3.5 ring-1 ring-amber-200">
+          <p className="text-sm font-semibold text-amber-900">Step 1 — Send {cedis(pay)} via mobile money</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-amber-800">
+            Send to the BeyondX payment number provided by your account manager, or via the mobile money number on your invoice. Keep the transaction receipt.
+          </p>
+        </div>
+
+        <p className="mt-4 text-xs font-semibold uppercase tracking-widest text-ink-700/50">Step 2 — Confirm how you paid</p>
+
+        <div className="mt-2 grid grid-cols-3 gap-2" role="radiogroup" aria-label="Payment method">
+          {PAYMENT_METHODS.map((m) => (
+            <button key={m.id} type="button" role="radio" aria-checked={method === m.id} aria-label={m.alt} onClick={() => setMethod(m.id)}
+              className={`flex h-16 items-center justify-center rounded-xl border bg-white p-2 transition-all ${method === m.id ? 'border-forest-600 ring-2 ring-forest-600/30' : 'border-ink-900/15 hover:border-forest-500/50'}`}>
+              <img src={m.logo} alt={m.alt} className="max-h-9 w-auto object-contain" />
+            </button>
+          ))}
+        </div>
+
+        <label className="mt-3 block">
+          <span className="mb-1 block text-xs font-medium text-ink-700">Transaction / reference number</span>
+          <input value={payRef} onChange={(e) => setPayRef(e.target.value)} placeholder="e.g. 1234567890"
+            className="w-full rounded-xl border border-ink-900/15 bg-white px-3 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/30" />
         </label>
 
-        <button onClick={submit} disabled={!payRef.trim() || !method || busy} className="mt-5 flex w-full items-center justify-center gap-1.5 rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40">
-          <ShieldCheck size={16} aria-hidden="true" /> {busy ? 'Submitting…' : 'Submit for BeyondX review'}
+        <button onClick={submit} disabled={!payRef.trim() || !method || busy}
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-forest-600 px-6 py-3.5 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40">
+          <ShieldCheck size={16} aria-hidden="true" />
+          {busy ? 'Submitting…' : `Submit booking — ${cedis(pay)}`}
         </button>
-        <p className="mt-2 text-center text-xs text-ink-700/70">
-          The worker will only be contacted after BeyondX confirms your payment.
+        <p className="mt-2 text-center text-[11px] text-ink-700/60">
+          Your worker is notified only after BeyondX verifies the payment — usually a few minutes.
         </p>
       </div>
     </div>
@@ -1257,7 +1341,8 @@ function RateModal({ task, onClose, onDone, onError }: { task: Task; onClose: ()
   const [stars, setStars] = useState(5)
   const [comment, setComment] = useState('')
   const [busy, setBusy] = useState(false)
-  const worker = typeof task.employer === 'string' ? task.employer : task.taskType || 'the worker'
+  const { workerName, workerId } = dispatchDetails(task)
+  const worker = workerName || (typeof task.employer === 'string' ? task.employer : task.taskType || 'the worker')
 
   const submit = async () => {
     if (busy) return
@@ -1265,34 +1350,22 @@ function RateModal({ task, onClose, onDone, onError }: { task: Task; onClose: ()
     try {
       await tasksApi.complete(task.id)
       await tasksApi.review(task.id, stars, comment).catch(() => null)
-
-      // Tell BeyondX that payment is now due to the worker. Never block the
-      // confirmation itself if the notification fails.
       const emp = session.employer()
-      const { workerName, workerId, paymentRef } = dispatchDetails(task)
       const orgName = (emp?.orgName as string) || 'An employer'
-      contact
-        .send({
-          name: orgName,
-          email: (emp?.email as string) || undefined,
-          phone: (emp?.phone as string) || undefined,
-          message:
-            `${orgName} confirmed the work is complete. Payment is now due to the worker.\n\n` +
-            `Worker: ${workerName || worker}${workerId ? ` (${workerId})` : ''}\n` +
-            `Task: ${task.taskType || '—'}\n` +
-            `Location: ${task.location || '—'}\n` +
-            `Duration: ${task.duration || '—'}\n` +
-            `Worker is owed: GHS ${Number(task.pay || 0).toFixed(2)}\n` +
-            `BeyondX service fee: GHS ${(Number(task.pay || 0) * PLATFORM_FEE).toFixed(2)}\n` +
-            `Employer paid in total: GHS ${(Number(task.pay || 0) * (1 + PLATFORM_FEE)).toFixed(2)}\n` +
-            (paymentRef ? `Employer payment ref: ${paymentRef}\n` : '') +
-            `Employer rating: ${stars}/5\n` +
-            (comment.trim() ? `Employer feedback: ${comment.trim()}\n` : '') +
-            `\nRelease the worker's payment to complete this job.`,
-          category: 'payment_due',
-        })
-        .catch(() => null)
-
+      contact.send({
+        name: orgName,
+        email: (emp?.email as string) || undefined,
+        phone: (emp?.phone as string) || undefined,
+        message:
+          `${orgName} confirmed the work is complete. Payment is now due to the worker.\n\n` +
+          `Worker: ${workerName || worker}${workerId ? ` (${workerId})` : ''}\n` +
+          `Task: ${task.taskType || '—'}\nLocation: ${task.location || '—'}\nDuration: ${task.duration || '—'}\n` +
+          `Worker is owed: GHS ${Number(task.pay || 0).toFixed(2)}\n` +
+          `Employer rating: ${stars}/5\n` +
+          (comment.trim() ? `Feedback: ${comment.trim()}\n` : '') +
+          `\nPlease release the worker's payment to complete this job.`,
+        category: 'payment_due',
+      }).catch(() => null)
       onDone(worker)
     } catch (e) {
       onError(e instanceof ApiError ? e.message : 'Please try again.')
@@ -1301,19 +1374,42 @@ function RateModal({ task, onClose, onDone, onError }: { task: Task; onClose: ()
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/50 p-4" onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby="rt-title" className="w-full max-w-md rounded-2xl bg-cream-50 p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <div className="mb-1 flex items-center justify-between">
-          <h2 id="rt-title" className="font-serif text-xl font-medium text-ink-900">Confirm work &amp; rate</h2>
-          <button onClick={onClose} aria-label="Close" className="rounded-lg p-1 text-ink-700 hover:bg-ink-900/5"><X size={18} aria-hidden="true" /></button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/60 p-4" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-labelledby="rt-title" className="w-full max-w-sm rounded-2xl bg-cream-50 shadow-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="bg-forest-700 px-6 py-5 text-center">
+          <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-cream-50/15">
+            <ShieldCheck size={22} aria-hidden="true" className="text-cream-50" />
+          </div>
+          <h2 id="rt-title" className="font-serif text-lg font-semibold text-cream-50">Confirm the work is done</h2>
+          <p className="mt-1 text-xs text-forest-200/80">{task.taskType}{task.location ? ` · ${task.location}` : ''}</p>
         </div>
-        <p className="mb-4 text-sm text-ink-700">Confirm the work is done and rate it. Once you confirm, BeyondX reviews and releases the payment we are holding to the worker.</p>
-        <StarPicker value={stars} onChange={setStars} />
-        <label htmlFor="rt-comment" className="sr-only">Feedback</label>
-        <textarea id="rt-comment" value={comment} onChange={(e) => setComment(e.target.value)} rows={3} placeholder="Feedback on the work (optional)" className="mt-4 w-full rounded-xl border border-ink-900/15 bg-white p-3 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/30" />
-        <button onClick={submit} disabled={busy} className="mt-4 w-full rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40">
-          {busy ? 'Confirming…' : 'Confirm work is done'}
-        </button>
+
+        <div className="p-6">
+          <p className="mb-4 text-sm leading-relaxed text-ink-700">
+            Once you confirm, BeyondX will release{' '}
+            <span className="font-semibold text-ink-900">{cedis(task.pay)}</span> to {worker}. This cannot be undone.
+          </p>
+
+          {/* Star rating */}
+          <div className="mb-1 text-xs font-semibold text-ink-700">How was the work?</div>
+          <StarPicker value={stars} onChange={setStars} />
+
+          <label htmlFor="rt-comment" className="sr-only">Optional feedback</label>
+          <textarea id="rt-comment" value={comment} onChange={(e) => setComment(e.target.value)} rows={2}
+            placeholder="Optional feedback for BeyondX (not shown publicly)"
+            className="mt-4 w-full rounded-xl border border-ink-900/12 bg-cream-100 p-3 text-sm text-ink-900 placeholder:text-ink-700/50 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/25" />
+
+          <div className="mt-4 flex gap-2">
+            <button onClick={onClose} className="flex-1 rounded-full border border-ink-900/15 px-4 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-900/5">
+              Not yet
+            </button>
+            <button onClick={submit} disabled={busy}
+              className="flex-1 rounded-full bg-forest-600 px-4 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
+              {busy ? 'Confirming…' : 'Yes, release payment'}
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   )
