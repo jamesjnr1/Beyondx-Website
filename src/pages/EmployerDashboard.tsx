@@ -68,11 +68,11 @@ function sortWorkersForTask(workers: Worker[], flags: TaskFlags): Worker[] {
 
 const STATUS: Record<string, { label: string; color: string; bar: string; note?: string; urgent?: boolean }> = {
   payment_pending:    { label: 'Verifying payment',   color: 'text-amber-700',   bar: 'bg-amber-400',  note: 'We received your payment details and are confirming the transaction. The worker will be notified once verified — usually within a few minutes.' },
-  offered:            { label: 'Worker notified',     color: 'text-ink-700',     bar: 'bg-ink-400',    note: 'The worker has been sent a job offer via SMS and is reviewing the details.' },
-  open:               { label: 'Finding a worker',    color: 'text-ink-500',     bar: 'bg-ink-300',    note: 'We are matching a worker to this job.' },
+  offered:            { label: 'Worker notified',     color: 'text-ink-700',     bar: 'bg-ink-900/30', note: 'The worker has been sent a job offer via SMS and is reviewing the details.' },
+  open:               { label: 'Finding a worker',    color: 'text-ink-500',     bar: 'bg-ink-900/20', note: 'We are matching a worker to this job.' },
   accepted:           { label: 'On the job',          color: 'text-forest-700',  bar: 'bg-forest-500', note: 'Work is underway. You will be notified when the worker marks it complete.' },
   pending_confirmation: { label: 'Action required',  color: 'text-amber-700',   bar: 'bg-amber-500',  note: 'The worker has marked the job as done. Confirm below to release their payment.', urgent: true },
-  employer_confirmed: { label: 'Payment processing', color: 'text-ink-600',     bar: 'bg-ink-400',    note: 'BeyondX is releasing the payment. This usually completes within a few hours.' },
+  employer_confirmed: { label: 'Payment processing', color: 'text-ink-600',     bar: 'bg-ink-900/30', note: 'BeyondX is releasing the payment. This usually completes within a few hours.' },
   completed:          { label: 'Complete',            color: 'text-forest-700',  bar: 'bg-forest-600', note: 'Payment has been released to the worker.' },
   payment_rejected:   { label: 'Payment not verified', color: 'text-red-600',   bar: 'bg-red-400',    note: 'We could not verify this payment. Please contact BeyondX to resolve.' },
 }
@@ -479,11 +479,8 @@ export default function EmployerDashboard() {
                 const isUrgent = t.status === 'pending_confirmation'
 
                 return (
-                  <div className={`relative overflow-hidden rounded-2xl bg-cream-50 shadow-sm ring-1 ring-ink-900/8 pl-1`}>
-                    {/* Left color bar */}
-                    <div className={`absolute inset-y-0 left-0 w-1 rounded-l-2xl ${s.bar}`} />
-
-                    <div className="p-5 pl-5">
+                  <div className={`rounded-2xl bg-cream-50 shadow-sm border border-ink-900/8`}>
+                    <div className="p-5">
                       {/* Header */}
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">

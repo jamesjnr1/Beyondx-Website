@@ -592,7 +592,7 @@ export default function WorkerDashboard() {
           {tab === 'support' ? null : loading ? <Skeleton /> : (
             <>
               {tab === 'available' && (available.length ? available.map((t) => (
-                <div key={t.id} className={`rounded-2xl bg-cream-50 shadow-sm ring-1 overflow-hidden ${t.status === 'offered' ? 'ring-forest-600/30' : 'ring-ink-900/8'}`}>
+                <div key={t.id} className={`rounded-2xl bg-cream-50 shadow-sm overflow-hidden border ${t.status === 'offered' ? 'border-forest-600/25' : 'border-ink-900/8'}`}>
                   {t.status === 'offered' && (
                     <div className="bg-forest-600 px-4 py-2 text-xs font-semibold text-cream-50 flex items-center gap-1.5">
                       <span className="flex h-1.5 w-1.5 rounded-full bg-cream-50 animate-pulse" />
