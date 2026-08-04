@@ -65,15 +65,15 @@ function sortWorkersForTask(workers: Worker[], flags: TaskFlags): Worker[] {
   return [...flagged, ...other]
 }
 
-const STATUS: Record<string, { label: string; dot: string; chip: string; note?: string; urgent?: boolean }> = {
-  payment_pending: { label: 'Verifying payment', dot: 'bg-amber-400', chip: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200', note: 'We received your payment details and are confirming the transaction. The worker will be notified once verified — usually within a few minutes.' },
-  offered:         { label: 'Worker notified', dot: 'bg-blue-400', chip: 'bg-blue-50 text-blue-700 ring-1 ring-blue-200', note: 'The worker has been sent a job offer via SMS and is reviewing the details.' },
-  open:            { label: 'Finding a worker', dot: 'bg-clay-400', chip: 'bg-clay-400/12 text-clay-700', note: 'We are matching a worker to this job.' },
-  accepted:        { label: 'Worker is on the job', dot: 'bg-forest-500', chip: 'bg-forest-600/10 text-forest-700 ring-1 ring-forest-600/20', note: 'Work is underway. You will be notified when the worker marks it complete.' },
-  pending_confirmation: { label: 'Ready to confirm', dot: 'bg-amber-500', chip: 'bg-amber-50 text-amber-800 ring-1 ring-amber-300', note: 'The worker has marked the job as done. Confirm below to release their payment through BeyondX.', urgent: true },
-  employer_confirmed: { label: 'Payment processing', dot: 'bg-ink-500', chip: 'bg-ink-900/8 text-ink-700', note: 'BeyondX is releasing the worker\'s payment. This usually completes within a few hours.' },
-  completed:       { label: 'Complete', dot: 'bg-forest-600', chip: 'bg-forest-600/12 text-forest-800 ring-1 ring-forest-600/20', note: 'Payment has been released to the worker. Thank you for using BeyondX.' },
-  payment_rejected: { label: 'Payment not verified', dot: 'bg-red-400', chip: 'bg-red-50 text-red-700 ring-1 ring-red-200', note: 'We could not verify this payment. Please contact BeyondX to resolve.' },
+const STATUS: Record<string, { label: string; color: string; bar: string; note?: string; urgent?: boolean }> = {
+  payment_pending:    { label: 'Verifying payment',   color: 'text-amber-700',   bar: 'bg-amber-400',  note: 'We received your payment details and are confirming the transaction. The worker will be notified once verified — usually within a few minutes.' },
+  offered:            { label: 'Worker notified',     color: 'text-ink-700',     bar: 'bg-ink-400',    note: 'The worker has been sent a job offer via SMS and is reviewing the details.' },
+  open:               { label: 'Finding a worker',    color: 'text-ink-500',     bar: 'bg-ink-300',    note: 'We are matching a worker to this job.' },
+  accepted:           { label: 'On the job',          color: 'text-forest-700',  bar: 'bg-forest-500', note: 'Work is underway. You will be notified when the worker marks it complete.' },
+  pending_confirmation: { label: 'Action required',  color: 'text-amber-700',   bar: 'bg-amber-500',  note: 'The worker has marked the job as done. Confirm below to release their payment.', urgent: true },
+  employer_confirmed: { label: 'Payment processing', color: 'text-ink-600',     bar: 'bg-ink-400',    note: 'BeyondX is releasing the payment. This usually completes within a few hours.' },
+  completed:          { label: 'Complete',            color: 'text-forest-700',  bar: 'bg-forest-600', note: 'Payment has been released to the worker.' },
+  payment_rejected:   { label: 'Payment not verified', color: 'text-red-600',   bar: 'bg-red-400',    note: 'We could not verify this payment. Please contact BeyondX to resolve.' },
 }
 const st = (s?: string) => STATUS[s || 'open'] || STATUS.open
 
@@ -226,16 +226,29 @@ export default function EmployerDashboard() {
           </div>
         )}
 
-        <div className="flex items-center gap-2 overflow-x-auto border-b border-ink-900/10 pb-px" role="tablist" aria-label="Employer sections">
-          {([['hire', 'Hire Workers'], ['post', 'Post a Task'], ['history', `My Jobs${taskList.filter(t => t.status === 'pending_confirmation').length > 0 ? ` · ${taskList.filter(t => t.status === 'pending_confirmation').length} need action` : taskList.length > 0 ? ` (${taskList.length})` : ''}`], ['support', 'Support']] as const).map(([id, label]) => (
-            <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
-              className={`shrink-0 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40 ${tab === id ? 'border-forest-600 text-forest-700' : 'border-transparent text-ink-700 hover:text-ink-900'}`}>
-              {label}
+        <div className="flex items-center justify-between border-b border-ink-900/10 pb-0">
+          {/* Page title on the left */}
+          <p className="text-xs font-semibold uppercase tracking-widest text-ink-700/40">
+            {tab === 'hire' ? 'Browse workers' : tab === 'post' ? 'Post a task' : tab === 'history' ? 'Jobs' : 'Help'}
+          </p>
+          {/* Tabs on the right */}
+          <div className="flex items-center gap-1" role="tablist" aria-label="Employer sections">
+            {([['hire', 'Hire Workers'], ['post', 'Post a Task'], ['history', (() => { const n = taskList.filter(t => t.status === 'pending_confirmation').length; return n > 0 ? `My Jobs (${n})` : 'My Jobs' })()], ['support', 'Support']] as const).map(([id, label]) => (
+              <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
+                className={`shrink-0 rounded-md px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40 ${tab === id ? 'bg-forest-600/10 text-forest-700' : 'text-ink-700/70 hover:text-ink-900 hover:bg-ink-900/4'}`}>
+                {label}
+                {id === 'history' && taskList.filter(t => t.status === 'pending_confirmation').length > 0 && (
+                  <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-white">
+                    {taskList.filter(t => t.status === 'pending_confirmation').length}
+                  </span>
+                )}
+              </button>
+            ))}
+            <button onClick={() => { setLoading(true); load() }} aria-label="Refresh"
+              className="ml-1 rounded-md p-2 text-ink-700/50 hover:bg-ink-900/5 hover:text-ink-700">
+              <RefreshCw size={13} aria-hidden="true" />
             </button>
-          ))}
-          <button onClick={() => { setLoading(true); load() }} aria-label="Refresh" className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full border border-ink-900/15 px-3 py-1.5 text-xs font-medium text-ink-700 hover:bg-ink-900/5">
-            <RefreshCw size={13} aria-hidden="true" /> Refresh
-          </button>
+          </div>
         </div>
 
         {tab === 'hire' && (
@@ -498,55 +511,48 @@ export default function EmployerDashboard() {
                 const isUrgent = t.status === 'pending_confirmation'
 
                 return (
-                  <div className={`rounded-2xl bg-cream-50 p-5 shadow-sm ring-1 ${isUrgent ? 'ring-amber-300' : 'ring-ink-900/8'}`}>
-                    {/* Header row */}
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-serif text-base font-semibold text-ink-900">{t.taskType || 'Task'}</span>
-                          <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${s.chip}`}>
-                            <span aria-hidden="true" className={`h-1.5 w-1.5 rounded-full ${s.dot}`} />
-                            {s.label}
-                          </span>
+                  <div className={`relative overflow-hidden rounded-2xl bg-cream-50 shadow-sm ring-1 ring-ink-900/8 pl-1`}>
+                    {/* Left color bar */}
+                    <div className={`absolute inset-y-0 left-0 w-1 rounded-l-2xl ${s.bar}`} />
+
+                    <div className="p-5 pl-5">
+                      {/* Header */}
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="font-serif text-base font-semibold text-ink-900">{t.taskType || 'Task'}</p>
+                          <p className="mt-0.5 text-sm text-ink-700">
+                            {workerName && <span className="font-medium text-ink-800">{workerName}</span>}
+                            {workerName && t.location ? ' · ' : ''}{t.location || ''}
+                            {t.duration ? ` · ${t.duration}` : ''}
+                          </p>
                         </div>
-                        <p className="mt-0.5 text-sm text-ink-700">
-                          {workerName && <span className="font-medium text-ink-800">{workerName}</span>}
-                          {workerName && t.location ? ' · ' : ''}
-                          {t.location || ''}
-                          {t.duration ? ` · ${t.duration}` : ''}
-                        </p>
+                        <div className="shrink-0 text-right">
+                          <p className={s.color + ' text-sm font-semibold'}>{s.label}</p>
+                          {rev && <div className="mt-1 flex items-center justify-end gap-1"><Stars n={Number(rev)} /></div>}
+                        </div>
                       </div>
-                      {rev && (
-                        <div className="flex items-center gap-1.5 text-xs text-ink-700">
-                          <span>Your rating:</span><Stars n={Number(rev)} />
+
+                      {/* Status note */}
+                      {s.note && !isUrgent && (
+                        <p className="mt-2.5 text-xs leading-relaxed text-ink-700/70">{s.note}</p>
+                      )}
+
+                      {/* Urgent confirm action */}
+                      {isUrgent && (
+                        <div className="mt-4 border-t border-amber-100 pt-4">
+                          <p className="text-sm text-ink-700">The worker has marked this job as complete.</p>
+                          <button
+                            onClick={() => setRating(t)}
+                            className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-forest-600 px-5 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40"
+                          >
+                            <ShieldCheck size={15} aria-hidden="true" /> Confirm work & release payment
+                          </button>
                         </div>
                       )}
+
+                      {/* Live location for accepted jobs */}
+                      {t.status === 'accepted' && <LiveLocation taskId={t.id} />}
                     </div>
-
-                    {/* Urgent confirm action */}
-                    {isUrgent && (
-                      <div className="mt-4 rounded-xl bg-amber-50 p-4 ring-1 ring-amber-200">
-                        <p className="text-sm font-medium text-amber-900">The worker has marked this job as complete.</p>
-                        <p className="mt-0.5 text-xs text-amber-700">Confirming releases their payment through BeyondX. You can also leave a rating.</p>
-                        <button
-                          onClick={() => setRating(t)}
-                          className="mt-3 flex w-full items-center justify-center gap-2 rounded-full bg-amber-600 px-5 py-2.5 text-sm font-semibold text-white transition-all hover:bg-amber-500 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50"
-                        >
-                          <ShieldCheck size={15} aria-hidden="true" /> Confirm work & release payment
-                        </button>
-                      </div>
-                    )}
-
-                    {/* Live location for active jobs */}
-                    {t.status === 'accepted' && <LiveLocation taskId={t.id} />}
-
-                    {/* Status note */}
-                    {s.note && !isUrgent && (
-                      <p className="mt-3 flex items-start gap-2 border-t border-ink-900/8 pt-3 text-xs leading-relaxed text-ink-700/80">
-                        <Info size={12} aria-hidden="true" className="mt-0.5 shrink-0 text-ink-700/50" />
-                        {s.note}
-                      </p>
-                    )}
                   </div>
                 )
               }
@@ -1151,28 +1157,16 @@ function DispatchModal({ worker, category, screening, dispatchQueue, onClose, on
           <h2 id="dp-title" className="font-serif text-xl font-medium text-ink-900">
             Book {wName(worker).split(' ')[0]}
             {screening && dispatchQueue && dispatchQueue.length > 1 && (
-              <span className="ml-2 rounded-full bg-forest-600/10 px-2 py-0.5 text-sm font-medium text-forest-700">
+              <span className="ml-2 text-sm font-normal text-ink-700/60">
                 {dispatchQueue.findIndex((w) => String(w.id) === String(worker.id)) + 1} of {dispatchQueue.length}
               </span>
             )}
           </h2>
           <button onClick={onClose} aria-label="Cancel" className="rounded-lg p-1 text-ink-700 hover:bg-ink-900/5"><X size={18} aria-hidden="true" /></button>
         </div>
-
-        {/* How it works — 3 clear steps */}
-        <ol className="mb-5 mt-3 flex gap-0 overflow-hidden rounded-xl border border-ink-900/10">
-          {[
-            ['1', 'Set details & pay', 'Fill in the job below and send payment via MoMo'],
-            ['2', 'We verify', 'BeyondX confirms your payment — takes a few minutes'],
-            ['3', 'Worker starts', 'Worker receives a job SMS and accepts the offer'],
-          ].map(([n, title, desc]) => (
-            <li key={n} className="flex-1 border-r border-ink-900/10 bg-cream-50 px-3 py-2.5 last:border-r-0">
-              <span className="block text-[10px] font-bold uppercase tracking-widest text-forest-600">{n}</span>
-              <span className="block text-[11px] font-semibold text-ink-900">{title}</span>
-              <span className="block text-[10px] leading-snug text-ink-700/70">{desc}</span>
-            </li>
-          ))}
-        </ol>
+        <p className="mb-5 mt-1 text-sm text-ink-700/70">
+          Fill in the job details, send payment via MoMo, and submit. BeyondX verifies the payment before notifying the worker.
+        </p>
 
         <div className="space-y-4">
           {/* Task type */}
@@ -1282,54 +1276,44 @@ function DispatchModal({ worker, category, screening, dispatchQueue, onClose, on
           )}
         </div>
 
-        {/* Price breakdown — prominent */}
-        <div className="mt-5 overflow-hidden rounded-2xl border border-ink-900/12">
-          <div className="bg-forest-700 px-5 py-4 text-center">
-            <p className="text-xs font-medium uppercase tracking-widest text-forest-200">Total to pay</p>
-            <p className="mt-1 font-serif text-4xl font-semibold text-cream-50">{cedis(pay)}</p>
-            <p className="mt-1 text-xs text-forest-200/80">
-              {cedis(workerGets)} to the worker · {cedis(fee)} BeyondX service fee
-            </p>
-          </div>
-          <div className="bg-cream-50 px-5 py-3 text-center text-[11px] text-ink-700/70">
-            {cat?.distancePricing
-              ? `${distanceKm} km delivery`
-              : `${cedis(baseRate)}/day × ${effectiveDays === 0.5 ? 'half day' : `${effectiveDays} day${effectiveDays === 1 ? '' : 's'}`}`}
+        {/* Price breakdown — prominent but clean */}
+        <div className="mt-5 rounded-2xl border border-ink-900/10 overflow-hidden">
+          <div className="bg-ink-900 px-5 py-4">
+            <div className="flex items-baseline justify-between">
+              <span className="text-sm font-medium text-cream-200/70">Total to pay BeyondX</span>
+              <span className="font-serif text-3xl font-semibold text-cream-50">{cedis(pay)}</span>
+            </div>
+            <div className="mt-1.5 flex items-center justify-between text-xs text-cream-200/50">
+              <span>{cedis(workerGets)} to worker + {cedis(fee)} service fee</span>
+              <span>{cat?.distancePricing ? `${distanceKm} km` : `${cedis(baseRate)}/day × ${effectiveDays}d`}</span>
+            </div>
           </div>
         </div>
 
-        {/* Pay via MoMo instruction */}
-        <div className="mt-4 rounded-xl bg-amber-50 px-4 py-3.5 ring-1 ring-amber-200">
-          <p className="text-sm font-semibold text-amber-900">Step 1 — Send {cedis(pay)} via mobile money</p>
-          <p className="mt-0.5 text-xs leading-relaxed text-amber-800">
-            Send to the BeyondX payment number provided by your account manager, or via the mobile money number on your invoice. Keep the transaction receipt.
-          </p>
-        </div>
-
-        <p className="mt-4 text-xs font-semibold uppercase tracking-widest text-ink-700/50">Step 2 — Confirm how you paid</p>
-
-        <div className="mt-2 grid grid-cols-3 gap-2" role="radiogroup" aria-label="Payment method">
-          {PAYMENT_METHODS.map((m) => (
-            <button key={m.id} type="button" role="radio" aria-checked={method === m.id} aria-label={m.alt} onClick={() => setMethod(m.id)}
-              className={`flex h-16 items-center justify-center rounded-xl border bg-white p-2 transition-all ${method === m.id ? 'border-forest-600 ring-2 ring-forest-600/30' : 'border-ink-900/15 hover:border-forest-500/50'}`}>
-              <img src={m.logo} alt={m.alt} className="max-h-9 w-auto object-contain" />
-            </button>
-          ))}
+        <div className="mt-4">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-ink-700/50">How did you pay?</p>
+          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Payment method">
+            {PAYMENT_METHODS.map((m) => (
+              <button key={m.id} type="button" role="radio" aria-checked={method === m.id} aria-label={m.alt} onClick={() => setMethod(m.id)}
+                className={`flex h-14 items-center justify-center rounded-xl border bg-white p-2 transition-all ${method === m.id ? 'border-ink-900 ring-2 ring-ink-900/20' : 'border-ink-900/12 hover:border-ink-900/30'}`}>
+                <img src={m.logo} alt={m.alt} className="max-h-8 w-auto object-contain" />
+              </button>
+            ))}
+          </div>
         </div>
 
         <label className="mt-3 block">
-          <span className="mb-1 block text-xs font-medium text-ink-700">Transaction / reference number</span>
+          <span className="mb-1 block text-xs font-semibold uppercase tracking-widest text-ink-700/50">Transaction reference</span>
           <input value={payRef} onChange={(e) => setPayRef(e.target.value)} placeholder="e.g. 1234567890"
-            className="w-full rounded-xl border border-ink-900/15 bg-white px-3 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/30" />
+            className="w-full rounded-xl border border-ink-900/15 bg-white px-3 py-2.5 text-sm text-ink-900 outline-none focus:border-ink-900 focus:ring-2 focus:ring-ink-900/10" />
         </label>
 
         <button onClick={submit} disabled={!payRef.trim() || !method || busy}
-          className="mt-5 flex w-full items-center justify-center gap-2 rounded-full bg-forest-600 px-6 py-3.5 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40">
-          <ShieldCheck size={16} aria-hidden="true" />
+          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-ink-900 px-6 py-3.5 text-sm font-semibold text-cream-50 transition-all hover:bg-ink-800 active:scale-[0.98] disabled:opacity-40 focus:outline-none focus-visible:ring-2 focus-visible:ring-ink-900/40">
           {busy ? 'Submitting…' : `Submit booking — ${cedis(pay)}`}
         </button>
-        <p className="mt-2 text-center text-[11px] text-ink-700/60">
-          Your worker is notified only after BeyondX verifies the payment — usually a few minutes.
+        <p className="mt-2 text-center text-[11px] text-ink-700/50">
+          Worker is contacted only after BeyondX confirms the payment.
         </p>
       </div>
     </div>

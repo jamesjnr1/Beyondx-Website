@@ -25,11 +25,8 @@ export default function DashboardHeader({
         <span aria-hidden="true" className="hidden h-6 w-px shrink-0 bg-ink-900/15 sm:block" />
         <h1 className="min-w-0 truncate font-serif text-base font-medium text-ink-900 sm:text-lg">{title}</h1>
 
-        {/* Right cluster, same line */}
+        {/* Right cluster */}
         <div className="ml-auto flex shrink-0 items-center gap-2 sm:gap-3">
-          <span className="hidden rounded-full bg-forest-600/10 px-3 py-1 text-xs font-semibold tracking-wide text-forest-700 lg:inline">
-            {role} · VERIFIED
-          </span>
           <Notifications role={role === 'WORKER' ? 'worker' : 'employer'} tasks={tasks} />
           {onEditProfile && (
             <button onClick={onEditProfile} aria-label="Edit your profile"

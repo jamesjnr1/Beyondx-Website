@@ -753,8 +753,8 @@ function vpCard(t){
       <div class="tr"><span class="tr-k">Payment ref</span><span class="tr-v" style="font-weight:600;color:var(--ink)">${anEsc(ref)}</span></div>
     </div>
     <div style="display:flex;gap:8px;margin-top:10px;">
-      <button class="btn-ps" style="flex:1;" onclick="verifyPayment('${t.id}','${w?.fullName||''}',${JSON.stringify(t).replace(/'/g,'\\'+'\'')})">
-        ✓ Confirm payment received — notify worker
+      <button class="btn-ps" style="flex:1;" data-task-id="${t.id}" onclick="verifyPaymentById(this)">
+        Confirm payment received — notify worker
       </button>
       <button onclick="rejectPayment('${t.id}')" style="padding:10px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--f);border:1.5px solid var(--b);background:transparent;color:var(--ink3);">
         ✗ Reject
@@ -763,6 +763,13 @@ function vpCard(t){
   </div>`;
 }
 
+async function verifyPaymentById(btn){
+  const taskId = btn.getAttribute('data-task-id');
+  const task = tasks.find(t => String(t.id) === String(taskId));
+  const w = task ? workers.find(x => String(x.id) === String(task.workerId)) : null;
+  const workerName = w?.fullName || task?.acceptedBy?.fullName || '';
+  await verifyPayment(taskId, workerName, task);
+}
 async function verifyPayment(taskId, workerName, taskData){
   if(!confirm('Confirm you have received payment for this task.\n\nThis will send the worker a detailed SMS and mark the task as offered.')) return;
   try{
