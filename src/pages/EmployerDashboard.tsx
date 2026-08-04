@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, Star, Send, Phone, Plus, X, ShieldCheck, CircleCheck, Info, RefreshCw, AlertCircle, Copy, Check } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Star, Send, Phone, Plus, X, ShieldCheck, CircleCheck, Info, RefreshCw, AlertCircle, Copy, Check, Award } from 'lucide-react'
 import DashboardHeader from './DashboardHeader'
 import ProfileModal from '../components/ProfileModal'
 import Toast, { type ToastMsg } from '../components/Toast'
@@ -951,6 +951,44 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch }: { worker:
                 </ul>
               </div>
             ) : null}
+
+            {/* Certifications — visible to employers, images link through */}
+            {(() => {
+              type Cert = { id: string; name: string; issuedBy: string; year: string; imageUrl?: string; verified?: boolean }
+              let certs: Cert[] = []
+              try {
+                const raw = worker.certifications
+                certs = Array.isArray(raw) ? raw as Cert[] : JSON.parse(String(raw || '[]'))
+              } catch { certs = [] }
+              if (!certs.length) return null
+              return (
+                <div>
+                  <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-widest text-clay-500">Qualifications & Certifications</h3>
+                  <ul className="space-y-2">
+                    {certs.map((c) => (
+                      <li key={c.id} className="flex items-start gap-2.5 rounded-xl border border-ink-900/10 bg-cream-50 px-3.5 py-3">
+                        <Award size={15} aria-hidden="true" className={`mt-0.5 shrink-0 ${c.verified ? 'text-forest-600' : 'text-ink-700/40'}`} />
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-sm font-medium text-ink-900">{c.name || '—'}</span>
+                          <span className="block text-[11px] text-ink-700/70">
+                            {[c.issuedBy, c.year].filter(Boolean).join(' · ')}
+                          </span>
+                          {c.imageUrl && (
+                            <a href={c.imageUrl} target="_blank" rel="noopener noreferrer"
+                              className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-forest-700 underline-offset-2 hover:underline">
+                              View certificate →
+                            </a>
+                          )}
+                        </span>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${c.verified ? 'bg-forest-600/10 text-forest-700' : 'bg-ink-900/6 text-ink-700/60'}`}>
+                          {c.verified ? '✓ Verified' : 'Declared'}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )
+            })()}
           </div>
         </div>
 

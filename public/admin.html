@@ -760,6 +760,9 @@ function rmForm(){
       <button type="button" onclick="quickBroadcast('profile')" style="padding:7px 14px;border-radius:8px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:var(--f);border:1.5px solid var(--b);background:transparent;color:var(--ink3);">
         👤 Ask workers to update profile
       </button>
+      <button type="button" onclick="quickBroadcast('experience')" style="padding:7px 14px;border-radius:8px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:var(--f);border:1.5px solid var(--b);background:transparent;color:var(--ink3);">
+        📋 Ask workers to add experience & certifications
+      </button>
     </div>
   </div>
   <div class="tc" style="margin-bottom:16px;">
@@ -866,6 +869,7 @@ function quickBroadcast(type){
   const messages={
     tools: `Hi! This is BeyondX. We need to update your profile.\n\nDo you bring your own tools to work (e.g. cleaning supplies, construction tools, or farming equipment)?\n\nPlease open your BeyondX Worker Dashboard at beyondxco.com, go to your profile, and tap Yes or No under "Do you have your own tools?"\n\nThis helps us match you to the right jobs and may increase your earnings. Thank you!`,
     profile: `Hi! This is BeyondX. Please take a moment to update your worker profile at beyondxco.com.\n\nYou can add your skills, update your photo, and let us know if you have your own tools. A complete profile helps employers find you and increases your chances of being dispatched. Thank you!`,
+    experience: `Hi! This is BeyondX. Did you know you can now add your work experience and certifications to your profile?\n\nVisit your Worker Dashboard at beyondxco.com and tap the "Work experience & certifications" section to:\n\n• Add past jobs and work history (photos are private to BeyondX)\n• Upload any certificates or qualifications you hold (visible to employers — boosts your profile!)\n\nWorkers with verified certifications get matched to better jobs. Thank you!`,
   };
   const msg=messages[type];
   if(!msg)return;

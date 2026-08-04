@@ -1,16 +1,321 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
-import { MapPin, Calendar, Check, X, Star, RotateCcw, Info, RefreshCw, AlertCircle, Wrench } from 'lucide-react'
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
+import { MapPin, Calendar, Check, X, Star, RotateCcw, Info, RefreshCw, AlertCircle, Wrench, Award, Briefcase, Camera, Plus, Trash2 } from 'lucide-react'
 import DashboardHeader from './DashboardHeader'
 import ReferralCard from '../components/ReferralCard'
 import ProfileModal, { type Profile } from '../components/ProfileModal'
 import Toast, { type ToastMsg } from '../components/Toast'
 import SupportPanel from '../components/SupportPanel'
 import LocationShare from '../components/LocationShare'
-import { tasks as tasksApi, workers as workersApi, contact, session, ApiError, type Task, type Worker } from '../lib/api'
+import { tasks as tasksApi, workers as workersApi, media, contact, session, ApiError, type Task, type Worker } from '../lib/api'
 import { isRemote } from '../data'
 
 // ---------------------------------------------------------------------------
-// Tools Status Card
+// Work Experience & Certifications Card
+//
+// TWO SEPARATE SECTIONS on a single card:
+//
+//   A. Work Experience — text entries (role, employer, duration) + optional
+//      photo. Photos go into worker-experience/ in Supabase storage and are
+//      PRIVATE to BeyondX: the URL is stored on the worker record but the
+//      employer-facing profile never renders it. BeyondX team can view it
+//      during manual vetting.
+//
+//   B. Certifications — structured (name, issuing body, year) + optional
+//      certificate image stored in worker-certs/. Certifications ARE shown
+//      to employers: a "Certified" chip on the worker's profile and a count
+//      on their card in the hire flow. Verified by BeyondX before the chip
+//      goes green; defaults to "Declared" until BeyondX marks it verified.
+//
+// Both are stored as JSON strings in worker fields: experienceEntries and
+// certifications. The PATCH goes through the existing /api/workers/me
+// endpoint — if Railway ignores unknown fields, entries are preserved on the
+// frontend session until the backend supports them.
+// ---------------------------------------------------------------------------
+
+type ExperienceEntry = {
+  id: string
+  role: string
+  employer: string
+  duration: string
+  photoUrl?: string            // private — not rendered in employer view
+}
+
+type Certification = {
+  id: string
+  name: string
+  issuedBy: string
+  year: string
+  imageUrl?: string            // public — shown to employers as evidence
+  verified?: boolean           // BeyondX sets this; false = "Declared", true = "Verified"
+}
+
+function parseJSON<T>(raw: unknown, fallback: T): T {
+  if (Array.isArray(raw)) return raw as unknown as T
+  try { return JSON.parse(String(raw)) } catch { return fallback }
+}
+
+function FileUploadButton({
+  onUploaded,
+  folder,
+  fileName,
+  label = 'Attach photo',
+}: {
+  onUploaded: (url: string) => void
+  folder: string
+  fileName: string
+  label?: string
+}) {
+  const ref = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+
+  const pick = async (e: ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0]
+    e.target.value = ''
+    if (!f) return
+    if (!['image/png', 'image/jpeg', 'image/jpg', 'image/webp'].includes(f.type)) {
+      setErr('Choose a PNG, JPG or WebP.'); return
+    }
+    if (f.size > 8 * 1024 * 1024) { setErr('Max 8MB.'); return }
+    setErr(null); setUploading(true)
+    try {
+      const base64: string = await new Promise((res, rej) => {
+        const r = new FileReader()
+        r.onload = () => res(String(r.result))
+        r.onerror = () => rej(new Error('Read error'))
+        r.readAsDataURL(f)
+      })
+      const result = await media.upload(base64, fileName, folder)
+      onUploaded(result.url)
+    } catch { setErr('Upload failed — try again.') }
+    finally { setUploading(false) }
+  }
+
+  return (
+    <div>
+      <button type="button" onClick={() => ref.current?.click()}
+        className="inline-flex items-center gap-1.5 rounded-lg border border-ink-900/15 px-3 py-1.5 text-xs font-medium text-ink-700 hover:bg-ink-900/5">
+        <Camera size={13} aria-hidden="true" /> {uploading ? 'Uploading…' : label}
+      </button>
+      <input ref={ref} type="file" accept="image/png,image/jpeg,image/webp" onChange={pick} className="sr-only" />
+      {err && <p className="mt-1 text-[11px] text-red-700">{err}</p>}
+    </div>
+  )
+}
+
+function WorkExperienceCard({
+  worker,
+  onSaved,
+}: {
+  worker: Worker | null
+  onSaved: (patch: Record<string, unknown>) => void
+}) {
+  const workerId = (worker?.workerId as string) || 'worker'
+  const [expEntries, setExpEntries] = useState<ExperienceEntry[]>(() =>
+    parseJSON<ExperienceEntry[]>(worker?.experienceEntries, [])
+  )
+  const [certs, setCerts] = useState<Certification[]>(() =>
+    parseJSON<Certification[]>(worker?.certifications, [])
+  )
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [tab, setTab] = useState<'exp' | 'certs'>('exp')
+
+  useEffect(() => {
+    setExpEntries(parseJSON<ExperienceEntry[]>(worker?.experienceEntries, []))
+    setCerts(parseJSON<Certification[]>(worker?.certifications, []))
+  }, [worker?.experienceEntries, worker?.certifications])
+
+  const addExp = () =>
+    setExpEntries((prev) => [...prev, { id: Date.now().toString(), role: '', employer: '', duration: '' }])
+
+  const updateExp = (id: string, field: keyof ExperienceEntry, val: string) =>
+    setExpEntries((prev) => prev.map((e) => e.id === id ? { ...e, [field]: val } : e))
+
+  const removeExp = (id: string) => setExpEntries((prev) => prev.filter((e) => e.id !== id))
+
+  const addCert = () =>
+    setCerts((prev) => [...prev, { id: Date.now().toString(), name: '', issuedBy: '', year: '', verified: false }])
+
+  const updateCert = (id: string, field: keyof Certification, val: string | boolean) =>
+    setCerts((prev) => prev.map((c) => c.id === id ? { ...c, [field]: val } : c))
+
+  const removeCert = (id: string) => setCerts((prev) => prev.filter((c) => c.id !== id))
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      const patch = {
+        experienceEntries: JSON.stringify(expEntries),
+        certifications: JSON.stringify(certs),
+      }
+      await workersApi.updateMe(patch)
+      onSaved(patch)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2500)
+    } catch { /* parent handles errors */ }
+    finally { setSaving(false) }
+  }
+
+  const inp = 'w-full rounded-lg border border-ink-900/12 bg-white px-3 py-2 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/20'
+
+  return (
+    <div className="mt-4 rounded-2xl border border-ink-900/8 bg-cream-50 shadow-sm">
+      {/* Header */}
+      <div className="flex items-center gap-3 border-b border-ink-900/8 px-5 py-4">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-forest-600/10 text-forest-600">
+          <Briefcase size={17} aria-hidden="true" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-serif text-base font-medium text-ink-900">Work experience & certifications</p>
+          <p className="mt-0.5 text-xs leading-snug text-ink-700/70">
+            Experience photos are private — only BeyondX sees them. Certifications are visible to employers and boost your profile.
+          </p>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="flex border-b border-ink-900/8">
+        {([['exp', 'Experience', Briefcase], ['certs', 'Certifications', Award]] as const).map(([id, label, Icon]) => (
+          <button key={id} onClick={() => setTab(id)}
+            className={`relative flex flex-1 items-center justify-center gap-2 py-3 text-sm font-medium transition-colors focus:outline-none ${tab === id ? 'text-forest-700' : 'text-ink-700/60 hover:text-ink-900'}`}>
+            <Icon size={14} aria-hidden="true" />
+            {label}
+            {tab === id && <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-forest-600" />}
+          </button>
+        ))}
+      </div>
+
+      <div className="px-5 py-4">
+        {/* ── Experience ── */}
+        {tab === 'exp' && (
+          <div className="space-y-4">
+            {expEntries.length === 0 && (
+              <p className="text-center text-sm text-ink-700/60 py-4">
+                No experience added yet. Add your past work to help BeyondX match you better.
+              </p>
+            )}
+            {expEntries.map((e) => (
+              <div key={e.id} className="rounded-xl border border-ink-900/10 bg-cream-100/60 p-4 space-y-3">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-ink-700/50">Role / Job title</label>
+                    <input value={e.role} onChange={(ev) => updateExp(e.id, 'role', ev.target.value)}
+                      placeholder="e.g. Farm labourer" className={inp} />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-ink-700/50">Employer / Location</label>
+                    <input value={e.employer} onChange={(ev) => updateExp(e.id, 'employer', ev.target.value)}
+                      placeholder="e.g. Kofi Farms, Tema" className={inp} />
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-ink-700/50">How long</label>
+                  <input value={e.duration} onChange={(ev) => updateExp(e.id, 'duration', ev.target.value)}
+                    placeholder="e.g. 6 months (2023)" className={inp} />
+                </div>
+                <div className="flex items-center justify-between gap-3 pt-1">
+                  <div>
+                    <FileUploadButton
+                      folder="worker-experience"
+                      fileName={`${workerId}-exp-${e.id}`}
+                      label={e.photoUrl ? '📎 Photo attached' : 'Attach photo (private)'}
+                      onUploaded={(url) => updateExp(e.id, 'photoUrl', url)}
+                    />
+                    {e.photoUrl && (
+                      <p className="mt-1 text-[11px] text-forest-700">✓ Photo saved — visible only to BeyondX</p>
+                    )}
+                  </div>
+                  <button onClick={() => removeExp(e.id)} aria-label="Remove entry"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-700/40 hover:bg-red-50 hover:text-red-600">
+                    <Trash2 size={14} aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            ))}
+            <button onClick={addExp}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-ink-900/15 py-3 text-sm font-medium text-ink-700/60 hover:border-forest-600/40 hover:text-forest-700 transition-colors">
+              <Plus size={16} aria-hidden="true" /> Add experience
+            </button>
+          </div>
+        )}
+
+        {/* ── Certifications ── */}
+        {tab === 'certs' && (
+          <div className="space-y-4">
+            {certs.length === 0 && (
+              <p className="text-center text-sm text-ink-700/60 py-4">
+                No certifications yet. Add any training, certificates or qualifications you hold.
+              </p>
+            )}
+            {certs.map((c) => (
+              <div key={c.id} className="rounded-xl border border-ink-900/10 bg-cream-100/60 p-4 space-y-3">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-ink-700/50">Certification name</label>
+                    <input value={c.name} onChange={(ev) => updateCert(c.id, 'name', ev.target.value)}
+                      placeholder="e.g. Pesticide Safety Certificate" className={inp} />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-ink-700/50">Issued by</label>
+                    <input value={c.issuedBy} onChange={(ev) => updateCert(c.id, 'issuedBy', ev.target.value)}
+                      placeholder="e.g. Ghana EPA" className={inp} />
+                  </div>
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-ink-700/50">Year obtained</label>
+                  <input value={c.year} onChange={(ev) => updateCert(c.id, 'year', ev.target.value)}
+                    placeholder="e.g. 2022" className={inp} style={{ maxWidth: 120 }} />
+                </div>
+                <div className="flex items-center justify-between gap-3 pt-1">
+                  <div>
+                    <FileUploadButton
+                      folder="worker-certs"
+                      fileName={`${workerId}-cert-${c.id}`}
+                      label={c.imageUrl ? '📎 Certificate attached' : 'Attach certificate image'}
+                      onUploaded={(url) => updateCert(c.id, 'imageUrl', url)}
+                    />
+                    {c.imageUrl && (
+                      <p className="mt-1 text-[11px] text-forest-700">
+                        ✓ Image attached — will show on your employer-visible profile once BeyondX reviews it
+                      </p>
+                    )}
+                    <div className="mt-2 flex items-center gap-1.5">
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${c.verified ? 'bg-forest-600/10 text-forest-700' : 'bg-ink-900/8 text-ink-700/70'}`}>
+                        {c.verified ? '✓ BeyondX Verified' : 'Declared — pending BeyondX review'}
+                      </span>
+                    </div>
+                  </div>
+                  <button onClick={() => removeCert(c.id)} aria-label="Remove certification"
+                    className="flex h-8 w-8 items-center justify-center rounded-lg text-ink-700/40 hover:bg-red-50 hover:text-red-600">
+                    <Trash2 size={14} aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+            ))}
+            <button onClick={addCert}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-ink-900/15 py-3 text-sm font-medium text-ink-700/60 hover:border-forest-600/40 hover:text-forest-700 transition-colors">
+              <Plus size={16} aria-hidden="true" /> Add certification
+            </button>
+          </div>
+        )}
+
+        {/* Save bar */}
+        <div className="mt-5 flex items-center justify-between border-t border-ink-900/8 pt-4">
+          <p className="text-xs text-ink-700/60">
+            {tab === 'exp' ? 'Your photos are private — employers only see text.' : 'Certifications show as badges on your employer profile after BeyondX review.'}
+          </p>
+          <button onClick={save} disabled={saving}
+            className="rounded-full bg-forest-600 px-5 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
+            {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+
 // Lets a worker declare which skill categories they have their own tools for.
 // Employers see a "Has tools" badge on their profile, and it feeds the tool
 // modifier pricing in the dispatch modal. Workers are asked to fill this in
@@ -313,6 +618,8 @@ export default function WorkerDashboard() {
         <ReferralCard code={(me?.workerId as string) || 'BX-—'} referrals={0} />
 
         <ToolsStatusCard worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
+
+        <WorkExperienceCard worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
 
         <div className="mt-8 flex items-center gap-2 overflow-x-auto border-b border-ink-900/10 pb-px" role="tablist" aria-label="Worker sections">
           {tabs.map((t) => (
