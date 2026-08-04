@@ -270,6 +270,7 @@ export const tasks = {
       duration: args.duration,
       pay: args.pay,
       workerId: args.worker.id,
+      status: 'payment_pending',
     },
   }),
 

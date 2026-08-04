@@ -584,7 +584,7 @@ function rs(id){
   const m={active:'accepted',open:'open',completed:'completed',verify:'payment_pending'};
   const ids={payouts:'pl',active:'al',open:'ol',completed:'cl',all:'xl',verify:'vl'};
   if(id==='verify'){
-    const pp=tasks.filter(t=>t.status==='payment_pending');
+    const pp=tasks.filter(t=>t.status==='payment_pending'||(t.description&&t.description.includes('Payment Ref')&&['open','offered'].includes(t.status)));
     const vpc=document.getElementById('vpCount'); if(vpc) vpc.textContent=pp.length?' '+pp.length+' pending':'All clear';
     document.getElementById('vl').innerHTML=pp.length?pp.map(vpCard).join(''):`<div class="empty">No payments awaiting verification &mdash; all clear</div>`;
   }
@@ -728,7 +728,7 @@ function re(){
 function eSearchInput(){etShown=20;re();}
 
 function checkVerifyBadge(){
-  const n=tasks.filter(t=>t.status==='payment_pending').length;
+  const n=tasks.filter(t=>t.status==='payment_pending'||(t.description&&t.description.includes('Payment Ref')&&['open','offered'].includes(t.status))).length;
   const b=document.getElementById('verifyBadge');
   if(!b)return;
   if(n>0){b.textContent=n;b.style.display='';}else{b.style.display='none';}
@@ -737,7 +737,9 @@ function checkVerifyBadge(){
 function vpCard(t){
   const w=workers.find(x=>String(x.id)===String(t.workerId));
   const wp=(parseFloat(t.pay)||0).toFixed(2);
-  const ref=t.paymentRef||'—';
+  // paymentRef may be in the paymentRef field or embedded in description
+  const descRef=(t.description||'').match(/Payment Ref:\s*(.+?)$/i)?.[1]?.trim();
+  const ref=t.paymentRef||descRef||'—';
   return`<div class="tsk">
     <div class="tsk-tp">
       <div>
