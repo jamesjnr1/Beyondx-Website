@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
-import { MapPin, Calendar, Check, X, Star, RotateCcw, Info, RefreshCw, AlertCircle, Wrench, Award, Briefcase, Camera, Plus, Trash2 } from 'lucide-react'
+import { MapPin, Calendar, Check, X, Star, RotateCcw, Info, RefreshCw, AlertCircle, Wrench, Award, Briefcase, Camera, Plus, Trash2, Phone, Building2, AlertTriangle } from 'lucide-react'
 import DashboardHeader from './DashboardHeader'
 import ReferralCard from '../components/ReferralCard'
 import ProfileModal, { type Profile } from '../components/ProfileModal'
@@ -219,11 +219,11 @@ function WorkExperienceCard({
                     <FileUploadButton
                       folder="worker-experience"
                       fileName={`${workerId}-exp-${e.id}`}
-                      label={e.photoUrl ? '📎 Photo attached' : 'Attach photo (private)'}
+                      label={e.photoUrl ? 'Photo attached' : 'Attach photo (private)'}
                       onUploaded={(url) => updateExp(e.id, 'photoUrl', url)}
                     />
                     {e.photoUrl && (
-                      <p className="mt-1 text-[11px] text-forest-700">✓ Photo saved — visible only to BeyondX</p>
+                      <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-forest-700"><Check size={11} aria-hidden="true" /> Photo saved — visible only to BeyondX</p>
                     )}
                   </div>
                   <button onClick={() => removeExp(e.id)} aria-label="Remove entry"
@@ -272,17 +272,17 @@ function WorkExperienceCard({
                     <FileUploadButton
                       folder="worker-certs"
                       fileName={`${workerId}-cert-${c.id}`}
-                      label={c.imageUrl ? '📎 Certificate attached' : 'Attach certificate image'}
+                      label={c.imageUrl ? 'Certificate attached' : 'Attach certificate image'}
                       onUploaded={(url) => updateCert(c.id, 'imageUrl', url)}
                     />
                     {c.imageUrl && (
                       <p className="mt-1 text-[11px] text-forest-700">
-                        ✓ Image attached — will show on your employer-visible profile once BeyondX reviews it
+                        <span className="flex items-center gap-1"><Check size={11} aria-hidden="true" /> Image attached — shown to employers after BeyondX review</span>
                       </p>
                     )}
                     <div className="mt-2 flex items-center gap-1.5">
                       <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${c.verified ? 'bg-forest-600/10 text-forest-700' : 'bg-ink-900/8 text-ink-700/70'}`}>
-                        {c.verified ? '✓ BeyondX Verified' : 'Declared — pending BeyondX review'}
+                        {c.verified ? 'BeyondX Verified' : 'Declared — pending review'}
                       </span>
                     </div>
                   </div>
@@ -307,7 +307,7 @@ function WorkExperienceCard({
           </p>
           <button onClick={save} disabled={saving}
             className="rounded-full bg-forest-600 px-5 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
-            {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save'}
+            {saving ? 'Saving…' : saved ? 'Saved' : 'Save'}
           </button>
         </div>
       </div>
@@ -336,16 +336,22 @@ function ToolsStatusCard({ worker, onSaved }: { worker: Worker | null; onSaved: 
 
   if (mySkills.length === 0) return null   // only show if relevant to their skills
 
+  const [saveErr, setSaveErr] = useState<string | null>(null)
+
   const save = async () => {
     setSaving(true)
+    setSaveErr(null)
     try {
       const patch = { hasTools }
       await workersApi.updateMe(patch)
       onSaved(patch)
       setSaved(true)
       setTimeout(() => setSaved(false), 2500)
-    } catch { /* toast is handled by parent if needed */ }
-    finally { setSaving(false) }
+    } catch (e) {
+      setSaveErr(e instanceof Error ? e.message : 'Could not save. Please try again.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -372,7 +378,7 @@ function ToolsStatusCard({ worker, onSaved }: { worker: Worker | null; onSaved: 
                     : 'border-ink-900/15 text-ink-700 hover:border-forest-500/40'
                 }`}
               >
-                ✓ Yes, I bring my own tools
+                Yes, I have tools
               </button>
               <button
                 type="button"
@@ -383,7 +389,7 @@ function ToolsStatusCard({ worker, onSaved }: { worker: Worker | null; onSaved: 
                     : 'border-ink-900/15 text-ink-700 hover:border-ink-900/30'
                 }`}
               >
-                ✗ No, employer provides
+                No, employer provides
               </button>
             </div>
             <button
@@ -392,13 +398,18 @@ function ToolsStatusCard({ worker, onSaved }: { worker: Worker | null; onSaved: 
               disabled={saving}
               className="rounded-full bg-forest-600 px-5 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60 sm:ml-auto"
             >
-              {saving ? 'Saving…' : saved ? '✓ Saved' : 'Save'}
+              {saving ? 'Saving…' : saved ? 'Saved' : 'Save'}
             </button>
           </div>
 
           {saved && (
-            <p className="mt-2 text-xs text-forest-700">
-              Updated — employers searching for workers with tools will now see this on your profile.
+            <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-forest-700">
+              <Check size={13} aria-hidden="true" /> Saved — employers can now see your tool availability.
+            </p>
+          )}
+          {saveErr && (
+            <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-red-700">
+              <AlertCircle size={13} aria-hidden="true" /> {saveErr}
             </p>
           )}
         </div>
@@ -453,19 +464,41 @@ function Empty({ text }: { text: string }) {
 }
 
 function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
+  const empPhone = typeof task.employer === 'object' ? (task.employer as Record<string, unknown>)?.phone as string | undefined : undefined
+  const empContact = typeof task.employer === 'object' ? (task.employer as Record<string, unknown>)?.contactPerson as string | undefined : undefined
+
   return (
-    <div className="flex flex-col gap-4 rounded-xl bg-cream-50 p-4 shadow-sm ring-1 ring-ink-900/5 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+    <div className="flex flex-col gap-4 rounded-xl bg-cream-50 p-4 shadow-sm ring-1 ring-ink-900/5 sm:p-5">
       <div className="min-w-0">
         <span className="mb-1 inline-block rounded-full bg-forest-600/10 px-2.5 py-0.5 text-xs font-medium text-forest-700">
           {task.taskType || 'Task'}
         </span>
-        <h3 className="font-serif text-lg font-medium text-ink-900">{task.description || task.taskType || 'Task'}</h3>
-        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-700">
+        {/* Job description — shown when the employer has added one */}
+        {task.description && task.description !== task.taskType && (
+          <p className="mt-1 text-sm leading-relaxed text-ink-800">{task.description}</p>
+        )}
+        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-700">
           {task.location && <span className="inline-flex items-center gap-1"><MapPin size={14} aria-hidden="true" /> {task.location}</span>}
           {task.duration && <span className="inline-flex items-center gap-1"><Calendar size={14} aria-hidden="true" /> {task.duration}</span>}
           <span className="font-semibold text-ink-900">{cedis(task.pay)}</span>
         </div>
-        <p className="mt-1 text-xs text-ink-700">Employer · <span className="font-medium text-ink-900">{employerName(task)}</span></p>
+        {/* Employer info — name, contact person, phone for clarifications */}
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-ink-900/6 pt-2 text-xs text-ink-700">
+          <span className="inline-flex items-center gap-1">
+            <Building2 size={13} aria-hidden="true" />
+            <span className="font-medium text-ink-900">{employerName(task)}</span>
+          </span>
+          {empContact && (
+            <span className="inline-flex items-center gap-1">
+              {empContact}
+            </span>
+          )}
+          {empPhone && (
+            <a href={`tel:${empPhone}`} className="inline-flex items-center gap-1 text-forest-700 hover:underline">
+              <Phone size={13} aria-hidden="true" /> {empPhone}
+            </a>
+          )}
+        </div>
       </div>
       {children && <div className="flex shrink-0 gap-2">{children}</div>}
     </div>
@@ -554,13 +587,35 @@ export default function WorkerDashboard() {
       `${employerName(t)} will confirm, then BeyondX releases your payment.`,
     )
 
+  const [confirmDeclineTask, setConfirmDeclineTask] = useState<Task | null>(null)
+
   const declineOffer = async (t: Task) => {
+    // Show the "are you sure?" modal first — set to null to close
+    setConfirmDeclineTask(t)
+  }
+
+  const doDecline = async (t: Task) => {
+    setConfirmDeclineTask(null)
     if (busyId) return
     setBusyId(t.id)
     try {
       await tasksApi.declineOffer(t.id)
       setDeclined((d) => [t, ...d])
-      setToast({ id: Date.now(), kind: 'info', title: 'Offer declined', detail: 'It has moved to your Declined tab for this session.' })
+      setToast({ id: Date.now(), kind: 'info', title: 'Offer declined', detail: 'The employer has been notified and will decide whether to reassign or request a refund.' })
+      // Notify BeyondX immediately so the team can contact the employer
+      const emp = employerName(t)
+      contact.send({
+        name: displayName,
+        phone: (me?.phone as string) || undefined,
+        message:
+          `Worker ${displayName} (${(me?.workerId as string) || '—'}) DECLINED a task offer.\n\n` +
+          `Task: ${t.taskType || '—'}\n` +
+          `Location: ${t.location || '—'}\n` +
+          `Employer: ${emp}\n` +
+          `Amount: GHS ${Number(t.pay || 0).toFixed(2)}\n\n` +
+          `Action needed: Contact the employer to ask whether they want a replacement worker or a refund of their payment.`,
+        category: 'task_declined',
+      }).catch(() => null)
       await load()
     } catch (e) {
       setToast({ id: Date.now(), kind: 'info', title: 'That did not go through', detail: e instanceof ApiError ? e.message : 'Please try again.' })
@@ -730,6 +785,37 @@ export default function WorkerDashboard() {
       </main>
 
       <Toast toast={toast} onClose={() => setToast(null)} />
+
+      {confirmDeclineTask && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/60 p-4">
+          <div role="dialog" aria-modal="true" className="w-full max-w-sm rounded-2xl bg-cream-50 p-6 shadow-xl">
+            <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
+              <AlertTriangle size={22} aria-hidden="true" className="text-red-600" />
+            </div>
+            <h2 className="font-serif text-lg font-medium text-ink-900">Decline this offer?</h2>
+            <p className="mt-2 text-sm leading-relaxed text-ink-700">
+              You're about to decline the <span className="font-semibold">{confirmDeclineTask.taskType}</span> offer
+              {confirmDeclineTask.location ? ` in ${confirmDeclineTask.location}` : ''}. 
+              This cannot be undone — the offer will be closed and the employer will be notified immediately.
+            </p>
+            <div className="mt-5 flex gap-3">
+              <button
+                onClick={() => setConfirmDeclineTask(null)}
+                className="flex-1 rounded-full border border-ink-900/15 px-4 py-2.5 text-sm font-medium text-ink-800 hover:bg-ink-900/5"
+              >
+                Keep offer
+              </button>
+              <button
+                onClick={() => doDecline(confirmDeclineTask)}
+                disabled={busyId === confirmDeclineTask.id}
+                className="flex-1 rounded-full bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-60"
+              >
+                {busyId === confirmDeclineTask.id ? 'Declining…' : 'Yes, decline'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {editing && (
         <ProfileModal

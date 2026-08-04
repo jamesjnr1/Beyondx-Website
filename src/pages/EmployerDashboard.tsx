@@ -723,7 +723,7 @@ function TaskScreening({
       <div className="mt-6">
         <div className={`rounded-2xl p-6 text-center ring-2 ${highRisk ? 'bg-clay-400/8 ring-clay-400/40' : 'bg-forest-600/8 ring-forest-600/30'}`}>
           <div className={`mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full text-2xl ${highRisk ? 'bg-clay-400/20' : 'bg-forest-600/15'}`}>
-            {highRisk ? '⚠️' : '✅'}
+            {highRisk ? <AlertCircle size={22} aria-hidden="true" /> : <ShieldCheck size={22} aria-hidden="true" />}
           </div>
           <p className={`font-serif text-xl font-medium ${highRisk ? 'text-clay-800' : 'text-forest-900'}`}>
             {highRisk ? 'Restricted task' : 'Open to all workers'}
@@ -782,12 +782,12 @@ function TaskScreening({
             <div className="mt-5 grid grid-cols-2 gap-3">
               <button onClick={() => current.type === 'risk' ? answerRisk(current.key, true) : answerToolsNeeded(true)}
                 className="flex flex-col items-center gap-1 rounded-xl border-2 border-clay-400/30 bg-clay-400/8 px-4 py-4 text-center font-semibold text-clay-700 transition-all hover:border-clay-500/60 hover:bg-clay-400/15 active:scale-[0.97]">
-                <span className="text-xl">✓ Yes</span>
+                <span className="text-base font-semibold">Yes</span>
                 <span className="text-xs font-normal text-clay-600/80">This applies</span>
               </button>
               <button onClick={() => current.type === 'risk' ? answerRisk(current.key, false) : answerToolsNeeded(false)}
                 className="flex flex-col items-center gap-1 rounded-xl border-2 border-forest-600/30 bg-forest-600/8 px-4 py-4 text-center font-semibold text-forest-700 transition-all hover:border-forest-600/60 hover:bg-forest-600/15 active:scale-[0.97]">
-                <span className="text-xl">✗ No</span>
+                <span className="text-base font-semibold">No</span>
                 <span className="text-xs font-normal text-forest-600/80">Doesn't apply</span>
               </button>
             </div>
@@ -982,7 +982,7 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch }: { worker:
                           )}
                         </span>
                         <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${c.verified ? 'bg-forest-600/10 text-forest-700' : 'bg-ink-900/6 text-ink-700/60'}`}>
-                          {c.verified ? '✓ Verified' : 'Declared'}
+                          {c.verified ? 'Verified' : 'Declared'}
                         </span>
                       </li>
                     ))}
@@ -1093,7 +1093,7 @@ function DispatchModal({ worker, category, screening, dispatchQueue, onClose, on
         <p className="mb-4 text-sm text-ink-700">
           Send your payment via mobile money first, then enter the reference number below.
           <span className="mt-1.5 block rounded-lg bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 ring-1 ring-amber-200">
-            BeyondX will verify your payment before the worker is notified. This usually takes a few hours on business days.
+            BeyondX will verify your payment before the worker is notified. This usually takes a few minutes during business hours.
           </span>
         </p>
 
