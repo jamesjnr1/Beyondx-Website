@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
-import { MapPin, Calendar, Check, Star, RotateCcw, Info, RefreshCw, AlertCircle, Wrench, Award, Briefcase, Camera, Plus, Trash2, Phone, Building2, AlertTriangle } from 'lucide-react'
+import { MapPin, Calendar, Check, Star, RotateCcw, Info, RefreshCw, AlertCircle, Award, Briefcase, Camera, Plus, Trash2, Phone, Building2, AlertTriangle } from 'lucide-react'
 import DashboardHeader from './DashboardHeader'
 import ReferralCard from '../components/ReferralCard'
 import ProfileModal, { type Profile } from '../components/ProfileModal'
@@ -327,18 +327,21 @@ function ToolsStatusCard({ worker, onSaved }: { worker: Worker | null; onSaved: 
   const mySkills = (Array.isArray(worker?.skills) ? worker!.skills as string[] : [])
     .filter((s) => TOOL_RELEVANT.includes(s))
 
-  const [hasTools, setHasTools] = useState<boolean>(Boolean(worker?.hasTools))
+  const savedValue = Boolean(worker?.hasTools)
+  const [hasTools, setHasTools] = useState<boolean>(savedValue)
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [saveErr, setSaveErr] = useState<string | null>(null)
 
   // Keep in sync if worker loads after initial render
   useEffect(() => { setHasTools(Boolean(worker?.hasTools)) }, [worker?.hasTools])
 
-  if (mySkills.length === 0) return null   // only show if relevant to their skills
+  if (mySkills.length === 0) return null
 
-  const [saveErr, setSaveErr] = useState<string | null>(null)
+  const dirty = hasTools !== savedValue
 
   const save = async () => {
+    if (!dirty || saving) return
     setSaving(true)
     setSaveErr(null)
     try {
@@ -355,65 +358,59 @@ function ToolsStatusCard({ worker, onSaved }: { worker: Worker | null; onSaved: 
   }
 
   return (
-    <div className="mt-4 rounded-2xl border border-ink-900/8 bg-cream-50 p-4 shadow-sm sm:p-5">
-      <div className="flex items-start gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-forest-600/10 text-forest-600">
-          <Wrench size={17} aria-hidden="true" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="font-serif text-base font-medium text-ink-900">Do you have your own tools?</p>
-          <p className="mt-0.5 text-xs leading-relaxed text-ink-700/80">
-            Workers who bring their own tools to {mySkills.join(', ')} jobs earn a 15% surcharge on the base rate.
-            Employers can also see this on your profile when matching you to a task.
-          </p>
+    <div className="mt-4 rounded-2xl border border-ink-900/8 bg-cream-50 p-5 shadow-sm">
+      <p className="text-sm font-semibold text-ink-900">Do you have your own tools?</p>
+      <p className="mt-1 text-xs leading-relaxed text-ink-700/70">
+        Workers who bring their own tools to {mySkills.join(' & ')} jobs earn a 15% surcharge on the base rate.
+      </p>
 
-          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setHasTools(true)}
-                className={`flex-1 rounded-xl border-2 px-4 py-3 text-sm font-semibold transition-all sm:flex-none sm:px-5 ${
-                  hasTools
-                    ? 'border-forest-600 bg-forest-600/8 text-forest-800'
-                    : 'border-ink-900/15 text-ink-700 hover:border-forest-500/40'
-                }`}
-              >
-                Yes, I have tools
-              </button>
-              <button
-                type="button"
-                onClick={() => setHasTools(false)}
-                className={`flex-1 rounded-xl border-2 px-4 py-3 text-sm font-semibold transition-all sm:flex-none sm:px-5 ${
-                  !hasTools
-                    ? 'border-ink-900 bg-ink-900/5 text-ink-900'
-                    : 'border-ink-900/15 text-ink-700 hover:border-ink-900/30'
-                }`}
-              >
-                No, employer provides
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={save}
-              disabled={saving}
-              className="rounded-full bg-forest-600 px-5 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60 sm:ml-auto"
-            >
-              {saving ? 'Saving…' : saved ? 'Saved' : 'Save'}
-            </button>
-          </div>
+      <div className="mt-3 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => { setHasTools(true); setSaved(false) }}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+            hasTools
+              ? 'bg-forest-600 text-white'
+              : 'border border-ink-900/15 text-ink-700 hover:border-ink-900/30'
+          }`}
+        >
+          Yes, I have tools
+        </button>
+        <button
+          type="button"
+          onClick={() => { setHasTools(false); setSaved(false) }}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+            !hasTools
+              ? 'bg-ink-900 text-cream-50'
+              : 'border border-ink-900/15 text-ink-700 hover:border-ink-900/30'
+          }`}
+        >
+          No, employer provides
+        </button>
 
-          {saved && (
-            <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-forest-700">
-              <Check size={13} aria-hidden="true" /> Saved — employers can now see your tool availability.
-            </p>
-          )}
-          {saveErr && (
-            <p className="mt-2 flex items-center gap-1.5 text-xs font-medium text-red-700">
-              <AlertCircle size={13} aria-hidden="true" /> {saveErr}
-            </p>
-          )}
-        </div>
+        {dirty && (
+          <button
+            type="button"
+            onClick={save}
+            disabled={saving}
+            className="ml-auto rounded-lg bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 disabled:opacity-60"
+          >
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+        )}
+
+        {saved && !dirty && (
+          <span className="ml-auto flex items-center gap-1 text-xs font-medium text-forest-700">
+            <Check size={13} aria-hidden="true" /> Saved
+          </span>
+        )}
       </div>
+
+      {saveErr && (
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-red-700">
+          <AlertCircle size={13} aria-hidden="true" /> {saveErr}
+        </p>
+      )}
     </div>
   )
 }
