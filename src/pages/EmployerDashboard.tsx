@@ -270,20 +270,20 @@ export default function EmployerDashboard() {
                   Choose the type of work — we'll show you verified workers ready for the job.
                 </p>
 
-                {/* Field / Remote toggle — clean underline style */}
-                <div className="mt-5 flex gap-0 border-b border-ink-900/10" role="tablist" aria-label="Work location">
+                <div className="mt-5 flex gap-1" role="tablist" aria-label="Work location">
                   {([['field', 'On the field'], ['remote', 'Remote']] as const).map(([id, label]) => (
                     <button
                       key={id}
                       role="tab"
                       aria-selected={workMode === id}
                       onClick={() => setWorkMode(id)}
-                      className={`relative mr-6 pb-3 text-sm font-medium transition-colors focus:outline-none ${
-                        workMode === id ? 'text-ink-900' : 'text-ink-700/50 hover:text-ink-900'
+                      className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
+                        workMode === id
+                          ? 'bg-ink-900 text-cream-50'
+                          : 'border border-ink-900/15 text-ink-700 hover:border-ink-900/30'
                       }`}
                     >
                       {label}
-                      {workMode === id && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-ink-900" />}
                     </button>
                   ))}
                 </div>

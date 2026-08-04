@@ -228,8 +228,8 @@ function WorkExperienceCard({
               </div>
             ))}
             <button onClick={addExp}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-ink-900/15 py-3 text-sm font-medium text-ink-700/60 hover:border-forest-600/40 hover:text-forest-700 transition-colors">
-              <Plus size={16} aria-hidden="true" /> Add experience
+              className="flex items-center gap-1.5 text-sm font-medium text-forest-700 hover:text-forest-500 transition-colors">
+              <Plus size={15} aria-hidden="true" /> Add experience
             </button>
           </div>
         )}
@@ -288,8 +288,8 @@ function WorkExperienceCard({
               </div>
             ))}
             <button onClick={addCert}
-              className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-ink-900/15 py-3 text-sm font-medium text-ink-700/60 hover:border-forest-600/40 hover:text-forest-700 transition-colors">
-              <Plus size={16} aria-hidden="true" /> Add certification
+              className="flex items-center gap-1.5 text-sm font-medium text-forest-700 hover:text-forest-500 transition-colors">
+              <Plus size={15} aria-hidden="true" /> Add certification
             </button>
           </div>
         )}
@@ -321,28 +321,30 @@ function ToolsStatusCard({ worker, onSaved }: { worker: Worker | null; onSaved: 
   const mySkills = (Array.isArray(worker?.skills) ? worker!.skills as string[] : [])
     .filter((s) => TOOL_RELEVANT.includes(s))
 
-  const savedValue = Boolean(worker?.hasTools)
-  const [hasTools, setHasTools] = useState<boolean>(savedValue)
-  const [editing, setEditing] = useState(!worker?.hasTools && worker?.hasTools !== false)
+  // hasToolsSet: true if the worker has explicitly answered (field exists and is boolean)
+  const hasToolsSet = worker != null && 'hasTools' in worker && typeof (worker as Record<string,unknown>).hasTools === 'boolean'
+  const serverValue = Boolean(worker?.hasTools)
+
+  const [selected, setSelected] = useState<boolean>(serverValue)
+  const [editing, setEditing] = useState(!hasToolsSet)   // start editing only if never answered
   const [saving, setSaving] = useState(false)
   const [saveErr, setSaveErr] = useState<string | null>(null)
 
   useEffect(() => {
-    setHasTools(Boolean(worker?.hasTools))
-    // If worker already has a saved value, start collapsed
-    if (worker && 'hasTools' in worker) setEditing(false)
-  }, [worker?.hasTools])
+    setSelected(Boolean(worker?.hasTools))
+    if (hasToolsSet) setEditing(false)
+  }, [worker?.hasTools])  // eslint-disable-line react-hooks/exhaustive-deps
 
   if (mySkills.length === 0) return null
 
-  const dirty = hasTools !== savedValue
+  const dirty = selected !== serverValue
 
   const save = async () => {
-    if (!dirty || saving) return
+    if (saving) return
     setSaving(true)
     setSaveErr(null)
     try {
-      const patch = { hasTools }
+      const patch = { hasTools: selected }
       await workersApi.updateMe(patch)
       onSaved(patch)
       setEditing(false)
@@ -353,15 +355,15 @@ function ToolsStatusCard({ worker, onSaved }: { worker: Worker | null; onSaved: 
     }
   }
 
-  // Collapsed — just shows the saved value with an Edit link
+  // Collapsed read-only state
   if (!editing) {
     return (
       <div className="mt-4 flex items-center justify-between rounded-2xl border border-ink-900/8 bg-cream-50 px-5 py-3.5 shadow-sm">
         <div>
           <p className="text-sm font-medium text-ink-900">Tools</p>
-          <p className="text-xs text-ink-700/70">{savedValue ? 'You bring your own tools (+15% surcharge)' : 'Employer provides tools'}</p>
+          <p className="text-xs text-ink-700/60">{serverValue ? 'You bring your own tools (+15% surcharge)' : 'Employer provides tools'}</p>
         </div>
-        <button onClick={() => setEditing(true)} className="text-xs font-medium text-ink-700/60 underline underline-offset-2 hover:text-ink-900">
+        <button onClick={() => setEditing(true)} className="text-xs font-medium text-ink-700/50 underline underline-offset-2 hover:text-ink-900">
           Change
         </button>
       </div>
@@ -372,28 +374,28 @@ function ToolsStatusCard({ worker, onSaved }: { worker: Worker | null; onSaved: 
   return (
     <div className="mt-4 rounded-2xl border border-ink-900/8 bg-cream-50 p-5 shadow-sm">
       <p className="text-sm font-semibold text-ink-900">Do you have your own tools?</p>
-      <p className="mt-1 text-xs leading-relaxed text-ink-700/70">
+      <p className="mt-1 text-xs leading-relaxed text-ink-700/60">
         Workers who bring their own tools to {mySkills.join(' & ')} jobs earn a 15% surcharge on the base rate.
       </p>
-      <div className="mt-3 flex items-center gap-2">
-        <button type="button" onClick={() => setHasTools(true)}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${hasTools ? 'bg-forest-600 text-white' : 'border border-ink-900/15 text-ink-700 hover:border-ink-900/30'}`}>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <button type="button" onClick={() => setSelected(true)}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${selected ? 'bg-forest-600 text-white' : 'border border-ink-900/15 text-ink-700 hover:border-ink-900/30'}`}>
           Yes, I have tools
         </button>
-        <button type="button" onClick={() => setHasTools(false)}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${!hasTools ? 'bg-ink-900 text-cream-50' : 'border border-ink-900/15 text-ink-700 hover:border-ink-900/30'}`}>
+        <button type="button" onClick={() => setSelected(false)}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${!selected ? 'bg-ink-900 text-cream-50' : 'border border-ink-900/15 text-ink-700 hover:border-ink-900/30'}`}>
           No, employer provides
         </button>
-        {dirty && (
-          <button type="button" onClick={save} disabled={saving}
-            className="ml-auto rounded-lg bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 hover:bg-forest-500 disabled:opacity-60">
-            {saving ? 'Saving…' : 'Save'}
+        <button type="button" onClick={save} disabled={saving}
+          className="ml-auto rounded-lg bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 hover:bg-forest-500 disabled:opacity-60">
+          {saving ? 'Saving…' : dirty ? 'Save' : 'Confirm'}
+        </button>
+        {hasToolsSet && (
+          <button onClick={() => { setSelected(serverValue); setEditing(false) }}
+            className="text-xs text-ink-700/40 hover:text-ink-900">
+            Cancel
           </button>
         )}
-        <button onClick={() => { setHasTools(savedValue); setEditing(false) }}
-          className="text-xs text-ink-700/50 hover:text-ink-900 ml-1">
-          Cancel
-        </button>
       </div>
       {saveErr && (
         <p className="mt-2 flex items-center gap-1.5 text-xs text-red-700">
@@ -695,17 +697,15 @@ export default function WorkerDashboard() {
                     </div>
                   )}
                   <div className="p-4 sm:p-5">
-                    <TaskCard task={t}>
-                      {null}
-                    </TaskCard>
-                    <div className="mt-4 flex gap-2.5">
+                    <TaskCard task={t}>{null}</TaskCard>
+                    <div className="mt-4 flex gap-2">
                       <button onClick={() => (t.status === 'offered' ? acceptOffer(t) : acceptOpen(t))} disabled={busyId === t.id}
-                        className="flex flex-1 items-center justify-center gap-1.5 rounded-full bg-forest-600 px-4 py-3 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
+                        className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-forest-600 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
                         <Check size={16} aria-hidden="true" /> {busyId === t.id ? 'Accepting…' : 'Accept this job'}
                       </button>
                       {t.status === 'offered' && (
                         <button onClick={() => declineOffer(t)} disabled={busyId === t.id}
-                          className="rounded-full border border-ink-900/15 px-4 py-3 text-sm font-medium text-ink-700 transition-colors hover:bg-ink-900/5 disabled:opacity-60">
+                          className="rounded-xl border border-ink-900/15 px-5 py-3 text-sm font-medium text-ink-700 transition-colors hover:bg-ink-900/5 disabled:opacity-60">
                           Decline
                         </button>
                       )}
