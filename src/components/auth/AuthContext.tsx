@@ -10,7 +10,7 @@ export type AuthView =
   | 'employer-onboarding'
   | null
 
-export type Page = 'home' | 'team' | 'gallery' | 'news' | 'worker-dashboard' | 'employer-dashboard'
+export type Page = 'home' | 'team' | 'gallery' | 'news' | 'worker-dashboard' | 'employer-dashboard' | 'book-worker'
 
 type AppCtx = {
   view: AuthView
@@ -32,6 +32,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // still holds the matching token, is returned there.
   const initialPage = (): Page => {
     try {
+      // New booking window opened via window.open with ?page=book-worker
+      const urlPage = new URLSearchParams(window.location.search).get('page')
+      if (urlPage === 'book-worker' && session.employerToken()) return 'book-worker'
       const last = localStorage.getItem('bx_view')
       if (last === 'worker-dashboard' && session.workerToken()) return 'worker-dashboard'
       if (last === 'employer-dashboard' && session.employerToken()) return 'employer-dashboard'

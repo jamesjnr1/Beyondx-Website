@@ -10,10 +10,12 @@ import GalleryPage from './pages/GalleryPage'
 import NewsPage from './pages/NewsPage'
 import WorkerDashboard from './pages/WorkerDashboard'
 import EmployerDashboard from './pages/EmployerDashboard'
+import BookWorker from './pages/BookWorker'
 
 function Shell() {
   const { page } = useAuth()
 
+  if (page === 'book-worker') return <BookWorker />
   if (page === 'worker-dashboard') return <><WorkerDashboard /><AccessibilityMenu /></>
   if (page === 'employer-dashboard') return <><EmployerDashboard /><AccessibilityMenu /></>
 

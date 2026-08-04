@@ -7,14 +7,15 @@ import SupportPanel from '../components/SupportPanel'
 import LiveLocation from '../components/LiveLocation'
 import { tasks as tasksApi, workers as workersApi, employers as employersApi, contact, session, ApiError, type Task, type Worker, type Employer } from '../lib/api'
 import { DISPATCH_ENABLED, DISPATCH_PAUSED_MESSAGE } from '../lib/config'
-import { categories, remoteCategories, allCategories, TOOL_SURCHARGE_RATE, VEHICLE_SURCHARGES, logisticsRate } from '../data'
+import { categories, remoteCategories, allCategories } from '../data'
 import { PLATFORM_FEE } from '../lib/payments'
+import { openBookingWindow } from './BookWorker'
+import type { BookingState } from './BookWorker'
 
 const cedis = (n?: number | string) => `GH\u20b5 ${Number(n || 0).toLocaleString()}`
 const wName = (w: Worker) => (w.fullName as string) || (w.name as string) || 'Worker'
 const wInitials = (w: Worker) => wName(w).split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
 const wSkills = (w: Worker): string[] => (Array.isArray(w.skills) ? (w.skills as string[]) : (w.cats as string[]) || [])
-const wCharge = (w: Worker): number => Number((w.dailyCharge as string) ?? (w.charge as number) ?? 0) || 0
 
 /** A worker is "background-flagged" only if they explicitly named a real
  *  prison facility at registration. Any opt-out phrasing, empty value, or
@@ -77,12 +78,6 @@ const STATUS: Record<string, { label: string; color: string; bar: string; note?:
 }
 const st = (s?: string) => STATUS[s || 'open'] || STATUS.open
 
-const PAYMENT_METHODS = [
-  { id: 'MTN MoMo', logo: '/payment/mtn-momo.png', alt: 'MTN Mobile Money' },
-  { id: 'Telecel Cash', logo: '/payment/telecel-cash.png', alt: 'Telecel Cash' },
-  { id: 'AirtelTigo Money', logo: '/payment/airteltigo-money.png', alt: 'AirtelTigo Money' },
-]
-
 // Dispatch writes "Worker: <name> (<id>) | Payment Ref: <ref>" into the description.
 function dispatchDetails(t: Task) {
   const d = String(t.description || '')
@@ -137,8 +132,19 @@ export default function EmployerDashboard() {
   const [screeningAnswers, setScreeningAnswers] = useState<ScreeningAnswers>(DEFAULT_SCREENING)
   const [selectedWorkers, setSelectedWorkers] = useState<Set<string | number>>(new Set())
   const [viewing, setViewing] = useState<Worker | null>(null)
-  const [dispatching, setDispatching] = useState<Worker | null>(null)
-  const [dispatchQueue, setDispatchQueue] = useState<Worker[]>([])
+  const openDispatch = (worker: Worker) => {
+    const state: BookingState = { worker, category: pickedCategory, screening: screeningAnswers }
+    openBookingWindow(state)
+    // Listen for when the booking window signals completion via localStorage
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'bx_booking_done') {
+        window.removeEventListener('storage', onStorage)
+        load()
+        setToast({ id: Date.now(), kind: 'success', title: 'Booking submitted', detail: 'Payment is being verified by BeyondX. Track it under My Jobs.' })
+      }
+    }
+    window.addEventListener('storage', onStorage)
+  }
   const [rating, setRating] = useState<Task | null>(null)
   const [editing, setEditing] = useState(false)
 
@@ -188,24 +194,6 @@ export default function EmployerDashboard() {
     setSelectedWorkers(new Set())
   }
 
-  const afterDispatch = () => {
-    // If there's a queue (multi-dispatch), move to the next worker.
-    // Clear the dispatched worker from the queue first, then open the
-    // modal for whoever is next. When the queue empties, close everything.
-    setDispatchQueue((prev) => {
-      const remaining = prev.slice(1)
-      if (remaining.length > 0) {
-        setDispatching(remaining[0])
-      } else {
-        setDispatching(null)
-        setSelectedWorkers(new Set())
-      }
-      return remaining
-    })
-    setAnnounce('Worker dispatched.')
-    setToast({ id: Date.now(), kind: 'success', title: 'Payment submitted for review', detail: 'BeyondX will verify your payment reference and notify the worker once confirmed. Track the status under Dispatch History.' })
-    load()
-  }
   const afterConfirm = (worker: string) => {
     setRating(null)
     setAnnounce(`Work confirmed for ${worker}.`)
@@ -381,8 +369,11 @@ export default function EmployerDashboard() {
                             <button
                               onClick={() => {
                                 const queue = matches.filter((w) => selectedWorkers.has(String(w.id)))
-                                setDispatchQueue(queue)
-                                setDispatching(queue[0])
+                                queue.forEach((w, i) => {
+                                  // Stagger slightly so browser doesn't block multiple popups
+                                  setTimeout(() => openDispatch(w), i * 300)
+                                })
+                                setSelectedWorkers(new Set())
                               }}
                               className="rounded-lg bg-cream-50 px-4 py-1.5 text-xs font-semibold text-forest-700 hover:bg-cream-100"
                             >
@@ -570,8 +561,8 @@ export default function EmployerDashboard() {
 
       <Toast toast={toast} onClose={() => setToast(null)} />
 
-      {viewing && <WorkerProfileModal worker={viewing} category={pickedCategory} onClose={() => setViewing(null)} onDispatch={() => { const w = viewing; setViewing(null); setDispatching(w) }} />}
-      {dispatching && DISPATCH_ENABLED && <DispatchModal worker={dispatching} category={pickedCategory} screening={screeningAnswers} dispatchQueue={dispatchQueue} onClose={() => { setDispatching(null); setDispatchQueue([]); setSelectedWorkers(new Set()) }} onDone={afterDispatch} onError={(m) => setToast({ id: Date.now(), kind: 'info', title: 'Dispatch failed', detail: m })} />}
+      {viewing && <WorkerProfileModal worker={viewing} category={pickedCategory} onClose={() => setViewing(null)} onDispatch={() => { const w = viewing; setViewing(null); if (w) openDispatch(w) }} />}
+      {/* DispatchModal replaced by BookWorker window — dispatching state kept for multi-dispatch queue */}
       {rating && <RateModal task={rating} onClose={() => setRating(null)} onDone={afterConfirm} onError={(m) => setToast({ id: Date.now(), kind: 'info', title: 'Could not confirm', detail: m })} />}
       {editing && profile !== undefined && (
         <ProfileModal
@@ -998,232 +989,6 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch }: { worker:
             </div>
           )}
         </div>
-      </div>
-    </div>
-  )
-}
-
-function DispatchModal({ worker, category, screening, dispatchQueue, onClose, onDone, onError }: { worker: Worker; category?: string | null; screening?: ScreeningAnswers; dispatchQueue?: Worker[]; onClose: () => void; onDone: () => void; onError: (m: string) => void }) {
-  useEsc(onClose)
-  const [days, setDays] = useState(1)
-  const [location, setLocation] = useState('')
-  const [taskType, setTaskType] = useState(category || wSkills(worker)[0] || 'General Task')
-  const [payRef, setPayRef] = useState('')
-  const [method, setMethod] = useState('')
-  const [busy, setBusy] = useState(false)
-  const cat = allCategories.find((c) => c.title === taskType)
-  // Pre-fill tier from screening
-  const [tier, setTier] = useState<'basic' | 'skilled'>(screening?.tier ?? 'basic')
-  useEffect(() => { setTier(screening?.tier ?? 'basic') }, [screening])
-  // Tool surcharge comes from the WORKER's profile (hasTools), not asked again here
-  const workerProvidesTools = Boolean(worker.hasTools)
-  // Logistics: distance + vehicle
-  const [distanceKm, setDistanceKm] = useState(3)
-  const [vehicle, setVehicle] = useState(0)   // surcharge value from VEHICLE_SURCHARGES
-
-  // Reset tier when category changes
-  useEffect(() => { setTier('basic') }, [taskType])
-
-  // ---------- Rate calculation ----------
-  const baseRate = (() => {
-    if (!cat) return wCharge(worker)
-    if (cat.distancePricing) return logisticsRate(distanceKm, tier === 'skilled', vehicle)
-    const flat = (tier === 'skilled' && cat.skilledRate) ? cat.skilledRate : cat.rate
-    if (cat.toolModifier && workerProvidesTools) return Math.round(flat * (1 + TOOL_SURCHARGE_RATE))
-    return flat
-  })()
-
-  const isPerDay = !cat?.distancePricing && cat?.mode !== 'remote'
-  const effectiveDays = cat?.distancePricing ? 1 : (cat?.minDays ? Math.max(days, cat.minDays) : days)
-  const workerGets = isPerDay ? baseRate * effectiveDays : baseRate
-  const fee = Math.round(workerGets * PLATFORM_FEE)
-  const pay = workerGets + fee
-  const duration = effectiveDays === 0.5 ? 'Half Day' : effectiveDays === 1 ? '1 Day' : `${effectiveDays} Days`
-
-  const submit = async () => {
-    if (!payRef.trim() || !method || busy) return
-    setBusy(true)
-    try {
-      // Creates the task with status 'payment_pending' — the worker is NOT
-      // notified yet. BeyondX team reviews the payment reference in the admin
-      // console and manually advances it to 'offered' once confirmed received.
-      await tasksApi.dispatch({
-        worker,
-        taskType,
-        location: cat?.mode === 'remote' ? 'Remote' : location,
-        duration,
-        pay: workerGets,
-        paymentRef: `${method} ${payRef.trim()}`,
-      })
-      onDone()
-    } catch (e) {
-      onError(e instanceof ApiError ? e.message : 'Please try again.')
-      setBusy(false)
-    }
-  }
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/50 p-4" onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby="dp-title" className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-cream-50 p-7 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <div className="mb-1 flex items-center justify-between">
-          <h2 id="dp-title" className="font-serif text-xl font-medium text-ink-900">
-            Book {wName(worker).split(' ')[0]}
-            {screening && dispatchQueue && dispatchQueue.length > 1 && (
-              <span className="ml-2 text-sm font-normal text-ink-700/60">
-                {dispatchQueue.findIndex((w) => String(w.id) === String(worker.id)) + 1} of {dispatchQueue.length}
-              </span>
-            )}
-          </h2>
-          <button onClick={onClose} aria-label="Cancel" className="rounded-lg p-1 text-ink-700 hover:bg-ink-900/5"><X size={18} aria-hidden="true" /></button>
-        </div>
-        <p className="mb-5 mt-1 text-sm text-ink-700/70">
-          Fill in the job details, send payment via MoMo, and submit. BeyondX verifies the payment before notifying the worker.
-        </p>
-
-        <div className="space-y-4">
-          {/* Task type */}
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-ink-700">Task type</span>
-            <select value={taskType} onChange={(e) => setTaskType(e.target.value)} className="w-full rounded-xl border border-ink-900/15 bg-white px-3 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/30">
-              {allCategories.map((c) => <option key={c.title}>{c.title}</option>)}
-            </select>
-          </label>
-
-          {/* Complexity tier */}
-          {cat?.skilledRate && (
-            <div>
-              <span className="mb-1.5 block text-xs font-medium text-ink-700">Complexity tier</span>
-              <div className="grid grid-cols-2 gap-2">
-                {([['basic', `Basic — ${cedis(cat.rate)}/day`], ['skilled', `Skilled — ${cedis(cat.skilledRate)}/day`]] as const).map(([t, label]) => (
-                  <button key={t} type="button" onClick={() => setTier(t)}
-                    className={`rounded-xl border px-3 py-2.5 text-left text-xs transition-all ${tier === t ? 'border-forest-600 bg-forest-600/8 font-semibold text-forest-800 ring-2 ring-forest-600/20' : 'border-ink-900/15 text-ink-700 hover:border-forest-500/40'}`}>
-                    {label}
-                    {t === 'skilled' && cat.skilledLabel && <span className="block mt-0.5 font-normal text-ink-700/70">e.g. {cat.skilledLabel}</span>}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Logistics distance + vehicle */}
-          {cat?.distancePricing && (
-            <div className="space-y-3 rounded-xl bg-cream-100 p-4 ring-1 ring-ink-900/8">
-              <p className="text-xs font-semibold uppercase tracking-widest text-clay-500">Logistics pricing</p>
-              <label className="block">
-                <span className="mb-1 block text-xs font-medium text-ink-700">Distance (GPS pickup → drop-off)</span>
-                <div className="flex items-center gap-3">
-                  <input type="range" min={1} max={30} step={1} value={distanceKm}
-                    onChange={(e) => setDistanceKm(Number(e.target.value))}
-                    className="flex-1 accent-forest-600" />
-                  <span className="w-14 shrink-0 text-right text-sm font-semibold text-ink-900">{distanceKm} km</span>
-                </div>
-                <p className="mt-1 text-xs text-ink-700/70">Distance is pulled from GPS check-in — enter an estimate for now.</p>
-              </label>
-              <div>
-                <span className="mb-1.5 block text-xs font-medium text-ink-700">Worker's vehicle</span>
-                <div className="grid grid-cols-2 gap-2">
-                  {VEHICLE_SURCHARGES.map((v) => (
-                    <button key={v.label} type="button" onClick={() => setVehicle(v.value)}
-                      className={`rounded-xl border px-3 py-2 text-left text-xs transition-all ${vehicle === v.value ? 'border-forest-600 bg-forest-600/8 font-semibold text-forest-800 ring-2 ring-forest-600/20' : 'border-ink-900/15 text-ink-700 hover:border-forest-500/40'}`}>
-                      {v.label}
-                      <span className="block mt-0.5 font-normal text-ink-700/70">{v.value === 0 ? 'No surcharge' : `+${cedis(v.value)}`}{v.note ? ` · ${v.note}` : ''}</span>
-                    </button>
-                  ))}
-                </div>
-              </div>
-              {tier === 'skilled' && (
-                <p className="text-xs text-ink-700">Skilled tier (inventory handling / documentation): +{cedis(30)}</p>
-              )}
-            </div>
-          )}
-
-          {/* Tool modifier — derived from worker's profile, not asked again */}
-          {cat?.toolModifier && (
-            <div className="rounded-xl border border-ink-900/10 bg-cream-100 px-3.5 py-3">
-              <p className="text-sm text-ink-900">
-                <span className="font-medium">Tools: </span>
-                {workerProvidesTools
-                  ? <span className="text-forest-700">Worker brings their own (+{cedis(Math.round((((tier === 'skilled' && cat.skilledRate) ? cat.skilledRate : cat.rate)) * TOOL_SURCHARGE_RATE))} surcharge applied)</span>
-                  : <span className="text-ink-700/70">Employer provides — no surcharge</span>}
-              </p>
-              <p className="mt-0.5 text-xs text-ink-700/60">Based on {wName(worker).split(' ')[0]}'s profile settings</p>
-            </div>
-          )}
-
-          {/* Agriculture minimum-day notice */}
-          {cat?.minDays && days < cat.minDays && (
-            <p className="rounded-xl bg-clay-400/10 px-3 py-2.5 text-xs leading-relaxed text-ink-800 ring-1 ring-clay-400/20">
-              <span className="font-semibold">Minimum {cat.minDays}-day booking</span> for {cat.title}. Duration adjusted automatically.
-            </p>
-          )}
-
-          {/* Location */}
-          {cat?.mode === 'remote' ? (
-            <p className="rounded-xl bg-forest-600/5 p-3 text-xs leading-relaxed text-ink-700 ring-1 ring-forest-600/15">
-              This is remote work — the worker completes it from wherever they are, so no job site is needed.
-            </p>
-          ) : !cat?.distancePricing ? (
-            <label className="block">
-              <span className="mb-1 block text-xs font-medium text-ink-700">Location</span>
-              <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Tema" className="w-full rounded-xl border border-ink-900/15 bg-white px-3 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/30" />
-            </label>
-          ) : (
-            <label className="block">
-              <span className="mb-1 block text-xs font-medium text-ink-700">Pickup location</span>
-              <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Makola Market" className="w-full rounded-xl border border-ink-900/15 bg-white px-3 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/30" />
-            </label>
-          )}
-
-          {/* Duration (not for logistics or remote) */}
-          {!cat?.distancePricing && cat?.mode !== 'remote' && (
-            <label className="block">
-              <span className="mb-1 block text-xs font-medium text-ink-700">Duration</span>
-              <select value={days} onChange={(e) => setDays(Number(e.target.value))} className="w-full rounded-xl border border-ink-900/15 bg-white px-3 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/30">
-                {cat?.minDays === 2 ? null : <option value={0.5}>Half Day</option>}
-                <option value={1}>1 Day</option>
-                <option value={2}>2 Days</option>
-                <option value={3}>3 Days</option>
-                <option value={5}>5 Days</option>
-              </select>
-            </label>
-          )}
-        </div>
-
-        {/* Price breakdown */}
-        <div className="mt-6 rounded-2xl bg-ink-900 px-6 py-5">
-          <p className="text-xs font-medium uppercase tracking-widest text-cream-50/50">Total to pay BeyondX</p>
-          <p className="mt-2 font-serif text-4xl font-semibold text-cream-50">{cedis(pay)}</p>
-          <div className="mt-3 flex items-center justify-between border-t border-cream-50/10 pt-3 text-xs text-cream-50/50">
-            <span>{cedis(workerGets)} to worker + {cedis(fee)} service fee</span>
-            <span>{cat?.distancePricing ? `${distanceKm} km` : `${cedis(baseRate)}/day × ${effectiveDays === 0.5 ? '½' : effectiveDays}d`}</span>
-          </div>
-        </div>
-
-        <div className="mt-5">
-          <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-ink-700/50">How did you pay?</p>
-          <div className="grid grid-cols-3 gap-3" role="radiogroup" aria-label="Payment method">
-            {PAYMENT_METHODS.map((m) => (
-              <button key={m.id} type="button" role="radio" aria-checked={method === m.id} aria-label={m.alt} onClick={() => setMethod(m.id)}
-                className={`flex h-16 items-center justify-center rounded-xl border bg-white p-2 transition-all ${method === m.id ? 'border-ink-900 ring-2 ring-ink-900/20' : 'border-ink-900/12 hover:border-ink-900/30'}`}>
-                <img src={m.logo} alt={m.alt} className="max-h-9 w-auto object-contain" />
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <label className="mt-4 block">
-          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-ink-700/50">Transaction reference</span>
-          <input value={payRef} onChange={(e) => setPayRef(e.target.value)} placeholder="e.g. 1234567890"
-            className="w-full rounded-xl border border-ink-900/15 bg-white px-4 py-3 text-sm text-ink-900 outline-none focus:border-ink-900 focus:ring-2 focus:ring-ink-900/10" />
-        </label>
-
-        <button onClick={submit} disabled={!payRef.trim() || !method || busy}
-          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-ink-900 px-6 py-4 text-sm font-semibold text-cream-50 transition-all hover:bg-ink-800 active:scale-[0.98] disabled:opacity-40 focus:outline-none focus-visible:ring-2 focus-visible:ring-ink-900/40">
-          {busy ? 'Submitting…' : `Submit booking — ${cedis(pay)}`}
-        </button>
-        <p className="mt-2.5 text-center text-xs text-ink-700/50">
-          Worker is contacted only after BeyondX confirms the payment.
-        </p>
       </div>
     </div>
   )
