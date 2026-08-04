@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/admin/tasks/:id/verify-payment", "destination": "/api/admin-verify-payment" },
+    { "source": "/api/journey", "destination": "/api/journey" },
     { "source": "/join", "destination": "/index.html" }
   ]
 }

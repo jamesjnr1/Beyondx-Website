@@ -201,7 +201,7 @@ tr:hover td{background:var(--bg);}
 .an-flag{font-size:15px;line-height:1;}
 .an-note{background:var(--forest-50);border:1.5px solid var(--forest-100);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:11.5px;color:var(--ink2);line-height:1.6;}
 </style>
-</head>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/><script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script></head>
 <body>
 <div class="login" id="loginScreen">
   <div class="lbox">
@@ -223,6 +223,7 @@ tr:hover td{background:var(--bg);}
       <div class="sb-a" onclick="nav('analytics',this)">Site Analytics</div>
       <div class="sb-grp">Tasks</div>
       <div class="sb-a" onclick="nav('verify',this)">Verify Payments <span class="sb-bdg" id="verifyBadge" style="display:none">0</span></div>
+      <div class="sb-a" onclick="nav('journeys',this)">Worker Journeys</div>
       <div class="sb-a" onclick="nav('active',this)">In Progress</div>
       <div class="sb-a" onclick="nav('open',this)">Open Tasks</div>
       <div class="sb-a" onclick="nav('completed',this)">Completed</div>
@@ -284,6 +285,18 @@ tr:hover td{background:var(--bg);}
           <div class="tc"><div class="tc-h"><span class="tc-ht">Top Employers</span></div><table><thead><tr><th>Organisation</th><th>Tasks</th><th>Spent</th></tr></thead><tbody id="empT"></tbody></table></div>
         </div>
         <div class="tc"><div class="tc-h"><span class="tc-ht">Recent Activity</span><span class="tc-hm">Live feed</span></div><div id="feed"></div></div>
+      </div>
+      <div class="sec" id="sec-journeys">
+        <div class="tc">
+          <div class="tc-h"><span class="tc-ht">Worker Journeys</span><span class="tc-hm" id="journeySubtitle">Select a job to view the route</span></div>
+          <div style="margin-bottom:12px;">
+            <select id="journeyTaskSelect" onchange="loadJourney()" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--b);font-family:var(--f);font-size:13px;background:#fff;color:var(--ink);">
+              <option value="">-- Select a job --</option>
+            </select>
+          </div>
+          <div id="journeyMap" style="height:420px;border-radius:14px;overflow:hidden;background:var(--bg2);display:none;"></div>
+          <div id="journeyTimeline" style="margin-top:12px;"></div>
+        </div>
       </div>
       <div class="sec" id="sec-verify">
         <div class="tc">
@@ -583,7 +596,17 @@ function ro(){
 function rs(id){
   const m={active:'accepted',open:'open',completed:'completed',verify:'payment_pending'};
   const ids={payouts:'pl',active:'al',open:'ol',completed:'cl',all:'xl',verify:'vl'};
-  if(id==='verify'){
+  if(id==='journeys'){
+    // Populate task selector with completed/active jobs that may have location history
+    const sel=document.getElementById('journeyTaskSelect');
+    const relevant=tasks.filter(t=>['accepted','completed','employer_confirmed'].includes(t.status));
+    sel.innerHTML='<option value="">-- Select a job --</option>'+relevant.map(t=>{
+      const w=workers.find(x=>String(x.id)===String(t.workerId));
+      return`<option value="${anEsc(String(t.id))}">${anEsc(t.taskType||'Task')} — ${anEsc(w?.fullName||'Unknown worker')} — ${new Date(t.createdAt).toLocaleDateString()}</option>`;
+    }).join('');
+    document.getElementById('journeySubtitle').textContent=relevant.length+' jobs with potential journey data';
+  }
+  else if(id==='verify'){
     const pp=tasks.filter(t=>t.status==='payment_pending'||(t.description&&t.description.includes('Payment Ref')&&['open','offered'].includes(t.status)));
     const vpc=document.getElementById('vpCount'); if(vpc) vpc.textContent=pp.length?' '+pp.length+' pending':'All clear';
     document.getElementById('vl').innerHTML=pp.length?pp.map(vpCard).join(''):`<div class="empty">No payments awaiting verification &mdash; all clear</div>`;
@@ -726,6 +749,96 @@ function re(){
   document.getElementById('etMore').innerHTML=showMoreHtml(emps.length-etShown,'etShown+=20;re();');
 }
 function eSearchInput(){etShown=20;re();}
+
+
+let _journeyMap=null;
+let _journeyPolyline=null;
+
+async function loadJourney(){
+  const taskId=document.getElementById('journeyTaskSelect').value;
+  const mapDiv=document.getElementById('journeyMap');
+  const timeline=document.getElementById('journeyTimeline');
+  const subtitle=document.getElementById('journeySubtitle');
+  if(!taskId){mapDiv.style.display='none';timeline.innerHTML='';return;}
+
+  subtitle.textContent='Loading route…';
+  mapDiv.style.display='block';
+  timeline.innerHTML='<p style="color:var(--ink3);font-size:12px;padding:8px 0">Loading…</p>';
+
+  try{
+    const r=await fetch('/api/journey?taskId='+encodeURIComponent(taskId)+'&adminPass='+encodeURIComponent(pass));
+    const d=await r.json();
+    const pts=d.points||[];
+
+    if(!pts.length){
+      subtitle.textContent='No location data recorded for this job yet.';
+      timeline.innerHTML='<p style="color:var(--ink3);font-size:12px;padding:8px 0">No points recorded. The worker either hasn\'t shared location or the history table isn\'t set up yet.</p>';
+      return;
+    }
+
+    subtitle.textContent=pts.length+' location points recorded';
+
+    // Init or reuse map
+    if(!_journeyMap){
+      _journeyMap=L.map('journeyMap',{zoomControl:true,attributionControl:true});
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(_journeyMap);
+    }
+    if(_journeyPolyline) _journeyMap.removeLayer(_journeyPolyline);
+    _journeyMap.eachLayer(l=>{if(l instanceof L.CircleMarker||l instanceof L.Marker) _journeyMap.removeLayer(l);});
+
+    const latLngs=pts.map(p=>[p.lat,p.lng]);
+
+    // Draw the full route polyline
+    _journeyPolyline=L.polyline(latLngs,{color:'#2a6e00',weight:4,opacity:0.8}).addTo(_journeyMap);
+
+    // Start marker — green
+    L.circleMarker(latLngs[0],{radius:9,color:'#fff',weight:2,fillColor:'#2a6e00',fillOpacity:1})
+     .bindPopup('Start — '+new Date(pts[0].recorded_at).toLocaleTimeString()).addTo(_journeyMap);
+
+    // End marker — darker
+    if(latLngs.length>1){
+      L.circleMarker(latLngs[latLngs.length-1],{radius:9,color:'#fff',weight:2,fillColor:'#12180e',fillOpacity:1})
+       .bindPopup('Last point — '+new Date(pts[pts.length-1].recorded_at).toLocaleTimeString()).addTo(_journeyMap);
+    }
+
+    _journeyMap.fitBounds(_journeyPolyline.getBounds(),{padding:[24,24]});
+    setTimeout(()=>_journeyMap.invalidateSize(),80);
+
+    // Timeline
+    const worker=pts[0]?.worker_name||'Worker';
+    const startT=new Date(pts[0].recorded_at);
+    const endT=new Date(pts[pts.length-1].recorded_at);
+    const minsDiff=Math.round((endT-startT)/60000);
+    timeline.innerHTML=`
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;">
+        <div style="background:var(--bg2);border-radius:10px;padding:12px;">
+          <div style="font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Worker</div>
+          <div style="font-size:13px;font-weight:600;color:var(--ink)">${anEsc(worker)}</div>
+        </div>
+        <div style="background:var(--bg2);border-radius:10px;padding:12px;">
+          <div style="font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Duration tracked</div>
+          <div style="font-size:13px;font-weight:600;color:var(--ink)">${minsDiff} min</div>
+        </div>
+        <div style="background:var(--bg2);border-radius:10px;padding:12px;">
+          <div style="font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Points recorded</div>
+          <div style="font-size:13px;font-weight:600;color:var(--ink)">${pts.length}</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--ink3);margin-bottom:6px;">Route timeline</div>
+      <div style="max-height:180px;overflow-y:auto;border:1px solid var(--b);border-radius:10px;">
+        ${pts.map((p,i)=>`
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--b);font-size:12px;${i===pts.length-1?'border-bottom:none':''}" onclick="if(_journeyMap)_journeyMap.flyTo([${p.lat},${p.lng}],17)">
+            <span style="width:20px;text-align:center;color:var(--ink3)">${i===0?'▶':i===pts.length-1?'⏹':'·'}</span>
+            <span style="color:var(--ink3);min-width:64px">${new Date(p.recorded_at).toLocaleTimeString()}</span>
+            <span style="color:var(--ink)">${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}</span>
+            ${p.accuracy?`<span style="color:var(--ink3);margin-left:auto">±${Math.round(p.accuracy)}m</span>`:''}
+          </div>`).join('')}
+      </div>`;
+  }catch(e){
+    subtitle.textContent='Could not load journey.';
+    timeline.innerHTML='<p style="color:var(--ink3);font-size:12px;padding:8px 0">Error: '+anEsc(e.message)+'</p>';
+  }
+}
 
 function checkVerifyBadge(){
   const n=tasks.filter(t=>t.status==='payment_pending'||(t.description&&t.description.includes('Payment Ref')&&['open','offered'].includes(t.status))).length;

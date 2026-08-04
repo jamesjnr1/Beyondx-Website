@@ -104,6 +104,8 @@ export default async function handler(req, res) {
           missingTable: missingTable || undefined,
         })
       }
+      // Fire-and-forget: record this point in the journey history table
+      insertJourneyPoint(cfg, taskId, body?.workerId, body?.workerName, lat, lng, num(body?.accuracy))
       return res.status(200).json({ ok: true })
     } catch (err) {
       console.error('[location] write error:', err.message)
@@ -161,4 +163,47 @@ export default async function handler(req, res) {
 
   res.setHeader('Allow', 'GET, POST, DELETE')
   return res.status(405).json({ error: 'Method not allowed' })
+}
+
+// ---------------------------------------------------------------------------
+// Journey history helpers
+// ---------------------------------------------------------------------------
+// task_location_history table DDL (run once in Supabase SQL editor):
+//   create table task_location_history (
+//     id          bigserial primary key,
+//     task_id     text not null,
+//     worker_id   text,
+//     worker_name text,
+//     lat         double precision not null,
+//     lng         double precision not null,
+//     accuracy    double precision,
+//     recorded_at timestamptz not null default now()
+//   );
+//   create index on task_location_history (task_id, recorded_at);
+
+export async function insertJourneyPoint(cfg, taskId, workerId, workerName, lat, lng, accuracy) {
+  if (!cfg.ready) return
+  const url = `${cfg.url}/rest/v1/task_location_history`
+  await fetch(url, {
+    method: 'POST',
+    headers: headers(cfg.key, { Prefer: 'return=minimal' }),
+    body: JSON.stringify({
+      task_id: String(taskId),
+      worker_id: workerId ? String(workerId) : null,
+      worker_name: workerName || null,
+      lat,
+      lng,
+      accuracy: accuracy || null,
+    }),
+  }).catch(() => null)  // never fail the main request
+}
+
+export async function getJourney(cfg, taskId) {
+  if (!cfg.ready) return []
+  const url = `${cfg.url}/rest/v1/task_location_history?task_id=eq.${encodeURIComponent(String(taskId))}&order=recorded_at.asc&limit=500`
+  try {
+    const r = await fetch(url, { headers: headers(cfg.key) })
+    if (!r.ok) return []
+    return await r.json()
+  } catch { return [] }
 }
