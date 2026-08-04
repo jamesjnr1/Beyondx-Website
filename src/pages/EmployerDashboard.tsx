@@ -270,18 +270,14 @@ export default function EmployerDashboard() {
                   Choose the type of work — we'll show you verified workers ready for the job.
                 </p>
 
-                <div className="mt-5 flex gap-1" role="tablist" aria-label="Work location">
+                <div className="mt-4 inline-flex rounded-full bg-ink-900/5 p-1" role="tablist" aria-label="Work location">
                   {([['field', 'On the field'], ['remote', 'Remote']] as const).map(([id, label]) => (
                     <button
                       key={id}
                       role="tab"
                       aria-selected={workMode === id}
                       onClick={() => setWorkMode(id)}
-                      className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
-                        workMode === id
-                          ? 'bg-ink-900 text-cream-50'
-                          : 'border border-ink-900/15 text-ink-700 hover:border-ink-900/30'
-                      }`}
+                      className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${workMode === id ? 'bg-cream-50 text-ink-900 shadow-sm' : 'text-ink-700 hover:text-ink-900'}`}
                     >
                       {label}
                     </button>
@@ -1068,7 +1064,7 @@ function DispatchModal({ worker, category, screening, dispatchQueue, onClose, on
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/50 p-4" onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby="dp-title" className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-cream-50 p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-labelledby="dp-title" className="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl bg-cream-50 p-7 shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="mb-1 flex items-center justify-between">
           <h2 id="dp-title" className="font-serif text-xl font-medium text-ink-900">
             Book {wName(worker).split(' ')[0]}
@@ -1193,43 +1189,39 @@ function DispatchModal({ worker, category, screening, dispatchQueue, onClose, on
           )}
         </div>
 
-        {/* Price breakdown — prominent but clean */}
-        <div className="mt-5 rounded-2xl border border-ink-900/10 overflow-hidden">
-          <div className="bg-ink-900 px-5 py-4">
-            <div className="flex items-baseline justify-between">
-              <span className="text-sm font-medium text-cream-200/70">Total to pay BeyondX</span>
-              <span className="font-serif text-3xl font-semibold text-cream-50">{cedis(pay)}</span>
-            </div>
-            <div className="mt-1.5 flex items-center justify-between text-xs text-cream-200/50">
-              <span>{cedis(workerGets)} to worker + {cedis(fee)} service fee</span>
-              <span>{cat?.distancePricing ? `${distanceKm} km` : `${cedis(baseRate)}/day × ${effectiveDays}d`}</span>
-            </div>
+        {/* Price breakdown */}
+        <div className="mt-6 rounded-2xl bg-ink-900 px-6 py-5">
+          <p className="text-xs font-medium uppercase tracking-widest text-cream-50/50">Total to pay BeyondX</p>
+          <p className="mt-2 font-serif text-4xl font-semibold text-cream-50">{cedis(pay)}</p>
+          <div className="mt-3 flex items-center justify-between border-t border-cream-50/10 pt-3 text-xs text-cream-50/50">
+            <span>{cedis(workerGets)} to worker + {cedis(fee)} service fee</span>
+            <span>{cat?.distancePricing ? `${distanceKm} km` : `${cedis(baseRate)}/day × ${effectiveDays === 0.5 ? '½' : effectiveDays}d`}</span>
           </div>
         </div>
 
-        <div className="mt-4">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-widest text-ink-700/50">How did you pay?</p>
-          <div className="grid grid-cols-3 gap-2" role="radiogroup" aria-label="Payment method">
+        <div className="mt-5">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-ink-700/50">How did you pay?</p>
+          <div className="grid grid-cols-3 gap-3" role="radiogroup" aria-label="Payment method">
             {PAYMENT_METHODS.map((m) => (
               <button key={m.id} type="button" role="radio" aria-checked={method === m.id} aria-label={m.alt} onClick={() => setMethod(m.id)}
-                className={`flex h-14 items-center justify-center rounded-xl border bg-white p-2 transition-all ${method === m.id ? 'border-ink-900 ring-2 ring-ink-900/20' : 'border-ink-900/12 hover:border-ink-900/30'}`}>
-                <img src={m.logo} alt={m.alt} className="max-h-8 w-auto object-contain" />
+                className={`flex h-16 items-center justify-center rounded-xl border bg-white p-2 transition-all ${method === m.id ? 'border-ink-900 ring-2 ring-ink-900/20' : 'border-ink-900/12 hover:border-ink-900/30'}`}>
+                <img src={m.logo} alt={m.alt} className="max-h-9 w-auto object-contain" />
               </button>
             ))}
           </div>
         </div>
 
-        <label className="mt-3 block">
-          <span className="mb-1 block text-xs font-semibold uppercase tracking-widest text-ink-700/50">Transaction reference</span>
+        <label className="mt-4 block">
+          <span className="mb-1.5 block text-xs font-semibold uppercase tracking-widest text-ink-700/50">Transaction reference</span>
           <input value={payRef} onChange={(e) => setPayRef(e.target.value)} placeholder="e.g. 1234567890"
-            className="w-full rounded-xl border border-ink-900/15 bg-white px-3 py-2.5 text-sm text-ink-900 outline-none focus:border-ink-900 focus:ring-2 focus:ring-ink-900/10" />
+            className="w-full rounded-xl border border-ink-900/15 bg-white px-4 py-3 text-sm text-ink-900 outline-none focus:border-ink-900 focus:ring-2 focus:ring-ink-900/10" />
         </label>
 
         <button onClick={submit} disabled={!payRef.trim() || !method || busy}
-          className="mt-5 flex w-full items-center justify-center gap-2 rounded-xl bg-ink-900 px-6 py-3.5 text-sm font-semibold text-cream-50 transition-all hover:bg-ink-800 active:scale-[0.98] disabled:opacity-40 focus:outline-none focus-visible:ring-2 focus-visible:ring-ink-900/40">
+          className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-ink-900 px-6 py-4 text-sm font-semibold text-cream-50 transition-all hover:bg-ink-800 active:scale-[0.98] disabled:opacity-40 focus:outline-none focus-visible:ring-2 focus-visible:ring-ink-900/40">
           {busy ? 'Submitting…' : `Submit booking — ${cedis(pay)}`}
         </button>
-        <p className="mt-2 text-center text-[11px] text-ink-700/50">
+        <p className="mt-2.5 text-center text-xs text-ink-700/50">
           Worker is contacted only after BeyondX confirms the payment.
         </p>
       </div>

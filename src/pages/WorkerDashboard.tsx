@@ -386,10 +386,12 @@ function ToolsStatusCard({ worker, onSaved }: { worker: Worker | null; onSaved: 
           className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${!selected ? 'bg-ink-900 text-cream-50' : 'border border-ink-900/15 text-ink-700 hover:border-ink-900/30'}`}>
           No, employer provides
         </button>
-        <button type="button" onClick={save} disabled={saving}
-          className="ml-auto rounded-lg bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 hover:bg-forest-500 disabled:opacity-60">
-          {saving ? 'Saving…' : dirty ? 'Save' : 'Confirm'}
-        </button>
+        {dirty && (
+          <button type="button" onClick={save} disabled={saving}
+            className="ml-auto rounded-lg bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 hover:bg-forest-500 disabled:opacity-60">
+            {saving ? 'Saving…' : 'Save'}
+          </button>
+        )}
         {hasToolsSet && (
           <button onClick={() => { setSelected(serverValue); setEditing(false) }}
             className="text-xs text-ink-700/40 hover:text-ink-900">
@@ -456,34 +458,28 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
   const empContact = typeof task.employer === 'object' ? (task.employer as Record<string, unknown>)?.contactPerson as string | undefined : undefined
 
   return (
-    <div className="flex flex-col gap-4 rounded-xl bg-cream-50 p-4 shadow-sm ring-1 ring-ink-900/5 sm:p-5">
+    <div className="flex flex-col gap-3 rounded-xl bg-cream-50 p-4 shadow-sm ring-1 ring-ink-900/5 sm:p-5">
       <div className="min-w-0">
-        <span className="mb-1 inline-block rounded-full bg-forest-600/10 px-2.5 py-0.5 text-xs font-medium text-forest-700">
-          {task.taskType || 'Task'}
-        </span>
+        <p className="text-sm font-semibold text-ink-900">{task.taskType || 'Task'}</p>
         {/* Job description — shown when the employer has added one */}
-        {task.description && task.description !== task.taskType && (
-          <p className="mt-1 text-sm leading-relaxed text-ink-800">{task.description}</p>
+        {task.description && task.description !== task.taskType && !task.description.includes('Payment Ref') && (
+          <p className="mt-0.5 text-sm leading-relaxed text-ink-700">{task.description}</p>
         )}
-        <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-700">
-          {task.location && <span className="inline-flex items-center gap-1"><MapPin size={14} aria-hidden="true" /> {task.location}</span>}
-          {task.duration && <span className="inline-flex items-center gap-1"><Calendar size={14} aria-hidden="true" /> {task.duration}</span>}
+        <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-700">
+          {task.location && <span className="inline-flex items-center gap-1"><MapPin size={13} aria-hidden="true" /> {task.location}</span>}
+          {task.duration && <span className="inline-flex items-center gap-1"><Calendar size={13} aria-hidden="true" /> {task.duration}</span>}
           <span className="font-semibold text-ink-900">{cedis(task.pay)}</span>
         </div>
-        {/* Employer info — name, contact person, phone for clarifications */}
+        {/* Employer info — name, contact, phone only */}
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-ink-900/6 pt-2 text-xs text-ink-700">
           <span className="inline-flex items-center gap-1">
-            <Building2 size={13} aria-hidden="true" />
+            <Building2 size={12} aria-hidden="true" />
             <span className="font-medium text-ink-900">{employerName(task)}</span>
           </span>
-          {empContact && (
-            <span className="inline-flex items-center gap-1">
-              {empContact}
-            </span>
-          )}
+          {empContact && <span>{empContact}</span>}
           {empPhone && (
             <a href={`tel:${empPhone}`} className="inline-flex items-center gap-1 text-forest-700 hover:underline">
-              <Phone size={13} aria-hidden="true" /> {empPhone}
+              <Phone size={12} aria-hidden="true" /> {empPhone}
             </a>
           )}
         </div>
