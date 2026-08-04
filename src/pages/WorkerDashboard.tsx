@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
-import { MapPin, Calendar, Check, Star, RotateCcw, Info, RefreshCw, AlertCircle, Award, Briefcase, Camera, Plus, Trash2, Phone, Building2, AlertTriangle } from 'lucide-react'
+import { MapPin, Calendar, Check, Star, RotateCcw, Info, RefreshCw, AlertCircle, Camera, Plus, Trash2, Phone, Building2, AlertTriangle } from 'lucide-react'
 import DashboardHeader from './DashboardHeader'
 import ReferralCard from '../components/ReferralCard'
 import ProfileModal, { type Profile } from '../components/ProfileModal'
@@ -162,26 +162,20 @@ function WorkExperienceCard({
   return (
     <div className="mt-4 rounded-2xl border border-ink-900/8 bg-cream-50 shadow-sm">
       {/* Header */}
-      <div className="flex items-center gap-3 border-b border-ink-900/8 px-5 py-4">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-forest-600/10 text-forest-600">
-          <Briefcase size={17} aria-hidden="true" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="font-serif text-base font-medium text-ink-900">Work experience & certifications</p>
-          <p className="mt-0.5 text-xs leading-snug text-ink-700/70">
-            Experience photos are private — only BeyondX sees them. Certifications are visible to employers and boost your profile.
-          </p>
-        </div>
+      <div className="border-b border-ink-900/8 px-5 py-4">
+        <p className="text-sm font-semibold text-ink-900">Work experience & certifications</p>
+        <p className="mt-0.5 text-xs text-ink-700/60">
+          Experience photos are private — only BeyondX sees them. Certifications are visible to employers.
+        </p>
       </div>
 
-      {/* Tabs */}
+      {/* Tabs — plain text, no icons */}
       <div className="flex border-b border-ink-900/8">
-        {([['exp', 'Experience', Briefcase], ['certs', 'Certifications', Award]] as const).map(([id, label, Icon]) => (
+        {([['exp', 'Experience'], ['certs', 'Certifications']] as const).map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)}
-            className={`relative flex flex-1 items-center justify-center gap-2 py-3 text-sm font-medium transition-colors focus:outline-none ${tab === id ? 'text-forest-700' : 'text-ink-700/60 hover:text-ink-900'}`}>
-            <Icon size={14} aria-hidden="true" />
+            className={`relative flex-1 py-3 text-sm font-medium transition-colors focus:outline-none ${tab === id ? 'text-ink-900' : 'text-ink-700/50 hover:text-ink-900'}`}>
             {label}
-            {tab === id && <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-forest-600" />}
+            {tab === id && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-ink-900" />}
           </button>
         ))}
       </div>
@@ -329,12 +323,15 @@ function ToolsStatusCard({ worker, onSaved }: { worker: Worker | null; onSaved: 
 
   const savedValue = Boolean(worker?.hasTools)
   const [hasTools, setHasTools] = useState<boolean>(savedValue)
+  const [editing, setEditing] = useState(!worker?.hasTools && worker?.hasTools !== false)
   const [saving, setSaving] = useState(false)
-  const [saved, setSaved] = useState(false)
   const [saveErr, setSaveErr] = useState<string | null>(null)
 
-  // Keep in sync if worker loads after initial render
-  useEffect(() => { setHasTools(Boolean(worker?.hasTools)) }, [worker?.hasTools])
+  useEffect(() => {
+    setHasTools(Boolean(worker?.hasTools))
+    // If worker already has a saved value, start collapsed
+    if (worker && 'hasTools' in worker) setEditing(false)
+  }, [worker?.hasTools])
 
   if (mySkills.length === 0) return null
 
@@ -348,8 +345,7 @@ function ToolsStatusCard({ worker, onSaved }: { worker: Worker | null; onSaved: 
       const patch = { hasTools }
       await workersApi.updateMe(patch)
       onSaved(patch)
-      setSaved(true)
-      setTimeout(() => setSaved(false), 2500)
+      setEditing(false)
     } catch (e) {
       setSaveErr(e instanceof Error ? e.message : 'Could not save. Please try again.')
     } finally {
@@ -357,55 +353,48 @@ function ToolsStatusCard({ worker, onSaved }: { worker: Worker | null; onSaved: 
     }
   }
 
+  // Collapsed — just shows the saved value with an Edit link
+  if (!editing) {
+    return (
+      <div className="mt-4 flex items-center justify-between rounded-2xl border border-ink-900/8 bg-cream-50 px-5 py-3.5 shadow-sm">
+        <div>
+          <p className="text-sm font-medium text-ink-900">Tools</p>
+          <p className="text-xs text-ink-700/70">{savedValue ? 'You bring your own tools (+15% surcharge)' : 'Employer provides tools'}</p>
+        </div>
+        <button onClick={() => setEditing(true)} className="text-xs font-medium text-ink-700/60 underline underline-offset-2 hover:text-ink-900">
+          Change
+        </button>
+      </div>
+    )
+  }
+
+  // Editing state
   return (
     <div className="mt-4 rounded-2xl border border-ink-900/8 bg-cream-50 p-5 shadow-sm">
       <p className="text-sm font-semibold text-ink-900">Do you have your own tools?</p>
       <p className="mt-1 text-xs leading-relaxed text-ink-700/70">
         Workers who bring their own tools to {mySkills.join(' & ')} jobs earn a 15% surcharge on the base rate.
       </p>
-
       <div className="mt-3 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={() => { setHasTools(true); setSaved(false) }}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
-            hasTools
-              ? 'bg-forest-600 text-white'
-              : 'border border-ink-900/15 text-ink-700 hover:border-ink-900/30'
-          }`}
-        >
+        <button type="button" onClick={() => setHasTools(true)}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${hasTools ? 'bg-forest-600 text-white' : 'border border-ink-900/15 text-ink-700 hover:border-ink-900/30'}`}>
           Yes, I have tools
         </button>
-        <button
-          type="button"
-          onClick={() => { setHasTools(false); setSaved(false) }}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${
-            !hasTools
-              ? 'bg-ink-900 text-cream-50'
-              : 'border border-ink-900/15 text-ink-700 hover:border-ink-900/30'
-          }`}
-        >
+        <button type="button" onClick={() => setHasTools(false)}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${!hasTools ? 'bg-ink-900 text-cream-50' : 'border border-ink-900/15 text-ink-700 hover:border-ink-900/30'}`}>
           No, employer provides
         </button>
-
         {dirty && (
-          <button
-            type="button"
-            onClick={save}
-            disabled={saving}
-            className="ml-auto rounded-lg bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 disabled:opacity-60"
-          >
+          <button type="button" onClick={save} disabled={saving}
+            className="ml-auto rounded-lg bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 hover:bg-forest-500 disabled:opacity-60">
             {saving ? 'Saving…' : 'Save'}
           </button>
         )}
-
-        {saved && !dirty && (
-          <span className="ml-auto flex items-center gap-1 text-xs font-medium text-forest-700">
-            <Check size={13} aria-hidden="true" /> Saved
-          </span>
-        )}
+        <button onClick={() => { setHasTools(savedValue); setEditing(false) }}
+          className="text-xs text-ink-700/50 hover:text-ink-900 ml-1">
+          Cancel
+        </button>
       </div>
-
       {saveErr && (
         <p className="mt-2 flex items-center gap-1.5 text-xs text-red-700">
           <AlertCircle size={13} aria-hidden="true" /> {saveErr}

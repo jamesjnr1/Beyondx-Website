@@ -265,21 +265,25 @@ export default function EmployerDashboard() {
             {/* Step 1 — what needs doing. Workers are then filtered to that work. */}
             {!pickedCategory ? (
               <>
-                <h2 className="font-serif text-xl font-medium text-ink-900">What do you need done?</h2>
-                <p className="mt-1 text-sm text-ink-700">
-                  Choose the type of work and we&rsquo;ll show you the workers certified for it.
+                <h2 className="font-serif text-2xl font-medium text-ink-900">Hire a worker</h2>
+                <p className="mt-1 text-sm text-ink-700/70">
+                  Choose the type of work — we'll show you verified workers ready for the job.
                 </p>
 
-                <div className="mt-4 inline-flex rounded-full bg-ink-900/5 p-1" role="tablist" aria-label="Work location">
+                {/* Field / Remote toggle — clean underline style */}
+                <div className="mt-5 flex gap-0 border-b border-ink-900/10" role="tablist" aria-label="Work location">
                   {([['field', 'On the field'], ['remote', 'Remote']] as const).map(([id, label]) => (
                     <button
                       key={id}
                       role="tab"
                       aria-selected={workMode === id}
                       onClick={() => setWorkMode(id)}
-                      className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${workMode === id ? 'bg-cream-50 text-ink-900 shadow-sm' : 'text-ink-700 hover:text-ink-900'}`}
+                      className={`relative mr-6 pb-3 text-sm font-medium transition-colors focus:outline-none ${
+                        workMode === id ? 'text-ink-900' : 'text-ink-700/50 hover:text-ink-900'
+                      }`}
                     >
                       {label}
+                      {workMode === id && <span className="absolute inset-x-0 bottom-0 h-0.5 bg-ink-900" />}
                     </button>
                   ))}
                 </div>
@@ -293,34 +297,24 @@ export default function EmployerDashboard() {
                         <button
                           onClick={() => pickCategory(c.title)}
                           aria-label={`${c.title} — ${count} worker${count === 1 ? '' : 's'} available`}
-                          className="flex h-full w-full flex-col rounded-xl bg-cream-50 p-4 text-left shadow-sm ring-1 ring-ink-900/5 transition-all hover:ring-forest-600/40 active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40"
+                          className="group flex h-full w-full flex-col rounded-2xl border border-ink-900/8 bg-cream-50 p-5 text-left transition-all hover:border-ink-900/20 hover:shadow-md active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-ink-900/30"
                         >
-                          <span className="flex items-center gap-2.5">
-                            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-forest-600/10 text-forest-600">
-                              <Icon size={18} aria-hidden="true" />
-                            </span>
-                            <span className="font-serif text-base font-medium leading-snug text-ink-900">{c.title}</span>
-                          </span>
-                          <span className="mt-2 block text-xs leading-relaxed text-ink-700">{c.description}</span>
-                          <span className="mt-3 flex items-center justify-between border-t border-ink-900/10 pt-2.5">
+                          <Icon size={20} aria-hidden="true" className="text-forest-600" />
+                          <span className="mt-3 block font-serif text-base font-semibold text-ink-900">{c.title}</span>
+                          <span className="mt-1 block text-xs leading-relaxed text-ink-700/70">{c.description}</span>
+                          <span className="mt-auto flex items-end justify-between pt-4">
                             <span className="text-sm text-ink-900">
                               {c.distancePricing ? (
-                                <span className="font-semibold">{cedis(40)} <span className="text-xs font-normal text-ink-700">base + distance</span></span>
+                                <><span className="font-semibold">{cedis(40)}</span><span className="ml-1 text-xs text-ink-700/60">base + distance</span></>
                               ) : c.skilledRate ? (
-                                <span>
-                                  <span className="font-semibold">{cedis(c.rate)}</span>
-                                  <span className="mx-1 text-ink-700/50">–</span>
-                                  <span className="font-semibold">{cedis(c.skilledRate)}</span>
-                                  <span className="ml-1 text-xs font-normal text-ink-700">{c.rateUnit || 'per day'}</span>
-                                </span>
+                                <><span className="font-semibold">{cedis(c.rate)}</span><span className="mx-1 text-ink-700/30">–</span><span className="font-semibold">{cedis(c.skilledRate)}</span><span className="ml-1 text-xs text-ink-700/60">{c.rateUnit || 'per day'}</span></>
                               ) : (
-                                <span>
-                                  <span className="font-semibold">{cedis(c.rate)}</span>
-                                  <span className="ml-1 text-xs font-normal text-ink-700">{c.rateUnit || 'per day'}</span>
-                                </span>
+                                <><span className="font-semibold">{cedis(c.rate)}</span><span className="ml-1 text-xs text-ink-700/60">{c.rateUnit || 'per day'}</span></>
                               )}
                             </span>
-                            <span className="text-xs text-ink-700">{count} worker{count === 1 ? '' : 's'}</span>
+                            <span className={`text-xs font-medium ${count > 0 ? 'text-forest-700' : 'text-ink-700/40'}`}>
+                              {count} {count === 1 ? 'worker' : 'workers'}
+                            </span>
                           </span>
                         </button>
                       </li>
