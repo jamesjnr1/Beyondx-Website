@@ -288,14 +288,31 @@ tr:hover td{background:var(--bg);}
       </div>
       <div class="sec" id="sec-journeys">
         <div class="tc">
-          <div class="tc-h"><span class="tc-ht">Worker Journeys</span><span class="tc-hm" id="journeySubtitle">Select a job to view the route</span></div>
-          <div style="margin-bottom:12px;">
-            <select id="journeyTaskSelect" onchange="loadJourney()" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--b);font-family:var(--f);font-size:13px;background:#fff;color:var(--ink);">
-              <option value="">-- Select a job --</option>
+          <div class="tc-h"><span class="tc-ht">Worker Journeys</span><span class="tc-hm" id="journeySubtitle">Select a job above to view the route</span></div>
+          <!-- Task selector -->
+          <div style="margin-bottom:20px;">
+            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);margin-bottom:8px">Select a job</div>
+            <select id="journeyTaskSelect" onchange="loadJourney()" style="width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--b);font-family:var(--f);font-size:13px;background:var(--bg);color:var(--ink);outline:none;">
+              <option value="">— Choose a job with location data —</option>
             </select>
           </div>
-          <div id="journeyMap" style="height:420px;border-radius:14px;overflow:hidden;background:var(--bg2);display:none;"></div>
-          <div id="journeyTimeline" style="margin-top:12px;"></div>
+          <!-- Stats -->
+          <div id="journeyStats" style="display:none;"></div>
+          <!-- Map -->
+          <div id="journeyMap" style="height:440px;border-radius:16px;overflow:hidden;border:1px solid var(--b);display:none;margin-bottom:16px;"></div>
+          <!-- Legend -->
+          <div style="display:flex;gap:20px;margin-bottom:16px;font-size:11px;color:var(--ink3);padding:0 2px">
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:#4a7c2f;display:inline-block"></span>Start</span>
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:#c0392b;display:inline-block"></span>End</span>
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:50%;background:#2a4a1a;display:inline-block"></span>Waypoint</span>
+            <span style="display:flex;align-items:center;gap:6px"><span style="width:24px;height:3px;background:#4a7c2f;border-radius:2px;display:inline-block"></span>Route</span>
+          </div>
+          <!-- Timeline -->
+          <div id="journeyTimeline" style="display:none;"></div>
+          <!-- Empty state -->
+          <div id="journeyEmpty" style="display:none;text-align:center;padding:40px 20px;color:var(--ink3);font-size:13px;border:1px solid var(--b);border-radius:12px;">
+            No location data recorded yet for this job.
+          </div>
         </div>
       </div>
       <div class="sec" id="sec-verify">
@@ -597,14 +614,16 @@ function rs(id){
   const m={active:'accepted',open:'open',completed:'completed',verify:'payment_pending'};
   const ids={payouts:'pl',active:'al',open:'ol',completed:'cl',all:'xl',verify:'vl'};
   if(id==='journeys'){
-    // Populate task selector with completed/active jobs that may have location history
     const sel=document.getElementById('journeyTaskSelect');
-    const relevant=tasks.filter(t=>['accepted','completed','employer_confirmed'].includes(t.status));
-    sel.innerHTML='<option value="">-- Select a job --</option>'+relevant.map(t=>{
+    // Show tasks that were accepted/in-progress (most likely to have location data)
+    const relevant=tasks.filter(t=>['accepted','completed','employer_confirmed','offered','payment_pending'].includes(t.status)||t.workerId);
+    sel.innerHTML='<option value="">— Choose a job with location data —</option>'+relevant.map(t=>{
       const w=workers.find(x=>String(x.id)===String(t.workerId));
-      return`<option value="${anEsc(String(t.id))}">${anEsc(t.taskType||'Task')} — ${anEsc(w?.fullName||'Unknown worker')} — ${new Date(t.createdAt).toLocaleDateString()}</option>`;
+      const wName=w?.fullName||'Unknown worker';
+      const date=t.createdAt?new Date(t.createdAt).toLocaleDateString('en-GB'):'';
+      return`<option value="${anEsc(String(t.id))}">${anEsc(t.taskType||'Task')} — ${anEsc(t.location||'')} — ${anEsc(wName)}${date?' ('+date+')':''}</option>`;
     }).join('');
-    document.getElementById('journeySubtitle').textContent=relevant.length+' jobs with potential journey data';
+    document.getElementById('journeySubtitle').textContent=relevant.length+' jobs available';
   }
   else if(id==='verify'){
     const pp=tasks.filter(t=>t.status==='payment_pending'||(t.description&&t.description.includes('Payment Ref')&&['open','offered'].includes(t.status)));
@@ -751,19 +770,30 @@ function re(){
 function eSearchInput(){etShown=20;re();}
 
 
-let _journeyMap=null;
-let _journeyPolyline=null;
+let _jMap=null,_jPoly=null,_jMarkers=[];
+
+function hav(lat1,lng1,lat2,lng2){
+  const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLng=(lng2-lng1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+}
+function totalKm(pts){let d=0;for(let i=1;i<pts.length;i++)d+=hav(pts[i-1].lat,pts[i-1].lng,pts[i].lat,pts[i].lng);return d.toFixed(2);}
+function fmtDur(a,b){const m=Math.round((new Date(b)-new Date(a))/60000);return m<60?m+'m':Math.floor(m/60)+'h '+(m%60)+'m';}
+function fmtTime(iso){return new Date(iso).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
 
 async function loadJourney(){
   const taskId=document.getElementById('journeyTaskSelect').value;
   const mapDiv=document.getElementById('journeyMap');
+  const stats=document.getElementById('journeyStats');
   const timeline=document.getElementById('journeyTimeline');
+  const empty=document.getElementById('journeyEmpty');
   const subtitle=document.getElementById('journeySubtitle');
-  if(!taskId){mapDiv.style.display='none';timeline.innerHTML='';return;}
 
-  subtitle.textContent='Loading route…';
-  mapDiv.style.display='block';
-  timeline.innerHTML='<p style="color:var(--ink3);font-size:12px;padding:8px 0">Loading…</p>';
+  [mapDiv,stats,timeline].forEach(el=>el.style.display='none');
+  empty.style.display='none';
+
+  if(!taskId){subtitle.textContent='Select a job above to view the route';return;}
+  subtitle.textContent='Loading…';
 
   try{
     const r=await fetch('/api/journey?taskId='+encodeURIComponent(taskId)+'&adminPass='+encodeURIComponent(pass));
@@ -771,74 +801,102 @@ async function loadJourney(){
     const pts=d.points||[];
 
     if(!pts.length){
-      subtitle.textContent='No location data recorded for this job yet.';
-      timeline.innerHTML='<p style="color:var(--ink3);font-size:12px;padding:8px 0">No points recorded. The worker either hasn\'t shared location or the history table isn\'t set up yet.</p>';
+      subtitle.textContent='No location data for this job';
+      empty.style.display='block';
       return;
     }
 
-    subtitle.textContent=pts.length+' location points recorded';
-
-    // Init or reuse map
-    if(!_journeyMap){
-      _journeyMap=L.map('journeyMap',{zoomControl:true,attributionControl:true});
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(_journeyMap);
-    }
-    if(_journeyPolyline) _journeyMap.removeLayer(_journeyPolyline);
-    _journeyMap.eachLayer(l=>{if(l instanceof L.CircleMarker||l instanceof L.Marker) _journeyMap.removeLayer(l);});
-
-    const latLngs=pts.map(p=>[p.lat,p.lng]);
-
-    // Draw the full route polyline
-    _journeyPolyline=L.polyline(latLngs,{color:'#2a6e00',weight:4,opacity:0.8}).addTo(_journeyMap);
-
-    // Start marker — green
-    L.circleMarker(latLngs[0],{radius:9,color:'#fff',weight:2,fillColor:'#2a6e00',fillOpacity:1})
-     .bindPopup('Start — '+new Date(pts[0].recorded_at).toLocaleTimeString()).addTo(_journeyMap);
-
-    // End marker — darker
-    if(latLngs.length>1){
-      L.circleMarker(latLngs[latLngs.length-1],{radius:9,color:'#fff',weight:2,fillColor:'#12180e',fillOpacity:1})
-       .bindPopup('Last point — '+new Date(pts[pts.length-1].recorded_at).toLocaleTimeString()).addTo(_journeyMap);
-    }
-
-    _journeyMap.fitBounds(_journeyPolyline.getBounds(),{padding:[24,24]});
-    setTimeout(()=>_journeyMap.invalidateSize(),80);
-
-    // Timeline
     const worker=pts[0]?.worker_name||'Worker';
-    const startT=new Date(pts[0].recorded_at);
-    const endT=new Date(pts[pts.length-1].recorded_at);
-    const minsDiff=Math.round((endT-startT)/60000);
-    timeline.innerHTML=`
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px;">
-        <div style="background:var(--bg2);border-radius:10px;padding:12px;">
-          <div style="font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Worker</div>
-          <div style="font-size:13px;font-weight:600;color:var(--ink)">${anEsc(worker)}</div>
-        </div>
-        <div style="background:var(--bg2);border-radius:10px;padding:12px;">
-          <div style="font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Duration tracked</div>
-          <div style="font-size:13px;font-weight:600;color:var(--ink)">${minsDiff} min</div>
-        </div>
-        <div style="background:var(--bg2);border-radius:10px;padding:12px;">
-          <div style="font-size:11px;color:var(--ink3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px;">Points recorded</div>
-          <div style="font-size:13px;font-weight:600;color:var(--ink)">${pts.length}</div>
-        </div>
-      </div>
-      <div style="font-size:12px;color:var(--ink3);margin-bottom:6px;">Route timeline</div>
-      <div style="max-height:180px;overflow-y:auto;border:1px solid var(--b);border-radius:10px;">
-        ${pts.map((p,i)=>`
-          <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;border-bottom:1px solid var(--b);font-size:12px;${i===pts.length-1?'border-bottom:none':''}" onclick="if(_journeyMap)_journeyMap.flyTo([${p.lat},${p.lng}],17)">
-            <span style="width:20px;text-align:center;color:var(--ink3)">${i===0?'▶':i===pts.length-1?'⏹':'·'}</span>
-            <span style="color:var(--ink3);min-width:64px">${new Date(p.recorded_at).toLocaleTimeString()}</span>
-            <span style="color:var(--ink)">${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}</span>
-            ${p.accuracy?`<span style="color:var(--ink3);margin-left:auto">±${Math.round(p.accuracy)}m</span>`:''}
+    const dist=totalKm(pts);
+    const dur=fmtDur(pts[0].recorded_at,pts[pts.length-1].recorded_at);
+    subtitle.textContent=pts.length+' points · '+dist+' km · '+dur;
+
+    // Stats
+    stats.innerHTML=`
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
+        ${[['Worker',worker],['Distance',dist+' km'],['Duration',dur],['Points',pts.length]].map(([l,v])=>`
+          <div style="background:var(--bg);border:1px solid var(--b);border-radius:12px;padding:14px 16px;">
+            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);margin-bottom:6px">${l}</div>
+            <div style="font-size:18px;font-weight:700;color:var(--ink)">${anEsc(String(v))}</div>
           </div>`).join('')}
       </div>`;
+    stats.style.display='block';
+
+    // Map
+    mapDiv.style.display='block';
+    if(!_jMap){
+      _jMap=L.map('journeyMap',{zoomControl:true,attributionControl:true});
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'© OpenStreetMap'}).addTo(_jMap);
+    }
+    if(_jPoly){_jMap.removeLayer(_jPoly);}
+    _jMarkers.forEach(m=>_jMap.removeLayer(m));
+    _jMarkers=[];
+
+    const ll=pts.map(p=>[p.lat,p.lng]);
+    _jPoly=L.polyline(ll,{color:'#4a7c2f',weight:4,opacity:0.85}).addTo(_jMap);
+
+    pts.forEach((p,i)=>{
+      const isFirst=i===0,isLast=i===pts.length-1;
+      const m=L.circleMarker([p.lat,p.lng],{
+        radius:isFirst||isLast?10:5,
+        color:'#fff',weight:2,
+        fillColor:isFirst?'#4a7c2f':isLast?'#c0392b':'#2a4a1a',
+        fillOpacity:1
+      }).addTo(_jMap)
+       .bindTooltip((isFirst?'▶ Start':isLast?'⏹ End':('Point '+(i+1)))+' — '+fmtTime(p.recorded_at),{direction:'top'})
+       .on('click',()=>selectJourneyPoint(i,pts));
+      _jMarkers.push(m);
+    });
+
+    _jMap.fitBounds(_jPoly.getBounds(),{padding:[28,28]});
+    setTimeout(()=>_jMap.invalidateSize(),80);
+
+    // Timeline
+    timeline.innerHTML=`
+      <div style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--ink3);margin-bottom:8px;padding:0 4px">Route timeline — click any point to fly there</div>
+      <div style="border:1px solid var(--b);border-radius:12px;overflow:hidden;max-height:260px;overflow-y:auto">
+        ${pts.map((p,i)=>{
+          const isFirst=i===0,isLast=i===pts.length-1;
+          const label=isFirst?'Start':isLast?'End':'Point '+(i+1);
+          const dot=isFirst?'#4a7c2f':isLast?'#c0392b':'var(--b2)';
+          return`<div id="jpt-${i}" onclick="selectJourneyPoint(${i},null)" style="display:flex;align-items:center;gap:12px;padding:10px 16px;cursor:pointer;border-bottom:1px solid var(--b);transition:background .15s;font-size:12px" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='transparent'">
+            <span style="width:28px;text-align:center;flex-shrink:0"><span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:${dot}"></span></span>
+            <span style="font-weight:600;color:var(--ink);min-width:54px">${label}</span>
+            <span style="color:var(--ink3);min-width:72px">${fmtTime(p.recorded_at)}</span>
+            <span style="color:var(--ink3);font-variant-numeric:tabular-nums">${p.lat.toFixed(5)}, ${p.lng.toFixed(5)}</span>
+            ${p.accuracy?`<span style="color:var(--ink3);margin-left:auto">±${Math.round(p.accuracy)}m</span>`:''}
+          </div>`;
+        }).join('')}
+      </div>`;
+    timeline.style.display='block';
+
+    // Store points for click handler
+    window._jPts=pts;
   }catch(e){
-    subtitle.textContent='Could not load journey.';
-    timeline.innerHTML='<p style="color:var(--ink3);font-size:12px;padding:8px 0">Error: '+anEsc(e.message)+'</p>';
+    subtitle.textContent='Could not load journey: '+e.message;
+    empty.textContent=e.message;
+    empty.style.display='block';
   }
 }
+
+function selectJourneyPoint(i,ptsArg){
+  const pts=ptsArg||window._jPts;
+  if(!pts||!_jMap) return;
+  _jMap.flyTo([pts[i].lat,pts[i].lng],17,{duration:0.8});
+  _jMarkers.forEach((m,j)=>{
+    const isFirst=j===0,isLast=j===pts.length-1;
+    m.setStyle({
+      radius:isFirst||isLast?10:j===i?8:5,
+      fillColor:j===i?'#89c43a':isFirst?'#4a7c2f':isLast?'#c0392b':'#2a4a1a',
+      weight:j===i?3:2
+    });
+  });
+  // Highlight timeline row
+  document.querySelectorAll('[id^="jpt-"]').forEach(el=>el.style.background='transparent');
+  const row=document.getElementById('jpt-'+i);
+  if(row){row.style.background='var(--bg)';row.scrollIntoView({block:'nearest'});}
+}
+
 
 function checkVerifyBadge(){
   const n=tasks.filter(t=>t.status==='payment_pending'||(t.description&&t.description.includes('Payment Ref')&&['open','offered'].includes(t.status))).length;

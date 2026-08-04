@@ -400,7 +400,6 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
 export default function WorkerDashboard() {
   const [tab, setTab] = useState<'available' | 'mine' | 'declined' | 'history' | 'support'>('available')
   const [offers, setOffers] = useState<Task[]>([])
-  const [open, setOpen] = useState<Task[]>([])
   const [mine, setMine] = useState<Task[]>([])
   const [history, setHistory] = useState<Task[]>([])
   const [declined, setDeclined] = useState<Task[]>([])
@@ -415,7 +414,7 @@ export default function WorkerDashboard() {
   const load = useCallback(async () => {
     setError(null)
     try {
-      const [openRes, mineRes, histRes, meRes] = await Promise.all([
+      const [, mineRes, histRes, meRes] = await Promise.all([
         tasksApi.open(),
         tasksApi.mine(),
         tasksApi.workerHistory(),
@@ -424,7 +423,7 @@ export default function WorkerDashboard() {
       const mineTasks = mineRes?.tasks || []
       setOffers(mineTasks.filter((t) => t.status === 'offered'))
       setMine(mineTasks.filter((t) => t.status === 'accepted' || t.status === 'pending_confirmation'))
-      setOpen((openRes?.tasks || []).filter((t) => t.status === 'open'))
+
       setHistory(histRes?.tasks || [])
       if (meRes?.worker) { setMe(meRes.worker); session.patchWorker(meRes.worker) }
     } catch (e) {
@@ -578,7 +577,9 @@ export default function WorkerDashboard() {
     }
   }
 
-  const available = [...offers, ...open]
+  // Workers cannot browse and self-select open tasks in early stage.
+  // They only see tasks that BeyondX has specifically offered them.
+  const available = [...offers]
   const displayName = (me?.fullName as string) || (me?.name as string) || 'Worker'
   const photo = (me?.photoUrl as string) || undefined
   const completed = history.length
@@ -675,7 +676,7 @@ export default function WorkerDashboard() {
                     </div>
                   </div>
                 </div>
-              )) : <Empty text="No jobs available right now. Check back soon." />)}
+              )) : <Empty text="No job offers yet. BeyondX will contact you when a suitable job is available." />)}
 
               {tab === 'mine' && (
                 <>
