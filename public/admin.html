@@ -753,8 +753,8 @@ function vpCard(t){
       <div class="tr"><span class="tr-k">Payment ref</span><span class="tr-v" style="font-weight:600;color:var(--ink)">${anEsc(ref)}</span></div>
     </div>
     <div style="display:flex;gap:8px;margin-top:10px;">
-      <button class="btn-ps" style="flex:1;" onclick="verifyPayment('${t.id}','${w?.fullName||''}')">
-        ✓ Confirm payment received — release to worker
+      <button class="btn-ps" style="flex:1;" onclick="verifyPayment('${t.id}','${w?.fullName||''}',${JSON.stringify(t).replace(/'/g,'\\'+'\'')})">
+        ✓ Confirm payment received — notify worker
       </button>
       <button onclick="rejectPayment('${t.id}')" style="padding:10px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--f);border:1.5px solid var(--b);background:transparent;color:var(--ink3);">
         ✗ Reject
@@ -763,16 +763,20 @@ function vpCard(t){
   </div>`;
 }
 
-async function verifyPayment(taskId, workerName){
-  if(!confirm('Confirm you have received the payment for this task. This will notify the worker and offer them the job.')) return;
+async function verifyPayment(taskId, workerName, taskData){
+  if(!confirm('Confirm you have received payment for this task.\n\nThis will send the worker a detailed SMS and mark the task as offered.')) return;
   try{
+    const body={action:'approve'};
+    if(taskData) body.task=taskData;
     const r=await fetch(API+'/admin/tasks/'+taskId+'/verify-payment',{
       method:'POST',
       headers:{'Content-Type':'application/json','x-admin-password':pass},
-      body:JSON.stringify({action:'approve'})
+      body:JSON.stringify(body)
     });
-    if(!r.ok) throw new Error('Server error '+r.status);
-    showToast('Payment verified — '+workerName+' has been notified.');
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(d.error||'Server error '+r.status);
+    const smsNote=d.smsSent?'SMS sent to worker ✓':d.smsError?'Note: '+d.smsError:'';
+    showToast('Payment verified — '+workerName+' offered the job.'+(smsNote?' | '+smsNote:''));
     const td=await fetch(API+'/admin/all',{headers:{'x-admin-password':pass}}).then(r=>r.json()).catch(()=>({tasks:[]}));
     tasks=td.tasks||[];
     checkVerifyBadge();
