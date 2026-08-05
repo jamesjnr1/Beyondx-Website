@@ -2,10 +2,7 @@
   "rewrites": [
     { "source": "/admin/tasks/:id/verify-payment", "destination": "/api/admin-verify-payment" },
     { "source": "/api/journey", "destination": "/api/journey" },
-    { "source": "/admin/favicon.svg", "destination": "/admin/favicon.svg" },
-    { "source": "/admin/assets/(.*)", "destination": "/admin/assets/$1" },
-    { "source": "/admin", "destination": "/admin/index.html" },
-    { "source": "/admin/((?!assets|favicon).*)", "destination": "/admin/index.html" },
+    { "source": "/admin", "destination": "/admin.html" },
     { "source": "/join", "destination": "/index.html" }
   ]
 }
