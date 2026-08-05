@@ -33,29 +33,32 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 body{background:var(--bg);color:var(--ink);font-family:var(--f);font-size:13px;-webkit-font-smoothing:antialiased;}
 .login{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--ink-900);}
-.lbox{background:var(--s);border-radius:18px;padding:44px 40px;width:360px;box-shadow:0 24px 64px rgba(0,0,0,.2);}
-.lbox h1{font-size:20px;font-weight:800;letter-spacing:-.4px;margin-bottom:4px;font-family:var(--d);}
-.lbox p{font-size:12px;color:var(--ink3);margin-bottom:26px;}
-.lbox input{width:100%;padding:10px 13px;border:1.5px solid var(--b);border-radius:9px;font-size:13px;font-family:var(--f);color:var(--ink);background:var(--bg);outline:none;margin-bottom:10px;transition:border-color .15s;}
-.lbox input:focus{border-color:var(--g2);}
-.lbox button{width:100%;padding:11px;background:var(--g);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;font-family:var(--f);cursor:pointer;}
-.lbox button:hover{background:var(--g2);}
-.lerr{font-size:12px;color:#dc2626;margin-top:8px;display:none;}
+.lbox{background:var(--s);border-radius:20px;padding:52px 48px;width:380px;box-shadow:0 32px 80px rgba(0,0,0,.28);}
+.lbox-logo{width:42px;height:42px;background:var(--forest-800);border-radius:12px;display:flex;align-items:center;justify-content:center;margin-bottom:28px;}
+.lbox-logo svg{width:22px;height:22px;fill:var(--forest-400);}
+.lbox h1{font-size:22px;font-weight:700;letter-spacing:-.4px;margin-bottom:6px;font-family:var(--d);color:var(--ink);}
+.lbox p{font-size:13px;color:var(--ink3);margin-bottom:32px;line-height:1.5;}
+.lbox label{display:block;font-size:11px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--ink3);margin-bottom:7px;font-family:var(--f);}
+.lbox input{width:100%;padding:12px 14px;border:1.5px solid var(--b);border-radius:10px;font-size:13.5px;font-family:var(--f);color:var(--ink);background:var(--bg);outline:none;margin-bottom:16px;transition:border-color .15s;}
+.lbox input:focus{border-color:var(--forest-600);box-shadow:0 0 0 3px rgba(107,171,33,.12);}
+.lbox button{width:100%;padding:13px;background:var(--ink-900);color:#fff;border:none;border-radius:10px;font-size:13.5px;font-weight:600;font-family:var(--f);cursor:pointer;letter-spacing:-.1px;transition:background .15s;}
+.lbox button:hover{background:var(--ink-800);}
+.lerr{font-size:12px;color:#dc2626;margin-top:10px;display:none;}
 .app{display:none;min-height:100vh;width:100%;}
-.sb{position:fixed;inset:0 auto 0 0;width:196px;background:var(--ink-900);display:flex;flex-direction:column;z-index:10;}
-.sb-brand{padding:18px 16px 16px;border-bottom:1px solid rgba(255,255,255,.08);}
+.sb{position:fixed;inset:0 auto 0 0;width:220px;background:var(--ink-900);display:flex;flex-direction:column;z-index:10;}
+.sb-brand{padding:22px 20px 18px;border-bottom:1px solid rgba(255,255,255,.08);}
 .sb-name{font-size:14px;font-weight:800;color:#fff;letter-spacing:-.3px;}
 .sb-tag{font-size:9px;color:rgba(255,255,255,.3);font-family:var(--f);letter-spacing:.8px;text-transform:uppercase;margin-top:2px;}
 .sb-nav{padding:10px 0;flex:1;}
-.sb-grp{font-size:9px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.25);padding:12px 16px 4px;font-family:var(--f);}
-.sb-a{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;font-size:12px;font-weight:500;color:rgba(255,255,255,.55);cursor:pointer;border-left:2px solid transparent;transition:all .12s;}
+.sb-grp{font-size:9px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.25);padding:16px 20px 5px;font-family:var(--f);}
+.sb-a{display:flex;align-items:center;justify-content:space-between;padding:9px 20px;font-size:12.5px;font-weight:500;color:rgba(255,255,255,.55);cursor:pointer;border-left:2px solid transparent;transition:all .12s;}
 .sb-a:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.05);}
 .sb-a.on{color:#fff;background:rgba(107,171,33,.16);border-left-color:var(--forest-500);}
 .sb-bdg{background:rgba(239,68,68,.9);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;font-family:var(--f);}
 .sb-ft{padding:12px 16px;border-top:1px solid rgba(255,255,255,.07);font-size:10px;color:rgba(255,255,255,.2);font-family:var(--f);}
-.main{margin-left:196px;flex:1;display:flex;flex-direction:column;min-height:100vh;width:calc(100% - 196px);}
-.tb{padding:14px 24px;background:var(--s);border-bottom:1.5px solid var(--b);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5;}
-.tb-title{font-size:15px;font-weight:700;letter-spacing:-.3px;font-family:var(--d);font-weight:600;letter-spacing:-.2px;}
+.main{margin-left:220px;flex:1;display:flex;flex-direction:column;min-height:100vh;width:calc(100% - 220px);}
+.tb{padding:16px 28px;background:var(--s);border-bottom:1.5px solid var(--b);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5;}
+.tb-title{font-size:16px;font-weight:700;letter-spacing:-.3px;font-family:var(--d);font-weight:600;letter-spacing:-.2px;}
 .tb-r{display:flex;align-items:center;gap:10px;}
 .live{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:600;color:var(--forest-700);background:var(--forest-50);border:1px solid var(--forest-100);border-radius:20px;padding:4px 9px;font-family:var(--f);}
 .dot{width:5px;height:5px;border-radius:50%;background:#22c55e;animation:blink 2s infinite;}
@@ -63,9 +66,9 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);font-size:13px;-
 .tb-t{font-size:10px;color:var(--ink3);font-family:var(--m);font-family:var(--m);}
 .btn-r{padding:6px 12px;background:var(--s);border:1.5px solid var(--b);border-radius:7px;font-size:11px;font-weight:600;color:var(--ink2);cursor:pointer;font-family:var(--f);transition:all .12s;}
 .btn-r:hover{border-color:var(--g2);color:var(--g);}
-.body{padding:20px 24px 40px;width:100%;}
-.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;width:100%;}
-.sc{background:var(--s);border:1.5px solid var(--b);border-radius:12px;padding:16px 18px;}
+.body{padding:28px 32px 52px;width:100%;}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;width:100%;}
+.sc{background:var(--s);border:1.5px solid var(--b);border-radius:14px;padding:20px 22px;}
 .sc.dk{background:var(--forest-800);border-color:var(--forest-800);}
 .sc-l{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ink3);margin-bottom:8px;font-family:var(--m);font-family:var(--f);letter-spacing:.9px;}
 .sc.dk .sc-l{color:rgba(255,255,255,.4);}
@@ -74,8 +77,8 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);font-size:13px;-
 .sc-s{font-size:11px;color:var(--ink3);margin-top:5px;}
 .sc.dk .sc-s{color:rgba(255,255,255,.4);}
 .sc-s.w{color:var(--amb);}
-.stats2{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;width:100%;}
-.sc-mini{background:var(--s);border:1.5px solid var(--b);border-radius:12px;padding:14px 16px;}
+.stats2{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px;width:100%;}
+.sc-mini{background:var(--s);border:1.5px solid var(--b);border-radius:14px;padding:18px 20px;}
 .sc-mini .sc-l{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ink3);margin-bottom:6px;font-family:var(--m);font-family:var(--f);}
 .sc-mini .sc-v{font-size:18px;font-weight:800;color:var(--ink);letter-spacing:-.4px;}
 .chart-card{background:var(--s);border:1.5px solid var(--b);border-radius:12px;padding:16px 18px;margin-bottom:16px;}
@@ -205,11 +208,15 @@ tr:hover td{background:var(--bg);}
 <body>
 <div class="login" id="loginScreen">
   <div class="lbox">
+    <div class="lbox-logo">
+      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+    </div>
     <h1>BeyondX Admin</h1>
-    <p>Operations and payout dashboard</p>
-    <input type="password" id="adminPass" placeholder="Admin password" onkeydown="if(event.key==='Enter')login()"/>
-    <button onclick="login()">Sign in</button>
-    <div class="lerr" id="err">Incorrect password</div>
+    <p>Enter your admin password to access the dashboard.</p>
+    <label for="adminPass">Password</label>
+    <input type="password" id="adminPass" placeholder="••••••••••••" onkeydown="if(event.key==='Enter')login()"/>
+    <button onclick="login()">Sign in →</button>
+    <div class="lerr" id="err">Incorrect password. Please try again.</div>
   </div>
 </div>
 <div class="app" id="app">
