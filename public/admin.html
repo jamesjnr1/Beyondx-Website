@@ -828,7 +828,10 @@ async function verifyPaymentById(btn){
 async function verifyPayment(taskId, workerName, taskData){
   if(!confirm('Confirm you have received payment for this task.\n\nThis will advance the task to \'offered\' and the worker will be notified via SMS.')) return;
   try{
-    // Step 1: Update task status to 'offered' directly on Railway
+    // Update task status to 'offered' directly on Railway.
+    // Railway's own PATCH /admin/tasks/:id/status route sends the worker's
+    // job-offer SMS automatically when the status becomes 'offered' —
+    // no separate SMS call needed here.
     const r=await fetch(API+'/admin/tasks/'+taskId+'/status',{
       method:'PATCH',
       headers:{'Content-Type':'application/json','x-admin-password':pass},
@@ -836,15 +839,6 @@ async function verifyPayment(taskId, workerName, taskData){
     });
     const d=await r.json().catch(()=>({}));
     if(!r.ok) throw new Error(d.error||'Railway returned '+r.status);
-
-    // Step 2: Send worker SMS via the Vercel endpoint (best-effort, non-blocking)
-    if(taskData){
-      fetch('/admin/tasks/'+taskId+'/verify-payment',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','x-admin-password':pass},
-        body:JSON.stringify({action:'sms-only',task:taskData})
-      }).catch(()=>null);
-    }
 
     showToast('Payment verified — '+workerName+' is now offered the job.');
     const td=await fetch(API+'/admin/all',{headers:{'x-admin-password':pass}}).then(r=>r.json()).catch(()=>({tasks:[]}));
@@ -858,13 +852,17 @@ async function rejectPayment(taskId){
   const reason=prompt('Reason for rejection (shown to employer):','Payment reference not found or amount incorrect.');
   if(!reason) return;
   try{
-    const r=await fetch(API+'/admin/tasks/'+taskId+'/verify-payment',{
-      method:'POST',
+    // Update task status to 'payment_rejected' directly on Railway —
+    // same pattern as verifyPayment, no dependency on any other service.
+    const r=await fetch(API+'/admin/tasks/'+taskId+'/status',{
+      method:'PATCH',
       headers:{'Content-Type':'application/json','x-admin-password':pass},
-      body:JSON.stringify({action:'reject',reason})
+      body:JSON.stringify({status:'payment_rejected',adminNote:reason})
     });
-    if(!r.ok) throw new Error('Server error '+r.status);
-    showToast('Payment rejected — employer will be notified.');
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(d.error||'Railway returned '+r.status);
+
+    showToast('Payment rejected.');
     const td=await fetch(API+'/admin/all',{headers:{'x-admin-password':pass}}).then(r=>r.json()).catch(()=>({tasks:[]}));
     tasks=td.tasks||[];
     checkVerifyBadge();
