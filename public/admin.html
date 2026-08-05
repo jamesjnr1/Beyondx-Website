@@ -1956,8 +1956,7 @@ function togglePassVis(){
     .catch(()=>{/* silently leave skeletons */});
 })();
 
-// Animate login button on submit
-const _origLogin=login;
+// Handle login form submit
 window.login=function(){
   const btn=document.getElementById('loginBtn');
   if(btn){btn.textContent='Signing in…';btn.disabled=true;}
