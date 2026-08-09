@@ -458,6 +458,23 @@ tr:hover td{background:var(--bg);}
       </div>
 
       <div class="sec" id="sec-analytics">
+        <div class="tc" style="margin-bottom:16px;">
+          <div class="tc-h">
+            <span class="tc-ht">Visitor &rarr; Signup Funnel</span>
+            <span class="tc-hm">Self-hosted &mdash; not Vercel Analytics</span>
+          </div>
+          <div style="padding:14px 18px;">
+            <div class="an-ctl" style="margin-bottom:14px;">
+              <span class="tb-t">Range</span>
+              <button class="btn-r vfrange on" onclick="setVfRange(7,this)">7 days</button>
+              <button class="btn-r vfrange" onclick="setVfRange(30,this)">30 days</button>
+              <button class="btn-r vfrange" onclick="setVfRange(0,this)">All time</button>
+              <button class="btn-r" style="margin-left:auto;" onclick="loadVisitorFunnel()">Refresh</button>
+            </div>
+            <div id="vfStats"></div>
+            <div id="vfTable" style="margin-top:14px;"></div>
+          </div>
+        </div>
         <div id="anAlert"></div>
         <div class="an-ctl">
           <span class="tb-t">Range</span>
@@ -588,7 +605,7 @@ function nav(id,el){
   if(id==='notify'){ ntChars(); ntLoad(); return; }
   if(id==='messages'){ rm(); return; }
   if(id==='payconfirm'){ pcEmployerList().then(pcPreview); pcRenderLog(); return; }
-  if(id==='analytics'){ if(!anData)loadAnalytics(); anStartAuto(); return; }
+  if(id==='analytics'){ loadVisitorFunnel(); if(!anData)loadAnalytics(); anStartAuto(); return; }
   if(id!=='overview')rs(id);
 }
 function render(){
@@ -1273,6 +1290,49 @@ function renderAnalytics(d){
   const rng = d.range ? ` · ${d.range.since} to ${d.range.until}` : '';
   document.getElementById('anUpdated').textContent =
     'Updated '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) + proj + rng;
+}
+
+let vfRangeDays=7;
+function setVfRange(days,btn){
+  vfRangeDays=days;
+  document.querySelectorAll('.vfrange').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  loadVisitorFunnel();
+}
+async function loadVisitorFunnel(){
+  const statsEl=document.getElementById('vfStats');
+  const tableEl=document.getElementById('vfTable');
+  statsEl.innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const r=await fetch(API+'/admin/visitor-stats?days='+vfRangeDays,{headers:{'x-admin-password':pass}});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.error||'Server error '+r.status);
+
+    statsEl.innerHTML=`
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
+        <div class="sc"><div class="sc-l">Visitors</div><div class="sc-v">${d.totalVisitors}</div></div>
+        <div class="sc dk"><div class="sc-l">Registered</div><div class="sc-v">${d.converted}</div><div class="sc-s">${d.conversionRate.toFixed(1)}% conversion</div></div>
+        <div class="sc"><div class="sc-l">As Workers</div><div class="sc-v">${d.workerSignups}</div></div>
+        <div class="sc"><div class="sc-l">As Employers</div><div class="sc-v">${d.employerSignups}</div></div>
+      </div>`;
+
+    tableEl.innerHTML = d.recent.length ? `
+      <div class="tc">
+        <div class="tc-h"><span class="tc-ht">Recent visitors</span><span class="tc-hm">${d.recent.length} shown</span></div>
+        <table><thead><tr><th>First seen</th><th>Last seen</th><th>Landing page</th><th>Referrer</th><th>Views</th><th>Status</th></tr></thead>
+        <tbody>${d.recent.map(v=>`<tr>
+          <td class="tm">${new Date(v.firstSeenAt).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</td>
+          <td class="tm">${new Date(v.lastSeenAt).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</td>
+          <td style="font-size:11px;color:var(--ink3)">${v.firstPath||'&mdash;'}</td>
+          <td style="font-size:11px;color:var(--ink3)">${v.referrer?(v.referrer.split('://')[1]||v.referrer).slice(0,30):'Direct'}</td>
+          <td class="tg">${v.pageViews}</td>
+          <td>${v.convertedAt?`<span style="color:var(--g3);font-weight:600;font-size:11px;">Registered (${v.convertedAs})</span>`:'<span style="font-size:11px;color:var(--ink3);">Browsing only</span>'}</td>
+        </tr>`).join('')}</tbody></table>
+      </div>` : '<div class="empty">No visitor data yet.</div>';
+  }catch(e){
+    statsEl.innerHTML=`<div class="empty">Could not load visitor stats: ${e.message}</div>`;
+    tableEl.innerHTML='';
+  }
 }
 
 function loadAnalytics(){
