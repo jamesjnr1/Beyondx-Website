@@ -5,7 +5,7 @@ import {
   allCategories, TOOL_SURCHARGE_RATE, VEHICLE_SURCHARGES,
   logisticsRate,
 } from '../data'
-import { PLATFORM_FEE } from '../lib/payments'
+import { PLATFORM_FEE_FLAT } from '../lib/payments'
 import { tasks as tasksApi, ApiError } from '../lib/api'
 import type { Worker } from '../lib/api'
 import type { ScreeningAnswers } from './EmployerDashboard'
@@ -147,7 +147,7 @@ function BookingForm({ state, onDone, onError }: {
   const isPerDay = !cat?.distancePricing && cat?.mode !== 'remote'
   const effectiveDays = cat?.distancePricing ? 1 : (cat?.minDays ? Math.max(days, cat.minDays) : days)
   const workerGets = isPerDay ? baseRate * effectiveDays : baseRate
-  const fee = Math.round(workerGets * PLATFORM_FEE)
+  const fee = PLATFORM_FEE_FLAT
   const pay = workerGets + fee
   const duration = effectiveDays === 0.5 ? 'Half Day' : effectiveDays === 1 ? '1 Day' : `${effectiveDays} Days`
 

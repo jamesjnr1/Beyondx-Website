@@ -12,6 +12,7 @@ import {
   Languages,
   Search,
   CalendarClock,
+  Cog,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -36,6 +37,10 @@ export interface Category {
   /** If true, a tool-provision surcharge (+15%) applies when the worker provides tools.
    *  Applies to Agriculture, Construction, Facility & Cleaning. */
   toolModifier?: boolean
+  /** If true, this category requires stricter proof-of-previous-work verification
+   *  before a worker can be listed — used for skilled trades where a bad job is
+   *  a safety issue, not just a quality one. */
+  strictVerification?: boolean
   /** Logistics & Delivery only — uses distance-based pricing instead of a flat day rate. */
   distancePricing?: boolean
   /** Minimum booking in days (Agriculture = 2). */
@@ -65,14 +70,42 @@ export const categories: Category[] = [
     distancePricing: true,
   },
   {
+    icon: Hammer,
+    title: 'General Site Labour',
+    description: 'Unskilled and semi-skilled help for construction sites — carrying, digging, mixing, cleanup.',
+    image: '/categories/general-labour.jpg',
+    tasks: ['Carrying materials', 'Digging & mixing', 'Site cleanup', 'Assisting tradespeople'],
+    rate: 100,
+    toolModifier: true,
+  },
+  {
+    icon: Wrench,
+    title: 'Skilled Trades',
+    description: 'Trained tradespeople — plumbing, electrical, and carpentry work.',
+    image: '/categories/electrical.jpg',
+    tasks: ['Plumbing installation & repair', 'Electrical wiring & fittings', 'Carpentry & joinery', 'Trade-specific fault finding'],
+    rate: 220,
+    toolModifier: true,
+    strictVerification: true,
+  },
+  {
     icon: PaintRoller,
-    title: 'Construction, Maintenance & Repairs',
-    description: 'Construction, painting, tiling, plumbing support, and site labour.',
+    title: 'Painting & Finishing',
+    description: 'Painting, tiling, plastering, and finishing work.',
     image: '/categories/painting.jpg',
-    tasks: ['Painting & touch-up work', 'Tiling assistance', 'Plumbing support', 'Building site labourer'],
+    tasks: ['Interior & exterior painting', 'Tiling', 'Plastering', 'Wall & surface finishing'],
     rate: 130,
-    skilledRate: 220,
-    skilledLabel: 'tiling, plumbing',
+    skilledRate: 200,
+    skilledLabel: 'tiling, plastering',
+    toolModifier: true,
+  },
+  {
+    icon: Cog,
+    title: 'Repairs & Maintenance',
+    description: 'Small jobs — appliance fixes, small plumbing/electrical repairs, general handyman work.',
+    image: '/categories/construction.jpg',
+    tasks: ['Appliance repair', 'Small plumbing fixes', 'Small electrical fixes', 'General handyman work'],
+    rate: 90,
     toolModifier: true,
   },
   {
@@ -273,9 +306,9 @@ export const pillars: Pillar[] = [
 export interface Stat { value: string; label: string }
 
 export const stats: Stat[] = [
-  { value: '15%', label: 'Service fee per completed job' },
+  { value: 'GH₵20', label: 'Flat service fee per completed job' },
   { value: '100%', label: 'Paid directly to the worker' },
-  { value: '7', label: 'Certified skill categories' },
+  { value: '10', label: 'Certified skill categories' },
   { value: '100%', label: 'GPS-verified attendance' },
 ]
 

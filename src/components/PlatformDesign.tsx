@@ -58,17 +58,18 @@ export default function PlatformDesign() {
             <h3 className="font-serif text-xl font-semibold text-ink-900">In-App Payments</h3>
             <p className="mt-3 text-sm leading-relaxed text-ink-700">
               All payments are processed through the BeyondX platform. Every
-              transaction is tracked. A 15% platform commission is deducted per
-              transaction to sustain programme operations.
+              transaction is tracked. A flat GH₵20 service fee is added per
+              completed job to sustain programme operations — the worker
+              keeps 100% of the quoted rate.
             </p>
             <div className="mt-6 flex gap-3">
               <div className="flex-1 rounded-xl bg-forest-600/5 p-3 text-center">
-                <span className="block font-serif text-2xl font-semibold text-forest-700">85%</span>
+                <span className="block font-serif text-2xl font-semibold text-forest-700">100%</span>
                 <span className="text-xs text-ink-700">To the worker</span>
               </div>
               <div className="flex-1 rounded-xl bg-ink-900/5 p-3 text-center">
-                <span className="block font-serif text-2xl font-semibold text-ink-900">15%</span>
-                <span className="text-xs text-ink-700">Platform commission</span>
+                <span className="block font-serif text-2xl font-semibold text-ink-900">GH₵20</span>
+                <span className="text-xs text-ink-700">Flat service fee</span>
               </div>
             </div>
           </motion.div>

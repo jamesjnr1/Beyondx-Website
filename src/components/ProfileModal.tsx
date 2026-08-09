@@ -133,7 +133,7 @@ export default function ProfileModal({
               <L label="Skills (comma separated)" htmlFor="pf-skills"><input id="pf-skills" value={p.skills || ''} onChange={set('skills')} placeholder="Painting, Cleaning" className={inp} /></L>
               <div>
                 <p className="mb-1.5 text-xs font-medium text-ink-700">Do you bring your own tools?</p>
-                <p className="mb-2 text-xs text-ink-700/60">Workers who bring tools to Facility, Agriculture, or Construction jobs earn a 15% surcharge.</p>
+                <p className="mb-2 text-xs text-ink-700/60">Workers who bring tools to Facility, Agriculture, or site/trade jobs earn a 15% surcharge.</p>
                 <div className="flex gap-2">
                   <button type="button" onClick={() => setP((prev) => ({ ...prev, hasTools: true }))}
                     className={`rounded-lg px-4 py-2 text-sm font-medium transition-all ${p.hasTools ? 'bg-forest-600 text-white' : 'border border-ink-900/15 text-ink-700 hover:border-ink-900/30'}`}>

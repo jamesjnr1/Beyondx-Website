@@ -1057,12 +1057,14 @@ function quickBroadcast(type){
 
 function rt(){
   const paid = tasks.filter(t=>t.status==='completed');
+  const FLAT_FEE = 20; // flat GH₵20 service fee per completed job — replaces the old 15% commission
   const totalRev = paid.reduce((s,t)=>s+parseFloat(t.pay),0);
+  const totalFees = paid.length * FLAT_FEE;
   const html = `
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;">
       <div class="sc"><div class="sc-l">Total Transactions</div><div class="sc-v">${paid.length}</div></div>
-      <div class="sc dk"><div class="sc-l">Employer Payments</div><div class="sc-v">GH&#8373; ${(totalRev*1.15).toFixed(0)}</div><div class="sc-s">GH&#8373; ${totalRev.toFixed(0)} to workers</div></div>
-      <div class="sc"><div class="sc-l">Platform Earnings</div><div class="sc-v">GH&#8373; ${(totalRev*0.15).toFixed(0)}</div><div class="sc-s">15% service fee</div></div>
+      <div class="sc dk"><div class="sc-l">Employer Payments</div><div class="sc-v">GH&#8373; ${(totalRev+totalFees).toFixed(0)}</div><div class="sc-s">GH&#8373; ${totalRev.toFixed(0)} to workers</div></div>
+      <div class="sc"><div class="sc-l">Platform Earnings</div><div class="sc-v">GH&#8373; ${totalFees.toFixed(0)}</div><div class="sc-s">GH&#8373;20 flat fee per job</div></div>
     </div>
     <div class="tc">
       <div class="tc-h"><span class="tc-ht">Transaction Log</span><span class="tc-hm">${paid.length} transactions</span></div>
@@ -1072,9 +1074,9 @@ function rt(){
         <td>${t.employer?.orgName||'—'}</td>
         <td>${t.acceptedBy?.fullName||'—'}</td>
         <td class="tm">${new Date(t.createdAt).toLocaleDateString()}</td>
-        <td class="tm">GH&#8373; ${(parseFloat(t.pay)*1.15).toFixed(0)}</td>
+        <td class="tm">GH&#8373; ${(parseFloat(t.pay)+FLAT_FEE).toFixed(0)}</td>
         <td class="tg">GH&#8373; ${parseFloat(t.pay).toFixed(0)}</td>
-        <td class="tm">GH&#8373; ${(parseFloat(t.pay)*0.15).toFixed(0)}</td>
+        <td class="tm">GH&#8373; ${FLAT_FEE.toFixed(0)}</td>
       </tr>`).join('')}</tbody></table>${showMoreHtml(paid.length-txShown,'txShown+=20;rt();')}` : `<div class="empty">No transactions yet</div>`}
     </div>`;
   document.getElementById('txContent').innerHTML = html;
