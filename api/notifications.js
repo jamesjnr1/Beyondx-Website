@@ -39,7 +39,11 @@ function headers(key) {
 }
 
 function isAdmin(req) {
-  const secret = process.env.ADMIN_API_SECRET
+  // ADMIN_API_SECRET is optional — if it was never explicitly set in Vercel
+  // (easy to forget, since every other admin flow uses ADMIN_PASSWORD),
+  // fall back to the one admin password that's guaranteed to be configured.
+  // This was the actual cause of every notification publish silently 401ing.
+  const secret = process.env.ADMIN_API_SECRET || process.env.ADMIN_PASSWORD
   if (!secret) return false
   return req.headers['x-admin-secret'] === secret
 }

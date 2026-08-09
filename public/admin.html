@@ -611,7 +611,7 @@ function ro(){
   const uniq=withTasks.size;
   document.getElementById('sg').innerHTML=`
     <div class="sc dk"><div class="sc-l">Total Tasks</div><div class="sc-v">${tasks.length}</div><div class="sc-s">${co.length} completed &middot; ${op.length} open</div></div>
-    <div class="sc"><div class="sc-l">Revenue</div><div class="sc-v">GH&#8373; ${(rev*1.15).toFixed(0)}</div><div class="sc-s">GH&#8373; ${(rev*.15).toFixed(0)} platform fees</div></div>
+    <div class="sc"><div class="sc-l">Revenue</div><div class="sc-v">GH&#8373; ${(rev+co.length*20).toFixed(0)}</div><div class="sc-s">GH&#8373; ${(co.length*20).toFixed(0)} platform fees</div></div>
     <div class="sc"><div class="sc-l">Pending Payouts</div><div class="sc-v">GH&#8373; ${pend.toFixed(0)}</div><div class="sc-s ${pend>0?'w':''}">${py.length} worker${py.length!==1?'s':''} waiting</div></div>
     <div class="sc"><div class="sc-l">Network</div><div class="sc-v">${workers.length} workers</div><div class="sc-s">${uniq} employer${uniq!==1?'s':''}</div></div>`;
   const complRate=tasks.length?(co.length/tasks.length*100):0;
@@ -665,6 +665,88 @@ function rs(id){
 }
 function stars(n){ return '★'.repeat(Math.round(n))+'☆'.repeat(5-Math.round(n)); }
 function closeDetail(){ document.getElementById('detailOverlay').classList.remove('on'); }
+
+let dmSelected = new Set();
+function showDispatchMultiPanel(taskId){
+  const t = tasks.find(x => String(x.id) === String(taskId));
+  if(!t) return;
+  dmSelected = new Set();
+
+  document.getElementById('detailPanel').innerHTML = `
+    <div class="dpanel-h">
+      <div><div class="dpanel-t">Dispatch to worker(s)</div><div class="dpanel-s">${t.taskType} &middot; ${t.location||''}</div></div>
+      <button class="dpanel-x" onclick="closeDetail()">✕</button>
+    </div>
+    <div style="background:var(--bg);border:1px solid var(--b);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:12.5px;color:var(--ink2);">
+      <div><strong>${t.employer?.orgName||'Employer'}</strong> &middot; GH&#8373; ${parseFloat(t.pay).toFixed(2)} per worker &middot; ${t.duration||''}</div>
+      ${t.description?`<div style="margin-top:4px;color:var(--ink3)">${anEsc(t.description)}</div>`:''}
+    </div>
+
+    <div class="dsec-t">Workers needed</div>
+    <input type="number" id="dmSlots" min="1" value="${t.slotsNeeded||1}" style="width:100%;padding:9px 12px;border:1.5px solid var(--b);border-radius:8px;font-family:var(--f);font-size:13px;margin-bottom:14px;" oninput="dmUpdateCount()"/>
+
+    <div class="dsec-t">Offer expires after</div>
+    <select id="dmExpiry" style="width:100%;padding:9px 12px;border:1.5px solid var(--b);border-radius:8px;font-family:var(--f);font-size:13px;margin-bottom:14px;background:#fff;">
+      <option value="">No limit</option>
+      <option value="2">2 hours</option>
+      <option value="6">6 hours</option>
+      <option value="24" selected>24 hours</option>
+      <option value="48">48 hours</option>
+    </select>
+
+    <div class="dsec-t">Select candidate workers (<span id="dmCount">0</span> selected — offer to more than you need in case some decline)</div>
+    <input class="srch" id="dmSearch" placeholder="Search workers by name or skill…" oninput="dmRenderWorkers()" style="margin-bottom:10px;"/>
+    <div id="dmWorkerList" style="max-height:280px;overflow-y:auto;border:1px solid var(--b);border-radius:10px;margin-bottom:16px;"></div>
+
+    <button class="btn-ps" style="width:100%;" onclick="dmSubmit('${t.id}')">Send offers</button>
+  `;
+  dmRenderWorkers();
+  document.getElementById('detailOverlay').classList.add('on');
+}
+
+function dmRenderWorkers(){
+  const q = (document.getElementById('dmSearch')?.value||'').toLowerCase();
+  const list = q ? workers.filter(w => [w.fullName, ...(w.skills||[])].join(' ').toLowerCase().includes(q)) : workers;
+  document.getElementById('dmWorkerList').innerHTML = list.slice(0,50).map(w => `
+    <label style="display:flex;align-items:center;gap:10px;padding:9px 12px;border-bottom:1px solid var(--b2);cursor:pointer;font-size:12.5px;">
+      <input type="checkbox" ${dmSelected.has(w.id)?'checked':''} onchange="dmToggle('${w.id}')" style="width:15px;height:15px;"/>
+      <span style="flex:1">${w.fullName} ${w.isBusy?'<span style=\"color:#b91c1c;font-size:10.5px;\">(on a job)</span>':''}</span>
+      <span style="color:var(--ink3);font-size:11px;">${(w.skills||[]).slice(0,2).join(', ')}</span>
+    </label>`).join('') || '<div class="empty">No matches</div>';
+}
+function dmToggle(id){
+  if(dmSelected.has(id)) dmSelected.delete(id); else dmSelected.add(id);
+  dmUpdateCount();
+}
+function dmUpdateCount(){
+  const el = document.getElementById('dmCount');
+  if(el) el.textContent = dmSelected.size;
+}
+async function dmSubmit(taskId){
+  const slotsNeeded = parseInt(document.getElementById('dmSlots').value, 10) || 1;
+  const offerHoursRaw = document.getElementById('dmExpiry').value;
+  const offerHours = offerHoursRaw ? parseInt(offerHoursRaw, 10) : undefined;
+  const workerIds = [...dmSelected];
+
+  if(workerIds.length === 0){ showToast('Select at least one worker.'); return; }
+  if(workerIds.length < slotsNeeded){ showToast(`You need ${slotsNeeded} worker(s) but only selected ${workerIds.length}.`); return; }
+  if(!confirm(`Send this offer to ${workerIds.length} worker(s) for ${slotsNeeded} slot(s)${offerHours?`, expiring in ${offerHours}h`:''}?`)) return;
+
+  try{
+    const r = await fetch(API+'/admin/tasks/dispatch-multi', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','x-admin-password':pass},
+      body: JSON.stringify({ sourceTaskId: taskId, workerIds, slotsNeeded, offerHours })
+    });
+    const d = await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(d.error || 'Server error '+r.status);
+    showToast(`Sent ${d.tasksCreated} offer(s).`);
+    closeDetail();
+    const td = await fetch(API+'/admin/all',{headers:{'x-admin-password':pass}}).then(r=>r.json()).catch(()=>({tasks:[]}));
+    tasks = td.tasks || [];
+    render();
+  }catch(e){ showToast('Could not send offers: '+e.message); }
+}
 
 function reviewRow(r,fromLabel){
   const dateStr=r.createdAt?new Date(r.createdAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
@@ -748,7 +830,13 @@ function tl(list){
   if(!list.length)return`<div class="empty">No tasks here</div>`;
   const bm={open:['bo','Open'],accepted:['ba','In Progress'],pending_confirmation:['bp','Awaiting Payment'],completed:['bd','Completed']};
   return list.map(t=>{const w=t.acceptedBy;const[bc,bl]=bm[t.status]||['bo','Unknown'];const wp=parseFloat(t.pay).toFixed(2);
-  return`<div class="tsk"><div class="tsk-tp"><div><div class="tsk-n">${t.taskType}</div><div class="tsk-m">${t.location} &middot; ${t.duration} &middot; ${new Date(t.createdAt).toLocaleDateString()}</div></div><span class="badge ${bc}">${bl}</span></div><div class="tsk-b"><div class="tr"><span class="tr-k">Employer</span><span class="tr-v">${t.employer?.orgName||'&mdash;'}</span></div><div class="tr"><span class="tr-k">Worker</span><span class="tr-v">${w?.fullName||'Unassigned'}${w?.phone?' &middot; '+w.phone:''}</span></div><div class="tr"><span class="tr-k">Employer Paid</span><span class="tr-v">GH&#8373; ${parseFloat(t.pay).toFixed(2)}</span></div><div class="tr"><span class="tr-k">Worker Gets</span><span class="tr-v g">GH&#8373; ${wp}</span></div></div>${t.status==='pending_confirmation'?`<button class="btn-ps" onclick="mkp('${t.id}','${w?.fullName||''}','${wp}')">Confirm Payment Sent</button>`:''}</div>`;
+  let slotInfo='';
+  if(t.groupId&&t.slotsNeeded){
+    const sibs=tasks.filter(x=>x.groupId===t.groupId);
+    const filled=sibs.filter(x=>['accepted','pending_confirmation','employer_confirmed','completed'].includes(x.status)).length;
+    slotInfo=`<div class="tr"><span class="tr-k">Slots</span><span class="tr-v">${filled} of ${t.slotsNeeded} filled${t.offerExpiresAt?' &middot; expires '+new Date(t.offerExpiresAt).toLocaleString('en-GB',{hour:'2-digit',minute:'2-digit',day:'numeric',month:'short'}):''}</span></div>`;
+  }
+  return`<div class="tsk"><div class="tsk-tp"><div><div class="tsk-n">${t.taskType}${t.status==='open'&&t.slotsNeeded>1?` &middot; needs ${t.slotsNeeded} workers`:''}</div><div class="tsk-m">${t.location} &middot; ${t.duration} &middot; ${new Date(t.createdAt).toLocaleDateString()}</div></div><span class="badge ${bc}">${bl}</span></div><div class="tsk-b"><div class="tr"><span class="tr-k">Employer</span><span class="tr-v">${t.employer?.orgName||'&mdash;'}</span></div><div class="tr"><span class="tr-k">Worker</span><span class="tr-v">${w?.fullName||'Unassigned'}${w?.phone?' &middot; '+w.phone:''}</span></div>${slotInfo}<div class="tr"><span class="tr-k">Employer Paid</span><span class="tr-v">GH&#8373; ${parseFloat(t.pay).toFixed(2)}</span></div><div class="tr"><span class="tr-k">Worker Gets</span><span class="tr-v g">GH&#8373; ${wp}</span></div></div>${t.status==='pending_confirmation'?`<button class="btn-ps" onclick="mkp('${t.id}','${w?.fullName||''}','${wp}')">Confirm Payment Sent</button>`:''}${t.status==='open'?`<button class="btn-ps" onclick="showDispatchMultiPanel('${t.id}')">Dispatch to worker(s)</button>`:''}</div>`;
   }).join('');
 }
 function rw(){
@@ -819,7 +907,7 @@ function vpCard(t){
       <div class="tr"><span class="tr-k">Employer</span><span class="tr-v">${t.employer?.orgName||'&mdash;'}</span></div>
       <div class="tr"><span class="tr-k">Worker</span><span class="tr-v">${w?.fullName||'Unassigned'}</span></div>
       ${jobDesc?`<div class="tr"><span class="tr-k">Description</span><span class="tr-v" style="max-width:400px">${anEsc(jobDesc)}</span></div>`:''}
-      <div class="tr"><span class="tr-k">Amount</span><span class="tr-v">GH&#8373; ${(parseFloat(t.pay)*1.15).toFixed(2)} total (GH&#8373; ${wp} to worker)</span></div>
+      <div class="tr"><span class="tr-k">Amount</span><span class="tr-v">GH&#8373; ${(parseFloat(t.pay)+20).toFixed(2)} total (GH&#8373; ${wp} to worker)</span></div>
       <div class="tr"><span class="tr-k">Payment ref</span><span class="tr-v" style="font-weight:600;color:var(--ink)">${anEsc(ref)}</span></div>
     </div>
     <div style="display:flex;gap:8px;margin-top:10px;">
@@ -976,11 +1064,18 @@ function rmData(){
     <td class="tm">${new Date(l.createdAt).toLocaleString()}</td>
     <td class="tm">${l.phone}</td>
     <td style="font-size:11px;max-width:280px;color:var(--ink3)">${(l.message||'').slice(0,70)}${l.message&&l.message.length>70?'…':''}</td>
-    <td>${l.status==='sent'?'<span style="color:var(--g3);font-weight:600;font-size:11px;">Sent</span>':l.errorType==='low_balance'?'<span style="color:#b91c1c;font-weight:600;font-size:11px;">Failed — Low Balance</span>':'<span style="color:#b91c1c;font-weight:600;font-size:11px;">Failed</span>'}</td>
+    <td>${l.status==='sent'?'<span style="color:var(--g3);font-weight:600;font-size:11px;">Sent</span>':l.errorType==='low_balance'?'<span style="color:#b91c1c;font-weight:600;font-size:11px;">Failed — Low Balance</span>':l.errorType==='invalid_number'?`<span style="color:#b91c1c;font-weight:600;font-size:11px;" title="${(l.errorDetail||'').replace(/"/g,'&quot;')}">Failed — Bad Number</span>`:'<span style="color:#b91c1c;font-weight:600;font-size:11px;">Failed</span>'}</td>
   </tr>`).join('');
+
+  const invalidNumberLogs=smsLogs.filter(l=>l.errorType==='invalid_number');
+  const invalidBanner=invalidNumberLogs.length?`<div style="background:#fde8e8;border:1.5px solid #f5c6c6;border-radius:10px;padding:16px 18px;margin-bottom:20px;">
+    <div style="font-weight:700;color:#b91c1c;font-size:13px;margin-bottom:4px;">⚠️ ${invalidNumberLogs.length} message${invalidNumberLogs.length>1?'s':''} failed — invalid phone number</div>
+    <div style="font-size:12px;color:#7f1d1d;">These numbers could not be sent to at all. Check the phone number on the worker/employer's profile — it may be missing digits or in the wrong format. Hover "Bad Number" in the table below to see what it normalized to.</div>
+  </div>`:'';
 
   document.getElementById('smsDataBox').innerHTML=`
     ${alertBanner}
+    ${invalidBanner}
     <div class="stats" style="margin-bottom:16px;grid-template-columns:repeat(3,1fr);">
       <div class="sc"><div class="sc-l">Sent (last 100)</div><div class="sc-v">${sentCount}</div></div>
       <div class="sc"><div class="sc-l">Failed</div><div class="sc-v">${failedCount}</div></div>

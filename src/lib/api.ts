@@ -253,6 +253,7 @@ export const tasks = {
       duration: string
       pay: number
       workerId?: string | number
+      workersNeeded?: number
     },
     token = session.employerToken(),
   ) => request<{ task?: Task }>('/api/tasks', { method: 'POST', body: payload, token }),

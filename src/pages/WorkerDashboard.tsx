@@ -365,6 +365,11 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
   const empPhone = typeof task.employer === 'object' ? (task.employer as Record<string, unknown>)?.phone as string | undefined : undefined
   const empContact = typeof task.employer === 'object' ? (task.employer as Record<string, unknown>)?.contactPerson as string | undefined : undefined
 
+  const isOffer = task.status === 'offered'
+  const expiresAt = task.offerExpiresAt as string | undefined
+  const slotsNeeded = task.slotsNeeded as number | undefined
+  const hoursLeft = expiresAt ? Math.round((new Date(expiresAt).getTime() - Date.now()) / 3600000) : null
+
   return (
     <div className="flex flex-col gap-3 rounded-xl bg-cream-50 p-4 shadow-sm ring-1 ring-ink-900/5 sm:p-5">
       <div className="min-w-0">
@@ -378,6 +383,15 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
           {task.duration && <span className="inline-flex items-center gap-1"><Calendar size={13} aria-hidden="true" /> {task.duration}</span>}
           <span className="font-semibold text-ink-900">{cedis(task.pay)}</span>
         </div>
+        {/* Multi-slot / expiry urgency — only relevant while the offer is still pending */}
+        {isOffer && (slotsNeeded && slotsNeeded > 1 || hoursLeft !== null) && (
+          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-amber-700">
+            {slotsNeeded && slotsNeeded > 1 && <span>This job needs {slotsNeeded} workers — first to accept get it.</span>}
+            {hoursLeft !== null && (
+              <span>{hoursLeft > 0 ? `Offer expires in ${hoursLeft}h` : 'Offer expiring soon'}</span>
+            )}
+          </div>
+        )}
         {/* Employer info — name, contact, phone only */}
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-ink-900/6 pt-2 text-xs text-ink-700">
           <span className="inline-flex items-center gap-1">
