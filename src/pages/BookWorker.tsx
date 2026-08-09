@@ -5,7 +5,7 @@ import {
   allCategories, TOOL_SURCHARGE_RATE, VEHICLE_SURCHARGES,
   logisticsRate,
 } from '../data'
-import { PLATFORM_FEE_FLAT } from '../lib/payments'
+import { PLATFORM_FEE_FLAT, MOMO_NUMBER, BEYONDX_PHONE } from '../lib/payments'
 import { tasks as tasksApi, ApiError } from '../lib/api'
 import type { Worker } from '../lib/api'
 import type { ScreeningAnswers } from './EmployerDashboard'
@@ -311,6 +311,15 @@ function BookingForm({ state, onDone, onError }: {
           <span>{cedis(workerGets)} to worker + {cedis(fee)} service fee</span>
           <span>{cat?.distancePricing ? `${distanceKm} km` : `${cedis(baseRate)}/day × ${effectiveDays === 0.5 ? '½' : effectiveDays}d`}</span>
         </div>
+      </div>
+
+      {/* Where to send it */}
+      <div className="mt-4 rounded-2xl border border-forest-600/20 bg-forest-600/5 px-5 py-4">
+        <p className="text-xs font-medium uppercase tracking-widest text-ink-700">Send payment to</p>
+        <p className="mt-1 font-serif text-2xl font-semibold text-ink-900">{MOMO_NUMBER}</p>
+        <p className="mt-1 text-xs text-ink-700">
+          MTN Mobile Money, registered to BeyondX. Questions? Call or WhatsApp {BEYONDX_PHONE}.
+        </p>
       </div>
 
       {/* Payment */}
