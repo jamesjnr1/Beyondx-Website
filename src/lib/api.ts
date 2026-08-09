@@ -52,8 +52,9 @@ export type Worker = {
 // Task lifecycle on the backend:
 //   open -> offered -> accepted -> pending_confirmation -> employer_confirmed / completed
 export type TaskStatus =
-  | 'open' | 'offered' | 'accepted'
+  | 'open' | 'payment_pending' | 'offered' | 'accepted'
   | 'pending_confirmation' | 'employer_confirmed' | 'completed'
+  | 'payment_rejected' | 'cancelled' | 'expired'
 
 export type Task = {
   id: string | number
@@ -282,6 +283,9 @@ export const tasks = {
 
   complete: (id: string | number, token = session.employerToken()) =>
     request<unknown>(`/api/tasks/${id}/complete`, { method: 'PATCH', token }),
+
+  cancel: (id: string | number, token = session.employerToken()) =>
+    request<unknown>(`/api/tasks/${id}/cancel`, { method: 'PATCH', token }),
 
   review: (id: string | number, rating: number, comment: string, token = session.employerToken()) =>
     request<unknown>(`/api/tasks/${id}/review`, { method: 'POST', body: { rating, comment }, token }),

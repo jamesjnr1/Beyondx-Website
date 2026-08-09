@@ -52,7 +52,7 @@ export const categories: Category[] = [
     icon: Sparkles,
     title: 'Facility & Cleaning',
     description: 'Office, school, and hospital cleaning plus drain clearing.',
-    image: '/categories/general-labour.jpg',
+    image: '/categories/facility-cleaning.jpg',
     tasks: ['Office cleaning', 'School compound sweeping', 'Hospital ward cleaning', 'Gutter & drain clearing'],
     rate: 200,
     skilledRate: 280,

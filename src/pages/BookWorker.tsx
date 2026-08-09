@@ -281,9 +281,9 @@ function BookingForm({ state, onDone, onError }: {
             id="bw-desc"
             value={jobDescription}
             onChange={(e) => setJobDescription(e.target.value)}
-            rows={3}
+            rows={5}
             placeholder="Describe exactly what needs to be done. The worker will see this in their SMS and dashboard."
-            className={`${inp} resize-none`}
+            className={`${inp} resize-y`}
           />
           <p className="mt-1 text-xs text-ink-700/50">Be specific — include any special instructions, equipment needed, or access details.</p>
         </div>

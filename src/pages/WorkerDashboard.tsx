@@ -376,7 +376,9 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
         <p className="text-sm font-semibold text-ink-900">{task.taskType || 'Task'}</p>
         {/* Job description — shown when the employer has added one */}
         {task.description && task.description !== task.taskType && !task.description.includes('Payment Ref') && (
-          <p className="mt-0.5 text-sm leading-relaxed text-ink-700">{task.description}</p>
+          <p className="mt-2 whitespace-pre-line rounded-lg bg-ink-900/[0.03] px-3 py-2.5 text-sm leading-relaxed text-ink-800">
+            {task.description}
+          </p>
         )}
         <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-700">
           {task.location && <span className="inline-flex items-center gap-1"><MapPin size={13} aria-hidden="true" /> {task.location}</span>}
@@ -499,7 +501,17 @@ export default function WorkerDashboard() {
         setAnnounce('Job accepted')
         await load()
       } catch (e) {
-        setToast({ id: Date.now(), kind: 'info', title: 'That did not go through', detail: e instanceof ApiError ? e.message : 'Please try again.' })
+        const isStale = e instanceof ApiError && (e.status === 409 || e.status === 404)
+        setToast({
+          id: Date.now(),
+          kind: 'info',
+          title: isStale ? 'This job changed' : 'That did not go through',
+          detail: e instanceof ApiError ? e.message : 'Please try again.',
+        })
+        // The job was expired, cancelled, or reassigned since this screen
+        // loaded — refresh so the stale card actually disappears instead
+        // of sitting there ready to fail again on a retry.
+        if (isStale) { setLocationTask(null); load() }
       } finally {
         setBusyId(null)
       }
@@ -587,7 +599,14 @@ export default function WorkerDashboard() {
       }).catch(() => null)
       await load()
     } catch (e) {
-      setToast({ id: Date.now(), kind: 'info', title: 'That did not go through', detail: e instanceof ApiError ? e.message : 'Please try again.' })
+      const isStale = e instanceof ApiError && (e.status === 409 || e.status === 404)
+      setToast({
+        id: Date.now(),
+        kind: 'info',
+        title: isStale ? 'This job changed' : 'That did not go through',
+        detail: e instanceof ApiError ? e.message : 'Please try again.',
+      })
+      if (isStale) load()
     } finally {
       setBusyId(null)
     }
