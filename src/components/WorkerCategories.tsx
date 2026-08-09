@@ -1,5 +1,4 @@
 import { motion } from 'framer-motion'
-import type { LucideIcon } from 'lucide-react'
 import { useReveal } from '../hooks/useReveal'
 import { categories, remoteCategories } from '../data'
 
@@ -32,13 +31,11 @@ function CategoryTile({
   image,
   title,
   description,
-  Icon,
   delay,
 }: {
   image: string
   title: string
   description: string
-  Icon: LucideIcon
   delay: number
 }) {
   return (
@@ -57,10 +54,6 @@ function CategoryTile({
           loading="lazy"
           decoding="async"
         />
-        <div className="absolute left-2 top-2 flex h-7 w-7 items-center justify-center rounded-lg bg-ink-950/40 backdrop-blur-sm sm:h-9 sm:w-9">
-          <Icon size={14} className="text-cream-50 sm:hidden" aria-hidden="true" />
-          <Icon size={18} className="hidden text-cream-50 sm:block" aria-hidden="true" />
-        </div>
       </div>
       <div className="p-2.5 sm:p-4">
         <h3 className="font-serif text-[13px] font-semibold leading-tight text-ink-900 sm:text-lg">
@@ -117,10 +110,6 @@ export default function WorkerCategories() {
                 loading="eager"
                 decoding="async"
               />
-              <div className="absolute left-3 top-3 flex h-9 w-9 items-center justify-center rounded-xl bg-ink-950/40 backdrop-blur-sm sm:h-11 sm:w-11">
-                <featured.icon size={18} className="text-cream-50 sm:hidden" aria-hidden="true" />
-                <featured.icon size={22} className="hidden text-cream-50 sm:block" aria-hidden="true" />
-              </div>
             </div>
             <div className="p-4 sm:p-6 lg:p-8">
               <h3 className="font-serif text-lg font-semibold text-ink-900 sm:text-2xl lg:text-3xl">
@@ -139,7 +128,6 @@ export default function WorkerCategories() {
                 image={cat.image}
                 title={cat.title}
                 description={cat.description}
-                Icon={cat.icon}
                 delay={(i % 3) * 0.06}
               />
             ))}
@@ -160,7 +148,6 @@ export default function WorkerCategories() {
                 image={REMOTE_IMAGES[cat.title] || cat.image}
                 title={cat.title}
                 description={cat.description}
-                Icon={cat.icon}
                 delay={(i % 3) * 0.06}
               />
             ))}
