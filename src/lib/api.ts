@@ -202,6 +202,7 @@ export const auth = {
     guarantorPhone: string
     guarantorRelationship: string
     referredBy?: string
+    visitorId?: string
   }) => request<WorkerAuthResponse>('/api/auth/worker-register', { method: 'POST', body: payload }),
 
   employerLogin: (email: string, password: string) =>
@@ -214,6 +215,7 @@ export const auth = {
     contactPerson: string
     phone: string
     region: string
+    visitorId?: string
   }) => request<EmployerAuthResponse>('/api/auth/employer-register', { method: 'POST', body: payload }),
 }
 

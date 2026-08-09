@@ -1,12 +1,13 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { inject } from '@vercel/analytics'
 import App from './App'
 import './index.css'
+import { trackVisit } from './lib/track'
 
-// Vercel Web Analytics — records visitors and page views for beyondxco.com.
-// Only runs on the deployed site; it is a no-op in local development.
-inject()
+// Self-hosted visitor tracking — deliberately not Vercel Analytics. See
+// src/lib/track.ts. Fires once per page load; the admin console reads the
+// aggregated result back from our own backend.
+trackVisit()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
