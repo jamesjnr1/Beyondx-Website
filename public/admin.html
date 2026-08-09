@@ -791,8 +791,56 @@ function tl(list){
   if(!list.length)return`<div class="empty">No tasks here</div>`;
   const bm={open:['bo','Open'],accepted:['ba','In Progress'],pending_confirmation:['bp','Awaiting Payment'],completed:['bd','Completed']};
   return list.map(t=>{const w=t.acceptedBy;const[bc,bl]=bm[t.status]||['bo','Unknown'];const wp=parseFloat(t.pay).toFixed(2);
-  return`<div class="tsk"><div class="tsk-tp"><div><div class="tsk-n">${t.taskType}</div><div class="tsk-m">${t.location} &middot; ${t.duration} &middot; ${new Date(t.createdAt).toLocaleDateString()}</div></div><span class="badge ${bc}">${bl}</span></div><div class="tsk-b"><div class="tr"><span class="tr-k">Employer</span><span class="tr-v">${t.employer?.orgName||'&mdash;'}</span></div><div class="tr"><span class="tr-k">Worker</span><span class="tr-v">${w?.fullName||'Unassigned'}${w?.phone?' &middot; '+w.phone:''}</span></div><div class="tr"><span class="tr-k">Employer Paid</span><span class="tr-v">GH&#8373; ${parseFloat(t.pay).toFixed(2)}</span></div><div class="tr"><span class="tr-k">Worker Gets</span><span class="tr-v g">GH&#8373; ${wp}</span></div></div>${t.status==='pending_confirmation'?`<button class="btn-ps" onclick="mkp('${t.id}','${w?.fullName||''}','${wp}')">Confirm Payment Sent</button>`:''}</div>`;
+  return`<div class="tsk"><div class="tsk-tp"><div><div class="tsk-n">${t.taskType}</div><div class="tsk-m">${t.location} &middot; ${t.duration} &middot; ${new Date(t.createdAt).toLocaleDateString()}</div></div><span class="badge ${bc}">${bl}</span></div><div class="tsk-b"><div class="tr"><span class="tr-k">Employer</span><span class="tr-v">${t.employer?.orgName||'&mdash;'}</span></div><div class="tr"><span class="tr-k">Worker</span><span class="tr-v">${w?.fullName||'Unassigned'}${w?.phone?' &middot; '+w.phone:''}</span></div><div class="tr"><span class="tr-k">Employer Paid</span><span class="tr-v">GH&#8373; ${parseFloat(t.pay).toFixed(2)}</span></div><div class="tr"><span class="tr-k">Worker Gets</span><span class="tr-v g">GH&#8373; ${wp}</span></div></div>${t.status==='pending_confirmation'?`<button class="btn-ps" onclick="mkp('${t.id}','${w?.fullName||''}','${wp}')">Confirm Payment Sent</button>`:''}${t.status==='open'?`<button class="btn-ps" onclick="showAssignPanel('${t.id}')">Assign a worker</button>`:''}</div>`;
   }).join('');
+}
+
+function showAssignPanel(taskId){
+  const t=tasks.find(x=>String(x.id)===String(taskId));
+  if(!t) return;
+  document.getElementById('detailPanel').innerHTML=`
+    <div class="dpanel-h">
+      <div><div class="dpanel-t">Assign a worker</div><div class="dpanel-s">${t.taskType} &middot; ${t.location||''}</div></div>
+      <button class="dpanel-x" onclick="closeDetail()">✕</button>
+    </div>
+    <div style="background:var(--bg);border:1px solid var(--b);border-radius:10px;padding:12px 14px;margin-bottom:16px;font-size:12.5px;color:var(--ink2);">
+      <div><strong>${t.employer?.orgName||'Employer'}</strong> &middot; GH&#8373; ${parseFloat(t.pay).toFixed(2)} &middot; ${t.duration||''}</div>
+      ${t.description?`<div style="margin-top:4px;color:var(--ink3)">${anEsc(t.description)}</div>`:''}
+    </div>
+    <input class="srch" id="asSearch" placeholder="Search workers by name or skill…" oninput="asRenderWorkers()" style="margin-bottom:10px;"/>
+    <div id="asWorkerList" style="max-height:400px;overflow-y:auto;border:1px solid var(--b);border-radius:10px;"></div>
+  `;
+  asRenderWorkers();
+  document.getElementById('detailOverlay').classList.add('on');
+  window._asTaskId=taskId;
+}
+function asRenderWorkers(){
+  const q=(document.getElementById('asSearch')?.value||'').toLowerCase();
+  const list=q?workers.filter(w=>[w.fullName,...(w.skills||[])].join(' ').toLowerCase().includes(q)):workers;
+  document.getElementById('asWorkerList').innerHTML=list.slice(0,50).map(w=>`
+    <div onclick="asAssign('${w.id}')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--b2);cursor:pointer;font-size:12.5px;" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='transparent'">
+      <span style="flex:1">${w.fullName} ${w.isBusy?'<span style="color:#b91c1c;font-size:10.5px;">(on a job)</span>':''}</span>
+      <span style="color:var(--ink3);font-size:11px;">${(w.skills||[]).slice(0,2).join(', ')}</span>
+    </div>`).join('') || '<div class="empty">No matches</div>';
+}
+async function asAssign(workerId){
+  const taskId=window._asTaskId;
+  const w=workers.find(x=>String(x.id)===String(workerId));
+  if(!confirm(`Assign ${w?.fullName||'this worker'} to this job? They will be sent the full job offer by SMS.`)) return;
+  try{
+    const r=await fetch(API+'/admin/tasks/'+taskId+'/status',{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','x-admin-password':pass},
+      body:JSON.stringify({status:'offered',workerId})
+    });
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(d.error||'Server error '+r.status);
+    showToast(`${w?.fullName||'Worker'} assigned — offer sent.`);
+    closeDetail();
+    const td=await fetch(API+'/admin/all',{headers:{'x-admin-password':pass}}).then(r=>r.json()).catch(()=>({tasks:[]}));
+    tasks=td.tasks||[];
+    render();
+  }catch(e){showToast('Could not assign: '+e.message);}
 }
 function rw(){
   const q=(document.getElementById('wSearch')?.value||'').toLowerCase();
