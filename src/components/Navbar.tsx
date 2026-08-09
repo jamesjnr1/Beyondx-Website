@@ -31,9 +31,10 @@ export default function Navbar() {
       initial={{ y: -80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      className={`fixed left-0 right-0 z-50 transition-all duration-300 ${
         solid ? 'bg-cream-50/90 backdrop-blur-md shadow-sm' : 'bg-transparent'
       }`}
+      style={{ top: 'var(--bx-banner-h, 0px)' }}
     >
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8">
         <button onClick={() => go('home')} aria-label="BeyondX home">

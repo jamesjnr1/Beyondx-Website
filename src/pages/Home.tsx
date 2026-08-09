@@ -1,3 +1,4 @@
+import LaunchBanner from '../components/LaunchBanner'
 import Hero from '../components/Hero'
 import Stats from '../components/Stats'
 import About from '../components/About'
@@ -12,6 +13,7 @@ import CTA from '../components/CTA'
 export default function Home() {
   return (
     <>
+      <LaunchBanner />
       <Hero />
       <Stats />
       <About />
