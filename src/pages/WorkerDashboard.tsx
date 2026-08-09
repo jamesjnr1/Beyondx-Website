@@ -414,6 +414,7 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
 export default function WorkerDashboard() {
   const [tab, setTab] = useState<'available' | 'mine' | 'declined' | 'history' | 'support'>('available')
   const [offers, setOffers] = useState<Task[]>([])
+  const [open, setOpen] = useState<Task[]>([])
   const [mine, setMine] = useState<Task[]>([])
   const [history, setHistory] = useState<Task[]>([])
   const [declined, setDeclined] = useState<Task[]>([])
@@ -428,7 +429,7 @@ export default function WorkerDashboard() {
   const load = useCallback(async () => {
     setError(null)
     try {
-      const [, mineRes, histRes, meRes] = await Promise.all([
+      const [openRes, mineRes, histRes, meRes] = await Promise.all([
         tasksApi.open(),
         tasksApi.mine(),
         tasksApi.workerHistory(),
@@ -436,6 +437,7 @@ export default function WorkerDashboard() {
       ])
       const mineTasks = mineRes?.tasks || []
       setOffers(mineTasks.filter((t) => t.status === 'offered'))
+      setOpen((openRes?.tasks || []).filter((t) => t.status === 'open'))
       setMine(mineTasks.filter((t) => t.status === 'accepted' || t.status === 'pending_confirmation'))
 
       setHistory(histRes?.tasks || [])
@@ -591,9 +593,11 @@ export default function WorkerDashboard() {
     }
   }
 
-  // Workers cannot browse and self-select open tasks in early stage.
-  // They only see tasks that BeyondX has specifically offered them.
-  const available = [...offers]
+  // Direct offers (dispatched by BeyondX to this specific worker) show first,
+  // followed by open tasks any worker can browse and accept first-come,
+  // first-served. Re-enabled — this was restricted during the early-stage
+  // rollout; the platform has since grown past that.
+  const available = [...offers, ...open]
   const displayName = (me?.fullName as string) || (me?.name as string) || 'Worker'
   const photo = (me?.photoUrl as string) || undefined
   const completed = history.length
@@ -690,7 +694,7 @@ export default function WorkerDashboard() {
                     </div>
                   </div>
                 </div>
-              )) : <Empty text="No job offers yet. BeyondX will contact you when a suitable job is available." />)}
+              )) : <Empty text="No jobs available right now. Check back soon." />)}
 
               {tab === 'mine' && (
                 <>
