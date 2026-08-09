@@ -41,12 +41,11 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);font-size:13.5px
 .login-brand-logo img{height:28px;width:auto;}
 .login-brand h1{font-family:var(--d);font-size:38px;font-weight:600;color:#fff;line-height:1.18;letter-spacing:-.03em;margin-bottom:18px;}
 .login-brand p{font-size:13px;color:rgba(255,255,255,.38);line-height:1.7;}
-.login-brand-stats{display:flex;flex-direction:column;gap:14px;}
-.lbs{display:flex;align-items:baseline;gap:10px;}
-.lbs-v{font-family:var(--d);font-size:28px;font-weight:600;color:rgba(255,255,255,.88);line-height:1;min-width:90px;}
-.lbs-l{font-size:11px;color:rgba(255,255,255,.30);}
-.lbs-loading{height:24px;width:80px;background:rgba(255,255,255,.08);border-radius:6px;animation:lbs-shimmer 1.5s infinite;}
-@keyframes lbs-shimmer{0%{opacity:.6}50%{opacity:.2}100%{opacity:.6}}
+.login-brand-features{display:flex;flex-direction:column;gap:18px;}
+.lbf{display:flex;align-items:flex-start;gap:12px;}
+.lbf-dot{flex-shrink:0;width:20px;height:20px;border-radius:50%;background:rgba(107,171,33,.15);display:flex;align-items:center;justify-content:center;margin-top:1px;}
+.lbf-dot svg{width:11px;height:11px;stroke:#89b64e;}
+.lbf-t{font-size:13px;color:rgba(255,255,255,.82);line-height:1.5;}
 .login-form-wrap{flex:1;display:flex;align-items:center;justify-content:center;padding:32px;}
 .lbox{width:100%;max-width:360px;}
 .lbox h2{font-family:var(--d);font-size:24px;font-weight:600;color:var(--ink);letter-spacing:-.025em;margin-bottom:6px;}
@@ -239,10 +238,11 @@ tr:hover td{background:var(--bg);}
       <h1>Workforce<br>management<br>built on trust.</h1>
       <p>Monitor operations, verify payments, manage workers and employers across Ghana.</p>
     </div>
-    <div class="login-brand-stats" id="loginStats">
-      <div class="lbs"><div class="lbs-loading" id="lbs0"></div><span class="lbs-l">verified workers</span></div>
-      <div class="lbs"><div class="lbs-loading" id="lbs1"></div><span class="lbs-l">jobs completed</span></div>
-      <div class="lbs"><div class="lbs-loading" id="lbs2"></div><span class="lbs-l">income generated</span></div>
+    <div class="login-brand-features">
+      <div class="lbf"><div class="lbf-dot"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div><span class="lbf-t">Verify payments and dispatch workers in one place</span></div>
+      <div class="lbf"><div class="lbf-dot"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div><span class="lbf-t">Track every job from posting to payout</span></div>
+      <div class="lbf"><div class="lbf-dot"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div><span class="lbf-t">See visitor-to-signup conversion in real time</span></div>
+      <div class="lbf"><div class="lbf-dot"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div><span class="lbf-t">Full oversight of Ghana's verified workforce</span></div>
     </div>
   </div>
   <!-- Form panel -->
@@ -1885,24 +1885,6 @@ function togglePassVis(){
     btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
   }
 }
-
-// Load live stats into login panel
-(function loadLoginStats(){
-  const API_URL='https://beyondx-backend-production-1a08.up.railway.app';
-  function fmtN(n){if(!n||n===0)return '—';if(n>=1000000)return (n/1000000).toFixed(1)+'M';if(n>=1000)return (n/1000).toFixed(1)+'k';return String(n);}
-  function fmtC(n){if(!n||n===0)return '—';if(n>=1000000)return 'GH₵ '+(n/1000000).toFixed(1)+'M';if(n>=1000)return 'GH₵ '+(n/1000).toFixed(0)+'k';return 'GH₵ '+n.toFixed(0);}
-  function setStatEl(id,html){const el=document.getElementById(id);if(el){el.outerHTML='<span class="lbs-v">'+html+'</span>';}}
-  fetch(API_URL+'/stats',{signal:AbortSignal.timeout(4000)})
-    .then(r=>r.ok?r.json():null)
-    .then(d=>{
-      if(d){
-        setStatEl('lbs0',fmtN(d.workers||d.totalWorkers||0));
-        setStatEl('lbs1',fmtN(d.completed||d.tasksCompleted||0));
-        setStatEl('lbs2',fmtC(d.revenue||d.totalRevenue||0));
-      }
-    })
-    .catch(()=>{/* silently leave skeletons */});
-})();
 
 // Handle login form submit
 window.login=function(){
