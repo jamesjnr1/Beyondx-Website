@@ -8,6 +8,7 @@ import * as v from '../../lib/validate'
 import { categories, remoteCategories } from '../../data'
 import GoogleSignInButton from './GoogleSignInButton'
 import { supabase } from '../../lib/supabase'
+import { getVisitorId } from '../../lib/track'
 import { finishEmployerRegistration } from './employerVerification'
 
 const REGIONS = [
@@ -560,6 +561,7 @@ function WorkerRegister() {
         fullName: f.name.trim(), phone: f.phone.trim(), prisonFacility: '',  // set by admin after background verification
         skills, pin: f.pin.trim(), guarantorName: f.gName.trim(),
         guarantorPhone: f.gPhone.trim(), guarantorRelationship: f.relationship,
+        visitorId: getVisitorId(),
       }
       const ref = referral.get()
       const extra: Record<string, string> = {}

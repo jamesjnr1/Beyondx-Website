@@ -5,6 +5,7 @@
 // can review and mark the account as verified.
 
 import { auth, session, contact } from '../../lib/api'
+import { getVisitorId } from '../../lib/track'
 
 export type PendingEmployer = {
   org: string; contact: string; phone: string; region: string
@@ -20,6 +21,7 @@ export async function finishEmployerRegistration(
   const data = await auth.employerRegister({
     email: p.email.trim(), password: p.password, orgName: p.org.trim(),
     contactPerson: p.contact.trim(), phone: p.phone.trim(), region: p.region,
+    visitorId: getVisitorId(),
   })
   session.saveEmployer(data.token, data.employer)
 

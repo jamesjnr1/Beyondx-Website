@@ -214,6 +214,7 @@ export const auth = {
     contactPerson: string
     phone: string
     region: string
+    visitorId?: string
   }) => request<EmployerAuthResponse>('/api/auth/employer-register', { method: 'POST', body: payload }),
 }
 

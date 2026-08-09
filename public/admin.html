@@ -666,6 +666,31 @@ function rs(id){
 function stars(n){ return '★'.repeat(Math.round(n))+'☆'.repeat(5-Math.round(n)); }
 function closeDetail(){ document.getElementById('detailOverlay').classList.remove('on'); }
 
+function showHistoryReview(taskId){
+  const t=tasks.find(x=>String(x.id)===String(taskId));
+  if(!t) return;
+  const empReview=(t.reviews||[]).find(r=>r.fromRole==='employer');
+  const workerReview=(t.reviews||[]).find(r=>r.fromRole==='worker');
+
+  document.getElementById('detailPanel').innerHTML=`
+    <div class="dpanel-h">
+      <div><div class="dpanel-t">${t.taskType}</div><div class="dpanel-s">${t.acceptedBy?.fullName||'Worker'} &middot; ${t.employer?.orgName||'Employer'}</div></div>
+      <button class="dpanel-x" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="dgrid">
+      <div class="dcell"><div class="dcell-l">Location</div><div class="dcell-v">${t.location||'&mdash;'}</div></div>
+      <div class="dcell"><div class="dcell-l">Date</div><div class="dcell-v">${new Date(t.createdAt).toLocaleDateString()}</div></div>
+      <div class="dcell"><div class="dcell-l">Amount</div><div class="dcell-v">GH&#8373; ${parseFloat(t.pay).toFixed(0)}</div></div>
+      <div class="dcell"><div class="dcell-l">Duration</div><div class="dcell-v">${t.duration||'&mdash;'}</div></div>
+    </div>
+    <div class="dsec-t">Employer's review of ${t.acceptedBy?.fullName||'the worker'}</div>
+    ${empReview?reviewRow(empReview,t.employer?.orgName||'Employer'):'<div style="font-size:12.5px;color:var(--ink3);">No review left yet.</div>'}
+    <div class="dsec-t">Worker's review of ${t.employer?.orgName||'the employer'}</div>
+    ${workerReview?reviewRow(workerReview,t.acceptedBy?.fullName||'Worker'):'<div style="font-size:12.5px;color:var(--ink3);">No review left yet.</div>'}
+  `;
+  document.getElementById('detailOverlay').classList.add('on');
+}
+
 
 function reviewRow(r,fromLabel){
   const dateStr=r.createdAt?new Date(r.createdAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
@@ -897,8 +922,13 @@ function rh(){
   const html = completed.length ? `
     <div class="tc" style="margin-bottom:12px;">
       <div class="tc-h"><span class="tc-ht">Work History</span><span class="tc-hm">${completed.length} completed tasks</span></div>
-      <table><thead><tr><th>Task</th><th>Location</th><th>Worker</th><th>Employer</th><th>Date</th><th>Amount</th><th>Worker Paid</th></tr></thead>
-      <tbody>${shown.map(t=>`<tr>
+      <table><thead><tr><th>Task</th><th>Location</th><th>Worker</th><th>Employer</th><th>Date</th><th>Amount</th><th>Worker Paid</th><th>Rating</th></tr></thead>
+      <tbody>${shown.map(t=>{
+        const review=(t.reviews||[]).find(r=>r.fromRole==='employer');
+        const ratingCell=review
+          ? `<span class="stars" style="color:#b8953a;font-size:13px;cursor:pointer;" onclick="showHistoryReview('${t.id}')" title="Click to see the review">${stars(review.rating)}</span>`
+          : `<span style="font-size:11px;color:var(--ink3);">No review</span>`;
+        return`<tr>
         <td class="tn">${t.taskType}</td>
         <td style="font-size:11px;color:var(--ink3)">${t.location||'&mdash;'}</td>
         <td>${t.acceptedBy?.fullName||'—'}</td>
@@ -906,7 +936,9 @@ function rh(){
         <td class="tm">${new Date(t.createdAt).toLocaleDateString()}</td>
         <td class="tm">GH&#8373; ${parseFloat(t.pay).toFixed(0)}</td>
         <td class="tg">GH&#8373; ${parseFloat(t.pay).toFixed(0)}</td>
-      </tr>`).join('')}</tbody></table>
+        <td>${ratingCell}</td>
+      </tr>`;
+      }).join('')}</tbody></table>
       ${showMoreHtml(completed.length-histShown,'histShown+=20;rh();')}
     </div>` : `<div class="empty">No completed tasks yet</div>`;
   document.getElementById('historyContent').innerHTML = html;
