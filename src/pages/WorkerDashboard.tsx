@@ -501,7 +501,17 @@ export default function WorkerDashboard() {
         setAnnounce('Job accepted')
         await load()
       } catch (e) {
-        setToast({ id: Date.now(), kind: 'info', title: 'That did not go through', detail: e instanceof ApiError ? e.message : 'Please try again.' })
+        const isStale = e instanceof ApiError && (e.status === 409 || e.status === 404)
+        setToast({
+          id: Date.now(),
+          kind: 'info',
+          title: isStale ? 'This job changed' : 'That did not go through',
+          detail: e instanceof ApiError ? e.message : 'Please try again.',
+        })
+        // The job was expired, cancelled, or reassigned since this screen
+        // loaded — refresh so the stale card actually disappears instead
+        // of sitting there ready to fail again on a retry.
+        if (isStale) { setLocationTask(null); load() }
       } finally {
         setBusyId(null)
       }
@@ -589,7 +599,14 @@ export default function WorkerDashboard() {
       }).catch(() => null)
       await load()
     } catch (e) {
-      setToast({ id: Date.now(), kind: 'info', title: 'That did not go through', detail: e instanceof ApiError ? e.message : 'Please try again.' })
+      const isStale = e instanceof ApiError && (e.status === 409 || e.status === 404)
+      setToast({
+        id: Date.now(),
+        kind: 'info',
+        title: isStale ? 'This job changed' : 'That did not go through',
+        detail: e instanceof ApiError ? e.message : 'Please try again.',
+      })
+      if (isStale) load()
     } finally {
       setBusyId(null)
     }
