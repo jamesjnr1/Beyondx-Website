@@ -176,6 +176,17 @@ export default function EmployerDashboard() {
   }, [])
   useEffect(() => { load() }, [load])
 
+  const cancelTask = async (t: Task) => {
+    if (!window.confirm(`Cancel this "${t.taskType}" job? This stops the search for a worker — you won't be charged.`)) return
+    try {
+      await tasksApi.cancel(t.id)
+      setToast({ id: Date.now(), kind: 'success', title: 'Job cancelled', detail: 'The search has been stopped.' })
+      load()
+    } catch (e) {
+      setToast({ id: Date.now(), kind: 'info', title: 'Could not cancel', detail: e instanceof ApiError ? e.message : 'Please try again.' })
+    }
+  }
+
   const orgName = (profile?.orgName as string) || 'Your organisation'
   const logo = (profile?.logoUrl as string) || undefined
 
@@ -500,6 +511,16 @@ export default function EmployerDashboard() {
                       {/* Status note */}
                       {s.note && !isUrgent && (
                         <p className="mt-2.5 text-xs leading-relaxed text-ink-700/70">{s.note}</p>
+                      )}
+
+                      {/* Cancel — only while still searching, before anyone has committed */}
+                      {(t.status === 'open' || t.status === 'payment_pending') && (
+                        <button
+                          onClick={() => cancelTask(t)}
+                          className="mt-3 text-xs font-medium text-red-600/80 underline decoration-red-600/30 underline-offset-2 transition-colors hover:text-red-700"
+                        >
+                          Cancel this job
+                        </button>
                       )}
 
                       {/* Urgent confirm action */}
@@ -1118,7 +1139,16 @@ function PostTask({ onDone }: { onDone: (msg: string) => void }) {
               </optgroup>
             </select>
           </label>
-          <label className="block"><span className="mb-1 block text-xs font-medium text-ink-700">Description</span><input value={description} onChange={(e) => setDescription(e.target.value)} placeholder="What needs doing" className={inp} /></label>
+          <label className="block">
+            <span className="mb-1 block text-xs font-medium text-ink-700">Description</span>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={5}
+              placeholder="Describe exactly what needs doing — the worker will see this in their SMS and dashboard."
+              className={`${inp} resize-y`}
+            />
+          </label>
           {cat?.mode === 'remote' ? null : (
             <label className="block"><span className="mb-1 block text-xs font-medium text-ink-700">Location</span><input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Tema" className={inp} /></label>
           )}

@@ -376,7 +376,9 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
         <p className="text-sm font-semibold text-ink-900">{task.taskType || 'Task'}</p>
         {/* Job description — shown when the employer has added one */}
         {task.description && task.description !== task.taskType && !task.description.includes('Payment Ref') && (
-          <p className="mt-0.5 text-sm leading-relaxed text-ink-700">{task.description}</p>
+          <p className="mt-2 whitespace-pre-line rounded-lg bg-ink-900/[0.03] px-3 py-2.5 text-sm leading-relaxed text-ink-800">
+            {task.description}
+          </p>
         )}
         <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-700">
           {task.location && <span className="inline-flex items-center gap-1"><MapPin size={13} aria-hidden="true" /> {task.location}</span>}
