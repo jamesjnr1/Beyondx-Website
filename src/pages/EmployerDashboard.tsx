@@ -8,7 +8,7 @@ import LiveLocation from '../components/LiveLocation'
 import { tasks as tasksApi, workers as workersApi, employers as employersApi, contact, session, ApiError, type Task, type Worker, type Employer } from '../lib/api'
 import { DISPATCH_ENABLED, DISPATCH_PAUSED_MESSAGE } from '../lib/config'
 import { categories, remoteCategories, allCategories } from '../data'
-import { PLATFORM_FEE } from '../lib/payments'
+import { PLATFORM_FEE_FLAT } from '../lib/payments'
 import { openBookingWindow } from './BookWorker'
 import type { BookingState } from './BookWorker'
 
@@ -646,7 +646,7 @@ export const DEFAULT_SCREENING: ScreeningAnswers = {
 // Category-specific examples shown alongside the basic/technical question
 const TIER_EXAMPLES: Record<string, { basic: string; skilled: string }> = {
   'Facility & Cleaning':            { basic: 'General sweeping, mopping, surface wiping', skilled: 'Drain clearing, chemical cleaning agents, pressure washing' },
-  'Construction, Maintenance & Repairs': { basic: 'Site labour, carrying materials, clearing debris', skilled: 'Tiling, plumbing, electrical support, plastering' },
+  'Painting & Finishing':           { basic: 'Painting & touch-up work', skilled: 'Tiling, plastering, surface finishing' },
   'Event & Hospitality':            { basic: 'Chair & table setup, serving food and drinks', skilled: 'AV equipment setup, electrical rigging, event lighting' },
   'Agriculture & Environment':      { basic: 'Weeding by hand, harvesting, clearing land', skilled: 'Applying weedicide or pesticides, operating sprayers, pest identification' },
   'Retail & Trade Support':         { basic: 'General shelf stocking, packing, bagging', skilled: 'Cold store operation, stock management systems, inventory counting' },
@@ -1080,7 +1080,7 @@ function PostTask({ onDone }: { onDone: (msg: string) => void }) {
   const rate = cat ? cat.rate : 0
   const days = duration === 'Half Day' ? 0.5 : parseFloat(duration) || 1
   const workerGets = rate * days
-  const fee = Math.round(workerGets * PLATFORM_FEE)
+  const fee = PLATFORM_FEE_FLAT
   const pay = String(workerGets)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
