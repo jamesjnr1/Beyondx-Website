@@ -78,8 +78,11 @@ export default async function handler(req, res) {
   dimensionHint = null
 
   // --- gate: keep this endpoint from being world-readable ---
-  const secret = process.env.ADMIN_API_SECRET
-  if (secret && req.headers['x-admin-secret'] !== secret) {
+  // Falls back to ADMIN_PASSWORD if ADMIN_API_SECRET was never configured.
+  // Previously this was skip-if-unset, which left the endpoint open rather
+  // than protected when the env var was missing.
+  const secret = process.env.ADMIN_API_SECRET || process.env.ADMIN_PASSWORD
+  if (!secret || req.headers['x-admin-secret'] !== secret) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
 

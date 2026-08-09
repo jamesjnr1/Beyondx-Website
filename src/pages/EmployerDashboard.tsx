@@ -469,7 +469,7 @@ export default function EmployerDashboard() {
           <div className="mt-6">
             {loading ? <Skeleton /> : taskList.length ? (() => {
               const urgent = taskList.filter((t) => t.status === 'pending_confirmation')
-              const active = taskList.filter((t) => ['payment_pending', 'offered', 'accepted'].includes(String(t.status)))
+              const active = taskList.filter((t) => ['open', 'payment_pending', 'offered', 'accepted'].includes(String(t.status)))
               const done = taskList.filter((t) => ['employer_confirmed', 'completed', 'payment_rejected'].includes(String(t.status)))
 
               const TaskItem = ({ t }: { t: Task }) => {
@@ -1076,6 +1076,7 @@ function PostTask({ onDone }: { onDone: (msg: string) => void }) {
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState('')
   const [duration, setDuration] = useState('1 Day')
+  const [workersNeeded, setWorkersNeeded] = useState(1)
   const cat = allCategories.find((c) => c.title === taskType)
   const rate = cat ? cat.rate : 0
   const days = duration === 'Half Day' ? 0.5 : parseFloat(duration) || 1
@@ -1090,8 +1091,8 @@ function PostTask({ onDone }: { onDone: (msg: string) => void }) {
     if (cat?.mode !== 'remote' && !location) return
     setErr(null); setBusy(true)
     try {
-      await tasksApi.create({ taskType, description, location: cat?.mode === 'remote' ? 'Remote' : location, duration, pay: parseFloat(pay) || 0 })
-      setDescription(''); setLocation('')
+      await tasksApi.create({ taskType, description, location: cat?.mode === 'remote' ? 'Remote' : location, duration, pay: parseFloat(pay) || 0, workersNeeded })
+      setDescription(''); setLocation(''); setWorkersNeeded(1)
       onDone(`"${taskType}" is now open for workers to accept.`)
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : 'Please try again.')
@@ -1125,15 +1126,18 @@ function PostTask({ onDone }: { onDone: (msg: string) => void }) {
             <label className="block"><span className="mb-1 block text-xs font-medium text-ink-700">Duration</span>
               <select value={duration} onChange={(e) => setDuration(e.target.value)} className={inp}><option>Half Day</option><option>1 Day</option><option>2 Days</option><option>3 Days</option><option>5 Days</option></select>
             </label>
-            <div className="block">
-              <span className="mb-1 block text-xs font-medium text-ink-700">Pay (GH₵)</span>
-              <div className="flex h-[42px] items-center rounded-xl bg-forest-600/5 px-3 text-sm font-semibold text-ink-900 ring-1 ring-forest-600/15">
-                {cedis(workerGets + fee)}
-              </div>
-              <span className="mt-1 block text-xs leading-relaxed text-ink-700">
-                {cedis(workerGets)} to the worker + {cedis(fee)} service fee
-              </span>
+            <label className="block"><span className="mb-1 block text-xs font-medium text-ink-700">Workers needed</span>
+              <input type="number" min={1} max={50} value={workersNeeded} onChange={(e) => setWorkersNeeded(Math.max(1, parseInt(e.target.value, 10) || 1))} className={inp} />
+            </label>
+          </div>
+          <div className="block">
+            <span className="mb-1 block text-xs font-medium text-ink-700">Pay {workersNeeded > 1 ? 'per worker' : ''} (GH₵)</span>
+            <div className="flex h-[42px] items-center rounded-xl bg-forest-600/5 px-3 text-sm font-semibold text-ink-900 ring-1 ring-forest-600/15">
+              {cedis(workerGets + fee)}{workersNeeded > 1 ? ` × ${workersNeeded}` : ''}
             </div>
+            <span className="mt-1 block text-xs leading-relaxed text-ink-700">
+              {cedis(workerGets)} to each worker + {cedis(fee)} service fee{workersNeeded > 1 ? ` per worker (${cedis((workerGets + fee) * workersNeeded)} total if all ${workersNeeded} are filled)` : ''}
+            </span>
           </div>
           {err && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">{err}</p>}
           <button onClick={submit} disabled={busy} className="flex w-full items-center justify-center gap-1.5 rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40">

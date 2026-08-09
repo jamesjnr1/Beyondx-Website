@@ -37,7 +37,9 @@ function headers(key) {
 export default async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store, max-age=0')
 
-  const secret = process.env.ADMIN_API_SECRET
+  // Falls back to ADMIN_PASSWORD if the separate ADMIN_API_SECRET was
+  // never configured — same fix as api/notifications.js.
+  const secret = process.env.ADMIN_API_SECRET || process.env.ADMIN_PASSWORD
   if (!secret || req.headers['x-admin-secret'] !== secret) {
     return res.status(401).json({ error: 'Unauthorized' })
   }
