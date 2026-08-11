@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1"/>
+<title>BeyondX — Market Day Sign-Up</title>
+<meta name="robots" content="noindex, nofollow"/>
+<link rel="icon" type="image/svg+xml" href="/favicon.svg"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Fraunces:opsz,wght@9..144,500;9..144,600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --g:#6bab21; --g2:#578c1a; --g-bg:#f0f7e8;
+  --ink:#12180e; --ink2:#3a4235; --ink3:#7c7c74;
+  --bg:#faf8f3; --b:#e8e8e4;
+  --f:'DM Sans',system-ui,sans-serif; --d:'Fraunces',Georgia,serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--ink);font-family:var(--f);min-height:100vh;-webkit-font-smoothing:antialiased;}
+.wrap{max-width:560px;margin:0 auto;padding:20px 18px 60px;}
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
+.brand img{width:34px;height:34px;border-radius:9px;}
+.brand-name{font-family:var(--d);font-size:19px;font-weight:600;}
+.subhead{font-size:13px;color:var(--ink3);margin-bottom:22px;}
+.counter{display:inline-flex;align-items:center;gap:6px;background:var(--g-bg);color:var(--g2);font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:20px;margin-bottom:22px;}
+.counter b{font-family:var(--d);font-size:14px;}
+
+.card{background:#fff;border:1px solid var(--b);border-radius:18px;padding:22px 20px;}
+.field{margin-bottom:18px;}
+.field label{display:block;font-size:12.5px;font-weight:600;color:var(--ink2);margin-bottom:7px;}
+.field input[type=text],.field input[type=tel],.field select,.field textarea{
+  width:100%;padding:13px 14px;border:1.5px solid var(--b);border-radius:11px;
+  font-family:var(--f);font-size:15px;color:var(--ink);background:var(--bg);outline:none;
+}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--g);background:#fff;}
+.field textarea{resize:vertical;min-height:70px;}
+
+.choice-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.choice{border:1.5px solid var(--b);border-radius:12px;padding:14px 8px;text-align:center;cursor:pointer;font-size:13px;font-weight:600;color:var(--ink2);background:#fff;transition:all .12s;user-select:none;}
+.choice .emoji{display:block;font-size:22px;margin-bottom:5px;}
+.choice.on{border-color:var(--g);background:var(--g-bg);color:var(--g2);}
+
+.hidden{display:none !important;}
+
+.submit-btn{width:100%;padding:16px;background:var(--ink);color:#fff;border:none;border-radius:13px;font-family:var(--f);font-size:16px;font-weight:700;cursor:pointer;margin-top:6px;transition:opacity .12s;}
+.submit-btn:active{opacity:.85;}
+.submit-btn:disabled{opacity:.5;}
+
+.err{color:#b91c1c;font-size:12.5px;margin-top:10px;display:none;}
+
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;padding:14px 22px;border-radius:14px;font-size:14px;font-weight:600;opacity:0;transition:all .25s;pointer-events:none;box-shadow:0 12px 30px rgba(0,0,0,.25);display:flex;align-items:center;gap:8px;z-index:50;}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+.toast .dot{width:8px;height:8px;border-radius:50%;background:var(--g);flex-shrink:0;}
+.toast.offline .dot{background:#d97706;}
+
+.offline-banner{background:#fef3e2;border:1px solid #f5d9a8;color:#92610d;font-size:12.5px;font-weight:600;padding:10px 14px;border-radius:10px;margin-bottom:16px;display:none;align-items:center;gap:8px;}
+.offline-banner.show{display:flex;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <img src="/beyondx-logo.png" alt="" onerror="this.style.display='none'"/>
+    <span class="brand-name">BeyondX</span>
+  </div>
+  <p class="subhead">Tell us a bit about yourself and we'll follow up after today.</p>
+  <div class="counter">✅ <b id="count">0</b> people signed up so far today</div>
+
+  <div class="offline-banner" id="offlineBanner">📶 No connection right now — saved on this device, will send automatically once you're back online.</div>
+
+  <div class="card">
+    <div class="field">
+      <label for="fName">Full name</label>
+      <input type="text" id="fName" placeholder="e.g. Kofi Asante" autocomplete="name"/>
+    </div>
+    <div class="field">
+      <label for="fPhone">Phone number</label>
+      <input type="tel" id="fPhone" placeholder="024 000 0000" autocomplete="tel" inputmode="tel"/>
+    </div>
+
+    <div class="field">
+      <label>I'm interested in...</label>
+      <div class="choice-row" id="interestRow">
+        <div class="choice" data-val="worker"><span class="emoji">🔧</span>Finding work</div>
+        <div class="choice" data-val="employer"><span class="emoji">🏢</span>Hiring workers</div>
+        <div class="choice" data-val="curious"><span class="emoji">👋</span>Just curious</div>
+      </div>
+    </div>
+
+    <div class="field hidden" id="categoryField">
+      <label for="fCategory">What kind of work?</label>
+      <select id="fCategory">
+        <option value="">Select…</option>
+        <option>Facility & Cleaning</option>
+        <option>Logistics & Delivery</option>
+        <option>General Site Labour</option>
+        <option>Skilled Trades</option>
+        <option>Painting & Finishing</option>
+        <option>Repairs & Maintenance</option>
+        <option>Event & Hospitality</option>
+        <option>Agriculture & Environment</option>
+        <option>Retail & Trade Support</option>
+        <option>Community Services</option>
+        <option>Remote / Online work</option>
+        <option>Not sure yet</option>
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="fLocation">Area / Town (optional)</label>
+      <input type="text" id="fLocation" placeholder="e.g. Madina, Tema"/>
+    </div>
+
+    <div class="field">
+      <label for="fNotes">Notes (optional)</label>
+      <textarea id="fNotes" placeholder="Anything else worth remembering"></textarea>
+    </div>
+
+    <p class="err" id="err"></p>
+    <button class="submit-btn" id="submitBtn" onclick="submitLead()">Sign up</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="dot"></span><span id="toastMsg"></span></div>
+
+<script>
+const API = 'https://beyondx-backend-production-1a08.up.railway.app';
+const QUEUE_KEY = 'bx_market_day_queue';
+const COUNT_KEY = 'bx_market_day_count';
+
+let interest = '';
+
+document.querySelectorAll('#interestRow .choice').forEach(el => {
+  el.addEventListener('click', () => {
+    document.querySelectorAll('#interestRow .choice').forEach(c => c.classList.remove('on'));
+    el.classList.add('on');
+    interest = el.dataset.val;
+    document.getElementById('categoryField').classList.toggle('hidden', interest !== 'worker');
+  });
+});
+
+function getQueue(){ try{ return JSON.parse(localStorage.getItem(QUEUE_KEY) || '[]'); }catch{ return []; } }
+function setQueue(q){ try{ localStorage.setItem(QUEUE_KEY, JSON.stringify(q)); }catch{} }
+function getCount(){ try{ return parseInt(localStorage.getItem(COUNT_KEY) || '0', 10); }catch{ return 0; } }
+function bumpCount(){ const n = getCount() + 1; try{ localStorage.setItem(COUNT_KEY, String(n)); }catch{} document.getElementById('count').textContent = n; }
+
+document.getElementById('count').textContent = getCount();
+
+function showToast(msg, offline){
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.toggle('offline', !!offline);
+  t.classList.add('on');
+  setTimeout(() => t.classList.remove('on'), 2600);
+}
+
+async function trySend(entry){
+  const r = await fetch(API + '/api/leads', {
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify(entry)
+  });
+  if(!r.ok){
+    const d = await r.json().catch(() => ({}));
+    throw new Error(d.error || 'Server error');
+  }
+}
+
+async function flushQueue(){
+  const q = getQueue();
+  if(!q.length) return;
+  const remaining = [];
+  for(const entry of q){
+    try{ await trySend(entry); }
+    catch{ remaining.push(entry); }
+  }
+  setQueue(remaining);
+  document.getElementById('offlineBanner').classList.toggle('show', remaining.length > 0);
+}
+
+window.addEventListener('online', flushQueue);
+setInterval(flushQueue, 15000);
+flushQueue();
+
+function resetForm(){
+  document.getElementById('fName').value = '';
+  document.getElementById('fPhone').value = '';
+  document.getElementById('fLocation').value = '';
+  document.getElementById('fNotes').value = '';
+  document.getElementById('fCategory').value = '';
+  document.querySelectorAll('#interestRow .choice').forEach(c => c.classList.remove('on'));
+  document.getElementById('categoryField').classList.add('hidden');
+  interest = '';
+  document.getElementById('err').style.display = 'none';
+  document.getElementById('fName').focus();
+}
+
+async function submitLead(){
+  const name = document.getElementById('fName').value.trim();
+  const phone = document.getElementById('fPhone').value.trim();
+  const err = document.getElementById('err');
+
+  if(!name){ err.textContent = 'Please enter a name.'; err.style.display='block'; return; }
+  if(!phone){ err.textContent = 'Please enter a phone number.'; err.style.display='block'; return; }
+  if(!interest){ err.textContent = 'Please select an option below.'; err.style.display='block'; return; }
+  err.style.display = 'none';
+
+  const entry = {
+    name, phone, interest,
+    category: document.getElementById('fCategory').value || null,
+    location: document.getElementById('fLocation').value.trim() || null,
+    notes: document.getElementById('fNotes').value.trim() || null,
+    source: 'market_day',
+  };
+
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+
+  try{
+    await trySend(entry);
+    bumpCount();
+    showToast('✅ Saved — thank you!', false);
+    resetForm();
+  }catch(e){
+    // Offline or server unreachable — queue it locally, never lose the entry
+    const q = getQueue();
+    q.push(entry);
+    setQueue(q);
+    document.getElementById('offlineBanner').classList.add('show');
+    bumpCount();
+    showToast('Saved on this device — will send once online', true);
+    resetForm();
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+document.getElementById('fPhone').addEventListener('keydown', e => {
+  if(e.key === 'Enter') submitLead();
+});
+</script>
+</body>
+</html>
