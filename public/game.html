@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>The Second Chance Challenge — BeyondX</title>
+<meta name="robots" content="noindex,nofollow"/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,900&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  --ink:#12180e; --ink2:#3a4235; --ink3:#7c7c74;
+  --g:#6bab21; --g2:#4a7a17; --g-light:#f0f7e8;
+  --gold:#c9961a; --gold-light:#fef9ea;
+  --red:#b91c1c; --red-light:#fef2f2;
+  --bg:#faf8f3; --white:#fff; --b:#e8e8e4;
+  --f:'DM Sans',sans-serif; --d:'Fraunces',Georgia,serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--ink);font-family:var(--f);min-height:100vh;-webkit-font-smoothing:antialiased;}
+
+/* ---- SCREENS ---- */
+.screen{display:none;min-height:100vh;flex-direction:column;align-items:center;padding:24px 18px 48px;}
+.screen.active{display:flex;}
+
+/* ---- INTRO ---- */
+.intro-logo{margin-bottom:32px;margin-top:16px;}
+.intro-logo img{height:40px;width:auto;}
+.intro-hero{text-align:center;max-width:340px;margin-bottom:32px;}
+.intro-hero h1{font-family:var(--d);font-size:clamp(28px,7vw,40px);font-weight:900;line-height:1.1;color:var(--ink);margin-bottom:14px;}
+.intro-hero h1 em{font-style:normal;color:var(--g);}
+.intro-hero p{font-size:15px;color:var(--ink2);line-height:1.65;}
+.intro-card{background:var(--ink);color:#fff;border-radius:20px;padding:22px 22px;max-width:360px;width:100%;margin-bottom:28px;}
+.intro-card h3{font-family:var(--d);font-size:17px;font-weight:700;margin-bottom:12px;color:#fff;}
+.intro-rule{display:flex;align-items:flex-start;gap:10px;margin-bottom:10px;font-size:13.5px;color:rgba(255,255,255,.8);line-height:1.5;}
+.intro-rule:last-child{margin-bottom:0;}
+.intro-rule .num{flex-shrink:0;width:22px;height:22px;border-radius:50%;background:var(--g);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px;}
+.start-btn{background:var(--g);color:#fff;border:none;border-radius:16px;padding:18px 36px;font-family:var(--f);font-size:17px;font-weight:700;cursor:pointer;width:100%;max-width:360px;transition:background .15s;}
+.start-btn:active{background:var(--g2);}
+
+/* ---- QUESTION ---- */
+.q-header{width:100%;max-width:480px;display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;margin-top:8px;}
+.q-progress-wrap{flex:1;height:7px;background:var(--b);border-radius:99px;margin:0 14px;}
+.q-progress-bar{height:100%;background:var(--g);border-radius:99px;transition:width .4s ease;}
+.q-num{font-size:12px;font-weight:700;color:var(--ink3);white-space:nowrap;}
+.q-score-badge{background:var(--g-light);color:var(--g2);font-size:12.5px;font-weight:700;padding:5px 10px;border-radius:20px;white-space:nowrap;}
+.q-card{background:var(--white);border:1px solid var(--b);border-radius:22px;padding:26px 22px;max-width:480px;width:100%;margin-bottom:20px;box-shadow:0 4px 24px rgba(18,24,14,.06);}
+.q-category{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--g2);margin-bottom:10px;}
+.q-text{font-family:var(--d);font-size:clamp(17px,4.5vw,22px);font-weight:700;line-height:1.35;color:var(--ink);}
+.q-fact{font-size:12.5px;color:var(--ink3);margin-top:10px;line-height:1.55;font-style:italic;}
+.options{display:flex;flex-direction:column;gap:10px;width:100%;max-width:480px;}
+.opt{background:var(--white);border:1.5px solid var(--b);border-radius:14px;padding:16px 18px;cursor:pointer;font-family:var(--f);font-size:14.5px;font-weight:600;color:var(--ink2);text-align:left;transition:all .15s;display:flex;align-items:center;gap:12px;}
+.opt:active{transform:scale(.98);}
+.opt .opt-letter{width:28px;height:28px;border-radius:8px;border:1.5px solid var(--b);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;transition:all .15s;}
+.opt.correct{border-color:var(--g);background:var(--g-light);}
+.opt.correct .opt-letter{background:var(--g);border-color:var(--g);color:#fff;}
+.opt.wrong{border-color:var(--red);background:var(--red-light);}
+.opt.wrong .opt-letter{background:var(--red);border-color:var(--red);color:#fff;}
+.opt.disabled{cursor:default;}
+.opt:not(.correct):not(.wrong):not(.disabled):hover{border-color:var(--ink);background:#f5f5f2;}
+
+.feedback{max-width:480px;width:100%;border-radius:14px;padding:14px 16px;font-size:13.5px;line-height:1.6;display:none;margin-top:4px;}
+.feedback.correct{background:var(--g-light);border:1px solid #c2e09a;color:#2d6010;}
+.feedback.wrong{background:var(--red-light);border:1px solid #fecaca;color:#7f1d1d;}
+.feedback strong{font-weight:700;}
+.next-btn{background:var(--ink);color:#fff;border:none;border-radius:14px;padding:16px;font-family:var(--f);font-size:15px;font-weight:700;cursor:pointer;width:100%;max-width:480px;margin-top:12px;display:none;transition:background .12s;}
+.next-btn:active{background:var(--g2);}
+
+/* ---- RESULT ---- */
+.result-wrap{text-align:center;max-width:400px;width:100%;}
+.result-emoji{font-size:56px;margin:16px 0 12px;}
+.result-heading{font-family:var(--d);font-size:clamp(26px,6vw,34px);font-weight:900;line-height:1.2;margin-bottom:8px;}
+.result-sub{font-size:15px;color:var(--ink2);line-height:1.6;margin-bottom:24px;}
+.result-score-pill{display:inline-flex;align-items:center;gap:8px;background:var(--g-light);color:var(--g2);font-size:15px;font-weight:700;padding:10px 20px;border-radius:99px;margin-bottom:28px;}
+.prize-card{background:var(--gold-light);border:2px solid #f0c96e;border-radius:20px;padding:22px;margin-bottom:24px;text-align:left;}
+.prize-card h3{font-family:var(--d);font-size:18px;font-weight:700;color:var(--gold);margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.prize-card p{font-size:14px;color:var(--ink2);line-height:1.6;}
+.result-cta{background:var(--ink);color:#fff;border:none;border-radius:16px;padding:17px;font-family:var(--f);font-size:16px;font-weight:700;cursor:pointer;width:100%;margin-bottom:12px;transition:background .12s;}
+.result-cta:active{background:var(--g2);}
+.result-replay{background:transparent;border:1.5px solid var(--b);border-radius:16px;padding:14px;font-family:var(--f);font-size:14px;font-weight:600;color:var(--ink3);cursor:pointer;width:100%;transition:all .12s;}
+.result-replay:hover{border-color:var(--ink);color:var(--ink);}
+
+.beyondx-outro{background:var(--ink);border-radius:20px;padding:22px;margin-top:20px;text-align:left;}
+.beyondx-outro h4{font-family:var(--d);font-size:17px;font-weight:700;color:#fff;margin-bottom:8px;}
+.beyondx-outro p{font-size:13px;color:rgba(255,255,255,.75);line-height:1.6;}
+.beyondx-outro strong{color:var(--g);}
+
+/* ---- UTIL ---- */
+.shake{animation:shake .4s ease;}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@media(max-width:400px){.q-card{padding:20px 16px;}.opt{padding:13px 14px;}}
+</style>
+</head>
+<body>
+
+<!-- ======================== INTRO SCREEN ======================== -->
+<div class="screen active" id="introScreen">
+  <div class="intro-logo">
+    <img src="/beyondx-logo.png" alt="BeyondX"/>
+  </div>
+  <div class="intro-hero">
+    <h1>The <em>Second&nbsp;Chance</em><br>Challenge</h1>
+    <p>Test what you know — and learn something real — about Ghana's workforce, prisons, and the people building a better future.</p>
+  </div>
+  <div class="intro-card">
+    <h3>How to play</h3>
+    <div class="intro-rule"><span class="num">1</span><span>10 questions about Ghana, second chances, and BeyondX</span></div>
+    <div class="intro-rule"><span class="num">2</span><span>Every answer comes with a real fact you can share</span></div>
+    <div class="intro-rule"><span class="num">3</span><span>Score 7 or more — collect your souvenir from our stand!</span></div>
+  </div>
+  <button class="start-btn" onclick="startGame()">Start the challenge →</button>
+</div>
+
+<!-- ======================== QUESTION SCREEN ======================== -->
+<div class="screen" id="questionScreen">
+  <div class="q-header">
+    <span class="q-num" id="qNum">1 / 10</span>
+    <div class="q-progress-wrap"><div class="q-progress-bar" id="qBar" style="width:10%"></div></div>
+    <span class="q-score-badge" id="qScoreBadge">⭐ 0</span>
+  </div>
+  <div class="q-card">
+    <div class="q-category" id="qCat"></div>
+    <div class="q-text" id="qText"></div>
+  </div>
+  <div class="options" id="options"></div>
+  <div class="feedback" id="feedback"></div>
+  <button class="next-btn" id="nextBtn" onclick="nextQuestion()">Next question →</button>
+</div>
+
+<!-- ======================== RESULT SCREEN ======================== -->
+<div class="screen" id="resultScreen">
+  <img src="/beyondx-logo.png" alt="BeyondX" style="height:36px;width:auto;margin:16px 0 24px;"/>
+  <div class="result-wrap">
+    <div class="result-emoji" id="resultEmoji"></div>
+    <div class="result-heading" id="resultHeading"></div>
+    <div class="result-sub" id="resultSub"></div>
+    <div class="result-score-pill" id="resultScore"></div>
+    <div class="prize-card" id="prizeCard"></div>
+    <div class="beyondx-outro">
+      <h4>About BeyondX</h4>
+      <p>BeyondX connects vetted, <strong>skill-matched workers</strong> — including those rebuilding after incarceration — with employers across Greater Accra. Every placement is GPS-verified, every payment is fair and transparent.<br><br>We believe the right job changes everything.</p>
+    </div>
+    <button class="result-cta" onclick="goSignUp()" style="margin-top:20px">Register at our stand →</button>
+    <button class="result-replay" onclick="restartGame()" style="margin-top:10px">Play again</button>
+  </div>
+</div>
+
+<script>
+const QUESTIONS = [
+  {
+    cat: 'Ghana Prisons',
+    q: 'Approximately how many people are held in Ghana\'s prisons at any given time?',
+    opts: ['About 5,000', 'About 15,000', 'About 40,000', 'About 100,000'],
+    correct: 1,
+    fact: 'Ghana\'s prison population is around 15,000–17,000, spread across facilities built for far fewer. Overcrowding is a serious ongoing challenge.'
+  },
+  {
+    cat: 'Second Chances',
+    q: 'What is the biggest barrier ex-convicts face when trying to find work in Ghana?',
+    opts: ['Lack of ID documents', 'Employer stigma and discrimination', 'Language barriers', 'Distance from cities'],
+    correct: 1,
+    fact: 'Stigma is the number one barrier. Many employers reject applicants as soon as a criminal record is mentioned — regardless of the offence, its age, or the person\'s current skills.'
+  },
+  {
+    cat: 'Skills & Work',
+    q: 'Which of these skills is commonly taught inside Ghana\'s prisons?',
+    opts: ['Carpentry & woodwork', 'Investment banking', 'Software engineering', 'Commercial diving'],
+    correct: 0,
+    fact: 'Many Ghana Prisons Service facilities run vocational programmes including carpentry, tailoring, soap-making, and agriculture — real, marketable skills that often go unused after release.'
+  },
+  {
+    cat: 'BeyondX',
+    q: 'What does BeyondX verify before listing a worker on its platform?',
+    opts: ['Social media following', 'Skills, identity, and background', 'University degree', 'Credit score'],
+    correct: 1,
+    fact: 'BeyondX verifies skills through practical demonstration, confirms identity, and reviews background — giving employers confidence and workers a fair chance to prove themselves.'
+  },
+  {
+    cat: 'Ghana & Work',
+    q: 'What percentage of Ghana\'s workforce is estimated to work in the informal economy?',
+    opts: ['Around 30%', 'Around 50%', 'Around 70%', 'Around 90%'],
+    correct: 3,
+    fact: 'An estimated 80–90% of Ghana\'s working population earns income through informal work — market trading, casual labour, artisanal work. BeyondX bridges this into a verified, structured system.'
+  },
+  {
+    cat: 'Reintegration',
+    q: 'Research globally shows that stable employment after release reduces the chance of re-offending by how much?',
+    opts: ['Around 10%', 'Around 25%', 'Around 50%', 'No significant effect'],
+    correct: 2,
+    fact: 'Multiple studies show employment after release reduces reoffending by up to 50%. A job is one of the single most effective tools for lasting reintegration.'
+  },
+  {
+    cat: 'BeyondX',
+    q: 'How does an employer pay workers through BeyondX?',
+    opts: ['Cash directly to the worker', 'Through BeyondX — it verifies and disburses', 'By mobile money to the worker\'s family', 'Monthly salary via bank transfer'],
+    correct: 1,
+    fact: 'All payments flow through BeyondX — the employer pays BeyondX, which verifies the work was done and disburses to the worker. This protects both sides and creates a clean record.'
+  },
+  {
+    cat: 'Ghana Prisons',
+    q: 'What does the Ghana Prisons Service motto "Correction, Rehabilitation, Reformation" suggest about its mission?',
+    opts: ['To punish offenders harshly', 'To hold people securely until their sentence ends', 'To change people so they can rejoin society successfully', 'To provide free labour for government projects'],
+    correct: 2,
+    fact: 'The motto reflects an aspirational mission: incarceration should not just punish but transform. Programmes like vocational training and BeyondX\'s workforce placement aim to make that real.'
+  },
+  {
+    cat: 'Second Chances',
+    q: 'BeyondX\'s model was originally developed as part of a project at which university?',
+    opts: ['University of Ghana', 'Kwame Nkrumah University of Science and Technology', 'Ashesi University', 'Ghana Institute of Management and Public Administration'],
+    correct: 2,
+    fact: 'BeyondX grew out of a workforce reintegration concept developed at Ashesi University — built by students who believed a verified platform could change how ex-convicts access dignified work.'
+  },
+  {
+    cat: 'BeyondX',
+    q: 'What does BeyondX\'s flat GH₵20 service fee mean for the worker?',
+    opts: ['The worker pays GH₵20 to register', 'GH₵20 is taken from their daily pay', 'The worker keeps 100% of the agreed rate — the employer pays the fee on top', 'GH₵20 goes to the Ghana Prisons Service'],
+    correct: 2,
+    fact: 'BeyondX charges a flat GH₵20 service fee to the employer on top of the worker\'s agreed rate. The worker receives their full pay — every cedi earned is theirs.'
+  }
+];
+
+let current = 0;
+let score = 0;
+let answered = false;
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function startGame(){
+  current = 0; score = 0;
+  // Shuffle questions for replayability
+  for(let i=QUESTIONS.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [QUESTIONS[i],QUESTIONS[j]]=[QUESTIONS[j],QUESTIONS[i]];
+  }
+  show('questionScreen');
+  renderQuestion();
+}
+
+function renderQuestion(){
+  answered = false;
+  const q = QUESTIONS[current];
+  const total = QUESTIONS.length;
+
+  document.getElementById('qNum').textContent = `${current+1} / ${total}`;
+  document.getElementById('qBar').style.width = `${((current+1)/total)*100}%`;
+  document.getElementById('qScoreBadge').textContent = `⭐ ${score}`;
+  document.getElementById('qCat').textContent = q.cat;
+  document.getElementById('qText').textContent = q.q;
+
+  const letters = ['A','B','C','D'];
+  document.getElementById('options').innerHTML = q.opts.map((opt,i)=>`
+    <button class="opt" onclick="choose(${i})" id="opt-${i}">
+      <span class="opt-letter">${letters[i]}</span>
+      <span>${opt}</span>
+    </button>`).join('');
+
+  document.getElementById('feedback').style.display='none';
+  document.getElementById('nextBtn').style.display='none';
+}
+
+function choose(idx){
+  if(answered) return;
+  answered = true;
+  const q = QUESTIONS[current];
+  const isCorrect = idx === q.correct;
+  if(isCorrect) score++;
+
+  // Style all buttons
+  document.querySelectorAll('.opt').forEach((el,i)=>{
+    el.classList.add('disabled');
+    if(i===q.correct) el.classList.add('correct');
+    else if(i===idx && !isCorrect) el.classList.add('wrong');
+  });
+
+  // Show feedback
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback ' + (isCorrect ? 'correct' : 'wrong');
+  fb.innerHTML = (isCorrect
+    ? `<strong>✓ Correct!</strong> `
+    : `<strong>✗ Not quite.</strong> The right answer is <strong>${q.opts[q.correct]}</strong>. `)
+    + q.fact;
+  fb.style.display='block';
+
+  if(!isCorrect){
+    document.getElementById(`opt-${idx}`)?.classList.add('shake');
+  }
+
+  // Show next button
+  const nb = document.getElementById('nextBtn');
+  nb.style.display='block';
+  nb.textContent = current < QUESTIONS.length-1 ? 'Next question →' : 'See my result →';
+}
+
+function nextQuestion(){
+  current++;
+  if(current >= QUESTIONS.length) showResult();
+  else renderQuestion();
+  window.scrollTo(0,0);
+}
+
+function showResult(){
+  show('resultScreen');
+  const total = QUESTIONS.length;
+  const pct = Math.round((score/total)*100);
+  const won = score >= 7;
+
+  let emoji, heading, sub;
+  if(score === total){
+    emoji='🏆'; heading='Perfect score!';
+    sub='You know your stuff — and you clearly care about this issue. You\'ve earned the top prize at our stand.';
+  } else if(score >= 8){
+    emoji='🎉'; heading='Outstanding!';
+    sub='You know Ghana\'s workforce challenges well. Come collect your souvenir — you\'ve earned it!';
+  } else if(score >= 7){
+    emoji='⭐'; heading='You\'re a winner!';
+    sub='Great performance! 7 or more means you\'re collecting a souvenir from the BeyondX stand today.';
+  } else if(score >= 5){
+    emoji='👏'; heading='Well played!';
+    sub='You know more than most. Come chat with our team — we\'ll tell you what you missed.';
+  } else {
+    emoji='💪'; heading='Good effort!';
+    sub='Every question teaches something. Come talk to us at the stand — the real stories are even better.';
+  }
+
+  document.getElementById('resultEmoji').textContent = emoji;
+  document.getElementById('resultHeading').textContent = heading;
+  document.getElementById('resultSub').textContent = sub;
+  document.getElementById('resultScore').innerHTML = `You scored <strong style="margin:0 4px">${score}/${total}</strong> — ${pct}%`;
+
+  const prize = document.getElementById('prizeCard');
+  if(won){
+    prize.innerHTML = `<h3>🎁 You won a souvenir!</h3><p>Show this screen to a member of the BeyondX team at our stand to collect your prize. Thank you for playing — and for caring about second chances.</p>`;
+    prize.style.display='block';
+  } else {
+    prize.style.display='none';
+  }
+}
+
+function restartGame(){
+  show('introScreen');
+}
+function goSignUp(){
+  window.location.href = '/market-day.html';
+}
+</script>
+</body>
+</html>
