@@ -34,6 +34,14 @@ function clear(...keys: string[]) {
   try { keys.forEach((k) => localStorage.removeItem(k)) } catch { /* ignore */ }
 }
 
+export type WorkerProximity = {
+  available: boolean
+  distanceKm: number | null
+  roadKm: number | null
+  transportAllowance: number
+  tier: 'nearby' | 'short' | 'medium' | 'far' | 'very_far' | 'unknown'
+}
+
 export type Worker = {
   id?: string | number
   workerId?: string
@@ -46,6 +54,8 @@ export type Worker = {
   tasksCompleted?: number
   dailyCharge?: string | number
   totalEarned?: number
+  homeArea?: string
+  proximity?: WorkerProximity
   [k: string]: unknown
 }
 
@@ -223,7 +233,8 @@ export const auth = {
 /* -------------------------------- workers ------------------------------ */
 
 export const workers = {
-  list: () => request<{ workers: Worker[] }>('/api/workers'),
+  list: (jobLocation?: string) =>
+    request<{ workers: Worker[] }>(`/api/workers${jobLocation ? `?jobLocation=${encodeURIComponent(jobLocation)}` : ''}`),
   me: (token = session.workerToken()) => request<{ worker: Worker }>('/api/workers/me', { token }),
   updateMe: (patch: Record<string, unknown>, token = session.workerToken()) =>
     request<unknown>('/api/workers/me', { method: 'PATCH', body: patch, token }),

@@ -153,6 +153,7 @@ export default function EmployerDashboard() {
   const [profile, setProfile] = useState<Employer | null>(session.employer())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [jobLocationFilter, setJobLocationFilter] = useState('')
   const [announce, setAnnounce] = useState('')
   const [toast, setToast] = useState<ToastMsg>(null)
 
@@ -160,7 +161,7 @@ export default function EmployerDashboard() {
     setError(null)
     try {
       const [wRes, tRes, pRes] = await Promise.all([
-        workersApi.list(),
+        workersApi.list(jobLocationFilter.trim() || undefined),
         tasksApi.all(),
         employersApi.profile().catch(() => null),
       ])
@@ -173,7 +174,7 @@ export default function EmployerDashboard() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [jobLocationFilter])
   useEffect(() => { load() }, [load])
 
   const cancelTask = async (t: Task) => {
@@ -365,6 +366,25 @@ export default function EmployerDashboard() {
                       {/* Worker list — shown once screening complete */}
                       {screeningDone && (
                         <>
+
+                      {/* Job location filter — workers re-sort by proximity as employer types */}
+                      <div className="mt-4 mb-1 rounded-xl border border-ink-900/10 bg-white px-4 py-3">
+                        <label className="mb-1 block text-xs font-semibold text-ink-700">
+                          📍 Where is the job? <span className="font-normal text-ink-700/60">(optional — sorts workers by how close they live)</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={jobLocationFilter}
+                          onChange={(e) => setJobLocationFilter(e.target.value)}
+                          placeholder="e.g. Tema, Madina, Osu…"
+                          className="w-full rounded-lg border border-ink-900/12 bg-cream-50 px-3 py-2 text-sm text-ink-900 outline-none focus:border-forest-500 focus:ring-2 focus:ring-forest-500/20 placeholder:text-ink-700/40"
+                        />
+                        {jobLocationFilter.trim() && (
+                          <p className="mt-1.5 text-xs text-ink-700/60">
+                            Workers are sorted nearest to <strong>{jobLocationFilter}</strong> first. A transport allowance is added when workers travel far.
+                          </p>
+                        )}
+                      </div>
                       {selectedWorkers.size > 0 && (
                         <div className="mt-4 mb-3 flex items-center justify-between rounded-xl bg-forest-600 px-4 py-3">
                           <span className="text-sm font-semibold text-cream-50">
@@ -438,6 +458,24 @@ export default function EmployerDashboard() {
                                           : <span>New worker</span>}
                                         <span>{Number(w.tasksCompleted ?? 0)} task{Number(w.tasksCompleted ?? 0) === 1 ? '' : 's'} completed</span>
                                         {Boolean(w.isBusy) && <span className="font-medium text-amber-700">On a job</span>}
+                                        {/* Proximity badge — only shown when employer has entered a job location */}
+                                        {w.proximity?.available && (
+                                          <span className={`inline-flex items-center gap-1 font-medium ${
+                                            w.proximity.tier === 'nearby' ? 'text-forest-700' :
+                                            w.proximity.tier === 'short'  ? 'text-forest-600' :
+                                            w.proximity.tier === 'medium' ? 'text-amber-700'  : 'text-red-700'
+                                          }`}>
+                                            📍 {w.proximity.roadKm}km away
+                                            {w.proximity.transportAllowance > 0 && (
+                                              <span className="text-ink-700/60">
+                                                {' '}· +GH₵{w.proximity.transportAllowance} transport
+                                              </span>
+                                            )}
+                                          </span>
+                                        )}
+                                        {w.proximity?.available === false && jobLocationFilter.trim() && w.homeArea && (
+                                          <span className="text-ink-700/50">📍 {w.homeArea}</span>
+                                        )}
                                       </span>
                                     </span>
                                     <span className="hidden shrink-0 text-sm font-medium text-forest-700 sm:inline">View profile</span>
@@ -912,6 +950,33 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch }: { worker:
               </span>
             </div>
           </div>
+
+          {/* Proximity & transport allowance — shown when available */}
+          {worker.proximity?.available && (
+            <div className={`mx-5 mt-3 rounded-xl px-4 py-3 ${
+              worker.proximity.transportAllowance === 0
+                ? 'bg-forest-600/10'
+                : worker.proximity.transportAllowance <= 10
+                ? 'bg-amber-50 ring-1 ring-amber-200'
+                : 'bg-red-50 ring-1 ring-red-200'
+            }`}>
+              <p className={`text-xs font-semibold ${
+                worker.proximity.transportAllowance === 0 ? 'text-forest-700'
+                : worker.proximity.transportAllowance <= 10 ? 'text-amber-800'
+                : 'text-red-800'
+              }`}>
+                📍 {worker.proximity.roadKm}km from job location
+                {worker.proximity.transportAllowance > 0
+                  ? ` · GH₵${worker.proximity.transportAllowance} transport added`
+                  : ' · Nearby — no transport needed'}
+              </p>
+              {worker.proximity.transportAllowance > 0 && (
+                <p className="mt-1 text-xs text-ink-700/70 leading-relaxed">
+                  This worker lives {worker.proximity.roadKm}km from the job. A <strong>GH₵{worker.proximity.transportAllowance} transport allowance</strong> will be added to the total you pay — the worker receives it on top of their full rate.
+                </p>
+              )}
+            </div>
+          )}
 
           <div className="space-y-4 px-6 pb-5 pt-5">
             {worker.phone ? (

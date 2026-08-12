@@ -73,7 +73,7 @@ function Modal({ title, subtitle, children }: { title: string; subtitle: string;
   )
 }
 
-function Field({ label, value, onChange, error, ...rest }: { label: string; value: string; onChange: (v: string) => void; error?: string } & Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'>) {
+function Field({ label, value, onChange, error, hint, ...rest }: { label: string; value: string; onChange: (v: string) => void; error?: string; hint?: string } & Omit<InputHTMLAttributes<HTMLInputElement>, 'value' | 'onChange'>) {
   const id = `f-${label.replace(/[^a-z0-9]+/gi, '-').toLowerCase()}`
   return (
     <div className="block">
@@ -88,6 +88,7 @@ function Field({ label, value, onChange, error, ...rest }: { label: string; valu
         {...rest}
       />
       {error && <p id={`${id}-err`} className="mt-1 text-xs text-red-700">{error}</p>}
+      {!error && hint && <p className="mt-1 text-xs text-ink-700/60">{hint}</p>}
     </div>
   )
 }
@@ -461,7 +462,7 @@ function EmployerRegister() {
 function WorkerRegister() {
   const { open } = useAuth()
   const [step, setStep] = useState(1)
-  const [f, setF] = useState({ name: '', phone: '', gName: '', gPhone: '', relationship: '', pin: '' })
+  const [f, setF] = useState({ name: '', phone: '', homeArea: '', gName: '', gPhone: '', relationship: '', pin: '' })
   // Google sign-up is optional for workers — most authenticate by phone+PIN
   // alone. If used, it just verifies an email to attach to the account.
   const [googleEmail, setGoogleEmail] = useState<string | null>(null)
@@ -561,6 +562,7 @@ function WorkerRegister() {
         fullName: f.name.trim(), phone: f.phone.trim(), prisonFacility: '',  // set by admin after background verification
         skills, pin: f.pin.trim(), guarantorName: f.gName.trim(),
         guarantorPhone: f.gPhone.trim(), guarantorRelationship: f.relationship,
+        homeArea: f.homeArea.trim() || undefined,
         visitorId: getVisitorId(),
       }
       const ref = referral.get()
@@ -612,6 +614,7 @@ function WorkerRegister() {
         {step === 1 && (<>
           <Field label="Full Name" value={f.name} onChange={set('name')} error={fieldErr.name} />
           <Field label="Phone Number" type="tel" placeholder="0241234567" value={f.phone} onChange={set('phone')} error={fieldErr.phone} />
+          <Field label="Area / Neighbourhood" placeholder="e.g. Madina, Tema, Dansoman" value={f.homeArea} onChange={set('homeArea')} hint="Helps match you to nearby jobs — employers see how close you are." />
 
           {phoneVerified ? (
             <p className="flex items-center gap-1.5 rounded-lg bg-forest-600/10 px-3 py-2 text-xs font-medium text-forest-700">

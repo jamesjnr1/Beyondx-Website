@@ -385,6 +385,17 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
           {task.duration && <span className="inline-flex items-center gap-1"><Calendar size={13} aria-hidden="true" /> {task.duration}</span>}
           <span className="font-semibold text-ink-900">{cedis(task.pay)}</span>
         </div>
+        {/* Transport allowance — shown when the task has one attached */}
+        {isOffer && (task.transportAllowance as number) > 0 && (
+          <div className="mt-2 rounded-lg bg-forest-600/8 px-3 py-2">
+            <p className="text-xs font-semibold text-forest-800">
+              🚌 GH₵{task.transportAllowance as number} transport allowance included
+            </p>
+            <p className="mt-0.5 text-xs text-ink-700/70">
+              This job is some distance from your home area. BeyondX has added a transport allowance on top of your full {cedis(task.pay)} pay — you receive both.
+            </p>
+          </div>
+        )}
         {/* Multi-slot / expiry urgency — only relevant while the offer is still pending */}
         {isOffer && (slotsNeeded && slotsNeeded > 1 || hoursLeft !== null) && (
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-amber-700">
