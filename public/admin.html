@@ -299,6 +299,10 @@ tr:hover td{background:var(--bg);}
         <div class="sb-a" onclick="nav('payconfirm',this)">Payment Confirmations</div>
       </div>
       <div class="sb-group">
+        <div class="sb-grp">Events</div>
+        <div class="sb-a" onclick="nav('leads',this)">Market Day Leads <span class="sb-bdg" id="leadsBadge" style="display:none;">0</span></div>
+      </div>
+      <div class="sb-group">
         <div class="sb-grp">Messages</div>
         <div class="sb-a" onclick="nav('inbox',this)">Support &amp; Reports <span class="sb-bdg" id="inboxBadge" style="display:none;">0</span></div>
         <div class="sb-a" onclick="nav('notify',this)">Send Notification</div>
@@ -365,6 +369,7 @@ tr:hover td{background:var(--bg);}
       <div class="sec" id="sec-history"><div id="historyContent"></div></div>
       <div class="sec" id="sec-transactions"><div id="txContent"></div></div>
       <div class="sec" id="sec-messages"><div id="smsFormBox"></div><div id="smsDataBox"></div></div>
+      <div class="sec" id="sec-leads"><div id="leadsContent"></div></div>
       <div class="sec" id="sec-employers"><input class="srch" id="eSearch" placeholder="Search employers by organisation or phone…" oninput="eSearchInput()"/><div class="tc"><div class="tc-h"><span class="tc-ht">Employers</span><span class="tc-hm" id="ec"></span></div><table><thead><tr><th>Organisation</th><th>Phone</th><th>Tasks</th><th>Completed</th><th>Total Spent</th></tr></thead><tbody id="et"></tbody></table><div id="etMore"></div></div></div>
       <div class="sec" id="sec-inbox">
         <div id="inAlert"></div>
@@ -599,13 +604,14 @@ function nav(id,el){
   document.querySelectorAll('.sb-a').forEach(n=>n.classList.remove('on'));
   document.getElementById('sec-'+id).classList.add('on');
   el.classList.add('on');
-  const T={overview:'Overview',verify:'Verify Payments',payouts:'Pay Now',active:'In Progress',open:'Open Tasks',completed:'Completed Tasks',all:'All Tasks',workers:'Workers',employers:'Employers',history:'Work History',transactions:'Transactions',messages:'SMS Log',analytics:'Site Analytics',payconfirm:'Payment Confirmations',notify:'Send Notification',inbox:'Support & Reports'};
+  const T={overview:'Overview',verify:'Verify Payments',payouts:'Pay Now',active:'In Progress',open:'Open Tasks',completed:'Completed Tasks',all:'All Tasks',workers:'Workers',employers:'Employers',history:'Work History',transactions:'Transactions',messages:'SMS Log',analytics:'Site Analytics',payconfirm:'Payment Confirmations',notify:'Send Notification',inbox:'Support & Reports',leads:'Market Day Leads'};
   document.getElementById('pageTitle').textContent=T[id]||id;
   if(id==='inbox'){ inLoad(); return; }
   if(id==='notify'){ ntChars(); ntLoad(); return; }
   if(id==='messages'){ rm(); return; }
   if(id==='payconfirm'){ pcEmployerList().then(pcPreview); pcRenderLog(); return; }
   if(id==='analytics'){ loadVisitorFunnel(); if(!anData)loadAnalytics(); anStartAuto(); return; }
+  if(id==='leads'){ loadLeads(); return; }
   if(id!=='overview')rs(id);
 }
 function render(){
@@ -1383,6 +1389,97 @@ async function loadVisitorFunnel(){
   }
 }
 
+let leadsData=[];
+let leadsFilter='all';
+function setLeadsFilter(f,btn){
+  leadsFilter=f;
+  document.querySelectorAll('.leadfilter').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  renderLeads();
+}
+async function loadLeads(){
+  const el=document.getElementById('leadsContent');
+  el.innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const r=await fetch(API+'/admin/leads',{headers:{'x-admin-password':pass}});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.error||'Server error '+r.status);
+    leadsData=d.leads||[];
+    renderLeads();
+  }catch(e){
+    el.innerHTML=`<div class="empty">Could not load leads: ${e.message}</div>`;
+  }
+}
+function renderLeads(){
+  const el=document.getElementById('leadsContent');
+  const total=leadsData.length;
+  const workers=leadsData.filter(l=>l.interest==='worker').length;
+  const employers=leadsData.filter(l=>l.interest==='employer').length;
+  const followedUp=leadsData.filter(l=>l.followedUp).length;
+  const pending=total-followedUp;
+
+  const badge=document.getElementById('leadsBadge');
+  if(badge){ if(pending>0){badge.textContent=pending;badge.style.display='';}else{badge.style.display='none';} }
+
+  let list = leadsFilter==='all' ? leadsData
+    : leadsFilter==='pending' ? leadsData.filter(l=>!l.followedUp)
+    : leadsData.filter(l=>l.interest===leadsFilter);
+
+  el.innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
+      <div class="sc dk"><div class="sc-l">Total Sign-ups</div><div class="sc-v">${total}</div></div>
+      <div class="sc"><div class="sc-l">Interested in Work</div><div class="sc-v">${workers}</div></div>
+      <div class="sc"><div class="sc-l">Interested in Hiring</div><div class="sc-v">${employers}</div></div>
+      <div class="sc"><div class="sc-l">Awaiting Follow-up</div><div class="sc-v">${pending}</div></div>
+    </div>
+    <div class="tc">
+      <div class="tc-h">
+        <span class="tc-ht">Market Day Leads</span>
+        <span style="display:flex;gap:6px;align-items:center;">
+          <button class="btn-r leadfilter on" onclick="setLeadsFilter('all',this)">All</button>
+          <button class="btn-r leadfilter" onclick="setLeadsFilter('pending',this)">Pending</button>
+          <button class="btn-r leadfilter" onclick="setLeadsFilter('worker',this)">Workers</button>
+          <button class="btn-r leadfilter" onclick="setLeadsFilter('employer',this)">Employers</button>
+          <button class="btn-r" onclick="exportLeadsCsv()">Export CSV</button>
+        </span>
+      </div>
+      ${list.length ? `<table><thead><tr><th>Name</th><th>Phone</th><th>Interested In</th><th>Category</th><th>Area</th><th>Notes</th><th>Signed Up</th><th>Follow-up</th></tr></thead>
+      <tbody>${list.map(l=>`<tr>
+        <td class="tn">${anEsc(l.name)}</td>
+        <td class="tm">${anEsc(l.phone)}</td>
+        <td><span class="badge ${l.interest==='worker'?'ba':l.interest==='employer'?'bo':'bd'}">${l.interest==='worker'?'Work':l.interest==='employer'?'Hiring':'Curious'}</span></td>
+        <td style="font-size:11px;color:var(--ink3)">${anEsc(l.category||'—')}</td>
+        <td style="font-size:11px;color:var(--ink3)">${anEsc(l.location||'—')}</td>
+        <td style="font-size:11px;color:var(--ink3);max-width:180px;">${anEsc(l.notes||'—')}</td>
+        <td class="tm">${new Date(l.createdAt).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</td>
+        <td><button class="btn-r ${l.followedUp?'':'on'}" style="${l.followedUp?'':'background:#f0f7e8;border-color:var(--g);color:var(--g2);'}" onclick="toggleLeadFollowUp('${l.id}',${!l.followedUp})">${l.followedUp?'✓ Done':'Mark done'}</button></td>
+      </tr>`).join('')}</tbody></table>` : `<div class="empty">No leads in this view yet</div>`}
+    </div>`;
+}
+async function toggleLeadFollowUp(id,followedUp){
+  try{
+    const r=await fetch(API+'/admin/leads/'+id,{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','x-admin-password':pass},
+      body:JSON.stringify({followedUp})
+    });
+    if(!r.ok) throw new Error('Server error '+r.status);
+    const lead=leadsData.find(l=>l.id===id);
+    if(lead) lead.followedUp=followedUp;
+    renderLeads();
+  }catch(e){ showToast('Could not update: '+e.message); }
+}
+function exportLeadsCsv(){
+  const rows=[['Name','Phone','Interested In','Category','Area','Notes','Signed Up','Followed Up']];
+  leadsData.forEach(l=>rows.push([l.name,l.phone,l.interest,l.category||'',l.location||'',l.notes||'',new Date(l.createdAt).toLocaleString(),l.followedUp?'Yes':'No']));
+  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='beyondx-market-day-leads-'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+
 function loadAnalytics(){
   if(anLoading) return;
   anLoading=true;
@@ -1952,6 +2049,12 @@ window.login=function(){
       document.getElementById('loginScreen').style.display='none';
       document.getElementById('app').style.display='flex';
       checkSmsBadge();checkVerifyBadge();inBadge();render();
+      fetch(API_URL+'/admin/leads',{headers:{'x-admin-password':p}}).then(r=>r.json()).then(d=>{
+        leadsData=d.leads||[];
+        const pending=leadsData.filter(l=>!l.followedUp).length;
+        const b=document.getElementById('leadsBadge');
+        if(b){ if(pending>0){b.textContent=pending;b.style.display='';}else{b.style.display='none';} }
+      }).catch(()=>{});
     }).catch(()=>{
       document.getElementById('err').style.display='block';
       restore();
