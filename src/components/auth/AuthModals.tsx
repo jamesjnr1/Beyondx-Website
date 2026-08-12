@@ -492,7 +492,7 @@ function WorkerRegister() {
   const sendPhoneCode = async () => {
     setPhoneErr(null); setPhoneBusy(true)
     try {
-      const r = await fetch('/api/send-phone-otp', {
+      const r = await fetch('https://beyondx-backend-production-1a08.up.railway.app/api/otp/send', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: f.phone.trim() }),
       })
@@ -509,7 +509,7 @@ function WorkerRegister() {
   const verifyPhoneCode = async () => {
     setPhoneErr(null); setPhoneBusy(true)
     try {
-      const r = await fetch('/api/verify-phone-otp', {
+      const r = await fetch('https://beyondx-backend-production-1a08.up.railway.app/api/otp/verify', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: f.phone.trim(), code: phoneCode.trim() }),
       })
