@@ -1,0 +1,1692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>BeyondX Admin</title>
+<link rel="icon" type="image/png" href="data:image/png;base64,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"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+:root{
+  /* Cream — page background and light surfaces */
+  --cream-50:#faf8f3;--cream-100:#f3efe4;--cream-200:#e7dfcb;--cream-300:#d3c6a4;--cream-500:#9c8c6a;
+  /* Ink — text, borders, sidebar */
+  --ink-50:#f6f6f4;--ink-100:#e8e8e4;--ink-200:#cfcfc9;--ink-300:#a8a8a0;--ink-400:#7c7c74;
+  --ink-600:#3a4235;--ink-700:#2a3226;--ink-800:#1e2419;--ink-900:#12180e;--ink-950:#0d0d0b;
+  /* Forest — brand green: active states, positive metrics, approvals */
+  --forest-50:#f0f7f0;--forest-100:#dcecdc;--forest-300:#a6d96a;--forest-400:#8bc53f;
+  --forest-500:#7bbb2e;--forest-600:#6bab21;--forest-700:#578c1a;--forest-800:#33520f;--forest-950:#0d1d0d;
+  /* Clay — pending, in progress, warnings */
+  --clay-50:#fbf6f0;--clay-100:#f5e9d8;--clay-200:#e8d2ae;--clay-400:#c79553;--clay-600:#8f6128;--clay-700:#6e4a1c;
+  /* Red — errors, suspended, disputed, destructive */
+  --red-50:#fef2f2;--red-200:#fecaca;--red-600:#dc2626;--red-700:#b91c1c;
+
+  /* Semantic aliases used through the console */
+  --bg:var(--cream-50);--s:#fff;--b:var(--ink-100);--b2:var(--ink-50);
+  --ink:var(--ink-900);--ink2:var(--ink-600);--ink3:var(--ink-400);
+  --g:var(--forest-600);--g2:var(--forest-700);--g3:var(--forest-500);--g4:var(--forest-50);
+  --amb:var(--clay-700);--amb-bg:var(--clay-50);--amb-b:var(--clay-200);
+  --f:'Inter',system-ui,sans-serif;--d:'Fraunces',Georgia,serif;--m:'JetBrains Mono',ui-monospace,monospace;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--ink);font-family:var(--f);font-size:13px;-webkit-font-smoothing:antialiased;}
+.login{display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--ink-900);}
+.lbox{background:var(--s);border-radius:18px;padding:44px 40px;width:360px;box-shadow:0 24px 64px rgba(0,0,0,.2);}
+.lbox h1{font-size:20px;font-weight:800;letter-spacing:-.4px;margin-bottom:4px;font-family:var(--d);}
+.lbox p{font-size:12px;color:var(--ink3);margin-bottom:26px;}
+.lbox input{width:100%;padding:10px 13px;border:1.5px solid var(--b);border-radius:9px;font-size:13px;font-family:var(--f);color:var(--ink);background:var(--bg);outline:none;margin-bottom:10px;transition:border-color .15s;}
+.lbox input:focus{border-color:var(--g2);}
+.lbox button{width:100%;padding:11px;background:var(--g);color:#fff;border:none;border-radius:9px;font-size:13px;font-weight:600;font-family:var(--f);cursor:pointer;}
+.lbox button:hover{background:var(--g2);}
+.lerr{font-size:12px;color:#dc2626;margin-top:8px;display:none;}
+.app{display:none;min-height:100vh;width:100%;}
+.sb{position:fixed;inset:0 auto 0 0;width:196px;background:var(--ink-900);display:flex;flex-direction:column;z-index:10;}
+.sb-brand{padding:18px 16px 16px;border-bottom:1px solid rgba(255,255,255,.08);}
+.sb-name{font-size:14px;font-weight:800;color:#fff;letter-spacing:-.3px;}
+.sb-tag{font-size:9px;color:rgba(255,255,255,.3);font-family:var(--f);letter-spacing:.8px;text-transform:uppercase;margin-top:2px;}
+.sb-nav{padding:10px 0;flex:1;}
+.sb-grp{font-size:9px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.25);padding:12px 16px 4px;font-family:var(--f);}
+.sb-a{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;font-size:12px;font-weight:500;color:rgba(255,255,255,.55);cursor:pointer;border-left:2px solid transparent;transition:all .12s;}
+.sb-a:hover{color:rgba(255,255,255,.85);background:rgba(255,255,255,.05);}
+.sb-a.on{color:#fff;background:rgba(107,171,33,.16);border-left-color:var(--forest-500);}
+.sb-bdg{background:rgba(239,68,68,.9);color:#fff;font-size:9px;font-weight:700;padding:1px 5px;border-radius:6px;font-family:var(--f);}
+.sb-ft{padding:12px 16px;border-top:1px solid rgba(255,255,255,.07);font-size:10px;color:rgba(255,255,255,.2);font-family:var(--f);}
+.main{margin-left:196px;flex:1;display:flex;flex-direction:column;min-height:100vh;width:calc(100% - 196px);}
+.tb{padding:14px 24px;background:var(--s);border-bottom:1.5px solid var(--b);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:5;}
+.tb-title{font-size:15px;font-weight:700;letter-spacing:-.3px;font-family:var(--d);font-weight:600;letter-spacing:-.2px;}
+.tb-r{display:flex;align-items:center;gap:10px;}
+.live{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:600;color:var(--forest-700);background:var(--forest-50);border:1px solid var(--forest-100);border-radius:20px;padding:4px 9px;font-family:var(--f);}
+.dot{width:5px;height:5px;border-radius:50%;background:#22c55e;animation:blink 2s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.15}}
+.tb-t{font-size:10px;color:var(--ink3);font-family:var(--m);font-family:var(--m);}
+.btn-r{padding:6px 12px;background:var(--s);border:1.5px solid var(--b);border-radius:7px;font-size:11px;font-weight:600;color:var(--ink2);cursor:pointer;font-family:var(--f);transition:all .12s;}
+.btn-r:hover{border-color:var(--g2);color:var(--g);}
+.body{padding:20px 24px 40px;width:100%;}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;width:100%;}
+.sc{background:var(--s);border:1.5px solid var(--b);border-radius:12px;padding:16px 18px;}
+.sc.dk{background:var(--forest-800);border-color:var(--forest-800);}
+.sc-l{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ink3);margin-bottom:8px;font-family:var(--m);font-family:var(--f);letter-spacing:.9px;}
+.sc.dk .sc-l{color:rgba(255,255,255,.4);}
+.sc-v{font-size:22px;font-weight:800;color:var(--ink);letter-spacing:-.5px;line-height:1;font-family:var(--d);font-weight:600;letter-spacing:-.5px;}
+.sc.dk .sc-v{color:#fff;}
+.sc-s{font-size:11px;color:var(--ink3);margin-top:5px;}
+.sc.dk .sc-s{color:rgba(255,255,255,.4);}
+.sc-s.w{color:var(--amb);}
+.stats2{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;width:100%;}
+.sc-mini{background:var(--s);border:1.5px solid var(--b);border-radius:12px;padding:14px 16px;}
+.sc-mini .sc-l{font-size:9px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--ink3);margin-bottom:6px;font-family:var(--m);font-family:var(--f);}
+.sc-mini .sc-v{font-size:18px;font-weight:800;color:var(--ink);letter-spacing:-.4px;}
+.chart-card{background:var(--s);border:1.5px solid var(--b);border-radius:12px;padding:16px 18px;margin-bottom:16px;}
+.chart-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.chart-ht{font-size:12px;font-weight:700;color:var(--ink);font-family:var(--d);font-weight:600;}
+.chart-hm{font-size:10px;color:var(--ink3);font-family:var(--m);font-family:var(--m);}
+.bars{display:flex;align-items:flex-end;gap:4px;height:90px;}
+.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;}
+.bar-fill{width:100%;background:var(--g3);border-radius:3px 3px 0 0;min-height:2px;transition:background .15s;}
+.bar-col:hover .bar-fill{background:var(--g2);}
+.bar-lbl{font-size:8px;color:var(--ink3);font-family:var(--m);margin-top:5px;white-space:nowrap;font-family:var(--m);}
+.catbar-row{padding:9px 14px;border-bottom:1px solid var(--b2);}
+.catbar-row:last-child{border-bottom:none;}
+.catbar-top{display:flex;justify-content:space-between;font-size:11px;margin-bottom:5px;}
+.catbar-name{font-weight:600;color:var(--ink);}
+.catbar-val{color:var(--g2);font-weight:600;font-variant-numeric:tabular-nums;}
+.catbar-track{background:var(--bg);border-radius:4px;height:6px;overflow:hidden;}
+.catbar-fill{background:var(--g3);height:100%;border-radius:4px;}
+.feed-row{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--b2);}
+.feed-row:last-child{border-bottom:none;}
+.feed-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.feed-txt{font-size:11px;color:var(--ink2);flex:1;}
+.feed-txt b{color:var(--ink);font-weight:600;}
+.feed-t{font-size:9px;color:var(--ink3);font-family:var(--m);white-space:nowrap;font-family:var(--m);}
+.srch{width:100%;padding:8px 12px;border:1.5px solid var(--b);border-radius:8px;font-size:12px;font-family:var(--f);color:var(--ink);background:var(--s);outline:none;margin-bottom:12px;}
+.srch:focus{border-color:var(--g2);}
+.alrt{background:var(--amb-bg);border:1.5px solid var(--amb-b);border-radius:10px;padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;}
+.alrt-t{font-size:12px;font-weight:600;color:var(--amb);}
+.alrt-s{font-size:11px;color:var(--clay-600);margin-top:2px;}
+.alrt-btn{padding:6px 13px;background:var(--amb);color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--f);}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;width:100%;}
+.tc{background:var(--s);border:1.5px solid var(--b);border-radius:12px;overflow:hidden;margin-bottom:12px;}
+.tc-h{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1.5px solid var(--b2);}
+.tc-ht{font-size:12px;font-weight:700;color:var(--ink);font-family:var(--d);font-weight:600;}
+.tc-hm{font-size:10px;color:var(--ink3);font-family:var(--m);font-family:var(--m);}
+table{width:100%;border-collapse:collapse;}
+thead tr{background:var(--bg);}
+th{padding:8px 14px;font-size:9px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--ink3);text-align:left;border-bottom:1px solid var(--b2);font-family:var(--m);}
+td{padding:10px 14px;border-bottom:1px solid var(--b2);color:var(--ink2);}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:var(--bg);}
+.tn{font-weight:600;color:var(--ink);}
+.tm{font-family:var(--m);font-size:10px;color:var(--ink3);}
+.tg{color:var(--g2);font-weight:600;font-variant-numeric:tabular-nums;}
+.badge{display:inline-block;font-size:9px;font-family:var(--m);font-weight:600;padding:2px 7px;border-radius:4px;}
+.bo{background:var(--ink-50);color:var(--ink-600);}
+.br{background:var(--red-50);color:var(--red-700);}
+.ba{background:var(--clay-50);color:var(--clay-700);}
+.bp{background:var(--amb-bg);color:var(--amb);}
+.bd{background:var(--forest-50);color:var(--forest-800);}
+.pc{background:var(--s);border:1.5px solid var(--b);border-radius:12px;padding:18px;margin-bottom:10px;}
+.pc-hd{display:flex;align-items:flex-start;justify-content:space-between;padding-bottom:14px;border-bottom:1px solid var(--b2);margin-bottom:14px;}
+.pc-n{font-size:15px;font-weight:700;color:var(--ink);}
+.pc-tk{font-size:11px;color:var(--ink3);margin-top:3px;}
+.pc-am{font-size:22px;font-weight:800;color:var(--g);letter-spacing:-.5px;}
+.pc-aml{font-size:9px;color:var(--ink3);text-align:right;font-family:var(--m);text-transform:uppercase;letter-spacing:.5px;}
+.pc-g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;}
+.pc-f{background:var(--bg);border:1px solid var(--b2);border-radius:8px;padding:10px 12px;}
+.pc-fl{font-size:9px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--ink3);margin-bottom:3px;font-family:var(--m);}
+.pc-fv{font-size:12px;font-weight:600;color:var(--ink);}
+.pc-fv.ph{font-family:var(--m);font-size:14px;color:var(--g2);}
+.pc-nt{font-size:11px;color:var(--ink3);margin-bottom:10px;line-height:1.55;}
+.btn-p{width:100%;padding:11px;background:var(--g);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--f);transition:background .15s;}
+.btn-p:hover{background:var(--g2);}
+.tsk{background:var(--s);border:1.5px solid var(--b);border-radius:10px;padding:14px 16px;margin-bottom:8px;}
+.tsk-tp{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:10px;}
+.tsk-n{font-size:13px;font-weight:700;color:var(--ink);}
+.tsk-m{font-size:10px;color:var(--ink3);margin-top:2px;font-family:var(--m);}
+.tsk-b{display:grid;grid-template-columns:1fr 1fr;gap:1px;}
+.tr{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--b2);}
+.tr:last-child{border-bottom:none;}
+.tr-k{font-size:11px;color:var(--ink3);}
+.tr-v{font-size:11px;font-weight:500;color:var(--ink2);}
+.tr-v.g{color:var(--g2);font-weight:600;}
+.btn-ps{margin-top:10px;width:100%;padding:8px;background:var(--g);color:#fff;border:none;border-radius:7px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--f);}
+.empty{text-align:center;padding:48px;color:var(--ink3);font-size:12px;}
+.sec{display:none;}
+.sec.on{display:block;}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--g);color:#fff;padding:10px 16px;border-radius:8px;font-size:12px;font-weight:500;display:none;z-index:999;box-shadow:0 8px 20px rgba(0,0,0,.15);}
+.dov{position:fixed;inset:0;background:rgba(13,26,15,.4);z-index:800;display:none;align-items:stretch;justify-content:flex-end;}
+.dov.on{display:flex;}
+.dpanel{width:480px;max-width:92vw;background:var(--s);height:100%;overflow-y:auto;box-shadow:-8px 0 30px rgba(0,0,0,.12);padding:26px;}
+.dpanel-h{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;padding-bottom:16px;border-bottom:1.5px solid var(--b);}
+.dpanel-t{font-size:18px;font-weight:800;color:var(--ink);}
+.dpanel-s{font-size:12px;color:var(--ink3);margin-top:2px;}
+.dpanel-x{background:none;border:none;font-size:18px;color:var(--ink3);cursor:pointer;padding:2px 6px;}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+.dcell{background:var(--g4);border-radius:8px;padding:10px 12px;}
+.dcell-l{font-size:10px;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:3px;}
+.dcell-v{font-size:14px;font-weight:700;color:var(--ink);}
+.dsec-t{font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.5px;margin:18px 0 10px;}
+.drow{padding:10px 0;border-bottom:1px solid var(--b2);}
+.drow:last-child{border-bottom:none;}
+.trow{cursor:pointer;}
+.trow:hover{background:var(--g4);}
+.btn-r.on{background:var(--g);color:#fff;border-color:var(--g);}
+.menu-wrap{position:relative;}
+.menu{position:absolute;right:0;top:calc(100% + 6px);min-width:250px;background:#fff;border:1.5px solid var(--b);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.13);padding:6px;z-index:60;}
+.menu button{display:block;width:100%;text-align:left;padding:9px 10px;background:none;border:0;border-radius:7px;cursor:pointer;font-family:var(--f);}
+.menu button:hover{background:var(--g4);}
+.menu button.danger:hover{background:var(--red-50);}
+.menu .mi-t{display:block;font-size:12px;font-weight:600;color:var(--ink);}
+.menu button.danger .mi-t{color:var(--red-700);}
+.menu .mi-s{display:block;font-size:10.5px;color:var(--ink3);margin-top:1px;}
+.menu-sep{height:1px;background:var(--b);margin:6px 4px;}
+.menu-lbl{font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink3);padding:4px 10px 2px;}
+.an-ctl{display:flex;gap:8px;margin-bottom:16px;align-items:center;}
+.an-up{color:var(--forest-700);font-weight:600;}
+.an-dn{color:var(--red-700);font-weight:600;}
+.an-legend{display:flex;gap:16px;margin-top:10px;font-size:10.5px;color:var(--ink3);}
+.an-legend span{display:flex;align-items:center;gap:6px;}
+.an-key{width:9px;height:9px;border-radius:2px;display:inline-block;}
+.an-dot{transition:opacity .15s;}
+.an-dot:hover{opacity:1 !important;}
+.dn-row{display:flex;align-items:center;gap:8px;margin-bottom:7px;font-size:12px;}
+.dn-key{width:9px;height:9px;border-radius:2px;flex-shrink:0;}
+.dn-name{flex:1;color:var(--ink);font-weight:500;}
+.dn-val{font-family:var(--m);font-weight:700;color:var(--ink2);}
+.an-row{position:relative;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border-radius:7px;overflow:hidden;margin-bottom:3px;}
+.an-row-bar{position:absolute;left:0;top:0;bottom:0;background:var(--forest-50);border-radius:7px;}
+.an-row-name{position:relative;font-size:12px;font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:7px;}
+.an-row-pct{position:relative;font-size:12px;font-weight:700;color:var(--ink2);font-family:var(--m);flex-shrink:0;}
+.an-flag{font-size:15px;line-height:1;}
+.an-note{background:var(--forest-50);border:1.5px solid var(--forest-100);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:11.5px;color:var(--ink2);line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="login" id="loginScreen">
+  <div class="lbox">
+    <h1>BeyondX Admin</h1>
+    <p>Operations and payout dashboard</p>
+    <input type="password" id="adminPass" placeholder="Admin password" onkeydown="if(event.key==='Enter')login()"/>
+    <button onclick="login()">Sign in</button>
+    <div class="lerr" id="err">Incorrect password</div>
+  </div>
+</div>
+<div class="app" id="app">
+  <div class="sb">
+    <div class="sb-brand"><div class="sb-name">BeyondX</div><div class="sb-tag">Admin Console</div></div>
+    <div class="sb-nav">
+      <div class="sb-grp">Dashboard</div>
+      <div class="sb-a on" onclick="nav('overview',this)">Overview</div>
+      <div class="sb-a" onclick="nav('payouts',this)">Pay Now <span class="sb-bdg" id="payBadge" style="display:none">0</span></div>
+      <div class="sb-grp">Site</div>
+      <div class="sb-a" onclick="nav('analytics',this)">Site Analytics</div>
+      <div class="sb-grp">Tasks</div>
+      <div class="sb-a" onclick="nav('verify',this)">Verify Payments <span class="sb-bdg" id="verifyBadge" style="display:none">0</span></div>
+      <div class="sb-a" onclick="nav('active',this)">In Progress</div>
+      <div class="sb-a" onclick="nav('open',this)">Open Tasks</div>
+      <div class="sb-a" onclick="nav('completed',this)">Completed</div>
+      <div class="sb-a" onclick="nav('all',this)">All Tasks</div>
+      <div class="sb-grp">People</div>
+      <div class="sb-a" onclick="nav('workers',this)">Workers</div>
+      <div class="sb-a" onclick="nav('employers',this)">Employers</div>
+      <div class="sb-grp">History</div>
+      <div class="sb-a" onclick="nav('history',this)">Work History</div>
+      <div class="sb-a" onclick="nav('transactions',this)">Transactions</div>
+      <div class="sb-grp">Payments</div>
+      <div class="sb-a" onclick="nav('payconfirm',this)">Payment Confirmations</div>
+      <div class="sb-grp">Messages</div>
+      <div class="sb-a" onclick="nav('inbox',this)">Support &amp; Reports <span class="sb-bdg" id="inboxBadge" style="display:none;">0</span></div>
+      <div class="sb-a" onclick="nav('notify',this)">Send Notification</div>
+      <div class="sb-a" onclick="nav('messages',this)">SMS Log <span class="sb-bdg" id="smsBadge" style="display:none;background:#dc2626;">!</span></div>
+    </div>
+    <div class="sb-ft" id="sbTime"></div>
+  </div>
+  <div class="main">
+    <div class="tb">
+      <div class="tb-title" id="pageTitle">Overview</div>
+      <div class="tb-r">
+        <span class="tb-t" id="tbTime"></span>
+        <span class="live"><span class="dot"></span>Live</span>
+        <button class="btn-r" onclick="load()">Refresh</button>
+        <div class="menu-wrap">
+          <button class="btn-r" id="actionsBtn" aria-haspopup="true" aria-expanded="false" onclick="toggleActions(event)">Actions ▾</button>
+          <div class="menu" id="actionsMenu" role="menu" hidden>
+            <button role="menuitem" onclick="closeActions();sendDormantReminders()">
+              <span class="mi-t">Send dormant reminders</span>
+              <span class="mi-s">Nudge workers who have been inactive</span>
+            </button>
+            <div class="menu-sep"></div>
+            <div class="menu-lbl">Danger zone</div>
+            <button role="menuitem" class="danger" onclick="closeActions();confirmClearData()">
+              <span class="mi-t">Clear all data</span>
+              <span class="mi-s">Removes tasks and activity</span>
+            </button>
+            <button role="menuitem" class="danger" onclick="closeActions();confirmClearEmployers()">
+              <span class="mi-t">Delete all employers</span>
+              <span class="mi-s">Removes every employer account</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="body">
+      <div class="sec on" id="sec-overview">
+        <div class="stats" id="sg"></div>
+        <div class="stats2" id="sg2"></div>
+        <div id="aa"></div>
+        <div class="chart-card">
+          <div class="chart-hd"><span class="chart-ht">Revenue — Last 14 Days</span><span class="chart-hm" id="revHm"></span></div>
+          <div class="bars" id="revBars"></div>
+        </div>
+        <div class="two">
+          <div class="tc"><div class="tc-h"><span class="tc-ht">Top Categories</span></div><div id="catT"></div></div>
+          <div class="tc"><div class="tc-h"><span class="tc-ht">Top Employers</span></div><table><thead><tr><th>Organisation</th><th>Tasks</th><th>Spent</th></tr></thead><tbody id="empT"></tbody></table></div>
+        </div>
+        <div class="tc"><div class="tc-h"><span class="tc-ht">Recent Activity</span><span class="tc-hm">Live feed</span></div><div id="feed"></div></div>
+      </div>
+      <div class="sec" id="sec-verify">
+        <div class="tc">
+          <div class="tc-h"><span class="tc-ht">Verify Payments</span><span class="tc-hm" id="vpCount"></span></div>
+          <div id="vl"></div>
+        </div>
+      </div>
+      <div class="sec" id="sec-payouts"><div id="pl"></div></div>
+      <div class="sec" id="sec-active"><div id="al"></div></div>
+      <div class="sec" id="sec-open"><div id="ol"></div></div>
+      <div class="sec" id="sec-completed"><div id="cl"></div></div>
+      <div class="sec" id="sec-all"><input class="srch" id="xSearch" placeholder="Search all tasks by type, location, employer, or worker…" oninput="rs('all')"/><div id="xl"></div></div>
+      <div class="sec" id="sec-workers"><input class="srch" id="wSearch" placeholder="Search workers by name, ID, phone, or skill…" oninput="wSearchInput()"/><div class="tc"><div class="tc-h"><span class="tc-ht">Workers</span><span class="tc-hm" id="wc"></span></div><table><thead><tr><th>Name</th><th>Worker ID</th><th>Phone</th><th>Status</th><th>Skills</th><th>Tasks</th><th>Rating</th></tr></thead><tbody id="wt"></tbody></table><div id="wtMore"></div></div></div>
+      <div class="sec" id="sec-history"><div id="historyContent"></div></div>
+      <div class="sec" id="sec-transactions"><div id="txContent"></div></div>
+      <div class="sec" id="sec-messages"><div id="smsFormBox"></div><div id="smsDataBox"></div></div>
+      <div class="sec" id="sec-employers"><input class="srch" id="eSearch" placeholder="Search employers by organisation or phone…" oninput="eSearchInput()"/><div class="tc"><div class="tc-h"><span class="tc-ht">Employers</span><span class="tc-hm" id="ec"></span></div><table><thead><tr><th>Organisation</th><th>Phone</th><th>Tasks</th><th>Completed</th><th>Total Spent</th></tr></thead><tbody id="et"></tbody></table><div id="etMore"></div></div></div>
+      <div class="sec" id="sec-inbox">
+        <div id="inAlert"></div>
+        <div class="an-ctl">
+          <span class="tb-t">Show</span>
+          <button class="btn-r inbf on" onclick="inFilter('open',this)">Needs attention</button>
+          <button class="btn-r inbf" onclick="inFilter('handled',this)">Handled</button>
+          <button class="btn-r inbf" onclick="inFilter('all',this)">All</button>
+          <span class="tb-t" id="inCount" style="margin-left:auto;"></span>
+          <button class="btn-r" onclick="inLoad()">Refresh</button>
+        </div>
+        <div id="inList"></div>
+      </div>
+
+      <div class="sec" id="sec-notify">
+        <div id="ntAlert"></div>
+        <div class="an-note">
+          These appear in the notification bell inside the worker and employer dashboards. Automatic notifications (offers, task updates, payments) keep working on their own. To reach people by SMS instead, use the SMS Log section.
+        </div>
+        <div class="tc" style="margin-bottom:16px;">
+          <div class="tc-h"><span class="tc-ht">New notification</span><span class="tc-hm" id="ntWho">Workers</span></div>
+          <div style="padding:16px;">
+            <div class="fld" style="margin-bottom:12px;">
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:6px;">Show to</label>
+              <button class="btn-r ntaud on" data-aud="worker" onclick="ntAudience('worker',this)">Workers</button>
+              <button class="btn-r ntaud" data-aud="employer" style="margin-left:6px;" onclick="ntAudience('employer',this)">Employers</button>
+              <button class="btn-r ntaud" data-aud="all" style="margin-left:6px;" onclick="ntAudience('all',this)">Everyone</button>
+            </div>
+            <div class="fld" style="margin-bottom:12px;">
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:6px;">Templates</label>
+              <button class="btn-r" onclick="ntTemplate('work')">New work</button>
+              <button class="btn-r" style="margin-left:6px;" onclick="ntTemplate('update')">Platform update</button>
+              <button class="btn-r" style="margin-left:6px;" onclick="ntTemplate('event')">Event</button>
+              <button class="btn-r" style="margin-left:6px;" onclick="ntTemplate('reminder')">Reminder</button>
+            </div>
+            <div class="fld" style="margin-bottom:12px;">
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:6px;">Title</label>
+              <input id="ntTitle" maxlength="70" placeholder="e.g. New work available" style="width:100%;padding:10px 12px;border:1.5px solid var(--bd);border-radius:8px;font-size:14px;font-family:inherit;">
+            </div>
+            <div class="fld" style="margin-bottom:6px;">
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:6px;">Message</label>
+              <textarea id="ntMessage" rows="4" maxlength="400" oninput="ntChars()" placeholder="Write the update…" style="width:100%;padding:10px 12px;border:1.5px solid var(--bd);border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
+              <div class="tb-t" style="margin-top:6px;" id="ntChars">0 characters</div>
+            </div>
+            <button class="btn-r on" onclick="ntSend()">Publish notification</button>
+            <button class="btn-r" style="margin-left:8px;" onclick="ntClear()">Clear</button>
+          </div>
+        </div>
+        <div class="tc">
+          <div class="tc-h"><span class="tc-ht">Published</span><span class="tc-hm">Visible in dashboards now</span></div>
+          <div id="ntLog"></div>
+        </div>
+      </div>
+
+      <div class="sec" id="sec-payconfirm">
+        <div class="an-note">
+          Use this once BeyondX has received an employer's dispatch payment. It sends them an SMS confirming the money arrived and that the worker has been notified.
+        </div>
+        <div class="tc" style="margin-bottom:16px;">
+          <div class="tc-h"><span class="tc-ht">Confirm a payment</span><span class="tc-hm">Sends an SMS to the employer</span></div>
+          <div style="padding:16px;">
+            <div class="fld" style="margin-bottom:12px;">
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:6px;">Employer</label>
+              <select id="pcEmployer" onchange="pcPreview()" style="width:100%;padding:10px 12px;border:1.5px solid var(--bd);border-radius:8px;font-size:14px;font-family:inherit;background:#fff;">
+                <option value="">Select an employer…</option>
+              </select>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+              <div class="fld">
+                <label style="display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:6px;">Amount received (GHS)</label>
+                <input id="pcAmount" type="number" step="0.01" placeholder="e.g. 100" oninput="pcPreview()" style="width:100%;padding:10px 12px;border:1.5px solid var(--bd);border-radius:8px;font-size:14px;font-family:inherit;">
+              </div>
+              <div class="fld">
+                <label style="display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:6px;">Payment reference</label>
+                <input id="pcRef" placeholder="e.g. MTN MoMo 1234567890" oninput="pcPreview()" style="width:100%;padding:10px 12px;border:1.5px solid var(--bd);border-radius:8px;font-size:14px;font-family:inherit;">
+              </div>
+            </div>
+            <div class="fld" style="margin-bottom:12px;">
+              <label style="display:block;font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:6px;">Message to send</label>
+              <textarea id="pcMessage" rows="4" oninput="pcDirty=true" style="width:100%;padding:10px 12px;border:1.5px solid var(--bd);border-radius:8px;font-size:14px;font-family:inherit;resize:vertical;"></textarea>
+              <div class="tb-t" style="margin-top:6px;">Edit freely — changing the fields above will stop overwriting your text.</div>
+            </div>
+            <button class="btn-r" onclick="pcReset()">Reset message</button>
+            <button class="btn-r on" style="margin-left:8px;" onclick="pcSend()">Send confirmation</button>
+          </div>
+        </div>
+        <div class="tc">
+          <div class="tc-h"><span class="tc-ht">Recently confirmed</span><span class="tc-hm">This session</span></div>
+          <div id="pcLog"></div>
+        </div>
+      </div>
+
+      <div class="sec" id="sec-analytics">
+        <div id="anAlert"></div>
+        <div class="an-ctl">
+          <span class="tb-t">Range</span>
+          <button class="btn-r anrange on" onclick="setAnRange(7,this)">7 days</button>
+          <button class="btn-r anrange" onclick="setAnRange(14,this)">14 days</button>
+          <button class="btn-r anrange" onclick="setAnRange(30,this)">30 days</button>
+          <span class="tb-t" id="anUpdated" style="margin-left:auto;"></span>
+          <span class="tb-t" id="anAuto">Auto-refreshes every minute</span>
+          <button class="btn-r" onclick="loadAnalytics()">Refresh now</button>
+        </div>
+        <div class="stats" id="anStats"></div>
+        <div class="chart-card">
+          <div class="chart-hd"><span class="chart-ht">Visitors &amp; page views</span><span class="chart-hm" id="anChartHm"></span></div>
+          <div id="anArea"></div>
+          <div class="an-legend">
+            <span><i class="an-key" style="background:var(--forest-600)"></i>Visitors</span>
+            <span><i class="an-key" style="background:var(--forest-300)"></i>Page views</span>
+          </div>
+        </div>
+
+        <div class="two">
+          <div class="tc" style="grid-column:span 1;">
+            <div class="tc-h"><span class="tc-ht">Where visitors are</span><span class="tc-hm" id="anMapHm">Visitors</span></div>
+            <div id="anMap" style="padding:8px 10px 14px;"></div>
+          </div>
+          <div class="tc">
+            <div class="tc-h"><span class="tc-ht">Devices</span><span class="tc-hm">Visitors</span></div>
+            <div style="display:flex;align-items:center;gap:18px;padding:14px 16px;">
+              <div id="anDonut" style="flex-shrink:0;"></div>
+              <div id="anDonutLegend" style="flex:1;min-width:0;"></div>
+            </div>
+          </div>
+        </div>
+        <div class="two">
+          <div class="tc"><div class="tc-h"><span class="tc-ht">Top Pages</span><span class="tc-hm">Visitors</span></div><div id="anPages"></div></div>
+          <div class="tc"><div class="tc-h"><span class="tc-ht">Where Visitors Come From</span><span class="tc-hm">Visitors</span></div><div id="anRefs"></div></div>
+        </div>
+        <div class="tc"><div class="tc-h"><span class="tc-ht">Clicks &amp; Actions</span><span class="tc-hm">Tracked events</span></div><table><thead><tr><th>Action</th><th>Clicks</th><th>People</th></tr></thead><tbody id="anEvents"></tbody></table></div>
+        <div class="two">
+          <div class="tc"><div class="tc-h"><span class="tc-ht">Countries</span><span class="tc-hm">Visitors</span></div><div id="anCountries"></div></div>
+          <div class="tc"><div class="tc-h"><span class="tc-ht">Browsers</span><span class="tc-hm">Visitors</span></div><div id="anBrowsers"></div></div>
+  
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="dov" id="detailOverlay" onclick="if(event.target===this)closeDetail()">
+  <div class="dpanel" id="detailPanel"></div>
+</div>
+<script>
+const API='https://beyondx-backend-production-1a08.up.railway.app';
+let pass='',tasks=[],workers=[],smsLogs=[],smsBroadcastMode='specific',smsDraftPhone='',smsDraftMessage='';
+let wtShown=20,etShown=20,histShown=20,txShown=20,smsShown=20;
+function showMoreHtml(remaining,onclick){
+  return remaining>0?`<div style="text-align:center;padding:14px;"><button onclick="${onclick}" style="padding:9px 20px;background:var(--off);border:1.5px solid var(--b);border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:var(--f);color:var(--ink2);">Show More (${remaining} remaining)</button></div>`:'';
+}
+function login(){
+  pass=document.getElementById('adminPass').value;
+  Promise.all([fetch(API+'/admin/all',{headers:{'x-admin-password':pass}}).then(r=>{if(!r.ok)throw new Error();return r.json();}),fetch(API+'/admin/workers',{headers:{'x-admin-password':pass}}).then(r=>r.json()),fetch(API+'/admin/sms-logs',{headers:{'x-admin-password':pass}}).then(r=>r.json()).catch(()=>({logs:[]}))])
+  .then(([td,wd,sd])=>{tasks=td.tasks;workers=wd.workers||[];smsLogs=sd.logs||[];loadEmployers();document.getElementById('loginScreen').style.display='none';document.getElementById('app').style.display='flex';checkSmsBadge();checkVerifyBadge();inBadge();render();})
+  .catch(()=>document.getElementById('err').style.display='block');
+}
+async function load(){
+  try{
+    const[td,wd,sd]=await Promise.all([fetch(API+'/admin/all',{headers:{'x-admin-password':pass}}).then(r=>r.json()),fetch(API+'/admin/workers',{headers:{'x-admin-password':pass}}).then(r=>r.json()),fetch(API+'/admin/sms-logs',{headers:{'x-admin-password':pass}}).then(r=>r.json()).catch(()=>({logs:[]}))]);
+    tasks=td.tasks;workers=wd.workers||[];smsLogs=sd.logs||[];
+    const t=new Date().toLocaleTimeString();
+    document.getElementById('tbTime').textContent='Updated '+t;
+    document.getElementById('sbTime').textContent=t;
+    checkSmsBadge();
+    render();
+  }catch(e){showToast('Could not refresh');}
+}
+function checkSmsBadge(){
+  const recentLowBalance=smsLogs.filter(l=>l.errorType==='low_balance');
+  const badge=document.getElementById('smsBadge');
+  if(badge)badge.style.display=recentLowBalance.length?'inline-flex':'none';
+}
+function confirmClearData(){
+  const typed = prompt('This will permanently delete ALL tasks, dispatches, and payments, and reset every worker\'s stats to zero. Workers and employers themselves will NOT be deleted.\n\nType CLEAR to confirm:');
+  if(typed !== 'CLEAR'){ if(typed !== null) showToast('Cancelled — you must type CLEAR exactly.'); return; }
+  clearAllData();
+}
+async function clearAllData(){
+  showToast('Clearing all data…');
+  try{
+    const r = await fetch(API+'/admin/clear-data', { method:'DELETE', headers:{'x-admin-password':pass} });
+    const data = await r.json();
+    if(!r.ok){ showToast(data.error || 'Failed to clear data.'); return; }
+    showToast('All tasks, dispatches, and payments cleared.');
+    await load();
+  }catch(e){ showToast('Connection error while clearing data.'); }
+}
+function confirmClearEmployers(){
+  const typed = prompt('This will PERMANENTLY DELETE every employer account, along with all of their tasks, dispatches, payments, and reviews. Workers themselves will NOT be deleted, but their stats will reset to zero since the related tasks are gone.\n\nThis cannot be undone.\n\nType DELETE EMPLOYERS to confirm:');
+  if(typed !== 'DELETE EMPLOYERS'){ if(typed !== null) showToast('Cancelled — you must type DELETE EMPLOYERS exactly.'); return; }
+  clearAllEmployers();
+}
+async function sendDormantReminders(){
+  if(!confirm('This will text every worker who hasn\'t logged in for 7+ days, reminding them to stay active. Continue?'))return;
+  showToast('Checking for dormant workers…');
+  try{
+    const r=await fetch(API+'/admin/send-dormant-reminders',{method:'POST',headers:{'x-admin-password':pass}});
+    const data=await r.json();
+    if(!r.ok){showToast(data.error||'Failed to send reminders.');return;}
+    showToast(data.notified?`Reminder sent to ${data.notified} dormant worker${data.notified>1?'s':''}.`:'No dormant workers found — everyone\'s active!');
+  }catch(e){showToast('Connection error while sending reminders.');}
+}
+async function clearAllEmployers(){
+  showToast('Deleting all employers…');
+  try{
+    const r = await fetch(API+'/admin/clear-employers', { method:'DELETE', headers:{'x-admin-password':pass} });
+    const data = await r.json();
+    if(!r.ok){ showToast(data.error || 'Failed to delete employers.'); return; }
+    showToast('All employers and their tasks, dispatches, payments, and reviews have been deleted.');
+    await load();
+  }catch(e){ showToast('Connection error while deleting employers.'); }
+}
+function nav(id,el){
+  if(id!=='analytics') anStopAuto();
+  document.querySelectorAll('.sec').forEach(s=>s.classList.remove('on'));
+  document.querySelectorAll('.sb-a').forEach(n=>n.classList.remove('on'));
+  document.getElementById('sec-'+id).classList.add('on');
+  el.classList.add('on');
+  const T={overview:'Overview',verify:'Verify Payments',payouts:'Pay Now',active:'In Progress',open:'Open Tasks',completed:'Completed Tasks',all:'All Tasks',workers:'Workers',employers:'Employers',history:'Work History',transactions:'Transactions',messages:'SMS Log',analytics:'Site Analytics',payconfirm:'Payment Confirmations',notify:'Send Notification',inbox:'Support & Reports'};
+  document.getElementById('pageTitle').textContent=T[id]||id;
+  if(id==='inbox'){ inLoad(); return; }
+  if(id==='notify'){ ntChars(); ntLoad(); return; }
+  if(id==='messages'){ rm(); return; }
+  if(id==='payconfirm'){ pcEmployerList().then(pcPreview); pcRenderLog(); return; }
+  if(id==='analytics'){ if(!anData)loadAnalytics(); anStartAuto(); return; }
+  if(id!=='overview')rs(id);
+}
+function render(){
+  const py=tasks.filter(t=>t.status==='employer_confirmed');
+  const pb=document.getElementById('payBadge');
+  pb.style.display=py.length?'inline':'none';if(py.length)pb.textContent=py.length;
+  ro();
+  const a=document.querySelector('.sec.on');
+  if(a){const id=a.id.replace('sec-','');if(id!=='overview')rs(id);}
+}
+function ro(){
+  const py=tasks.filter(t=>t.status==='employer_confirmed');
+  const co=tasks.filter(t=>t.status==='completed');
+  const op=tasks.filter(t=>t.status==='open');
+  const ac=tasks.filter(t=>t.status==='accepted');
+  const rev=co.reduce((s,t)=>s+parseFloat(t.pay),0);
+  const pend=py.reduce((s,t)=>s+parseFloat(t.pay),0);
+  const withTasks=new Set(tasks.map(t=>t.employerId));
+  employers.forEach(e=>withTasks.add(e.id||e.employerId));
+  const uniq=withTasks.size;
+  document.getElementById('sg').innerHTML=`
+    <div class="sc dk"><div class="sc-l">Total Tasks</div><div class="sc-v">${tasks.length}</div><div class="sc-s">${co.length} completed &middot; ${op.length} open</div></div>
+    <div class="sc"><div class="sc-l">Revenue</div><div class="sc-v">GH&#8373; ${(rev*1.15).toFixed(0)}</div><div class="sc-s">GH&#8373; ${(rev*.15).toFixed(0)} platform fees</div></div>
+    <div class="sc"><div class="sc-l">Pending Payouts</div><div class="sc-v">GH&#8373; ${pend.toFixed(0)}</div><div class="sc-s ${pend>0?'w':''}">${py.length} worker${py.length!==1?'s':''} waiting</div></div>
+    <div class="sc"><div class="sc-l">Network</div><div class="sc-v">${workers.length} workers</div><div class="sc-s">${uniq} employer${uniq!==1?'s':''}</div></div>`;
+  const complRate=tasks.length?(co.length/tasks.length*100):0;
+  const avgVal=tasks.length?(tasks.reduce((s,t)=>s+parseFloat(t.pay),0)/tasks.length):0;
+  const ratedW=workers.filter(w=>w.rating>0);
+  const avgRating=ratedW.length?(ratedW.reduce((s,w)=>s+parseFloat(w.rating),0)/ratedW.length):0;
+  const activeW=new Set(ac.map(t=>t.acceptedBy?.workerId).filter(Boolean)).size;
+  document.getElementById('sg2').innerHTML=`
+    <div class="sc-mini"><div class="sc-l">Completion Rate</div><div class="sc-v">${complRate.toFixed(0)}%</div></div>
+    <div class="sc-mini"><div class="sc-l">Avg Task Value</div><div class="sc-v">GH&#8373; ${avgVal.toFixed(0)}</div></div>
+    <div class="sc-mini"><div class="sc-l">In Progress</div><div class="sc-v">${ac.length}</div></div>
+    <div class="sc-mini"><div class="sc-l">Avg Worker Rating</div><div class="sc-v">${avgRating>0?avgRating.toFixed(1)+' \u2605':'\u2014'}</div></div>`;
+  document.getElementById('aa').innerHTML=pend>0?`<div class="alrt"><div><div class="alrt-t">${py.length} worker${py.length!==1?'s':''} waiting for payment &mdash; GH&#8373; ${pend.toFixed(2)}</div><div class="alrt-s">Go to Pay Now to send these payments</div></div><button class="alrt-btn" onclick="nav('payouts',document.querySelectorAll('.sb-a')[1])">Pay Now</button></div>`:'';
+  const days=[];
+  for(let i=13;i>=0;i--){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);days.push(d);}
+  const dayRev=days.map(d=>{const next=new Date(d);next.setDate(d.getDate()+1);return co.filter(t=>{const c=new Date(t.createdAt);return c>=d&&c<next;}).reduce((s,t)=>s+parseFloat(t.pay),0);});
+  const maxRev=Math.max(...dayRev,1);
+  document.getElementById('revHm').textContent='GH\u20b5 '+dayRev.reduce((a,b)=>a+b,0).toFixed(0)+' total';
+  document.getElementById('revBars').innerHTML=days.map((d,i)=>`<div class="bar-col" title="GH&#8373; ${dayRev[i].toFixed(0)}"><div class="bar-fill" style="height:${Math.max(dayRev[i]/maxRev*100,2)}%"></div><div class="bar-lbl">${d.toLocaleDateString('en-GB',{day:'2-digit',month:'short'}).slice(0,2)}</div></div>`).join('');
+  const catC={};tasks.forEach(t=>{if(!catC[t.taskType])catC[t.taskType]={c:0,r:0};catC[t.taskType].c++;if(t.status==='completed')catC[t.taskType].r+=parseFloat(t.pay);});
+  const tC=Object.entries(catC).sort((a,b)=>b[1].c-a[1].c).slice(0,6);
+  const maxCat=Math.max(...tC.map(([,d])=>d.c),1);
+  document.getElementById('catT').innerHTML=tC.map(([c,d])=>`<div class="catbar-row"><div class="catbar-top"><span class="catbar-name">${c}</span><span class="catbar-val">${d.c} &middot; GH&#8373; ${d.r.toFixed(0)}</span></div><div class="catbar-track"><div class="catbar-fill" style="width:${d.c/maxCat*100}%"></div></div></div>`).join('')||`<div class="empty">No data</div>`;
+  const empC={};tasks.forEach(t=>{if(t.employer&&t.employerId){if(!empC[t.employerId])empC[t.employerId]={name:t.employer.orgName,c:0,s:0};empC[t.employerId].c++;empC[t.employerId].s+=parseFloat(t.pay);}});
+  const tE=Object.values(empC).sort((a,b)=>b.c-a.c).slice(0,6);
+  document.getElementById('empT').innerHTML=tE.map(e=>`<tr><td class="tn">${e.name}</td><td>${e.c}</td><td class="tg">GH&#8373; ${e.s.toFixed(0)}</td></tr>`).join('')||`<tr><td colspan="3" class="empty">No data</td></tr>`;
+  const fm={open:['#7c7c74','posted a new'],accepted:['#8bc53f','accepted the'],pending_confirmation:['#c79553','marked done on'],employer_confirmed:['#8f6128','confirmed the'],completed:['#6bab21','completed the']};
+  const recent=[...tasks].sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt)).slice(0,10);
+  document.getElementById('feed').innerHTML=recent.length?recent.map(t=>{const[color,verb]=fm[t.status]||['#7a9a7e','updated the'];const who=t.acceptedBy?.fullName||t.employer?.orgName||'Someone';return`<div class="feed-row"><div class="feed-dot" style="background:${color}"></div><div class="feed-txt"><b>${who}</b> ${verb} <b>${t.taskType}</b> task in ${t.location}</div><div class="feed-t">${new Date(t.createdAt).toLocaleString()}</div></div>`;}).join(''):`<div class="empty">No activity yet</div>`;
+}
+function rs(id){
+  const m={active:'accepted',open:'open',completed:'completed',verify:'payment_pending'};
+  const ids={payouts:'pl',active:'al',open:'ol',completed:'cl',all:'xl',verify:'vl'};
+  if(id==='verify'){
+    const pp=tasks.filter(t=>t.status==='payment_pending');
+    const vpc=document.getElementById('vpCount'); if(vpc) vpc.textContent=pp.length?' '+pp.length+' pending':'All clear';
+    document.getElementById('vl').innerHTML=pp.length?pp.map(vpCard).join(''):`<div class="empty">No payments awaiting verification &mdash; all clear</div>`;
+  }
+  else if(id==='payouts'){const py=tasks.filter(t=>t.status==='employer_confirmed');document.getElementById('pl').innerHTML=py.length?py.map(pc).join(''):`<div class="empty">No pending payouts &mdash; all clear</div>`;}
+  else if(m[id])document.getElementById(ids[id]).innerHTML=tl(tasks.filter(t=>t.status===m[id]));
+  else if(id==='all'){
+    const q=(document.getElementById('xSearch')?.value||'').toLowerCase();
+    const list=q?tasks.filter(t=>[t.taskType,t.location,t.employer?.orgName,t.acceptedBy?.fullName].join(' ').toLowerCase().includes(q)):tasks;
+    document.getElementById('xl').innerHTML=tl(list);
+  }
+  else if(id==='workers')rw();
+  else if(id==='employers')re();
+  else if(id==='history')rh();
+  else if(id==='transactions')rt();
+  else if(id==='messages')rmData();
+}
+function stars(n){ return '★'.repeat(Math.round(n))+'☆'.repeat(5-Math.round(n)); }
+function closeDetail(){ document.getElementById('detailOverlay').classList.remove('on'); }
+
+function reviewRow(r,fromLabel){
+  const dateStr=r.createdAt?new Date(r.createdAt).toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'}):'';
+  return`<div class="drow">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+      <div style="font-size:12.5px;font-weight:700;color:var(--ink);">${fromLabel}</div>
+      <span class="stars" style="color:#b8953a;font-size:13px;">${stars(r.rating)}</span>
+    </div>
+    <div style="font-size:11px;color:var(--ink3);margin-bottom:4px;">${r.taskType||''} &middot; ${dateStr}</div>
+    ${r.comment?`<div style="font-size:12.5px;color:var(--ink2);line-height:1.55;">${r.comment}</div>`:`<div style="font-size:11.5px;color:var(--ink3);font-style:italic;">No comment left.</div>`}
+  </div>`;
+}
+
+function showWorkerDetail(workerId){
+  const w=workers.find(x=>x.id===workerId || x.workerId===workerId);
+  if(!w) return;
+  const wTasks=tasks.filter(t=>t.workerId===w.id || t.acceptedBy?.workerId===w.workerId);
+  const reviewsAbout=[]; // employer -> worker reviews, i.e. reviews ABOUT this worker
+  wTasks.forEach(t=>(t.reviews||[]).forEach(r=>{
+    if(r.fromRole==='employer') reviewsAbout.push({...r, taskType:t.taskType, empName:t.employer?.orgName||'An Employer'});
+  }));
+  reviewsAbout.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+
+  document.getElementById('detailPanel').innerHTML=`
+    <div class="dpanel-h">
+      <div><div class="dpanel-t">${w.fullName}</div><div class="dpanel-s">${w.workerId} &middot; ${w.isBusy?'<span style="color:#b91c1c;">On a Job</span>':'<span style="color:var(--g3);">Available</span>'}</div></div>
+      <button class="dpanel-x" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="dgrid">
+      <div class="dcell"><div class="dcell-l">Phone</div><div class="dcell-v">${w.phone||'&mdash;'}</div></div>
+      <div class="dcell"><div class="dcell-l">Day Rate</div><div class="dcell-v">GH&#8373; ${w.dailyCharge}</div></div>
+      <div class="dcell"><div class="dcell-l">Tasks Completed</div><div class="dcell-v">${w.tasksCompleted}</div></div>
+      <div class="dcell"><div class="dcell-l">Total Earned</div><div class="dcell-v">GH&#8373; ${parseFloat(w.totalEarned||0).toFixed(0)}</div></div>
+      <div class="dcell"><div class="dcell-l">Rating</div><div class="dcell-v">${w.rating>0?parseFloat(w.rating).toFixed(1)+' &#9733;':'&mdash;'}</div></div>
+      <div class="dcell"><div class="dcell-l">Offense Level</div><div class="dcell-v" style="text-transform:capitalize;">${w.offenseLevel||'none'}</div></div>
+    </div>
+    <div class="dsec-t">Skills</div>
+    <div style="font-size:12.5px;color:var(--ink2);">${(w.skills||[]).join(', ')||'&mdash;'}</div>
+    <div class="dsec-t">Guarantor</div>
+    <div style="font-size:12.5px;color:var(--ink2);">${w.guarantorName?`${w.guarantorName} &middot; ${w.guarantorPhone||'&mdash;'}<br><span style="color:var(--ink3)">${w.guarantorRelationship||''}</span>`:'No guarantor on file.'}</div>
+    <div class="dsec-t">Reviews from Employers (${reviewsAbout.length})</div>
+    ${reviewsAbout.length?reviewsAbout.map(r=>reviewRow(r,r.empName)).join(''):'<div style="font-size:12.5px;color:var(--ink3);">No reviews yet.</div>'}
+  `;
+  document.getElementById('detailOverlay').classList.add('on');
+}
+
+function showEmployerDetail(employerId){
+  const eTasks=tasks.filter(t=>t.employerId===employerId);
+  if(!eTasks.length) return;
+  const e=eTasks[0].employer;
+  const completed=eTasks.filter(t=>t.status==='completed');
+  const spent=eTasks.reduce((s,t)=>s+parseFloat(t.pay),0);
+  const reviewsAbout=[]; // worker -> employer reviews, i.e. reviews ABOUT this employer
+  eTasks.forEach(t=>(t.reviews||[]).forEach(r=>{
+    if(r.fromRole==='worker') reviewsAbout.push({...r, taskType:t.taskType, workerName:t.acceptedBy?.fullName||'A Worker'});
+  }));
+  reviewsAbout.sort((a,b)=>new Date(b.createdAt)-new Date(a.createdAt));
+  const avgRating=reviewsAbout.length?(reviewsAbout.reduce((s,r)=>s+r.rating,0)/reviewsAbout.length):0;
+
+  document.getElementById('detailPanel').innerHTML=`
+    <div class="dpanel-h">
+      <div><div class="dpanel-t">${e.orgName}</div><div class="dpanel-s">${e.phone||'&mdash;'}</div></div>
+      <button class="dpanel-x" onclick="closeDetail()">✕</button>
+    </div>
+    <div class="dgrid">
+      <div class="dcell"><div class="dcell-l">Tasks Posted</div><div class="dcell-v">${eTasks.length}</div></div>
+      <div class="dcell"><div class="dcell-l">Completed</div><div class="dcell-v">${completed.length}</div></div>
+      <div class="dcell"><div class="dcell-l">Total Spent</div><div class="dcell-v">GH&#8373; ${spent.toFixed(0)}</div></div>
+      <div class="dcell"><div class="dcell-l">Rating</div><div class="dcell-v">${avgRating>0?avgRating.toFixed(1)+' &#9733;':'&mdash;'}</div></div>
+    </div>
+    <div class="dsec-t">Reviews from Workers (${reviewsAbout.length})</div>
+    ${reviewsAbout.length?reviewsAbout.map(r=>reviewRow(r,r.workerName)).join(''):'<div style="font-size:12.5px;color:var(--ink3);">No reviews yet.</div>'}
+  `;
+  document.getElementById('detailOverlay').classList.add('on');
+}
+function pc(t){
+  const w=t.acceptedBy;const wp=parseFloat(t.pay).toFixed(2);const fp=(parseFloat(t.pay)*.15).toFixed(2);
+  return`<div class="pc"><div class="pc-hd"><div><div class="pc-n">${w?.fullName||'Unknown Worker'}</div><div class="pc-tk">${t.taskType} &middot; ${t.location} &middot; ${t.duration}</div></div><div style="text-align:right"><div class="pc-aml">Send to worker</div><div class="pc-am">GH&#8373; ${wp}</div></div></div><div class="pc-g"><div class="pc-f"><div class="pc-fl">Mobile Money Number</div><div class="pc-fv ph">${w?.phone||'Not on record'}</div></div><div class="pc-f"><div class="pc-fl">Worker ID</div><div class="pc-fv">${w?.workerId||'&mdash;'}</div></div><div class="pc-f"><div class="pc-fl">Employer</div><div class="pc-fv">${t.employer?.orgName||'&mdash;'}</div></div><div class="pc-f"><div class="pc-fl">BeyondX Keeps</div><div class="pc-fv">GH&#8373; ${fp}</div></div></div><div class="pc-nt">Send GH&#8373; ${wp} via Mobile Money to the number above, then confirm below.</div><button class="btn-p" onclick="mkp('${t.id}','${w?.fullName||''}','${wp}')">I Have Sent GH&#8373; ${wp} &mdash; Mark as Paid</button></div>`;
+}
+function tl(list){
+  if(!list.length)return`<div class="empty">No tasks here</div>`;
+  const bm={open:['bo','Open'],accepted:['ba','In Progress'],pending_confirmation:['bp','Awaiting Payment'],completed:['bd','Completed']};
+  return list.map(t=>{const w=t.acceptedBy;const[bc,bl]=bm[t.status]||['bo','Unknown'];const wp=parseFloat(t.pay).toFixed(2);
+  return`<div class="tsk"><div class="tsk-tp"><div><div class="tsk-n">${t.taskType}</div><div class="tsk-m">${t.location} &middot; ${t.duration} &middot; ${new Date(t.createdAt).toLocaleDateString()}</div></div><span class="badge ${bc}">${bl}</span></div><div class="tsk-b"><div class="tr"><span class="tr-k">Employer</span><span class="tr-v">${t.employer?.orgName||'&mdash;'}</span></div><div class="tr"><span class="tr-k">Worker</span><span class="tr-v">${w?.fullName||'Unassigned'}${w?.phone?' &middot; '+w.phone:''}</span></div><div class="tr"><span class="tr-k">Employer Paid</span><span class="tr-v">GH&#8373; ${parseFloat(t.pay).toFixed(2)}</span></div><div class="tr"><span class="tr-k">Worker Gets</span><span class="tr-v g">GH&#8373; ${wp}</span></div></div>${t.status==='pending_confirmation'?`<button class="btn-ps" onclick="mkp('${t.id}','${w?.fullName||''}','${wp}')">Confirm Payment Sent</button>`:''}</div>`;
+  }).join('');
+}
+function rw(){
+  const q=(document.getElementById('wSearch')?.value||'').toLowerCase();
+  const list=q?workers.filter(w=>[w.fullName,w.workerId,w.phone,...(w.skills||[])].join(' ').toLowerCase().includes(q)):workers;
+  document.getElementById('wc').textContent=list.length+' of '+workers.length+' registered';
+  const shown=list.slice(0,wtShown);
+  document.getElementById('wt').innerHTML=shown.map(w=>`<tr class="trow" onclick="showWorkerDetail('${w.id}')"><td class="tn">${w.fullName}</td><td class="tm">${w.workerId}</td><td class="tm">${w.phone||'&mdash;'}</td><td>${w.isBusy?'<span style="color:#b91c1c;font-weight:600;font-size:11px;">On a Job</span>':'<span style="color:var(--g3);font-weight:600;font-size:11px;">Available</span>'}</td><td style="font-size:11px;color:var(--ink3)">${(w.skills||[]).slice(0,2).join(', ')+(w.skills?.length>2?'&hellip;':'')}</td><td class="tg">${w.tasksCompleted}</td><td>${w.rating>0?parseFloat(w.rating).toFixed(1)+'&star;':'&mdash;'}</td></tr>`).join('')||`<tr><td colspan="7" class="empty">No matches</td></tr>`;
+  document.getElementById('wtMore').innerHTML=showMoreHtml(list.length-wtShown,'wtShown+=20;rw();');
+}
+function wSearchInput(){wtShown=20;rw();}
+// Employers come from the backend's own list, not from whoever happens to have
+// posted a task — otherwise anyone who signed up but never dispatched is invisible.
+let employers=[];
+async function loadEmployers(){
+  try{
+    const d=await fetch(API+'/admin/employers',{headers:{'x-admin-password':pass}}).then(r=>r.json());
+    employers=d.employers||[];
+  }catch(e){ employers=[]; }
+  render();
+  if(document.getElementById('sec-employers')?.classList.contains('on')) re();
+}
+
+function re(){
+  const q=(document.getElementById('eSearch')?.value||'').toLowerCase();
+  // Start from every registered employer, then attach whatever tasks they have.
+  const byId=new Map(employers.map(e=>[e.id||e.employerId,{...e,eid:e.id||e.employerId}]));
+  // Include any employer seen on a task but missing from the list, so nothing is lost.
+  tasks.filter(t=>t.employer).forEach(t=>{
+    if(!byId.has(t.employerId)) byId.set(t.employerId,{...t.employer,eid:t.employerId});
+  });
+  let emps=[...byId.values()];
+  if(q)emps=emps.filter(e=>(e.orgName+' '+(e.phone||'')).toLowerCase().includes(q));
+  document.getElementById('ec').textContent=emps.length+' registered';
+  const shown=emps.slice(0,etShown);
+  document.getElementById('et').innerHTML=shown.map(e=>{const et=tasks.filter(t=>t.employerId===e.eid);const ed=et.filter(t=>t.status==='completed');const sp=et.reduce((s,t)=>s+parseFloat(t.pay),0);return`<tr class="trow" onclick="showEmployerDetail('${e.eid}')"><td class="tn">${e.orgName}</td><td class="tm">${e.phone||'&mdash;'}</td><td style="font-weight:600">${et.length}</td><td class="tg">${ed.length}</td><td class="tg">GH&#8373; ${sp.toFixed(0)}</td></tr>`;}).join('')||`<tr><td colspan="5" class="empty">No matches</td></tr>`;
+  document.getElementById('etMore').innerHTML=showMoreHtml(emps.length-etShown,'etShown+=20;re();');
+}
+function eSearchInput(){etShown=20;re();}
+
+function checkVerifyBadge(){
+  const n=tasks.filter(t=>t.status==='payment_pending').length;
+  const b=document.getElementById('verifyBadge');
+  if(!b)return;
+  if(n>0){b.textContent=n;b.style.display='';}else{b.style.display='none';}
+}
+
+function vpCard(t){
+  const w=workers.find(x=>String(x.id)===String(t.workerId));
+  const wp=(parseFloat(t.pay)||0).toFixed(2);
+  const ref=t.paymentRef||'—';
+  return`<div class="tsk">
+    <div class="tsk-tp">
+      <div>
+        <div class="tsk-n">${t.taskType}</div>
+        <div class="tsk-m">${t.location||''} &middot; ${t.duration||''} &middot; ${new Date(t.createdAt).toLocaleDateString()}</div>
+      </div>
+      <span class="badge bc-of">Awaiting verification</span>
+    </div>
+    <div class="tsk-b">
+      <div class="tr"><span class="tr-k">Employer</span><span class="tr-v">${t.employer?.orgName||'&mdash;'}</span></div>
+      <div class="tr"><span class="tr-k">Worker</span><span class="tr-v">${w?.fullName||'Unassigned'}</span></div>
+      <div class="tr"><span class="tr-k">Amount</span><span class="tr-v">GH&#8373; ${(parseFloat(t.pay)*1.15).toFixed(2)} total (GH&#8373; ${wp} to worker)</span></div>
+      <div class="tr"><span class="tr-k">Payment ref</span><span class="tr-v" style="font-weight:600;color:var(--ink)">${anEsc(ref)}</span></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:10px;">
+      <button class="btn-ps" style="flex:1;" onclick="verifyPayment('${t.id}','${w?.fullName||''}')">
+        ✓ Confirm payment received — release to worker
+      </button>
+      <button onclick="rejectPayment('${t.id}')" style="padding:10px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--f);border:1.5px solid var(--b);background:transparent;color:var(--ink3);">
+        ✗ Reject
+      </button>
+    </div>
+  </div>`;
+}
+
+async function verifyPayment(taskId, workerName){
+  if(!confirm('Confirm you have received the payment for this task. This will notify the worker and offer them the job.')) return;
+  try{
+    // This route is a Vercel rewrite → /api/admin-verify-payment, which then
+    // talks to Railway with the admin service key. It must be called on our
+    // own origin (relative path) — calling the Railway API base directly
+    // skips the rewrite and 404s, which is why this used to silently fail.
+    const r=await fetch('/admin/tasks/'+taskId+'/verify-payment',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-admin-password':pass},
+      body:JSON.stringify({action:'approve'})
+    });
+    if(!r.ok) throw new Error('Server error '+r.status);
+    showToast('Payment verified — '+workerName+' has been notified.');
+    const td=await fetch(API+'/admin/all',{headers:{'x-admin-password':pass}}).then(r=>r.json()).catch(()=>({tasks:[]}));
+    tasks=td.tasks||[];
+    checkVerifyBadge();
+    rs('verify');
+  }catch(e){showToast('Could not verify payment: '+e.message);}
+}
+
+async function rejectPayment(taskId){
+  const reason=prompt('Reason for rejection (shown to employer):','Payment reference not found or amount incorrect.');
+  if(!reason) return;
+  try{
+    // Relative path — see note in verifyPayment() above.
+    const r=await fetch('/admin/tasks/'+taskId+'/verify-payment',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-admin-password':pass},
+      body:JSON.stringify({action:'reject',reason})
+    });
+    if(!r.ok) throw new Error('Server error '+r.status);
+    showToast('Payment rejected — employer will be notified.');
+    const td=await fetch(API+'/admin/all',{headers:{'x-admin-password':pass}}).then(r=>r.json()).catch(()=>({tasks:[]}));
+    tasks=td.tasks||[];
+    checkVerifyBadge();
+    rs('verify');
+  }catch(e){showToast('Could not reject payment: '+e.message);}
+}
+
+async function mkp(id,name,amount){
+  if(!confirm('Confirm you sent GH₵'+amount+' to '+name+'?'))return;
+  try{const r=await fetch(API+'/admin/tasks/'+id+'/paid',{method:'PATCH',headers:{'x-admin-password':pass}});if(r.ok){showToast(name+' marked as paid');await load();}else showToast('Failed. Try again.');}catch(e){showToast('Connection error');}
+}
+
+function rh(){
+  const completed = tasks.filter(t=>t.status==='completed');
+  const shown = completed.slice(0,histShown);
+  const html = completed.length ? `
+    <div class="tc" style="margin-bottom:12px;">
+      <div class="tc-h"><span class="tc-ht">Work History</span><span class="tc-hm">${completed.length} completed tasks</span></div>
+      <table><thead><tr><th>Task</th><th>Location</th><th>Worker</th><th>Employer</th><th>Date</th><th>Amount</th><th>Worker Paid</th></tr></thead>
+      <tbody>${shown.map(t=>`<tr>
+        <td class="tn">${t.taskType}</td>
+        <td style="font-size:11px;color:var(--ink3)">${t.location||'&mdash;'}</td>
+        <td>${t.acceptedBy?.fullName||'—'}</td>
+        <td>${t.employer?.orgName||'—'}</td>
+        <td class="tm">${new Date(t.createdAt).toLocaleDateString()}</td>
+        <td class="tm">GH&#8373; ${parseFloat(t.pay).toFixed(0)}</td>
+        <td class="tg">GH&#8373; ${parseFloat(t.pay).toFixed(0)}</td>
+      </tr>`).join('')}</tbody></table>
+      ${showMoreHtml(completed.length-histShown,'histShown+=20;rh();')}
+    </div>` : `<div class="empty">No completed tasks yet</div>`;
+  document.getElementById('historyContent').innerHTML = html;
+}
+
+function rm(){
+  // Only rebuild the compose form on first visit to this tab, or when the
+  // broadcast mode changes. The periodic auto-refresh (every 15s) must never
+  // touch it — that was wiping out whatever the admin was typing.
+  rmForm();
+  rmData();
+}
+
+function rmForm(){
+  const box=document.getElementById('smsFormBox');
+  if(!box) return;
+  box.innerHTML=`<div class="tc" style="margin-bottom:12px;">
+    <div class="tc-h"><span class="tc-ht">Quick Broadcasts</span></div>
+    <div style="padding:12px 16px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button type="button" onclick="quickBroadcast('tools')" style="padding:7px 14px;border-radius:8px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:var(--f);border:1.5px solid var(--g2);background:var(--g2);color:#fff;">
+        🔧 Ask workers: Do you have tools?
+      </button>
+      <button type="button" onclick="quickBroadcast('profile')" style="padding:7px 14px;border-radius:8px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:var(--f);border:1.5px solid var(--b);background:transparent;color:var(--ink3);">
+        👤 Ask workers to update profile
+      </button>
+      <button type="button" onclick="quickBroadcast('experience')" style="padding:7px 14px;border-radius:8px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:var(--f);border:1.5px solid var(--b);background:transparent;color:var(--ink3);">
+        📋 Ask workers to add experience & certifications
+      </button>
+    </div>
+  </div>
+  <div class="tc" style="margin-bottom:16px;">
+    <div class="tc-h"><span class="tc-ht">Send Custom SMS</span></div>
+    <div style="padding:16px;">
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;">
+        <button type="button" onclick="setSmsMode('specific')" style="padding:6px 12px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:var(--f);border:1.5px solid ${smsBroadcastMode==='specific'?'var(--g2)':'var(--b)'};background:${smsBroadcastMode==='specific'?'var(--g2)':'transparent'};color:${smsBroadcastMode==='specific'?'#fff':'var(--ink3)'};">Specific Number(s)</button>
+        <button type="button" onclick="setSmsMode('workers')" style="padding:6px 12px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:var(--f);border:1.5px solid ${smsBroadcastMode==='workers'?'var(--g2)':'var(--b)'};background:${smsBroadcastMode==='workers'?'var(--g2)':'transparent'};color:${smsBroadcastMode==='workers'?'#fff':'var(--ink3)'};">All Workers (${workers.length})</button>
+        <button type="button" onclick="setSmsMode('employers')" style="padding:6px 12px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:var(--f);border:1.5px solid ${smsBroadcastMode==='employers'?'var(--g2)':'var(--b)'};background:${smsBroadcastMode==='employers'?'var(--g2)':'transparent'};color:${smsBroadcastMode==='employers'?'#fff':'var(--ink3)'};">All Employers</button>
+        <button type="button" onclick="setSmsMode('both')" style="padding:6px 12px;border-radius:6px;font-size:11.5px;font-weight:600;cursor:pointer;font-family:var(--f);border:1.5px solid ${smsBroadcastMode==='both'?'var(--g2)':'var(--b)'};background:${smsBroadcastMode==='both'?'var(--g2)':'transparent'};color:${smsBroadcastMode==='both'?'#fff':'var(--ink3)'};">Everyone</button>
+      </div>
+      ${smsBroadcastMode==='specific'?`<textarea id="customSmsPhone" oninput="smsDraftPhone=this.value" placeholder="Phone number(s) — one per line, or separated by commas. e.g. 0244000000, 0501234567" rows="2" style="width:100%;padding:9px 12px;border:1.5px solid var(--b);border-radius:8px;font-size:12.5px;font-family:var(--f);resize:vertical;margin-bottom:8px;">${anEsc(smsDraftPhone)}</textarea>`:`<div style="background:var(--off);border:1.5px solid var(--b);border-radius:8px;padding:10px 12px;margin-bottom:8px;font-size:12px;color:var(--ink3);">${smsBroadcastMode==='workers'?`Will send to all ${workers.length} registered workers.`:smsBroadcastMode==='employers'?`Will send to all registered employers.`:`Will send to every registered worker and employer.`}</div>`}
+      <textarea id="customSmsMessage" oninput="smsDraftMessage=this.value" placeholder="Message..." rows="3" style="width:100%;padding:9px 12px;border:1.5px solid var(--b);border-radius:8px;font-size:12.5px;font-family:var(--f);resize:vertical;margin-bottom:10px;">${anEsc(smsDraftMessage)}</textarea>
+      <button onclick="sendCustomSms()" style="padding:9px 18px;background:var(--g2);color:#fff;border:none;border-radius:8px;font-size:12.5px;font-weight:600;cursor:pointer;font-family:var(--f);">Send SMS</button>
+    </div>
+  </div>`;
+}
+
+function setSmsMode(mode){
+  // Save whatever is currently typed before the form rebuilds for the new mode.
+  const phoneEl=document.getElementById('customSmsPhone');
+  const msgEl=document.getElementById('customSmsMessage');
+  if(phoneEl) smsDraftPhone=phoneEl.value;
+  if(msgEl) smsDraftMessage=msgEl.value;
+  smsBroadcastMode=mode;
+  rmForm();
+}
+
+function rmData(){
+  const lowBalanceLogs=smsLogs.filter(l=>l.errorType==='low_balance');
+  const failedCount=smsLogs.filter(l=>l.status==='failed').length;
+  const sentCount=smsLogs.filter(l=>l.status==='sent').length;
+
+  const alertBanner=lowBalanceLogs.length?`<div style="background:#fde8e8;border:1.5px solid #f5c6c6;border-radius:10px;padding:16px 18px;margin-bottom:20px;">
+    <div style="font-weight:700;color:#b91c1c;font-size:13px;margin-bottom:4px;">⚠️ Low Arkesel Balance — ${lowBalanceLogs.length} message${lowBalanceLogs.length>1?'s':''} failed to send</div>
+    <div style="font-size:12px;color:#7f1d1d;">Recent SMS sends failed with a balance-related error. Top up your Arkesel account to resume sending dispatch alerts, welcome texts, and payment confirmations.</div>
+  </div>`:'';
+
+  const rows=smsLogs.slice(0,smsShown).map(l=>`<tr>
+    <td class="tm">${new Date(l.createdAt).toLocaleString()}</td>
+    <td class="tm">${l.phone}</td>
+    <td style="font-size:11px;max-width:280px;color:var(--ink3)">${(l.message||'').slice(0,70)}${l.message&&l.message.length>70?'…':''}</td>
+    <td>${l.status==='sent'?'<span style="color:var(--g3);font-weight:600;font-size:11px;">Sent</span>':l.errorType==='low_balance'?'<span style="color:#b91c1c;font-weight:600;font-size:11px;">Failed — Low Balance</span>':'<span style="color:#b91c1c;font-weight:600;font-size:11px;">Failed</span>'}</td>
+  </tr>`).join('');
+
+  document.getElementById('smsDataBox').innerHTML=`
+    ${alertBanner}
+    <div class="stats" style="margin-bottom:16px;grid-template-columns:repeat(3,1fr);">
+      <div class="sc"><div class="sc-l">Sent (last 100)</div><div class="sc-v">${sentCount}</div></div>
+      <div class="sc"><div class="sc-l">Failed</div><div class="sc-v">${failedCount}</div></div>
+      <div class="sc"><div class="sc-l">Low Balance Failures</div><div class="sc-v" style="color:${lowBalanceLogs.length?'#b91c1c':'inherit'}">${lowBalanceLogs.length}</div></div>
+    </div>
+    <div class="tc">
+      <div class="tc-h"><span class="tc-ht">Recent SMS</span><span class="tc-hm">${smsLogs.length}</span></div>
+      <table><thead><tr><th>Time</th><th>Phone</th><th>Message</th><th>Status</th></tr></thead><tbody>${rows||'<tr><td colspan="4" class="empty">No messages sent yet</td></tr>'}</tbody></table>
+      ${showMoreHtml(smsLogs.length-smsShown,'smsShown+=20;rmData();')}
+    </div>`;
+}
+
+async function sendCustomSms(){
+  const message=document.getElementById('customSmsMessage').value.trim();
+  if(!message){showToast('Please enter a message.');return;}
+
+  let phones=[];
+  if(smsBroadcastMode==='specific'){
+    const raw=document.getElementById('customSmsPhone').value.trim();
+    if(!raw){showToast('Please enter at least one phone number.');return;}
+    phones=raw.split(/[\n,]+/).map(p=>p.trim()).filter(Boolean);
+    if(!phones.length){showToast('Please enter at least one valid phone number.');return;}
+  } else {
+    showToast('Gathering recipients…');
+    let employerPhones=[];
+    if(smsBroadcastMode==='employers'||smsBroadcastMode==='both'){
+      try{
+        const ed=await fetch(API+'/admin/employers',{headers:{'x-admin-password':pass}}).then(r=>r.json());
+        employerPhones=(ed.employers||[]).map(e=>e.phone).filter(Boolean);
+      }catch(e){showToast('Could not load employer list.');return;}
+    }
+    const workerPhones=(smsBroadcastMode==='workers'||smsBroadcastMode==='both')?workers.map(w=>w.phone).filter(Boolean):[];
+    phones=[...new Set([...workerPhones,...employerPhones])];
+    if(!phones.length){showToast('No recipients with phone numbers found.');return;}
+    if(!confirm(`This will send this message to ${phones.length} recipient${phones.length>1?'s':''} (${smsBroadcastMode}). Continue?`))return;
+  }
+
+  showToast(`Sending to ${phones.length} recipient${phones.length>1?'s':''}…`);
+  let sent=0,failed=0;
+  for(const phone of phones){
+    try{
+      const r=await fetch(API+'/admin/send-sms',{method:'POST',headers:{'Content-Type':'application/json','x-admin-password':pass},body:JSON.stringify({phone,message})});
+      if(r.ok)sent++;else failed++;
+    }catch(e){failed++;}
+  }
+  showToast(failed?`Sent to ${sent}, failed for ${failed}.`:`Sent to all ${sent} recipient${sent>1?'s':''}!`);
+  const phoneField=document.getElementById('customSmsPhone');
+  if(phoneField)phoneField.value='';
+  document.getElementById('customSmsMessage').value='';
+  const sd=await fetch(API+'/admin/sms-logs',{headers:{'x-admin-password':pass}}).then(r=>r.json()).catch(()=>({logs:[]}));
+  smsLogs=sd.logs||[];
+  checkSmsBadge();
+  checkVerifyBadge();
+  rm();
+}
+
+function quickBroadcast(type){
+  const messages={
+    tools: `Hi! This is BeyondX. We need to update your profile.\n\nDo you bring your own tools to work (e.g. cleaning supplies, construction tools, or farming equipment)?\n\nPlease open your BeyondX Worker Dashboard at beyondxco.com, go to your profile, and tap Yes or No under "Do you have your own tools?"\n\nThis helps us match you to the right jobs and may increase your earnings. Thank you!`,
+    profile: `Hi! This is BeyondX. Please take a moment to update your worker profile at beyondxco.com.\n\nYou can add your skills, update your photo, and let us know if you have your own tools. A complete profile helps employers find you and increases your chances of being dispatched. Thank you!`,
+    experience: `Hi! This is BeyondX. Did you know you can now add your work experience and certifications to your profile?\n\nVisit your Worker Dashboard at beyondxco.com and tap the "Work experience & certifications" section to:\n\n• Add past jobs and work history (photos are private to BeyondX)\n• Upload any certificates or qualifications you hold (visible to employers — boosts your profile!)\n\nWorkers with verified certifications get matched to better jobs. Thank you!`,
+  };
+  const msg=messages[type];
+  if(!msg)return;
+  smsDraftMessage=msg;
+  smsBroadcastMode='workers';
+  rmForm();
+  // Scroll to the compose box
+  setTimeout(()=>{
+    const el=document.getElementById('smsFormBox');
+    if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+  },100);
+}
+
+function rt(){
+  const paid = tasks.filter(t=>t.status==='completed');
+  const totalRev = paid.reduce((s,t)=>s+parseFloat(t.pay),0);
+  const html = `
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;">
+      <div class="sc"><div class="sc-l">Total Transactions</div><div class="sc-v">${paid.length}</div></div>
+      <div class="sc dk"><div class="sc-l">Employer Payments</div><div class="sc-v">GH&#8373; ${(totalRev*1.15).toFixed(0)}</div><div class="sc-s">GH&#8373; ${totalRev.toFixed(0)} to workers</div></div>
+      <div class="sc"><div class="sc-l">Platform Earnings</div><div class="sc-v">GH&#8373; ${(totalRev*0.15).toFixed(0)}</div><div class="sc-s">15% service fee</div></div>
+    </div>
+    <div class="tc">
+      <div class="tc-h"><span class="tc-ht">Transaction Log</span><span class="tc-hm">${paid.length} transactions</span></div>
+      ${paid.length ? `<table><thead><tr><th>Task</th><th>Employer</th><th>Worker</th><th>Date</th><th>Total</th><th>Worker Cut</th><th>Platform Fee</th></tr></thead>
+      <tbody>${paid.slice(0,txShown).map(t=>`<tr>
+        <td class="tn">${t.taskType}</td>
+        <td>${t.employer?.orgName||'—'}</td>
+        <td>${t.acceptedBy?.fullName||'—'}</td>
+        <td class="tm">${new Date(t.createdAt).toLocaleDateString()}</td>
+        <td class="tm">GH&#8373; ${(parseFloat(t.pay)*1.15).toFixed(0)}</td>
+        <td class="tg">GH&#8373; ${parseFloat(t.pay).toFixed(0)}</td>
+        <td class="tm">GH&#8373; ${(parseFloat(t.pay)*0.15).toFixed(0)}</td>
+      </tr>`).join('')}</tbody></table>${showMoreHtml(paid.length-txShown,'txShown+=20;rt();')}` : `<div class="empty">No transactions yet</div>`}
+    </div>`;
+  document.getElementById('txContent').innerHTML = html;
+}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',3200);}
+setInterval(()=>{if(pass)load();},15000);
+
+/* ===================== SITE ANALYTICS ===================== */
+const ANALYTICS_API='/api/analytics';
+let anDays=7, anData=null, anLoading=false;
+
+function setAnRange(d,el){
+  anDays=d;
+  document.querySelectorAll('.anrange').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  loadAnalytics();
+}
+
+/* Tolerant readers: Vercel returns the grouped field under different key names
+   depending on what you group by, so pick the first text field as the label. */
+function anLabel(row,preferred){
+  if(preferred && row[preferred]!=null && row[preferred]!=='') return String(row[preferred]);
+  for(const k in row){ if(typeof row[k]==='string' && row[k]!=='') return row[k]; }
+  return '(none)';
+}
+function anCount(row){ const v=row.pageviews!=null?row.pageviews:(row.count!=null?row.count:(row.views!=null?row.views:0)); return Number(v)||0; }
+// Vercel's Top Pages / Referrers / Devices / Countries panels count VISITORS,
+// not page views — match that so the two dashboards agree.
+function anVisitors(row){ const v=row.visitors!=null?row.visitors:anCount(row); return Number(v)||0; }
+
+// ISO-3166 alpha-2 -> flag emoji
+function anFlag(code){
+  if(!/^[A-Za-z]{2}$/.test(code||'')) return '';
+  return String.fromCodePoint(...code.toUpperCase().split('').map(c=>127397+c.charCodeAt(0)));
+}
+let anRegionNames = null;
+function anCountryName(code){
+  if(!/^[A-Za-z]{2}$/.test(code||'')) return code||'(unknown)';
+  try{
+    anRegionNames = anRegionNames || new Intl.DisplayNames(['en'],{type:'region'});
+    return anRegionNames.of(code.toUpperCase()) || code.toUpperCase();
+  }catch(e){ return code.toUpperCase(); }
+}
+function anPeople(row){ return row.visitors!=null?Number(row.visitors):null; }
+function anNum(n){ return n==null?'—':Number(n).toLocaleString(); }
+
+function anDelta(pct){
+  if(pct==null||!isFinite(pct)) return '';
+  if(pct===0) return '<span class="sc-s">No change vs previous period</span>';
+  const cls=pct>0?'an-up':'an-dn', arrow=pct>0?'&uarr;':'&darr;';
+  return `<div class="sc-s"><span class="${cls}">${arrow} ${Math.abs(pct)}%</span> vs previous period</div>`;
+}
+
+function anAlert(title,msg){
+  document.getElementById('anAlert').innerHTML=
+    `<div class="alrt"><div><div class="alrt-t">${title}</div><div class="alrt-s">${msg}</div></div></div>`;
+}
+
+function anEmptyAll(msg){
+  ['anPages','anRefs','anCountries','anBrowsers'].forEach(id=>{
+    document.getElementById(id).innerHTML=`<div class="empty">${msg}</div>`;
+  });
+  document.getElementById('anEvents').innerHTML=`<tr><td colspan="3"><div class="empty">${msg}</div></td></tr>`;
+  const m=document.getElementById('anMap'); if(m) m.innerHTML='';
+  const a=document.getElementById('anArea'); if(a) a.innerHTML='';
+  const dn=document.getElementById('anDonut'); if(dn) dn.innerHTML='';
+  const dl=document.getElementById('anDonutLegend'); if(dl) dl.innerHTML='';
+  document.getElementById('anChartHm').textContent='';
+}
+
+/* Bar list styled like the existing Top Categories block */
+// Browsers / operating systems are not available on every plan. Hide the whole
+// card when there is nothing to show rather than leaving an empty box.
+function anOptionalPanel(id, rows, key, kind){
+  const el = document.getElementById(id);
+  if(!el) return;
+  const card = el.closest('.tc');
+  const has = Array.isArray(rows) && rows.length > 0;
+  if(card) card.style.display = has ? '' : 'none';
+  if(has) anBarList(el, rows, key, kind);
+}
+
+function anBarList(el,rows,preferredKey,kind){
+  if(!rows||!rows.length){ el.innerHTML=`<div class="empty">No data yet</div>`; return; }
+  const top=rows.slice().sort((a,b)=>anVisitors(b)-anVisitors(a)).slice(0,8);
+  const total=top.reduce((sum,r)=>sum+anVisitors(r),0) || 1;
+  const max=Math.max(...top.map(anVisitors),1);
+  el.innerHTML=top.map(r=>{
+    let raw=anLabel(r,preferredKey);
+    let label=anEsc(raw);
+    if(kind==='country'){
+      const f=anFlag(raw);
+      label=`${f?`<span class="an-flag">${f}</span>`:''}${anEsc(anCountryName(raw))}`;
+    }else if(kind==='referrer' && (!raw || raw==='(none)')){
+      label='Direct / none';
+    }else if(kind==='device'||kind==='browser'||kind==='os'){
+      const KEEP={ios:'iOS',macos:'macOS',ipados:'iPadOS',tvos:'tvOS',windows:'Windows',android:'Android'};
+      const key=String(raw).toLowerCase();
+      label=anEsc(KEEP[key] || String(raw).replace(/\b[a-z]/g, c=>c.toUpperCase()));
+    }
+    const v=anVisitors(r);
+    const pct=Math.round(v/total*100);
+    return `<div class="an-row" title="${anEsc(raw)}: ${anNum(v)} visitor${v===1?'':'s'}">
+      <div class="an-row-bar" style="width:${Math.max(v/max*100,3)}%"></div>
+      <span class="an-row-name">${label}</span>
+      <span class="an-row-pct">${pct}%</span>
+    </div>`;
+  }).join('');
+}
+
+function anEsc(t){ return String(t).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function renderAnalytics(d){
+  const t=d.totals||{};
+  document.getElementById('anStats').innerHTML=`
+    <div class="sc dk"><div class="sc-l">Visitors</div><div class="sc-v">${anNum(t.visitors)}</div>${anDelta(t.visitorsChangePct)}</div>
+    <div class="sc"><div class="sc-l">Page Views</div><div class="sc-v">${anNum(t.pageViews)}</div>${anDelta(t.pageViewsChangePct)}</div>
+    <div class="sc"><div class="sc-l">Tracked Clicks</div><div class="sc-v">${d.eventsUnavailable?'&mdash;':anNum(t.clicks)}</div><div class="sc-s">${d.eventsUnavailable?'Needs Vercel Pro':'Across '+(d.events||[]).length+' action'+((d.events||[]).length===1?'':'s')}</div></div>
+    <div class="sc"><div class="sc-l">Views Per Visitor</div><div class="sc-v">${t.visitors?(t.pageViews/t.visitors).toFixed(1):'—'}</div><div class="sc-s">Last ${d.range?d.range.days:anDays} days</div></div>`;
+
+  /* Visitors over time */
+  const rows=(d.overTime||[]).slice().sort((a,b)=>String(anLabel(a,'timestamp')).localeCompare(String(anLabel(b,'timestamp'))));
+  document.getElementById('anChartHm').textContent = rows.length ? `Last ${d.range?d.range.days:anDays} days` : 'No data yet';
+
+  anArea(rows);
+  anMap(d.countries);
+  anDonut(d.devices);
+  anBarList(document.getElementById('anPages'),d.topPages,'requestPath','page');
+  anBarList(document.getElementById('anRefs'),d.referrers,'referrerHostname','referrer');
+  anBarList(document.getElementById('anCountries'),d.countries,'country','country');
+  anOptionalPanel('anBrowsers', d.browsers, 'browserName', 'browser');
+
+  const ev=(d.events||[]).slice().sort((a,b)=>anCount(b)-anCount(a));
+  if(ev.length){
+    document.getElementById('anEvents').innerHTML = ev.map(r=>`<tr><td class="tn">${anEsc(anLabel(r,'eventName'))}</td><td class="tg">${anNum(anCount(r))}</td><td class="tm">${anNum(anPeople(r))}</td></tr>`).join('');
+  }else if(d.eventsUnavailable){
+    document.getElementById('anEvents').innerHTML =
+      `<tr><td colspan="3"><div style="padding:22px 16px;text-align:center;">
+        <div style="font-size:12px;font-weight:600;color:var(--ink2);margin-bottom:4px;">Click tracking is not available on your current plan</div>
+        <div style="font-size:11px;color:var(--ink3);line-height:1.6;max-width:460px;margin:0 auto;">
+          ${anEsc(d.eventsUnavailable)} Visitors, page views and traffic sources above are unaffected.<br>
+          Alternative: log clicks to your own Supabase backend for free.
+        </div>
+      </div></td></tr>`;
+  }else{
+    document.getElementById('anEvents').innerHTML =
+      `<tr><td colspan="3"><div class="empty">No tracked clicks yet — add the event snippet to the site.</div></td></tr>`;
+  }
+
+  if(d.problems&&d.problems.length){
+    anAlert('Some panels could not load', anEsc(d.problems.join(' · ')));
+  }
+  const proj = d.project ? ` · project ${d.project}` : '';
+  const rng = d.range ? ` · ${d.range.since} to ${d.range.until}` : '';
+  document.getElementById('anUpdated').textContent =
+    'Updated '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) + proj + rng;
+}
+
+function loadAnalytics(){
+  if(anLoading) return;
+  anLoading=true;
+  document.getElementById('anAlert').innerHTML='';
+  document.getElementById('anUpdated').textContent='Loading…';
+
+  fetch(`${ANALYTICS_API}?days=${anDays}&_=${Date.now()}`,{cache:'no-store',headers:{'x-admin-secret':pass}})
+    .then(async r=>{
+      const body=await r.text();
+      let j=null; try{ j=JSON.parse(body); }catch(e){}
+      if(!r.ok){
+        const err=new Error((j&&j.error)||`HTTP ${r.status}`);
+        err.status=r.status; throw err;
+      }
+      return j;
+    })
+    .then(d=>{
+      anData=d;
+      renderAnalytics(d);
+    })
+    .catch(err=>{
+      document.getElementById('anUpdated').textContent='';
+      document.getElementById('anStats').innerHTML='';
+      if(err.status===401){
+        anAlert('Analytics rejected the admin password',
+          'Set ADMIN_API_SECRET in Vercel to exactly the same value as your admin password, then redeploy.');
+      }else if(err.status===404){
+        anAlert('Analytics endpoint not found',
+          'Add api/analytics.js to the beyondxco project and redeploy. It will then live at /api/analytics.');
+      }else if(String(err.message).includes('Missing environment')){
+        anAlert('Analytics not configured yet', anEsc(err.message)+'. Add these in Vercel → Settings → Environment Variables, then redeploy.');
+      }else if(err.status===500){
+        anAlert('The analytics function crashed',
+          'It returned a 500 with no details, which usually means it failed to start rather than failed to fetch. Check the Vercel deployment log for this project (Deployments → latest → Functions → /api/analytics) for the real error.');
+      }else{
+        anAlert('Could not load site analytics', anEsc(err.message||'Unknown error'));
+      }
+      anEmptyAll('Not available');
+    })
+    .finally(()=>{ anLoading=false; });
+}
+
+
+/* =================== PAYMENT CONFIRMATIONS =================== */
+let pcDirty = false;
+const pcSentLog = [];
+
+async function pcEmployerList(){
+  const sel = document.getElementById('pcEmployer');
+  if(!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="">Loading employers…</option>';
+  try{
+    const d = await fetch(API+'/admin/employers',{headers:{'x-admin-password':pass}}).then(r=>r.json());
+    const withPhones = (d.employers||[]).filter(e=>e.phone);
+    sel.innerHTML = '<option value="">Select an employer…</option>' +
+      withPhones.map(e=>{
+        const nm = e.orgName||e.contactPerson||'Employer';
+        return `<option value="${anEsc(e.phone)}" data-name="${anEsc(nm)}">${anEsc(nm)} — ${anEsc(e.phone)}</option>`;
+      }).join('');
+    if(!withPhones.length){
+      sel.innerHTML = '<option value="">No employers with a phone number yet</option>';
+    }
+    sel.value = current;
+  }catch(e){
+    sel.innerHTML = '<option value="">Could not load employers</option>';
+    showToast('Could not load the employer list.');
+  }
+}
+
+function pcPreview(){
+  if(pcDirty) return;
+  const sel = document.getElementById('pcEmployer');
+  const opt = sel.options[sel.selectedIndex];
+  const org = opt && opt.dataset ? (opt.dataset.name||'') : '';
+  const amt = document.getElementById('pcAmount').value;
+  const ref = document.getElementById('pcRef').value.trim();
+  const parts = [];
+  parts.push(org ? `Hello ${org},` : 'Hello,');
+  parts.push(amt ? `BeyondX has received your payment of GHS ${Number(amt).toFixed(2)}.` : 'BeyondX has received your payment.');
+  if(ref) parts.push(`Reference: ${ref}.`);
+  parts.push('Your worker has been notified and will be dispatched shortly. Thank you for hiring through BeyondX.');
+  document.getElementById('pcMessage').value = parts.join(' ');
+}
+
+function pcReset(){ pcDirty=false; pcPreview(); }
+
+async function pcSend(){
+  const sel = document.getElementById('pcEmployer');
+  const phone = sel.value;
+  const message = document.getElementById('pcMessage').value.trim();
+  if(!phone){ showToast('Choose an employer first.'); return; }
+  if(!message){ showToast('The message is empty.'); return; }
+  const opt = sel.options[sel.selectedIndex];
+  const org = opt && opt.dataset ? (opt.dataset.name||phone) : phone;
+  if(!confirm(`Send this payment confirmation to ${org} (${phone})?`)) return;
+  showToast('Sending…');
+  try{
+    const r = await fetch(API+'/admin/send-sms',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-admin-password':pass},
+      body:JSON.stringify({phone, message})
+    });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    showToast('Payment confirmation sent to '+org+'.');
+    pcSentLog.unshift({org, phone, at:new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})});
+    pcRenderLog();
+    pcDirty=false;
+    document.getElementById('pcAmount').value='';
+    document.getElementById('pcRef').value='';
+    pcPreview();
+  }catch(e){
+    showToast('Could not send: '+e.message);
+  }
+}
+
+function pcRenderLog(){
+  const el = document.getElementById('pcLog');
+  if(!el) return;
+  el.innerHTML = pcSentLog.length
+    ? pcSentLog.map(x=>`<div class="trow" style="display:flex;justify-content:space-between;padding:12px 16px;"><span class="tn">${anEsc(x.org)}</span><span class="tm">${anEsc(x.phone)} · ${anEsc(x.at)}</span></div>`).join('')
+    : '<div class="empty">No confirmations sent in this session.</div>';
+}
+
+
+/* ---------- top bar actions menu ---------- */
+function toggleActions(e){
+  e.stopPropagation();
+  const m=document.getElementById('actionsMenu');
+  const b=document.getElementById('actionsBtn');
+  const show=m.hidden;
+  m.hidden=!show;
+  b.setAttribute('aria-expanded',show?'true':'false');
+}
+function closeActions(){
+  const m=document.getElementById('actionsMenu');
+  if(m){m.hidden=true;document.getElementById('actionsBtn').setAttribute('aria-expanded','false');}
+}
+document.addEventListener('click',closeActions);
+document.addEventListener('keydown',e=>{ if(e.key==='Escape')closeActions(); });
+
+
+/* =================== SEND NOTIFICATION (in-app) =================== */
+let ntAud = 'worker';
+const NT_LABEL = { worker:'Workers', employer:'Employers', all:'Everyone' };
+
+function ntAudience(a, el){
+  ntAud = a;
+  document.querySelectorAll('.ntaud').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('ntWho').textContent = NT_LABEL[a];
+  ntLoad();
+}
+
+function ntChars(){
+  const v = document.getElementById('ntMessage').value;
+  document.getElementById('ntChars').textContent = `${v.length} characters`;
+}
+
+function ntClear(){
+  document.getElementById('ntTitle').value='';
+  document.getElementById('ntMessage').value='';
+  ntChars();
+}
+
+const NT_TEMPLATES = {
+  work:     { t:'New work available',   m:'New tasks have been posted on BeyondX. Open your dashboard to see what you can accept.' },
+  update:   { t:'Platform update',      m:'We have made improvements to BeyondX. Log in to see what has changed.' },
+  event:    { t:'Upcoming session',     m:'We are running a session for BeyondX members soon. Get in touch to reserve your place.' },
+  reminder: { t:'Keep your profile up to date', m:'Please check your profile and skills are current so we can match you to the right work faster.' }
+};
+function ntTemplate(k){
+  const t = NT_TEMPLATES[k]; if(!t) return;
+  document.getElementById('ntTitle').value = t.t;
+  document.getElementById('ntMessage').value = t.m;
+  ntChars();
+}
+
+function ntAlert(title,msg){
+  document.getElementById('ntAlert').innerHTML =
+    `<div class="alrt"><div><div class="alrt-t">${anEsc(title)}</div><div class="alrt-s">${anEsc(msg)}</div></div></div>`;
+}
+
+async function ntSend(){
+  const title = document.getElementById('ntTitle').value.trim();
+  const message = document.getElementById('ntMessage').value.trim();
+  if(!title){ showToast('Give the notification a title.'); return; }
+  if(!message){ showToast('Write a message first.'); return; }
+  if(!confirm(`Publish this notification to ${NT_LABEL[ntAud].toLowerCase()}?\n\n${title}\n${message}`)) return;
+
+  showToast('Publishing…');
+  try{
+    const r = await fetch('/api/notifications',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','x-admin-secret':pass},
+      body:JSON.stringify({audience:ntAud, title, body:message})
+    });
+    const d = await r.json().catch(()=>({}));
+    if(!r.ok){
+      ntAlert('Could not publish', d.error || `HTTP ${r.status}`);
+      showToast('Could not publish.');
+      return;
+    }
+    document.getElementById('ntAlert').innerHTML='';
+    showToast('Notification published.');
+    ntClear();
+    ntLoad();
+  }catch(e){
+    ntAlert('Could not publish', e.message);
+  }
+}
+
+async function ntLoad(){
+  const el = document.getElementById('ntLog');
+  if(!el) return;
+  el.innerHTML = '<div class="empty">Loading…</div>';
+  try{
+    const d = await fetch(`/api/notifications?audience=${ntAud}&_=${Date.now()}`,{cache:'no-store'}).then(r=>r.json());
+    if(d.configured === false){
+      el.innerHTML = '<div class="empty">Storage not configured yet — add SUPABASE_URL and SUPABASE_SERVICE_KEY in Vercel.</div>';
+      return;
+    }
+    const rows = d.notifications || [];
+    el.innerHTML = rows.length ? rows.map(n=>`
+      <div class="trow" style="padding:12px 16px;">
+        <div style="display:flex;justify-content:space-between;gap:12px;align-items:baseline;">
+          <span class="tn">${anEsc(n.title)}</span>
+          <span class="tm">${anEsc(NT_LABEL[n.audience]||n.audience)} · ${anEsc(new Date(n.created_at).toLocaleDateString('en-GB',{day:'numeric',month:'short'}))}
+            <button class="btn-r" style="margin-left:8px;color:var(--red-700);border-color:var(--red-200);" onclick="ntDelete('${anEsc(n.id)}')">Remove</button>
+          </span>
+        </div>
+        <div class="tm" style="margin-top:4px;">${anEsc(n.body)}</div>
+      </div>`).join('')
+      : '<div class="empty">Nothing published yet.</div>';
+  }catch(e){
+    el.innerHTML = '<div class="empty">Could not load published notifications.</div>';
+  }
+}
+
+async function ntDelete(id){
+  if(!confirm('Remove this notification from all dashboards?')) return;
+  try{
+    const r = await fetch(`/api/notifications?id=${encodeURIComponent(id)}`,{
+      method:'DELETE', headers:{'x-admin-secret':pass}
+    });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    showToast('Removed.');
+    ntLoad();
+  }catch(e){ showToast('Could not remove: '+e.message); }
+}
+
+/* ---------- analytics auto-refresh ---------- */
+const AN_REFRESH_MS = 60000;
+let anTimer = null;
+
+function anStartAuto(){
+  anStopAuto();
+  anTimer = setInterval(() => {
+    // Skip while the tab is in the background — no point burning API calls.
+    if (document.hidden) return;
+    if (!document.getElementById('sec-analytics').classList.contains('on')) { anStopAuto(); return; }
+    loadAnalytics();
+  }, AN_REFRESH_MS);
+}
+function anStopAuto(){
+  if (anTimer) { clearInterval(anTimer); anTimer = null; }
+}
+// Refresh straight away when returning to the tab if the data has gone stale.
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && anTimer && anData) loadAnalytics();
+});
+
+
+/* ---------- world map + charts ---------- */
+const AN_WORLD = "M335 472L333 475L321 475L316 473L328 473L332 471L335 472ZM58 471L52 471L45 468L52 468L58 471ZM375 467L378 468L380 472L360 475L350 474L350 473L358 471L365 467L375 467ZM163 454L170 454L166 456L159 455L163 454ZM225 450L231 450L233 451L220 451L216 450L225 450ZM310 447L309 450L303 451L299 451L300 450L294 451L292 449L300 448L301 443L305 441L310 447ZM0 485L3 484L16 485L28 483L61 487L69 486L87 488L102 486L103 485L73 482L76 479L75 478L64 475L82 476L93 473L85 470L69 470L61 467L60 464L80 465L94 462L94 459L97 459L99 460L124 456L167 457L183 455L188 458L191 457L201 459L220 459L222 458L215 456L212 452L232 454L250 454L252 452L263 454L274 455L277 453L288 455L309 453L314 450L310 444L312 440L312 437L313 436L325 430L339 426L341 426L336 429L328 430L326 432L327 434L323 435L318 439L324 442L328 446L331 455L321 459L304 463L285 463L295 466L284 468L283 470L291 473L334 479L338 481L362 477L381 478L387 476L421 473L418 470L401 471L401 468L420 463L451 459L456 457L457 456L454 455L457 453L466 451L471 448L479 449L481 447L488 449L498 448L499 449L522 444L526 444L530 447L537 444L542 446L553 444L560 445L563 446L575 446L589 443L594 440L607 444L617 441L651 433L657 433L663 437L671 439L678 437L691 439L694 442L693 444L688 445L689 446L692 446L689 450L694 451L697 450L705 444L716 443L720 440L730 437L741 437L744 434L749 437L766 437L777 437L786 432L795 436L806 435L816 433L821 435L833 437L842 435L858 435L874 434L875 431L879 435L882 436L904 436L907 439L913 440L924 441L929 440L949 446L965 447L976 449L970 455L961 457L954 462L954 464L958 467L964 469L949 470L944 475L971 483L995 485L0 485ZM312 400L319 402L318 403L314 402L311 404L308 404L299 401L293 397L302 400L307 396L309 396L312 400ZM337 392L340 393L339 394L331 395L330 394L337 392ZM695 388L691 388L691 385L696 386L695 388ZM904 363L912 364L911 370L910 369L908 371L906 371L902 364L902 363L904 363ZM981 364L984 365L980 370L981 372L976 373L974 378L970 380L963 378L964 375L974 370L978 364L980 362L981 364ZM985 350L987 353L987 351L989 354L991 355L996 355L994 359L992 359L989 365L987 366L985 365L987 362L986 361L983 360L985 358L985 354L980 346L984 348L985 350ZM964 312L963 312L960 310L956 306L964 312ZM995 298L996 300L993 300L994 298L995 298ZM0 296L998 297L996 297L996 296L998 295L1 295L0 296ZM639 288L640 294L638 294L638 297L631 319L626 321L622 319L620 311L623 306L622 298L623 295L629 294L633 291L633 288L634 288L637 283L639 288ZM899 288L900 290L902 289L904 292L907 303L913 307L916 312L919 312L919 315L925 322L927 328L925 336L918 349L917 354L912 355L906 358L902 357L903 355L899 358L891 356L888 350L884 349L884 346L880 348L883 343L883 341L878 347L876 346L873 341L865 337L850 339L845 342L843 344L833 344L828 347L824 347L820 345L821 342L821 338L815 323L816 324L815 321L817 323L815 318L817 310L817 313L824 308L836 305L840 301L842 296L843 298L844 297L843 296L844 295L845 295L845 293L849 290L853 288L857 291L860 292L859 290L863 285L868 284L868 282L866 281L868 281L876 284L879 283L880 284L878 287L876 292L889 299L892 296L894 284L896 280L899 288ZM835 278L830 277L833 276L835 278ZM846 278L843 278L847 274L854 273L846 278ZM827 272L831 274L824 275L827 272ZM841 272L841 274L833 274L835 273L837 274L841 272ZM802 269L807 269L808 268L821 273L818 274L793 269L795 266L798 267L802 269ZM933 269L931 268L929 264L933 269ZM922 265L917 268L912 266L916 265L917 264L917 265L919 265L921 263L921 262L923 262L922 265ZM862 259L863 261L855 259L856 258L862 259ZM925 262L925 263L923 261L919 258L923 259L925 262ZM873 253L873 258L876 259L879 256L884 255L902 261L906 265L910 267L911 268L908 269L909 271L919 279L911 278L906 272L902 271L898 273L898 275L896 276L892 275L886 272L882 273L885 270L883 265L871 260L869 261L867 258L871 256L867 256L863 253L868 251L873 253ZM848 246L844 249L834 249L833 251L836 254L843 252L842 253L838 255L842 265L841 266L840 265L841 262L837 263L836 257L834 258L835 265L832 265L832 260L830 258L833 248L836 246L841 248L848 246ZM857 247L857 249L856 249L856 252L854 247L855 244L857 247ZM794 266L791 266L785 262L776 249L774 245L765 235L771 235L780 244L782 244L788 250L787 252L790 253L791 257L795 259L794 266ZM827 245L831 247L827 248L826 252L824 254L823 261L822 260L819 261L815 259L811 260L810 258L806 258L806 254L803 251L803 246L805 244L809 245L809 243L814 241L824 231L831 235L826 241L828 244L827 245ZM851 227L851 230L851 233L850 230L848 231L848 234L845 233L845 230L843 228L839 231L839 230L840 228L843 226L844 227L849 225L848 223L851 224L851 227ZM726 233L723 233L722 231L723 223L727 229L726 233ZM844 221L842 225L840 223L842 220L843 220L843 221L845 219L844 221ZM829 224L825 227L832 218L832 221L829 224ZM839 217L842 218L839 221L839 217ZM849 216L849 219L847 219L848 221L847 222L845 218L847 218L847 217L845 215L849 216ZM837 199L840 199L840 203L838 206L838 210L844 212L845 215L841 212L841 213L839 212L835 212L836 210L834 208L833 205L834 205L835 199L837 199ZM318 199L313 200L313 199L318 199ZM286 200L282 199L286 199L288 200L286 200ZM298 195L306 195L310 198L309 199L304 199L302 201L299 199L293 199L299 198L296 195L298 195ZM806 198L804 199L802 199L802 196L808 194L808 195L806 198ZM68 197L67 197L67 194L70 196L68 197ZM279 187L294 194L284 195L286 193L283 192L281 190L272 188L273 187L264 189L271 186L279 187ZM837 187L835 189L834 185L837 180L839 181L837 187ZM874 155L873 158L872 157L869 159L868 158L869 155L874 155ZM596 151L592 154L590 152L596 151ZM566 151L573 152L569 153L565 152L566 151ZM543 144L542 148L535 146L535 144L543 144ZM526 136L527 137L527 141L524 142L523 136L526 136ZM892 147L890 152L881 154L877 157L875 156L875 154L864 156L867 158L865 163L863 164L862 163L862 160L859 158L868 152L877 151L880 146L882 148L887 144L889 140L889 137L890 136L893 135L894 141L892 144L892 147ZM527 133L526 135L524 133L526 131L527 133ZM900 127L904 127L904 130L900 131L898 133L893 131L892 134L889 135L888 132L890 130L893 129L894 123L900 127ZM323 121L328 121L325 122L321 120L322 119L323 121ZM157 115L151 114L144 111L143 109L151 110L157 115ZM344 109L342 112L344 111L346 111L345 112L351 113L351 115L353 115L354 118L353 120L350 120L349 117L346 120L344 120L346 118L344 118L335 118L337 116L335 115L341 109L346 107L344 109ZM131 100L134 100L133 103L136 105L130 102L130 100L131 100ZM899 109L902 114L898 113L896 117L899 120L899 122L897 120L895 122L895 108L893 106L894 102L896 101L895 99L896 99L899 109ZM481 105L476 106L472 106L475 103L473 100L481 97L484 98L481 105ZM535 96L534 98L530 95L534 94L535 96ZM75 91L72 92L70 90L74 89L77 90L75 91ZM492 87L489 90L495 90L491 95L494 95L501 103L505 104L503 106L504 108L502 109L492 109L485 111L484 111L491 107L485 106L488 105L487 103L487 101L491 102L492 100L487 98L486 95L484 96L483 92L486 87L492 87ZM273 76L269 77L267 77L269 75L273 76ZM23 73L31 74L29 75L23 74L23 73ZM263 68L264 69L277 73L275 74L269 72L262 75L261 73L258 73L260 72L261 67L263 68ZM460 65L459 67L462 69L459 71L448 74L437 72L440 71L433 70L438 68L432 68L434 66L439 66L443 67L447 66L451 67L460 65ZM289 63L286 64L285 62L287 61L291 61L289 63ZM0 58L14 63L14 65L16 66L15 64L23 64L28 67L21 68L20 72L11 70L11 68L5 68L3 67L4 66L0 67L2 68L0 70L1000 70L993 71L998 75L998 77L993 76L982 79L973 84L969 82L962 84L961 83L954 84L950 88L950 89L953 90L953 94L950 94L949 96L950 98L945 99L945 102L940 103L940 106L936 108L932 96L933 92L936 89L940 89L955 80L957 76L953 76L952 79L945 82L943 78L935 79L928 84L931 86L920 87L920 85L916 84L913 86L895 86L875 98L880 98L884 101L886 99L889 99L893 103L893 105L891 108L889 115L884 121L875 129L871 131L867 130L861 133L860 136L854 140L854 141L857 143L860 148L859 153L851 154L850 148L852 148L850 145L846 144L848 140L845 139L836 142L839 138L838 136L831 141L828 141L826 142L830 146L833 147L836 145L840 146L840 147L836 148L831 153L834 155L839 162L839 164L837 165L839 167L838 172L836 172L830 182L822 187L808 191L807 193L805 194L805 191L801 190L794 195L794 197L802 208L804 213L803 218L792 226L792 222L787 220L785 216L780 215L780 213L778 213L776 224L777 224L779 229L786 235L790 246L788 247L782 242L778 232L774 227L773 228L774 218L770 203L765 206L762 205L762 199L760 195L757 193L754 187L751 187L751 189L747 189L742 190L740 194L736 196L728 204L723 206L722 221L720 221L719 223L720 224L717 225L715 228L713 225L704 206L702 191L696 192L692 189L693 188L693 187L687 183L684 179L671 180L659 179L657 175L652 176L643 173L639 166L633 167L636 173L639 176L641 181L642 178L643 178L643 182L644 183L650 183L657 177L658 183L663 185L666 188L662 193L661 194L660 197L654 201L654 202L646 204L645 207L635 211L621 215L618 208L618 203L609 191L607 184L604 183L598 172L596 172L597 168L594 173L590 167L599 184L599 186L602 189L604 198L607 200L609 206L620 216L619 217L624 221L642 217L642 220L637 231L633 238L612 257L609 263L608 268L610 269L609 274L612 280L613 291L610 296L604 299L597 305L599 311L598 317L590 321L591 323L589 330L578 341L572 344L563 344L554 347L551 344L551 338L542 325L540 311L533 300L533 294L535 288L538 283L538 280L533 264L524 253L527 241L526 240L524 237L516 238L512 233L505 233L495 237L487 236L479 238L475 237L465 230L459 220L454 216L454 212L451 209L454 205L455 200L453 189L460 177L465 172L468 172L473 167L473 163L474 160L481 155L484 151L494 152L504 148L526 146L528 147L528 148L531 147L529 149L530 151L528 155L529 156L542 160L544 163L553 166L556 164L556 160L560 159L580 164L586 162L589 164L594 164L596 162L600 154L599 149L600 148L596 148L595 149L590 150L588 148L582 150L577 148L573 144L574 142L573 140L576 138L580 138L581 136L587 136L593 133L598 133L607 136L612 136L616 133L615 132L602 124L606 122L605 120L609 119L597 121L597 123L601 124L601 125L594 127L593 126L593 125L590 124L593 123L592 122L585 121L582 125L580 125L577 132L580 136L577 136L573 138L572 137L569 136L566 137L568 139L566 139L563 138L567 145L564 145L565 146L563 146L564 149L562 149L560 148L559 144L554 138L554 134L544 129L541 125L540 124L539 126L539 123L537 123L534 124L535 128L542 133L544 133L544 135L551 138L551 139L547 138L546 139L548 140L547 142L545 144L544 145L545 142L543 139L534 134L529 131L528 128L525 127L518 130L509 130L508 134L502 136L499 141L500 142L494 148L488 148L485 150L482 147L475 148L475 144L474 142L476 137L474 130L478 128L495 129L496 128L497 122L492 118L488 117L487 115L496 115L495 112L497 113L504 111L505 108L511 107L513 103L523 101L524 100L523 96L524 91L529 90L528 92L530 93L527 96L528 98L530 100L535 99L539 101L549 98L555 99L559 97L559 92L560 91L563 90L565 92L567 92L568 88L565 87L565 86L578 85L581 83L578 82L564 84L559 81L560 79L558 76L560 74L571 69L566 67L562 67L559 69L559 71L550 76L548 80L552 83L550 86L547 87L544 94L541 94L539 96L536 96L529 85L523 88L520 89L516 87L514 78L516 76L529 71L541 62L553 56L564 55L568 53L578 52L587 54L583 55L586 57L589 56L601 58L614 63L614 64L607 67L592 65L597 67L597 71L603 73L603 71L601 70L603 69L610 71L612 70L610 68L617 65L622 66L624 65L621 63L623 61L621 60L628 60L630 62L627 62L627 64L629 65L649 59L651 59L649 61L663 59L667 60L670 58L667 57L668 56L676 57L690 61L692 59L689 57L686 57L687 56L685 53L690 50L692 48L702 48L702 49L700 52L702 54L702 58L705 60L698 66L701 66L708 62L707 60L708 58L705 58L704 57L707 54L703 52L708 50L707 48L710 49L709 52L712 52L711 50L715 49L726 51L724 48L724 45L741 45L739 43L742 41L759 39L780 38L783 35L790 34L795 35L791 36L797 36L798 38L809 37L817 39L816 41L804 44L814 45L815 46L821 45L842 47L842 45L853 46L857 47L858 49L857 50L865 53L867 50L872 52L889 51L887 49L890 48L915 49L925 53L942 53L944 54L944 56L947 57L966 57L971 59L974 58L972 57L973 55L996 57L0 58ZM636 135L640 138L638 138L636 142L637 146L641 148L650 147L650 142L648 141L648 139L646 139L647 136L652 136L649 133L647 134L647 136L646 131L643 130L640 126L642 126L643 124L647 124L647 120L642 119L636 121L630 126L636 135ZM234 58L233 59L223 57L227 55L234 58ZM0 51L7 52L0 53L0 51ZM248 57L248 60L252 58L256 59L255 61L257 63L262 59L262 56L270 57L274 58L274 59L272 61L274 62L274 64L268 66L262 65L257 70L254 72L250 72L248 73L248 75L241 78L238 81L237 86L241 87L244 91L248 91L264 96L271 97L272 102L278 108L280 107L282 104L280 100L278 98L283 97L287 93L285 89L282 87L285 84L283 77L295 77L302 80L307 80L308 86L312 88L316 87L321 82L329 92L328 94L341 98L342 101L345 102L345 105L333 110L316 110L302 120L309 116L319 113L322 115L319 116L321 122L325 123L329 123L332 119L332 121L334 122L318 129L316 129L316 126L321 124L314 125L314 126L305 129L304 130L303 132L306 134L295 136L300 136L295 137L292 142L290 140L292 143L289 147L290 145L288 141L288 144L286 144L288 145L290 151L274 163L274 167L278 175L277 180L275 180L273 178L270 173L270 169L266 166L264 168L260 166L252 166L251 166L252 169L250 169L239 167L232 171L230 174L230 178L228 188L233 196L238 200L244 198L248 196L249 192L258 190L259 192L256 199L255 199L255 204L253 206L264 206L268 208L267 219L272 225L274 226L279 223L287 226L290 224L292 219L296 219L301 215L302 216L300 218L301 225L303 223L302 220L305 218L306 216L311 221L316 220L320 222L321 220L328 220L326 221L327 222L331 224L331 226L336 228L338 231L341 233L350 234L357 238L360 245L361 245L359 249L360 250L365 251L365 253L367 252L375 254L376 257L379 257L389 258L397 263L401 264L404 270L402 275L393 286L391 300L386 311L383 314L376 315L368 319L365 322L364 330L351 346L347 347L344 347L338 344L338 346L341 348L342 353L340 356L335 358L327 358L327 363L326 364L319 364L320 367L323 367L324 368L319 371L318 375L313 377L312 379L318 381L317 384L308 391L311 395L303 397L303 400L292 395L290 385L294 380L290 380L293 377L293 373L297 373L298 368L296 367L295 370L294 370L297 359L296 353L297 353L302 340L301 330L303 327L305 305L305 301L301 298L289 291L278 270L274 267L275 266L274 263L278 257L278 256L277 257L275 256L275 253L278 248L281 246L282 243L286 239L283 227L279 225L276 228L278 229L275 230L275 228L268 227L264 222L264 223L262 222L262 219L256 214L257 213L247 211L237 205L232 207L213 199L207 195L208 190L205 187L197 179L196 177L193 173L188 170L186 163L181 162L181 166L190 176L193 183L196 186L194 187L188 181L188 178L180 173L183 171L179 168L174 158L171 155L165 154L154 138L154 131L156 124L154 116L158 117L159 119L159 114L146 109L145 105L141 103L141 101L133 96L133 93L128 89L120 88L111 85L91 81L88 81L89 83L79 86L79 81L82 80L72 85L74 86L72 88L60 94L42 99L62 90L64 86L58 88L55 86L50 87L50 84L45 84L41 82L41 80L39 79L43 75L47 75L53 73L51 71L53 70L42 71L33 68L43 65L45 65L45 66L51 66L37 60L38 59L47 57L50 55L65 52L71 54L101 55L121 59L139 55L141 56L144 54L151 57L154 55L155 57L163 56L184 60L180 61L195 61L198 63L201 61L198 60L200 59L205 59L210 61L218 62L227 62L226 60L229 60L233 60L233 63L235 61L237 61L238 58L232 55L232 52L236 50L242 52L246 55L243 56L248 57ZM183 47L181 48L188 47L192 49L195 47L199 51L201 50L199 47L204 47L207 48L210 53L220 55L219 57L215 57L216 58L215 59L206 58L185 60L184 58L177 58L174 56L188 55L172 54L171 53L177 52L168 51L173 48L183 47ZM210 46L207 48L203 46L210 46ZM288 47L279 48L275 46L277 45L283 45L288 47ZM260 47L262 49L264 46L271 45L276 48L276 50L284 48L294 51L294 52L299 51L309 54L314 58L309 59L320 62L324 64L328 64L322 69L315 66L311 66L311 68L319 71L320 74L319 76L309 73L316 78L303 75L299 74L300 73L292 70L284 72L282 71L284 69L295 68L294 67L298 63L297 62L286 59L288 58L281 55L274 56L264 56L254 54L251 53L254 52L250 52L249 49L252 47L262 45L260 47ZM221 45L230 45L230 46L228 47L232 48L231 51L224 52L215 49L221 48L218 46L221 45ZM899 47L889 46L895 45L899 47ZM241 48L238 50L235 50L233 46L237 44L249 45L241 48ZM165 52L158 53L150 50L156 45L153 44L173 44L179 46L169 49L165 52ZM919 41L915 43L906 41L907 40L919 41ZM240 42L238 43L231 42L237 40L240 42ZM903 40L901 42L886 43L880 41L882 39L886 39L903 40ZM226 37L229 38L227 42L215 40L215 38L226 37ZM199 38L206 39L206 40L205 42L188 43L184 42L189 41L173 41L179 38L197 40L193 38L196 37L199 38ZM660 54L649 53L648 52L643 51L643 50L651 45L649 45L655 43L655 41L684 37L691 37L662 44L654 49L655 51L660 54ZM237 36L246 37L248 38L247 39L252 40L275 40L278 42L272 43L251 43L243 42L242 39L239 38L230 37L231 36L237 36ZM177 34L177 36L175 37L159 39L169 35L177 34ZM194 34L185 34L195 33L194 34ZM569 34L558 34L559 34L558 33L564 32L569 34ZM195 32L187 32L190 31L195 32ZM234 33L227 33L226 31L235 32L234 33ZM222 32L223 34L208 32L211 31L207 30L220 31L222 32ZM792 32L776 34L784 30L793 31L792 32ZM551 29L560 31L553 32L548 37L544 37L538 35L541 34L531 31L529 29L547 28L551 29ZM571 27L576 28L564 29L548 27L571 27ZM642 26L632 28L629 27L631 26L625 26L643 26L642 26ZM778 31L764 30L753 27L766 24L778 28L778 31ZM258 29L262 30L248 33L242 32L239 31L241 30L236 30L231 27L238 25L237 24L243 24L256 27L258 29ZM310 19L328 20L312 24L318 24L302 28L286 30L290 30L288 31L291 32L278 36L284 37L276 38L251 38L251 36L256 36L255 34L264 35L256 32L264 30L259 27L273 26L257 26L246 23L263 20L269 21L271 20L280 19L310 19ZM425 18L442 20L411 22L439 23L436 25L456 22L465 23L466 24L444 27L451 27L445 31L445 34L449 36L440 37L445 39L446 41L443 41L446 44L440 44L443 45L442 46L435 46L438 49L431 49L439 51L440 54L435 54L429 52L430 53L427 55L438 55L423 60L412 61L405 65L389 68L387 70L386 74L381 76L382 78L380 83L366 81L357 73L355 69L351 66L352 64L350 63L353 60L357 59L359 56L352 58L348 57L349 53L357 54L350 51L345 51L348 48L341 42L337 41L337 40L330 39L310 39L302 36L315 35L296 33L297 32L317 29L319 28L311 27L327 24L326 23L341 22L353 23L360 21L376 23L370 22L370 20L393 18L425 18Z";
+const AN_CENTROIDS = {"FJ":[16.0,-16.4],"TZ":[34.3,-6.5],"CA":[-90.7,56.4],"US":[-90.4,38.3],"KZ":[65.3,47.3],"UZ":[65.3,41.2],"PG":[146.2,-7.8],"ID":[114.0,0.1],"AR":[-65.1,-37.0],"CL":[-71.4,-38.0],"SO":[46.8,6.4],"KE":[37.8,1.1],"SD":[29.3,12.8],"TD":[18.0,13.0],"HT":[-72.7,18.8],"RU":[77.8,59.6],"BS":[-77.9,24.5],"NO":[18.1,66.2],"GL":[-41.0,74.1],"TL":[125.9,-8.7],"ZA":[24.7,-28.6],"LS":[28.4,-29.6],"MX":[-103.1,23.9],"UY":[-56.1,-32.7],"BR":[-56.9,-9.7],"BO":[-64.1,-16.3],"PE":[-74.1,-7.8],"CO":[-72.7,4.5],"PA":[-80.3,8.5],"CR":[-84.2,9.8],"NI":[-85.0,13.1],"HN":[-86.3,14.7],"SV":[-88.9,13.9],"GT":[-90.3,15.5],"BZ":[-88.6,17.4],"VE":[-66.9,7.2],"GY":[-58.9,4.5],"SR":[-55.9,3.7],"FR":[3.3,47.0],"EC":[-78.7,-1.6],"PR":[-66.4,18.3],"JM":[-77.3,18.2],"CU":[-79.7,21.7],"ZW":[29.7,-18.9],"BW":[24.5,-22.5],"NA":[17.9,-21.6],"SN":[-14.6,13.9],"ML":[-5.8,14.1],"MR":[-12.4,18.8],"BJ":[2.3,9.8],"NE":[8.7,15.5],"NG":[8.3,9.7],"CM":[13.2,6.9],"TG":[0.9,8.9],"GH":[-1.0,8.3],"CI":[-6.3,7.9],"GN":[-11.0,10.4],"GW":[-15.2,12.0],"LR":[-9.1,6.8],"SL":[-11.7,8.6],"BF":[-1.9,12.1],"CG":[14.9,-0.9],"GA":[11.9,-0.3],"ZM":[28.0,-12.8],"MW":[34.1,-12.9],"MZ":[34.9,-17.9],"SZ":[31.4,-26.4],"AO":[17.4,-10.9],"BI":[30.0,-3.2],"IL":[35.2,32.1],"LB":[35.9,33.8],"MG":[47.0,-18.0],"GM":[-15.3,13.5],"TN":[9.8,34.0],"DZ":[3.0,29.7],"JO":[36.7,31.1],"AE":[54.2,24.2],"QA":[51.2,25.3],"KW":[47.7,29.3],"IQ":[44.4,33.4],"OM":[56.6,20.9],"VU":[166.9,-15.4],"KH":[104.9,12.6],"TH":[100.7,13.2],"LA":[103.7,18.3],"MM":[97.2,20.0],"VN":[105.9,16.7],"KP":[127.3,39.9],"KR":[127.5,36.7],"MN":[104.6,47.2],"IN":[83.6,24.0],"BD":[90.6,23.4],"BT":[90.6,27.5],"NP":[84.6,28.2],"PK":[69.4,30.8],"AF":[67.8,34.8],"TJ":[70.8,38.5],"KG":[74.0,41.4],"TM":[58.5,39.3],"IR":[53.3,33.3],"SY":[38.0,35.1],"AM":[45.3,39.9],"SE":[16.6,62.7],"BY":[28.2,53.4],"UA":[30.5,48.7],"PL":[19.5,51.7],"AT":[13.5,47.6],"HU":[19.2,47.5],"MD":[28.5,47.0],"RO":[25.2,45.9],"LT":[24.0,55.2],"LV":[24.9,56.9],"EE":[25.9,58.6],"DE":[10.7,51.0],"BG":[24.7,42.9],"GR":[23.1,39.8],"TR":[36.8,38.4],"AL":[20.1,41.2],"HR":[16.4,44.9],"CH":[8.3,46.8],"LU":[6.0,49.8],"BE":[4.6,50.6],"NL":[5.6,52.2],"PT":[-8.0,39.8],"ES":[-4.5,40.2],"IE":[-7.7,53.5],"NC":[165.5,-21.2],"NZ":[171.0,-43.5],"AU":[133.2,-23.8],"LK":[80.9,7.6],"CN":[105.7,37.3],"IT":[12.6,43.1],"DK":[9.6,56.3],"GB":[-3.1,53.9],"IS":[-19.3,65.3],"AZ":[47.4,40.4],"GE":[43.4,42.3],"PH":[121.8,15.4],"MY":[114.8,3.7],"SI":[15.0,46.1],"FI":[25.8,65.5],"SK":[19.4,48.8],"CZ":[15.8,49.8],"ER":[39.6,14.7],"JP":[136.0,35.7],"PY":[-57.6,-23.3],"YE":[46.5,15.5],"SA":[43.6,24.0],"AQ":[-3.4,-73.0],"CY":[33.2,35.0],"MA":[-9.4,28.8],"EG":[31.6,28.1],"LY":[16.6,28.5],"ET":[39.2,9.0],"DJ":[42.5,11.8],"UG":[32.0,1.3],"RW":[29.9,-2.0],"BA":[17.9,44.2],"MK":[21.7,41.7],"RS":[20.9,43.8],"ME":[19.4,42.7],"XK":[21.0,42.5],"TT":[-61.5,10.5]};
+
+function anMap(countries){
+  const el = document.getElementById('anMap');
+  if(!el) return;
+  const rows = (countries||[]).filter(r=>anVisitors(r)>0);
+  const max = Math.max(...rows.map(anVisitors), 1);
+  const dots = rows.map(r=>{
+    const code = String(anLabel(r,'country')||'').toUpperCase();
+    const c = AN_CENTROIDS[code];
+    if(!c) return '';
+    const x = (c[0] + 180) / 360 * 1000;
+    const y = (90 - c[1]) / 180 * 500;
+    const v = anVisitors(r);
+    const rad = 5 + Math.sqrt(v/max) * 16;
+    return `<circle class="an-dot" cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${rad.toFixed(1)}" fill="var(--forest-600)" opacity="0.55"><title>${anEsc(anCountryName(code))}: ${anNum(v)} visitor${v===1?'':'s'}</title></circle>
+            <circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="2.5" fill="var(--forest-700)"/>`;
+  }).join('');
+  el.innerHTML = rows.length
+    ? `<svg viewBox="0 0 1000 500" style="width:100%;height:auto;display:block;" role="img" aria-label="Map of visitor locations">
+         <path d="${AN_WORLD}" fill="var(--ink-100)" stroke="var(--ink-200)" stroke-width="0.6"/>
+         ${dots}
+       </svg>`
+    : '<div class="empty">No location data yet</div>';
+  const hm = document.getElementById('anMapHm');
+  if(hm) hm.textContent = rows.length ? `${rows.length} countr${rows.length===1?'y':'ies'}` : 'Visitors';
+}
+
+function anArea(rows){
+  const el = document.getElementById('anArea');
+  if(!el) return;
+  if(!rows || !rows.length){ el.innerHTML='<div class="empty">No data yet</div>'; return; }
+  const W=1000, H=220, PL=8, PR=8, PT=12, PB=26;
+  const views = rows.map(anCount);
+  const vis = rows.map(anVisitors);
+  const max = Math.max(...views, ...vis, 1);
+  const n = rows.length;
+  const x = i => n===1 ? W/2 : PL + i*(W-PL-PR)/(n-1);
+  const y = v => PT + (1 - v/max) * (H-PT-PB);
+
+  // Smooth curve through the points (Catmull-Rom converted to cubic Bezier)
+  function curve(vals){
+    const pts = vals.map((v,i)=>[x(i), y(v)]);
+    if(pts.length===1) return `M${pts[0][0]},${pts[0][1]}`;
+    let d = `M${pts[0][0].toFixed(1)},${pts[0][1].toFixed(1)}`;
+    for(let i=0;i<pts.length-1;i++){
+      const p0 = pts[i-1] || pts[i], p1 = pts[i], p2 = pts[i+1], p3 = pts[i+2] || pts[i+1];
+      const c1x = p1[0] + (p2[0]-p0[0])/6, c1y = p1[1] + (p2[1]-p0[1])/6;
+      const c2x = p2[0] - (p3[0]-p1[0])/6, c2y = p2[1] - (p3[1]-p1[1])/6;
+      d += ` C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
+    }
+    return d;
+  }
+  const areaPath = v => `${curve(v)} L${x(n-1).toFixed(1)},${(H-PB).toFixed(1)} L${x(0).toFixed(1)},${(H-PB).toFixed(1)} Z`;
+
+  const labels = rows.map((r,i)=>{
+    if(n>10 && i%2) return '';
+    const raw = anLabel(r,'timestamp');
+    const dt = new Date(raw);
+    const t = isNaN(dt) ? String(raw).slice(-2) : dt.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+    return `<text x="${x(i).toFixed(1)}" y="${H-8}" text-anchor="middle" font-size="10" fill="var(--ink3)" font-family="var(--m)">${anEsc(t)}</text>`;
+  }).join('');
+
+  const grid = [0,0.5,1].map(f=>{
+    const gy = PT + f*(H-PT-PB);
+    return `<line x1="${PL}" y1="${gy.toFixed(1)}" x2="${W-PR}" y2="${gy.toFixed(1)}" stroke="var(--ink-100)" stroke-width="1"/>`;
+  }).join('');
+
+  const dots = rows.map((r,i)=>`<circle cx="${x(i).toFixed(1)}" cy="${y(anVisitors(r)).toFixed(1)}" r="3" fill="var(--forest-700)"><title>${anEsc(anLabel(r,'timestamp')).slice(0,10)}: ${anNum(anVisitors(r))} visitors, ${anNum(anCount(r))} views</title></circle>`).join('');
+
+  el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;" role="img" aria-label="Visitors and page views over time">
+    <defs>
+      <linearGradient id="agViews" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--forest-300)" stop-opacity="0.45"/>
+        <stop offset="100%" stop-color="var(--forest-300)" stop-opacity="0.03"/>
+      </linearGradient>
+      <linearGradient id="agVis" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0%" stop-color="var(--forest-600)" stop-opacity="0.35"/>
+        <stop offset="100%" stop-color="var(--forest-600)" stop-opacity="0.02"/>
+      </linearGradient>
+    </defs>
+    ${grid}
+    <path d="${areaPath(views)}" fill="url(#agViews)"/>
+    <path d="${curve(views)}" fill="none" stroke="var(--forest-300)" stroke-width="2" stroke-linecap="round"/>
+    <path d="${areaPath(vis)}" fill="url(#agVis)"/>
+    <path d="${curve(vis)}" fill="none" stroke="var(--forest-600)" stroke-width="2.5" stroke-linecap="round"/>
+    ${dots}
+    ${labels}
+  </svg>`;
+}
+
+function anDonut(rows){
+  const el = document.getElementById('anDonut');
+  const lg = document.getElementById('anDonutLegend');
+  if(!el || !lg) return;
+  const data = (rows||[]).map(r=>({name:anLabel(r,'deviceType'), v:anVisitors(r)})).filter(d=>d.v>0);
+  if(!data.length){ el.innerHTML=''; lg.innerHTML='<div class="empty">No data yet</div>'; return; }
+  const total = data.reduce((s,d)=>s+d.v,0);
+  const COLORS = ['var(--forest-600)','var(--forest-400)','var(--clay-400)','var(--ink-300)'];
+  const R=52, SW=16, C=2*Math.PI*R;
+  let offset=0;
+  const rings = data.map((d,i)=>{
+    const frac = d.v/total;
+    const seg = `<circle cx="70" cy="70" r="${R}" fill="none" stroke="${COLORS[i%COLORS.length]}" stroke-width="${SW}"
+      stroke-dasharray="${(frac*C).toFixed(2)} ${(C-frac*C).toFixed(2)}" stroke-dashoffset="${(-offset*C).toFixed(2)}"
+      transform="rotate(-90 70 70)"><title>${anEsc(d.name)}: ${anNum(d.v)}</title></circle>`;
+    offset += frac;
+    return seg;
+  }).join('');
+  el.innerHTML = `<svg width="140" height="140" viewBox="0 0 140 140" role="img" aria-label="Devices breakdown">
+    ${rings}
+    <text x="70" y="66" text-anchor="middle" font-size="22" font-weight="700" fill="var(--ink)" font-family="var(--d)">${anNum(total)}</text>
+    <text x="70" y="82" text-anchor="middle" font-size="9.5" fill="var(--ink3)" letter-spacing="0.5">VISITORS</text>
+  </svg>`;
+  lg.innerHTML = data.map((d,i)=>{
+    const KEEP={mobile:'Mobile',desktop:'Desktop',tablet:'Tablet'};
+    const nm = KEEP[String(d.name).toLowerCase()] || d.name;
+    return `<div class="dn-row"><span class="dn-key" style="background:${COLORS[i%COLORS.length]}"></span><span class="dn-name">${anEsc(nm)}</span><span class="dn-val">${Math.round(d.v/total*100)}%</span></div>`;
+  }).join('');
+}
+
+/* =================== SUPPORT & REPORTS INBOX =================== */
+let inStatus = 'open';
+
+const IN_KIND = {
+  worker_report:      { label:'Report · worker',      cls:'br' },
+  employer_report:    { label:'Report · employer',    cls:'br' },
+  worker_support:     { label:'Support · worker',     cls:'ba' },
+  employer_support:   { label:'Support · employer',   cls:'ba' },
+  worker_onboarding:  { label:'New worker',           cls:'bd' },
+  employer_onboarding:{ label:'New employer',         cls:'bd' },
+  task_completed:     { label:'Task marked done',     cls:'bo' },
+  payment_due:        { label:'Payment due',          cls:'ba' },
+  get_in_touch:       { label:'Enquiry',              cls:'bo' },
+};
+
+function inFilter(status, el){
+  inStatus = status;
+  document.querySelectorAll('.inbf').forEach(b=>b.classList.remove('on'));
+  el.classList.add('on');
+  inLoad();
+}
+
+function inWhen(iso){
+  const d = new Date(iso);
+  if(isNaN(d)) return '';
+  const mins = Math.floor((Date.now()-d.getTime())/60000);
+  if(mins < 1) return 'just now';
+  if(mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins/60);
+  if(hrs < 24) return `${hrs}h ago`;
+  return d.toLocaleDateString('en-GB',{day:'numeric',month:'short'});
+}
+
+async function inLoad(){
+  const el = document.getElementById('inList');
+  if(!el) return;
+  el.innerHTML = '<div class="empty">Loading…</div>';
+  try{
+    const d = await fetch(`/api/messages?status=${inStatus}&_=${Date.now()}`,{
+      cache:'no-store', headers:{'x-admin-secret':pass}
+    }).then(r=>r.json());
+
+    if(d.configured === false){
+      el.innerHTML = '<div class="empty">Message storage is not configured yet — add SUPABASE_URL and SUPABASE_SERVICE_KEY in Vercel, then create the support_messages table.</div>';
+      document.getElementById('inCount').textContent = '';
+      return;
+    }
+    if(d.missingTable){
+      el.innerHTML = `<div class="tc" style="padding:20px;">
+        <div style="font-size:13px;font-weight:700;color:var(--ink);margin-bottom:6px;">One setup step left</div>
+        <div style="font-size:12px;color:var(--ink2);line-height:1.7;margin-bottom:12px;">
+          ${anEsc(d.error)} Run this in your Supabase SQL editor, then refresh this page.
+          Messages already sent are not lost — they are in your email.
+        </div>
+        <pre style="background:var(--ink-50);border:1.5px solid var(--b);border-radius:8px;padding:14px;font-family:var(--m);font-size:11px;line-height:1.7;overflow:auto;margin:0;color:var(--ink);">create table support_messages (
+  id uuid primary key default gen_random_uuid(),
+  category text not null,
+  name text,
+  email text,
+  phone text,
+  message text not null,
+  handled boolean not null default false,
+  created_at timestamptz not null default now()
+);
+alter table support_messages enable row level security;</pre>
+      </div>`;
+      document.getElementById('inCount').textContent = '';
+      return;
+    }
+    if(d.error){ el.innerHTML = `<div class="empty">${anEsc(d.error)}${d.reason?`<br><span style="font-size:11px;">${anEsc(d.reason)}</span>`:''}</div>`; return; }
+
+    const rows = d.messages || [];
+    document.getElementById('inCount').textContent = `${rows.length} message${rows.length===1?'':'s'}`;
+    el.innerHTML = rows.length ? rows.map(m=>{
+      const kind = IN_KIND[m.category] || { label:m.category, cls:'bo' };
+      const contact = [m.phone ? `<a href="tel:${anEsc(m.phone)}" style="color:var(--g2);">${anEsc(m.phone)}</a>` : '',
+                       m.email ? `<a href="mailto:${anEsc(m.email)}" style="color:var(--g2);">${anEsc(m.email)}</a>` : ''
+                      ].filter(Boolean).join(' · ');
+      return `<div class="tc" style="margin-bottom:10px;${m.handled?'opacity:.6;':''}">
+        <div class="tc-h">
+          <span style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <span class="badge ${kind.cls}">${anEsc(kind.label)}</span>
+            <span class="tc-ht">${anEsc(m.name || 'Unknown')}</span>
+            ${contact ? `<span class="tm">${contact}</span>` : ''}
+          </span>
+          <span class="tc-hm">${anEsc(inWhen(m.created_at))}</span>
+        </div>
+        <div style="padding:14px 16px;font-size:13px;line-height:1.65;color:var(--ink2);white-space:pre-wrap;">${anEsc(m.message)}</div>
+        <div style="padding:0 16px 14px;">
+          <button class="btn-r ${m.handled?'':'on'}" onclick="inHandle('${anEsc(m.id)}',${m.handled?'false':'true'})">
+            ${m.handled ? 'Reopen' : 'Mark handled'}
+          </button>
+          <button class="btn-r" style="margin-left:8px;color:var(--red-700);border-color:var(--red-200);" onclick="inDelete('${anEsc(m.id)}')">Delete</button>
+        </div>
+      </div>`;
+    }).join('') : `<div class="empty">${inStatus==='open'?'Nothing needs attention.':'No messages.'}</div>`;
+  }catch(e){
+    el.innerHTML = '<div class="empty">Could not load messages.</div>';
+  }
+}
+
+async function inHandle(id, handled){
+  try{
+    const r = await fetch(`/api/messages?id=${encodeURIComponent(id)}`,{
+      method:'PATCH',
+      headers:{'Content-Type':'application/json','x-admin-secret':pass},
+      body:JSON.stringify({handled})
+    });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    showToast(handled ? 'Marked handled.' : 'Reopened.');
+    inLoad(); inBadge();
+  }catch(e){ showToast('Could not update: '+e.message); }
+}
+
+async function inDelete(id){
+  if(!confirm('Delete this message permanently?')) return;
+  try{
+    const r = await fetch(`/api/messages?id=${encodeURIComponent(id)}`,{
+      method:'DELETE', headers:{'x-admin-secret':pass}
+    });
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    showToast('Deleted.');
+    inLoad(); inBadge();
+  }catch(e){ showToast('Could not delete: '+e.message); }
+}
+
+// Sidebar badge showing how many messages still need attention.
+async function inBadge(){
+  const b = document.getElementById('inboxBadge');
+  if(!b) return;
+  try{
+    const d = await fetch(`/api/messages?status=open&_=${Date.now()}`,{
+      cache:'no-store', headers:{'x-admin-secret':pass}
+    }).then(r=>r.json());
+    const n = (d.messages||[]).length;
+    b.textContent = n > 99 ? '99+' : n;
+    b.style.display = n ? 'inline-flex' : 'none';
+  }catch(e){ b.style.display='none'; }
+}
+
+</script>
+</body>
+</html>
