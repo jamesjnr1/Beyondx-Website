@@ -103,6 +103,65 @@ function FileUploadButton({
   )
 }
 
+function HomeAreaCard({ worker, onSaved }: { worker: Worker | null; onSaved: (p: Record<string, unknown>) => void }) {
+  const current = (worker?.homeArea as string) || ''
+  const [area, setArea] = useState(current)
+  const [busy, setBusy] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+
+  useEffect(() => { setArea((worker?.homeArea as string) || '') }, [worker?.homeArea])
+
+  const save = async () => {
+    if (!area.trim() || busy) return
+    setBusy(true); setErr(null)
+    try {
+      await workersApi.updateMe({ homeArea: area.trim() })
+      onSaved({ homeArea: area.trim() })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    } catch {
+      setErr('Could not save — please try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="rounded-2xl bg-cream-50 p-5 shadow-sm ring-1 ring-ink-900/5">
+      <div className="mb-3 flex items-center gap-2">
+        <MapPin size={16} className="shrink-0 text-forest-600" aria-hidden="true" />
+        <p className="text-sm font-semibold text-ink-900">Your home area</p>
+      </div>
+      {!current && (
+        <p className="mb-3 flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-900 ring-1 ring-amber-200">
+          <span className="mt-0.5 shrink-0 text-base leading-none">📍</span>
+          Adding your area helps BeyondX match you to nearby jobs — and adds a transport allowance to your pay when jobs are far from you.
+        </p>
+      )}
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={area}
+          onChange={(e) => { setArea(e.target.value); setSaved(false) }}
+          onKeyDown={(e) => { if (e.key === 'Enter') save() }}
+          placeholder="e.g. Madina, Tema, Dansoman, Osu…"
+          className="flex-1 rounded-xl border border-ink-900/15 bg-white px-3.5 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-500 focus:ring-2 focus:ring-forest-500/20 placeholder:text-ink-700/40"
+        />
+        <button
+          onClick={save}
+          disabled={busy || !area.trim() || area.trim() === current}
+          className="shrink-0 rounded-xl bg-forest-600 px-4 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 disabled:opacity-50"
+        >
+          {busy ? 'Saving…' : saved ? '✓ Saved' : 'Save'}
+        </button>
+      </div>
+      {err && <p className="mt-2 text-xs text-red-700">{err}</p>}
+      {current && !saved && <p className="mt-2 text-xs text-ink-700/60">Currently: <strong>{current}</strong></p>}
+    </div>
+  )
+}
+
 function WorkExperienceCard({
   worker,
   onSaved,
@@ -451,7 +510,7 @@ export default function WorkerDashboard() {
       const mineTasks = mineRes?.tasks || []
       setOffers(mineTasks.filter((t) => t.status === 'offered'))
       setOpen((openRes?.tasks || []).filter((t) => t.status === 'open'))
-      setMine(mineTasks.filter((t) => t.status === 'accepted' || t.status === 'pending_confirmation'))
+      setMine(mineTasks.filter((t) => t.status === 'accepted' || t.status === 'pending_confirmation' || t.status === 'payment_pending'))
 
       setHistory(histRes?.tasks || [])
       if (meRes?.worker) { setMe(meRes.worker); session.patchWorker(meRes.worker) }
@@ -678,6 +737,9 @@ export default function WorkerDashboard() {
 
         <WorkExperienceCard worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
 
+        {/* Home area — for proximity matching */}
+        <HomeAreaCard worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
+
         <div className="mt-8 flex items-center gap-2 overflow-x-auto border-b border-ink-900/10 pb-px" role="tablist" aria-label="Worker sections">
           {tabs.map((t) => (
             <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
@@ -728,7 +790,13 @@ export default function WorkerDashboard() {
 
               {tab === 'mine' && (
                 <>
-                  {mine.length > 0 && (
+                  {mine.some(t => t.status === 'payment_pending') && (
+                    <p className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-900 ring-1 ring-amber-200">
+                      <span className="mt-0.5 shrink-0 text-base leading-none">⏳</span>
+                      BeyondX is verifying the employer's payment. Once confirmed — usually within a few minutes — you'll be officially dispatched and can begin the job.
+                    </p>
+                  )}
+                  {mine.length > 0 && mine.some(t => t.status !== 'payment_pending') && (
                     <p className="flex items-start gap-2 rounded-xl bg-forest-600/5 p-3 text-xs leading-relaxed text-ink-700 ring-1 ring-forest-600/15">
                       <Info size={13} aria-hidden="true" className="mt-0.5 shrink-0 text-forest-600" />
                       Mark a task complete when you finish. Your employer confirms the work, then BeyondX releases your payment.
@@ -737,7 +805,11 @@ export default function WorkerDashboard() {
                   {mine.length ? mine.map((t) => (
                     <div key={t.id}>
                       <TaskCard task={t}>
-                        {t.status === 'pending_confirmation' ? (
+                        {t.status === 'payment_pending' ? (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 ring-1 ring-amber-200">
+                            ⏳ Payment being verified
+                          </span>
+                        ) : t.status === 'pending_confirmation' ? (
                           <span className="rounded-full bg-ink-900/10 px-3 py-1.5 text-xs font-semibold text-ink-700">Awaiting employer confirmation</span>
                         ) : (
                           <button onClick={() => markDone(t)} disabled={busyId === t.id} aria-label={`Mark ${t.taskType || 'task'} complete`}

@@ -365,7 +365,14 @@ tr:hover td{background:var(--bg);}
       <div class="sec" id="sec-open"><div id="ol"></div></div>
       <div class="sec" id="sec-completed"><div id="cl"></div></div>
       <div class="sec" id="sec-all"><input class="srch" id="xSearch" placeholder="Search all tasks by type, location, employer, or worker…" oninput="rs('all')"/><div id="xl"></div></div>
-      <div class="sec" id="sec-workers"><input class="srch" id="wSearch" placeholder="Search workers by name, ID, phone, or skill…" oninput="wSearchInput()"/><div class="tc"><div class="tc-h"><span class="tc-ht">Workers</span><span class="tc-hm" id="wc"></span></div><table><thead><tr><th>Name</th><th>Worker ID</th><th>Phone</th><th>Status</th><th>Skills</th><th>Tasks</th><th>Rating</th></tr></thead><tbody id="wt"></tbody></table><div id="wtMore"></div></div></div>
+      <div class="sec" id="sec-workers">
+        <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center;">
+          <input class="srch" id="wSearch" placeholder="Search workers by name, ID, phone, or skill…" oninput="wSearchInput()" style="flex:1;margin-bottom:0;"/>
+          <button class="btn-r" onclick="blastLocationRequest()" style="white-space:nowrap;flex-shrink:0;">📍 Request home areas</button>
+        </div>
+        <div id="blastResult" style="display:none;"></div>
+        <div class="tc"><div class="tc-h"><span class="tc-ht">Workers</span><span class="tc-hm" id="wc"></span></div><table><thead><tr><th>Name</th><th>Worker ID</th><th>Phone</th><th>Home Area</th><th>Status</th><th>Skills</th><th>Tasks</th><th>Rating</th></tr></thead><tbody id="wt"></tbody></table><div id="wtMore"></div></div>
+      </div>
       <div class="sec" id="sec-history"><div id="historyContent"></div></div>
       <div class="sec" id="sec-transactions"><div id="txContent"></div></div>
       <div class="sec" id="sec-messages"><div id="smsFormBox"></div><div id="smsDataBox"></div></div>
@@ -852,9 +859,30 @@ function rw(){
   const q=(document.getElementById('wSearch')?.value||'').toLowerCase();
   const list=q?workers.filter(w=>[w.fullName,w.workerId,w.phone,...(w.skills||[])].join(' ').toLowerCase().includes(q)):workers;
   document.getElementById('wc').textContent=list.length+' of '+workers.length+' registered';
+  const noArea=workers.filter(w=>!w.homeArea).length;
+  if(noArea>0 && !q){
+    const br=document.getElementById('blastResult');
+    if(br && br.style.display==='none') br.innerHTML='';
+  }
   const shown=list.slice(0,wtShown);
-  document.getElementById('wt').innerHTML=shown.map(w=>`<tr class="trow" onclick="showWorkerDetail('${w.id}')"><td class="tn">${w.fullName}</td><td class="tm">${w.workerId}</td><td class="tm">${w.phone||'&mdash;'}</td><td>${w.isBusy?'<span style="color:#b91c1c;font-weight:600;font-size:11px;">On a Job</span>':'<span style="color:var(--g3);font-weight:600;font-size:11px;">Available</span>'}</td><td style="font-size:11px;color:var(--ink3)">${(w.skills||[]).slice(0,2).join(', ')+(w.skills?.length>2?'&hellip;':'')}</td><td class="tg">${w.tasksCompleted}</td><td>${w.rating>0?parseFloat(w.rating).toFixed(1)+'&star;':'&mdash;'}</td></tr>`).join('')||`<tr><td colspan="7" class="empty">No matches</td></tr>`;
+  document.getElementById('wt').innerHTML=shown.map(w=>`<tr class="trow" onclick="showWorkerDetail('${w.id}')"><td class="tn">${w.fullName}</td><td class="tm">${w.workerId}</td><td class="tm">${w.phone||'&mdash;'}</td><td style="font-size:11px">${w.homeArea?`<span style="color:var(--g2);font-weight:600">${w.homeArea}</span>`:'<span style="color:#b91c1c;font-size:10px;">Not set</span>'}</td><td>${w.isBusy?'<span style="color:#b91c1c;font-weight:600;font-size:11px;">On a Job</span>':'<span style="color:var(--g3);font-weight:600;font-size:11px;">Available</span>'}</td><td style="font-size:11px;color:var(--ink3)">${(w.skills||[]).slice(0,2).join(', ')+(w.skills?.length>2?'&hellip;':'')}</td><td class="tg">${w.tasksCompleted}</td><td>${w.rating>0?parseFloat(w.rating).toFixed(1)+'&star;':'&mdash;'}</td></tr>`).join('')||`<tr><td colspan="8" class="empty">No matches</td></tr>`;
   document.getElementById('wtMore').innerHTML=showMoreHtml(list.length-wtShown,'wtShown+=20;rw();');
+}
+async function blastLocationRequest(){
+  const noArea=workers.filter(w=>!w.homeArea).length;
+  if(noArea===0){ showToast('All workers already have a home area set!'); return; }
+  if(!confirm(`Send an SMS to ${noArea} worker${noArea>1?'s':''} who don't have a home area set yet, asking them to log in and add their neighbourhood?`)) return;
+  const btn=event.target; btn.disabled=true; btn.textContent='Sending…';
+  try{
+    const r=await fetch(API+'/admin/blast-location-request',{method:'POST',headers:{'x-admin-password':pass}});
+    const d=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(d.error||'Server error');
+    const br=document.getElementById('blastResult');
+    br.style.display='block';
+    br.innerHTML=`<div style="background:#f0f7e8;border:1px solid #c2e09a;border-radius:10px;padding:12px 14px;font-size:12.5px;color:#2d6010;margin-bottom:12px;">✅ Sent to <strong>${d.sent}</strong> worker${d.sent!==1?'s':''}${d.failed>0?' ('+d.failed+' failed — no phone number on file)':''}. They'll be asked to log in and add their area.</div>`;
+    showToast('SMS sent to '+d.sent+' workers.');
+  }catch(e){ showToast('Could not send: '+e.message); }
+  finally{ btn.disabled=false; btn.textContent='📍 Request home areas'; }
 }
 function wSearchInput(){wtShown=20;rw();}
 // Employers come from the backend's own list, not from whoever happens to have
