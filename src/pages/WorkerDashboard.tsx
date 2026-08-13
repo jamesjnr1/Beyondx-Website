@@ -745,6 +745,19 @@ export default function WorkerDashboard() {
 
         <ReferralCard code={(me?.workerId as string) || 'BX-—'} referrals={0} />
 
+        {/* Home area — shown prominently; editable below in HomeAreaCard */}
+        {me?.homeArea ? (
+          <div className="flex items-center gap-2 rounded-xl bg-cream-50 px-4 py-2.5 ring-1 ring-ink-900/8">
+            <MapPin size={14} className="shrink-0 text-forest-600" aria-hidden="true" />
+            <span className="text-sm text-ink-700">Based in <strong className="text-ink-900">{me.homeArea as string}</strong></span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-2.5 ring-1 ring-amber-200">
+            <MapPin size={14} className="shrink-0 text-amber-700" aria-hidden="true" />
+            <span className="text-sm text-amber-900">No home area set — add yours below to get matched to nearby jobs.</span>
+          </div>
+        )}
+
         <WorkExperienceCard worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
 
         {/* Home area — for proximity matching */}
