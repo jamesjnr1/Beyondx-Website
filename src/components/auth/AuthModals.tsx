@@ -150,6 +150,11 @@ function WorkerLogin() {
   const [pin, setPin] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  const [mode, setMode] = useState<'login' | 'forgot-send' | 'forgot-verify'>('login')
+  const [resetCode, setResetCode] = useState('')
+  const [newPin, setNewPin] = useState('')
+  const [success, setSuccess] = useState<string | null>(null)
+  const API = 'https://beyondx-backend-production-1a08.up.railway.app'
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -159,18 +164,67 @@ function WorkerLogin() {
       const data = await auth.workerLogin(phone.trim(), pin.trim())
       session.saveWorker(data.token, data.worker)
       go('worker-dashboard')
-    } catch (e2) {
-      setErr(errText(e2))
-    } finally {
-      setBusy(false)
-    }
+    } catch (e2) { setErr(errText(e2)) } finally { setBusy(false) }
   }
+
+  const sendResetCode = async (e: FormEvent) => {
+    e.preventDefault()
+    if (busy || !phone.trim()) return
+    setErr(null); setBusy(true)
+    try {
+      const r = await fetch(`${API}/api/otp/send`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: phone.trim() }) })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) throw new Error(d.error || 'Could not send code.')
+      setMode('forgot-verify')
+    } catch (e2) { setErr(errText(e2)) } finally { setBusy(false) }
+  }
+
+  const resetPin = async (e: FormEvent) => {
+    e.preventDefault()
+    if (busy) return
+    setErr(null); setBusy(true)
+    try {
+      const r = await fetch(`${API}/api/auth/worker-reset-pin`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone: phone.trim(), code: resetCode.trim(), newPin: newPin.trim() }) })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) throw new Error(d.error || 'Could not reset PIN.')
+      setSuccess('PIN updated! You can now sign in.'); setMode('login'); setPin(''); setResetCode(''); setNewPin('')
+    } catch (e2) { setErr(errText(e2)) } finally { setBusy(false) }
+  }
+
+  if (mode === 'forgot-send') return (
+    <Modal title="Reset Your PIN" subtitle="Enter your phone number and we'll send you a code">
+      <form onSubmit={sendResetCode} className="space-y-4">
+        <Field label="Phone Number" type="tel" placeholder="0XX XXX XXXX" value={phone} onChange={setPhone} />
+        <FormError message={err} />
+        <Submit disabled={busy || !phone.trim()}>{busy ? 'Sending…' : 'Send Reset Code'}</Submit>
+      </form>
+      <Divider />
+      <button onClick={() => { setMode('login'); setErr(null) }} className="w-full text-center text-sm text-ink-700 underline underline-offset-2">Back to login</button>
+    </Modal>
+  )
+
+  if (mode === 'forgot-verify') return (
+    <Modal title="Enter Code & New PIN" subtitle={`We sent a code to ${phone}`}>
+      <form onSubmit={resetPin} className="space-y-4">
+        <Field label="6-digit code" inputMode="numeric" placeholder="123456" value={resetCode} onChange={setResetCode} />
+        <Field label="New PIN" type="password" inputMode="numeric" placeholder="••••" value={newPin} onChange={setNewPin} hint="4–6 digits" />
+        <FormError message={err} />
+        <Submit disabled={busy}>{busy ? 'Updating…' : 'Set New PIN'}</Submit>
+      </form>
+      <Divider />
+      <button onClick={() => { setMode('forgot-send'); setErr(null) }} className="w-full text-center text-sm text-ink-700 underline underline-offset-2">Resend code</button>
+    </Modal>
+  )
 
   return (
     <Modal title="Worker Login" subtitle="Access your BeyondX task dashboard">
+      {success && <p className="mb-3 rounded-lg bg-forest-600/10 px-3 py-2 text-sm font-medium text-forest-700">{success}</p>}
       <form onSubmit={submit} className="space-y-4">
         <Field label="Phone Number" type="tel" placeholder="0XX XXX XXXX" value={phone} onChange={setPhone} />
-        <Field label="PIN" type="password" inputMode="numeric" placeholder="••••" value={pin} onChange={setPin} />
+        <div>
+          <Field label="PIN" type="password" inputMode="numeric" placeholder="••••" value={pin} onChange={setPin} />
+          <button type="button" onClick={() => { setMode('forgot-send'); setErr(null); setSuccess(null) }} className="mt-1 text-xs text-forest-700 underline underline-offset-2">Forgot PIN?</button>
+        </div>
         <FormError message={err} />
         <Submit disabled={busy}>{busy ? 'Signing in…' : 'Sign In to My Dashboard'}</Submit>
       </form>
@@ -221,6 +275,11 @@ function EmployerLogin() {
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  const [mode, setMode] = useState<'login' | 'forgot-send' | 'forgot-verify'>('login')
+  const [resetCode, setResetCode] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [success, setSuccess] = useState<string | null>(null)
+  const API = 'https://beyondx-backend-production-1a08.up.railway.app'
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -230,18 +289,67 @@ function EmployerLogin() {
       const data = await auth.employerLogin(email.trim(), password)
       session.saveEmployer(data.token, data.employer)
       go('employer-dashboard')
-    } catch (e2) {
-      setErr(errText(e2))
-    } finally {
-      setBusy(false)
-    }
+    } catch (e2) { setErr(errText(e2)) } finally { setBusy(false) }
   }
+
+  const sendResetCode = async (e: FormEvent) => {
+    e.preventDefault()
+    if (busy || !email.trim()) return
+    setErr(null); setBusy(true)
+    try {
+      const r = await fetch(`${API}/api/auth/employer-forgot-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email.trim() }) })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) throw new Error(d.error || 'Could not send reset email.')
+      setMode('forgot-verify')
+    } catch (e2) { setErr(errText(e2)) } finally { setBusy(false) }
+  }
+
+  const resetPass = async (e: FormEvent) => {
+    e.preventDefault()
+    if (busy) return
+    setErr(null); setBusy(true)
+    try {
+      const r = await fetch(`${API}/api/auth/employer-reset-password`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: email.trim(), code: resetCode.trim(), newPassword }) })
+      const d = await r.json().catch(() => ({}))
+      if (!r.ok) throw new Error(d.error || 'Could not reset password.')
+      setSuccess('Password updated! You can now sign in.'); setMode('login'); setPassword(''); setResetCode(''); setNewPassword('')
+    } catch (e2) { setErr(errText(e2)) } finally { setBusy(false) }
+  }
+
+  if (mode === 'forgot-send') return (
+    <Modal title="Reset Password" subtitle="Enter your email and we'll send a reset code">
+      <form onSubmit={sendResetCode} className="space-y-4">
+        <Field label="Email Address" type="email" placeholder="you@company.com" value={email} onChange={setEmail} />
+        <FormError message={err} />
+        <Submit disabled={busy || !email.trim()}>{busy ? 'Sending…' : 'Send Reset Code'}</Submit>
+      </form>
+      <Divider />
+      <button onClick={() => { setMode('login'); setErr(null) }} className="w-full text-center text-sm text-ink-700 underline underline-offset-2">Back to login</button>
+    </Modal>
+  )
+
+  if (mode === 'forgot-verify') return (
+    <Modal title="Enter Code & New Password" subtitle={`Check your email at ${email}`}>
+      <form onSubmit={resetPass} className="space-y-4">
+        <Field label="6-digit code" inputMode="numeric" placeholder="123456" value={resetCode} onChange={setResetCode} />
+        <Field label="New Password" type="password" placeholder="••••••••" value={newPassword} onChange={setNewPassword} hint="At least 6 characters" />
+        <FormError message={err} />
+        <Submit disabled={busy}>{busy ? 'Updating…' : 'Set New Password'}</Submit>
+      </form>
+      <Divider />
+      <button onClick={() => { setMode('forgot-send'); setErr(null) }} className="w-full text-center text-sm text-ink-700 underline underline-offset-2">Resend code</button>
+    </Modal>
+  )
 
   return (
     <Modal title="Employer Login" subtitle="Sign in to access the worker dispatch platform">
+      {success && <p className="mb-3 rounded-lg bg-forest-600/10 px-3 py-2 text-sm font-medium text-forest-700">{success}</p>}
       <form onSubmit={submit} className="space-y-4">
         <Field label="Email Address" type="email" placeholder="you@company.com" value={email} onChange={setEmail} />
-        <Field label="Password" type="password" placeholder="••••••••" value={password} onChange={setPassword} />
+        <div>
+          <Field label="Password" type="password" placeholder="••••••••" value={password} onChange={setPassword} />
+          <button type="button" onClick={() => { setMode('forgot-send'); setErr(null); setSuccess(null) }} className="mt-1 text-xs text-forest-700 underline underline-offset-2">Forgot password?</button>
+        </div>
         <FormError message={err} />
         <Submit disabled={busy}>{busy ? 'Signing in…' : 'Sign In'}</Submit>
       </form>
