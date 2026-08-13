@@ -1226,13 +1226,25 @@ function PostTask({ onDone }: { onDone: (msg: string) => void }) {
             </label>
           </div>
           <div className="block">
-            <span className="mb-1 block text-xs font-medium text-ink-700">Pay {workersNeeded > 1 ? 'per worker' : ''} (GH₵)</span>
-            <div className="flex h-[42px] items-center rounded-xl bg-forest-600/5 px-3 text-sm font-semibold text-ink-900 ring-1 ring-forest-600/15">
-              {cedis(workerGets + fee)}{workersNeeded > 1 ? ` × ${workersNeeded}` : ''}
+            <span className="mb-1 block text-xs font-medium text-ink-700">Cost breakdown</span>
+            <div className="rounded-xl bg-forest-600/5 px-4 py-3 ring-1 ring-forest-600/15 space-y-1">
+              <div className="flex justify-between text-sm text-ink-700">
+                <span>Per worker ({duration})</span>
+                <span className="font-semibold text-ink-900">{cedis(workerGets + fee)}</span>
+              </div>
+              <div className="flex justify-between text-xs text-ink-700/70">
+                <span>Worker gets {cedis(workerGets)} + GH₵{fee} service fee</span>
+              </div>
+              {workersNeeded > 1 && (
+                <>
+                  <div className="my-1 border-t border-ink-900/10" />
+                  <div className="flex justify-between text-sm font-bold text-ink-900">
+                    <span>Total for {workersNeeded} workers</span>
+                    <span className="text-forest-700">{cedis((workerGets + fee) * workersNeeded)}</span>
+                  </div>
+                </>
+              )}
             </div>
-            <span className="mt-1 block text-xs leading-relaxed text-ink-700">
-              {cedis(workerGets)} to each worker + {cedis(fee)} service fee{workersNeeded > 1 ? ` per worker (${cedis((workerGets + fee) * workersNeeded)} total if all ${workersNeeded} are filled)` : ''}
-            </span>
           </div>
           {err && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">{err}</p>}
           <button onClick={submit} disabled={busy} className="flex w-full items-center justify-center gap-1.5 rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40">

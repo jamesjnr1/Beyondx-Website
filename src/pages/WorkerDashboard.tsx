@@ -426,7 +426,9 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
 
   const isOffer = task.status === 'offered'
   const expiresAt = task.offerExpiresAt as string | undefined
-  const slotsNeeded = task.slotsNeeded as number | undefined
+  const slotsNeeded = (task.slotsNeeded as number) || 1
+  const filledSlots = (task.filledSlots as number) || 0
+  const slotsRemaining = (task.slotsRemaining as number) ?? (slotsNeeded - filledSlots)
   const hoursLeft = expiresAt ? Math.round((new Date(expiresAt).getTime() - Date.now()) / 3600000) : null
 
   return (
@@ -456,13 +458,21 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
           </div>
         )}
         {/* Multi-slot / expiry urgency — only relevant while the offer is still pending */}
-        {isOffer && (slotsNeeded && slotsNeeded > 1 || hoursLeft !== null) && (
+        {isOffer && (slotsNeeded > 1 || hoursLeft !== null) && (
           <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-amber-700">
-            {slotsNeeded && slotsNeeded > 1 && <span>This job needs {slotsNeeded} workers — first to accept get it.</span>}
+            {slotsNeeded > 1 && <span>This job needs {slotsNeeded} workers — first to accept get it.</span>}
             {hoursLeft !== null && (
               <span>{hoursLeft > 0 ? `Offer expires in ${hoursLeft}h` : 'Offer expiring soon'}</span>
             )}
           </div>
+        )}
+        {/* Open multi-worker task — show remaining spots */}
+        {!isOffer && task.status === 'open' && slotsNeeded > 1 && (
+          <p className="mt-2 rounded-lg bg-forest-600/8 px-3 py-2 text-xs font-medium text-forest-800">
+            {slotsRemaining > 0
+              ? `${slotsRemaining} of ${slotsNeeded} spots still open`
+              : `All ${slotsNeeded} spots filled`}
+          </p>
         )}
         {/* Employer info — name, contact, phone only */}
         <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-ink-900/6 pt-2 text-xs text-ink-700">
