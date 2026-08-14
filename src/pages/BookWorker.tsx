@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { ArrowLeft, CheckCircle } from 'lucide-react'
+import { ArrowLeft, CheckCircle, MapPin, Bus } from 'lucide-react'
 import JobLocationMap from '../components/JobLocationMap'
 import Logo from '../components/Logo'
 import {
@@ -7,7 +7,7 @@ import {
   logisticsRate,
 } from '../data'
 import { PLATFORM_FEE_FLAT, MOMO_NUMBER, BEYONDX_PHONE } from '../lib/payments'
-import { tasks as tasksApi, ApiError } from '../lib/api'
+import { tasks as tasksApi, workers as workersApi, ApiError } from '../lib/api'
 import type { Worker } from '../lib/api'
 import type { ScreeningAnswers } from './EmployerDashboard'
 
@@ -135,6 +135,24 @@ function BookingForm({ state, onDone, onError }: {
   const [distanceKm, setDistanceKm] = useState(3)
   const [vehicle, setVehicle] = useState(0)
 
+  // Transport allowance — computed live from worker home area + job location
+  const workerHomeArea = (worker.homeArea as string) || ''
+  const [transport, setTransport] = useState<{ available: boolean; roadKm: number | null; transportAllowance: number; tier: string } | null>(null)
+
+  useEffect(() => {
+    if (!workerHomeArea || !location.trim() || cat?.mode === 'remote') {
+      setTransport(null)
+      return
+    }
+    const t = setTimeout(async () => {
+      try {
+        const r = await workersApi.proximity(workerHomeArea, location.trim())
+        setTransport(r)
+      } catch { setTransport(null) }
+    }, 600) // debounce 600ms
+    return () => clearTimeout(t)
+  }, [workerHomeArea, location, cat?.mode])
+
   useEffect(() => { setTier('basic') }, [taskType])
 
   const baseRate = (() => {
@@ -148,8 +166,9 @@ function BookingForm({ state, onDone, onError }: {
   const isPerDay = !cat?.distancePricing && cat?.mode !== 'remote'
   const effectiveDays = cat?.distancePricing ? 1 : (cat?.minDays ? Math.max(days, cat.minDays) : days)
   const workerGets = isPerDay ? baseRate * effectiveDays : baseRate
+  const transportAllowance = (cat?.mode !== 'remote' && transport?.available) ? (transport.transportAllowance ?? 0) : 0
   const fee = PLATFORM_FEE_FLAT
-  const pay = workerGets + fee
+  const pay = workerGets + transportAllowance + fee
   const duration = effectiveDays === 0.5 ? 'Half Day' : effectiveDays === 1 ? '1 Day' : `${effectiveDays} Days`
 
   const submit = async () => {
@@ -163,6 +182,7 @@ function BookingForm({ state, onDone, onError }: {
         location: cat?.mode === 'remote' ? 'Remote' : location,
         duration,
         pay: workerGets,
+        transportAllowance,
         paymentRef: `${method} ${payRef.trim()}`,
       })
       onDone()
@@ -273,12 +293,36 @@ function BookingForm({ state, onDone, onError }: {
           </div>
         )}
 
-        {/* Location map preview */}
+        {/* Location map preview — shows both job site and, when transport is calculated, worker home area */}
         {location.trim() && cat?.mode !== 'remote' && (
           <div>
-            <p className="mb-1.5 text-xs font-medium text-ink-700">Job site</p>
             <JobLocationMap location={location} heightClass="h-40" showOpenLink />
           </div>
+        )}
+
+        {/* Worker home area indicator */}
+        {workerHomeArea && cat?.mode !== 'remote' && (
+          <div className="flex items-start gap-2 rounded-xl border border-ink-900/10 bg-cream-100 px-3 py-2.5">
+            <MapPin size={14} className="mt-0.5 shrink-0 text-forest-600" aria-hidden="true" />
+            <div className="min-w-0">
+              <p className="text-xs font-medium text-ink-900">{wName(worker).split(' ')[0]}'s home area: <span className="text-forest-700">{workerHomeArea}</span></p>
+              {transport?.available && (
+                <p className={`mt-0.5 text-xs ${transport.transportAllowance > 0 ? 'text-amber-700' : 'text-forest-700'}`}>
+                  {transport.roadKm}km road distance ·{' '}
+                  {transport.transportAllowance > 0
+                    ? `GH₵${transport.transportAllowance} transport allowance added`
+                    : 'No transport allowance needed'}
+                </p>
+              )}
+              {location.trim() && !transport && <p className="mt-0.5 text-xs text-ink-700/50">Enter job location to calculate transport</p>}
+            </div>
+          </div>
+        )}
+        {!workerHomeArea && cat?.mode !== 'remote' && (
+          <p className="flex items-center gap-1.5 text-xs text-amber-700">
+            <MapPin size={11} aria-hidden="true" />
+            Worker hasn't set a home area — transport allowance can't be calculated automatically.
+          </p>
         )}
 
         {/* Job description — required */}
@@ -316,9 +360,25 @@ function BookingForm({ state, onDone, onError }: {
       <div className="mt-8 rounded-2xl bg-ink-900 px-6 py-5">
         <p className="text-xs font-medium uppercase tracking-widest text-cream-50/50">Total to pay BeyondX</p>
         <p className="mt-2 font-serif text-4xl font-semibold text-cream-50">{cedis(pay)}</p>
-        <div className="mt-3 flex items-center justify-between border-t border-cream-50/10 pt-3 text-xs text-cream-50/50">
-          <span>{cedis(workerGets)} to worker + {cedis(fee)} service fee</span>
-          <span>{cat?.distancePricing ? `${distanceKm} km` : `${cedis(baseRate)}/day × ${effectiveDays === 0.5 ? '½' : effectiveDays}d`}</span>
+        <div className="mt-3 space-y-1.5 border-t border-cream-50/10 pt-3 text-xs text-cream-50/50">
+          <div className="flex items-center justify-between">
+            <span>Worker pay</span>
+            <span>{cedis(workerGets)}</span>
+          </div>
+          {transportAllowance > 0 && (
+            <div className="flex items-center justify-between">
+              <span className="flex items-center gap-1"><Bus size={10} aria-hidden="true" /> Transport allowance ({transport?.roadKm}km)</span>
+              <span>+ {cedis(transportAllowance)}</span>
+            </div>
+          )}
+          <div className="flex items-center justify-between">
+            <span>BeyondX service fee</span>
+            <span>+ {cedis(fee)}</span>
+          </div>
+          <div className="flex items-center justify-between border-t border-cream-50/10 pt-1.5 text-cream-50/70 font-semibold">
+            <span>Total</span>
+            <span>{cedis(pay)}</span>
+          </div>
         </div>
       </div>
 

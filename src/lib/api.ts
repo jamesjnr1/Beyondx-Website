@@ -240,6 +240,10 @@ export const workers = {
   me: (token = session.workerToken()) => request<{ worker: Worker }>('/api/workers/me', { token }),
   updateMe: (patch: Record<string, unknown>, token = session.workerToken()) =>
     request<unknown>('/api/workers/me', { method: 'PATCH', body: patch, token }),
+  proximity: (workerHomeArea: string, jobLocation: string) =>
+    request<{ available: boolean; roadKm: number | null; transportAllowance: number; tier: string }>(
+      `/api/workers/proximity?workerHomeArea=${encodeURIComponent(workerHomeArea)}&jobLocation=${encodeURIComponent(jobLocation)}`
+    ),
 }
 
 /* --------------------------------- tasks ------------------------------- */
@@ -279,7 +283,7 @@ export const tasks = {
   // Dispatch a specific worker: a task carrying the payment reference,
   // matching the exact shape beyondxco.com posts.
   dispatch: (
-    args: { worker: Worker; taskType: string; jobDescription: string; location: string; duration: string; pay: number; paymentRef: string },
+    args: { worker: Worker; taskType: string; jobDescription: string; location: string; duration: string; pay: number; paymentRef: string; transportAllowance?: number },
     token = session.employerToken(),
   ) => request<{ task?: Task }>('/api/tasks', {
     method: 'POST',
@@ -293,6 +297,7 @@ export const tasks = {
       workerId: args.worker.id,
       paymentRef: args.paymentRef,
       status: 'payment_pending',
+      ...(args.transportAllowance ? { transportAllowance: args.transportAllowance } : {}),
     },
   }),
 

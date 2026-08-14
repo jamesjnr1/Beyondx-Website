@@ -1340,13 +1340,17 @@ function PostTask({ onDone }: { onDone: (msg: string) => void }) {
                 <span className="font-semibold text-ink-900">{cedis(workerGets + fee)}</span>
               </div>
               <div className="flex justify-between text-xs text-ink-700/70">
-                <span>Worker gets {cedis(workerGets)} + GH₵{fee} service fee</span>
+                <span>Worker pay {cedis(workerGets)} + GH₵{fee} service fee</span>
+              </div>
+              <div className="flex justify-between text-xs text-amber-700 border-t border-ink-900/10 pt-1">
+                <span>+ Transport allowance (added per worker based on distance)</span>
+                <span>GH₵0–40</span>
               </div>
               {workersNeeded > 1 && (
                 <>
                   <div className="my-1 border-t border-ink-900/10" />
                   <div className="flex justify-between text-sm font-bold text-ink-900">
-                    <span>Total for {workersNeeded} workers</span>
+                    <span>Base total for {workersNeeded} workers</span>
                     <span className="text-forest-700">{cedis((workerGets + fee) * workersNeeded)}</span>
                   </div>
                 </>
