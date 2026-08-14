@@ -13,8 +13,13 @@
   ::selection {
     @apply bg-forest-500/20 text-forest-800;
   }
+  /* Remove ALL browser default focus outlines — no blue rings anywhere */
+  * {
+    outline: none !important;
+  }
+  /* Keyboard users only — subtle green ring for accessibility */
   :focus-visible {
-    outline: 2px solid theme('colors.forest.600');
+    outline: 2px solid theme('colors.forest.600') !important;
     outline-offset: 2px;
   }
   @media (prefers-reduced-motion: reduce) {
