@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { X } from 'lucide-react'
+import { X, Megaphone } from 'lucide-react'
 import { useAuth } from './auth/AuthContext'
 
 const DISMISS_KEY = 'bx_launch_banner_dismissed'
@@ -56,7 +56,7 @@ export default function LaunchBanner() {
         >
           <div className="mx-auto flex max-w-7xl items-center justify-center gap-3 px-5 py-2.5 sm:px-8">
             <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-center text-[13px] font-medium text-cream-50 sm:text-sm">
-              <span aria-hidden="true">🎉</span>
+              <Megaphone size={14} className="shrink-0 text-forest-400" aria-hidden="true" />
               <span>BeyondX is officially live in Greater Accra.</span>
               <button
                 onClick={() => go('news')}

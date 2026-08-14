@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
-import { MapPin, Calendar, Check, Star, RotateCcw, Info, RefreshCw, AlertCircle, Camera, Plus, Trash2, Phone, AlertTriangle, ChevronRight, Map } from 'lucide-react'
+import { MapPin, Calendar, Check, Star, RotateCcw, Info, RefreshCw, AlertCircle, Camera, Plus, Trash2, Phone, AlertTriangle, ChevronRight, Map, ClipboardList, Wallet, Bus, Clock, Users, CheckCircle2, Loader2 } from 'lucide-react'
 import JobLocationMap from '../components/JobLocationMap'
 import DashboardHeader from './DashboardHeader'
 import ReferralCard from '../components/ReferralCard'
@@ -426,9 +426,14 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
   const transportAmt = (task.transportAllowance as number) || 0
 
   return (
-    <div className="overflow-hidden rounded-2xl bg-white shadow-sm border border-ink-900/8">
-      {/* Top accent bar for offers */}
-      {isOffer && <div className="h-1 bg-forest-600" />}
+    <div className={`overflow-hidden rounded-2xl bg-white shadow-sm border ${isOffer ? 'border-forest-600/30' : 'border-ink-900/8'}`}>
+      {/* Accent bar for direct offers */}
+      {isOffer && (
+        <div className="flex items-center gap-2 bg-forest-600 px-4 py-2">
+          <span className="flex h-1.5 w-1.5 rounded-full bg-cream-50 animate-pulse" aria-hidden="true" />
+          <span className="text-xs font-semibold text-cream-50">Direct offer — respond to secure this job</span>
+        </div>
+      )}
 
       <div className="p-4 sm:p-5">
         {/* Header row: title + pay */}
@@ -471,7 +476,7 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
           )}
           {scheduledLabel && (
             <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-forest-700">
-              <span aria-hidden="true">🕐</span>{scheduledLabel}
+              <Clock size={12} aria-hidden="true" className="text-forest-600" />{scheduledLabel}
             </span>
           )}
         </div>
@@ -493,9 +498,9 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
         {/* Transport allowance notice */}
         {isOffer && transportAmt > 0 && (
           <div className="mt-3 flex items-start gap-2 rounded-lg bg-forest-600/8 px-3 py-2.5">
-            <span className="mt-px shrink-0 text-sm" aria-hidden="true">🚌</span>
+            <Bus size={14} aria-hidden="true" className="mt-0.5 shrink-0 text-forest-700" />
             <p className="text-xs leading-relaxed text-forest-800">
-              <strong>GH₵{transportAmt} transport allowance</strong> added — this job is far from your home area. You receive this on top of your full {cedis(task.pay)}.
+              <strong>GH₵{transportAmt} transport allowance</strong> included — this job is farther from your home area. Paid on top of your full {cedis(task.pay)}.
             </p>
           </div>
         )}
@@ -503,9 +508,10 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
         {/* Urgency notices */}
         {isOffer && (slotsNeeded > 1 || hoursLeft !== null) && (
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            {slotsNeeded > 1 && (
+            {slotsNeeded > 1 && slotsRemaining > 0 && (
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 border border-amber-200">
-                {slotsNeeded} workers needed
+                <Users size={11} aria-hidden="true" />
+                {slotsRemaining} spot{slotsRemaining !== 1 ? 's' : ''} left
               </span>
             )}
             {hoursLeft !== null && (
@@ -515,17 +521,18 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
             )}
           </div>
         )}
-        {!isOffer && slotsNeeded > 1 && (
-          <p className="mt-3 text-xs font-medium text-forest-700">
-            {slotsRemaining} of {slotsNeeded} spots still open
+        {!isOffer && slotsNeeded > 1 && slotsRemaining > 0 && (
+          <p className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-forest-700">
+            <Users size={12} aria-hidden="true" />
+            {slotsRemaining} of {slotsNeeded} spots remaining
           </p>
         )}
 
         {/* Payment pending notice */}
         {task.status === 'payment_pending' && (
           <div className="mt-3 flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2.5 border border-amber-200">
-            <span className="text-sm" aria-hidden="true">⏳</span>
-            <p className="text-xs font-medium text-amber-900">Payment is being verified — you'll be dispatched once confirmed</p>
+            <Loader2 size={13} aria-hidden="true" className="shrink-0 animate-spin text-amber-700" />
+            <p className="text-xs font-medium text-amber-900">Verifying payment — you'll be dispatched once confirmed</p>
           </div>
         )}
       </div>
@@ -790,9 +797,9 @@ export default function WorkerDashboard() {
         )}
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <Stat icon={<Star size={20} />} label="Your rating" value={me?.rating && Number(me.rating) > 0 ? `${Number(me.rating).toFixed(1)}` : '—'} />
-          <Stat icon={<img src="/icons/tasks.png" alt="" className="h-5 w-5 object-contain" />} label="Tasks completed" value={`${completed}`} />
-          <Stat icon={<img src="/icons/wallet.png" alt="" className="h-5 w-5 object-contain" />} label="Total earned" value={cedis(earned)} />
+          <Stat icon={<Star size={20} className="text-forest-600" />} label="Your rating" value={me?.rating && Number(me.rating) > 0 ? `${Number(me.rating).toFixed(1)} / 5` : '—'} />
+          <Stat icon={<ClipboardList size={20} className="text-forest-600" />} label="Tasks completed" value={`${completed}`} />
+          <Stat icon={<Wallet size={20} className="text-forest-600" />} label="Total earned" value={cedis(earned)} />
         </div>
 
         <ReferralCard code={(me?.workerId as string) || 'BX-—'} referrals={0} />
@@ -853,57 +860,55 @@ export default function WorkerDashboard() {
           {tab === 'support' ? null : loading ? <Skeleton /> : (
             <>
               {tab === 'available' && (available.length ? available.map((t) => (
-                <div key={t.id} className={`rounded-2xl bg-cream-50 shadow-sm overflow-hidden border ${t.status === 'offered' ? 'border-forest-600/25' : 'border-ink-900/8'}`}>
-                  {t.status === 'offered' && (
-                    <div className="bg-forest-600 px-4 py-2 text-xs font-semibold text-cream-50 flex items-center gap-1.5">
-                      <span className="flex h-1.5 w-1.5 rounded-full bg-cream-50 animate-pulse" />
-                      New job offer — respond to lock it in
-                    </div>
-                  )}
-                  <div className="p-4 sm:p-5">
-                    <TaskCard task={t}>{null}</TaskCard>
-                    <div className="mt-4 flex gap-2">
-                      <button onClick={() => (t.status === 'offered' ? acceptOffer(t) : acceptOpen(t))} disabled={busyId === t.id}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-forest-600 px-5 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
-                        <Check size={15} aria-hidden="true" /> {busyId === t.id ? 'Accepting…' : 'Accept'}
-                      </button>
+                <TaskCard key={t.id} task={t}>
+                  {t.status === 'offered' ? (
+                    <div className="flex items-center gap-2">
                       <button onClick={() => declineOffer(t)} disabled={busyId === t.id}
                         className="inline-flex items-center gap-1.5 rounded-full border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-700 transition-colors hover:bg-ink-900/5 disabled:opacity-60">
                         Decline
                       </button>
+                      <button onClick={() => acceptOffer(t)} disabled={busyId === t.id}
+                        className="inline-flex items-center gap-1.5 rounded-full bg-forest-600 px-5 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
+                        <Check size={15} aria-hidden="true" /> {busyId === t.id ? 'Accepting…' : 'Accept offer'}
+                      </button>
                     </div>
-                  </div>
-                </div>
+                  ) : (
+                    <button onClick={() => acceptOpen(t)} disabled={busyId === t.id}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-forest-600 px-5 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
+                      <Check size={15} aria-hidden="true" /> {busyId === t.id ? 'Accepting…' : 'Accept'}
+                    </button>
+                  )}
+                </TaskCard>
               )) : <Empty text="No jobs available right now. Check back soon." />)}
 
               {tab === 'mine' && (
                 <>
-                  {mine.some(t => t.status === 'payment_pending') && (
-                    <p className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-900 border border-amber-200">
-                      <span className="mt-0.5 shrink-0 text-base leading-none">⏳</span>
-                      BeyondX is verifying the employer's payment. Once confirmed — usually within a few minutes — you'll be officially dispatched and can begin the job.
-                    </p>
-                  )}
-                  {mine.length > 0 && mine.some(t => t.status !== 'payment_pending') && (
-                    <p className="flex items-start gap-2 rounded-xl bg-forest-600/5 p-3 text-xs leading-relaxed text-ink-700 border border-forest-600/15">
-                      <Info size={13} aria-hidden="true" className="mt-0.5 shrink-0 text-forest-600" />
-                      Mark a task complete when you finish. Your employer confirms the work, then BeyondX releases your payment.
-                    </p>
-                  )}
-                  {mine.length ? mine.map((t) => (
+                  {mine.length ? mine.map((t) => {
+                    // Mark Complete is only available on the scheduled day (or any day if no date set)
+                    const scheduledDate = t.scheduledDate as string | undefined
+                    const today = new Date().toISOString().split('T')[0]
+                    const canMarkDone = !scheduledDate || scheduledDate <= today
+
+                    return (
                     <div key={t.id}>
                       <TaskCard task={t}>
                         {t.status === 'payment_pending' ? (
                           <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 border border-amber-200">
-                            ⏳ Payment being verified
+                            <Loader2 size={11} className="animate-spin" aria-hidden="true" /> Verifying payment
                           </span>
                         ) : t.status === 'pending_confirmation' ? (
-                          <span className="rounded-full bg-ink-900/10 px-3 py-1.5 text-xs font-semibold text-ink-700">Awaiting employer confirmation</span>
-                        ) : (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-ink-900/8 px-3 py-1.5 text-xs font-semibold text-ink-700">
+                            <CheckCircle2 size={12} aria-hidden="true" className="text-forest-600" /> Awaiting confirmation
+                          </span>
+                        ) : canMarkDone ? (
                           <button onClick={() => markDone(t)} disabled={busyId === t.id} aria-label={`Mark ${t.taskType || 'task'} complete`}
                             className="shrink-0 rounded-full bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
-                            {busyId === t.id ? 'Working…' : 'Mark Complete'}
+                            {busyId === t.id ? 'Saving…' : 'Mark complete'}
                           </button>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-ink-900/5 px-3 py-1.5 text-xs font-medium text-ink-700/60">
+                            <Clock size={11} aria-hidden="true" /> Available on {new Date(scheduledDate + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
+                          </span>
                         )}
                       </TaskCard>
                       <div className="-mt-1 rounded-b-xl bg-cream-50 px-4 pb-4 shadow-sm border border-ink-900/8 sm:px-5">
@@ -916,7 +921,7 @@ export default function WorkerDashboard() {
                         />
                       </div>
                     </div>
-                  )) : <Empty text="You haven't accepted any tasks yet." />}
+                  )}) : <Empty text="You haven't accepted any tasks yet." />}
                 </>
               )}
 

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, Star, Send, Phone, Plus, X, ShieldCheck, CircleCheck, Info, RefreshCw, AlertCircle, Copy, Check, Award, Map } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Star, Send, Phone, Plus, X, ShieldCheck, CircleCheck, Info, RefreshCw, AlertCircle, Copy, Check, Award, Map, Clock, MapPin } from 'lucide-react'
 import JobLocationMap from '../components/JobLocationMap'
 import DashboardHeader from './DashboardHeader'
 import ProfileModal from '../components/ProfileModal'
@@ -371,7 +371,7 @@ export default function EmployerDashboard() {
                       {/* Job location filter — workers re-sort by proximity as employer types */}
                       <div className="mt-4 mb-1 rounded-xl border border-ink-900/10 bg-white px-4 py-3">
                         <label className="mb-1 block text-xs font-semibold text-ink-700">
-                          📍 Where is the job? <span className="font-normal text-ink-700/60">(optional — sorts workers by how close they live)</span>
+                          <span className="inline-flex items-center gap-1"><MapPin size={12} className="text-forest-600" aria-hidden="true" /> Where is the job?</span> <span className="font-normal text-ink-700/60">(optional — sorts by proximity)</span>
                         </label>
                         <input
                           type="text"
@@ -466,7 +466,7 @@ export default function EmployerDashboard() {
                                             w.proximity.tier === 'short'  ? 'text-forest-600' :
                                             w.proximity.tier === 'medium' ? 'text-amber-700'  : 'text-red-700'
                                           }`}>
-                                            📍 {w.proximity.roadKm}km away
+                                            {w.proximity.roadKm}km away
                                             {w.proximity.transportAllowance > 0 && (
                                               <span className="text-ink-700/60">
                                                 {' '}· +GH₵{w.proximity.transportAllowance} transport
@@ -475,7 +475,7 @@ export default function EmployerDashboard() {
                                           </span>
                                         )}
                                         {w.proximity?.available === false && jobLocationFilter.trim() && w.homeArea && (
-                                          <span className="text-ink-700/50">📍 {w.homeArea}</span>
+                                          <span className="inline-flex items-center gap-0.5 text-ink-700/50"><MapPin size={11} aria-hidden="true" />{w.homeArea}</span>
                                         )}
                                       </span>
                                     </span>
@@ -559,8 +559,9 @@ export default function EmployerDashboard() {
                             {t.duration ? ` · ${t.duration}` : ''}
                           </p>
                           {(t.scheduledDate as string) && (
-                            <p className="mt-0.5 text-xs font-medium text-forest-700">
-                              🕐 {new Date(`${t.scheduledDate as string}T${(t.scheduledTime as string) || '08:00'}:00`).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                            <p className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-forest-700">
+                              <Clock size={11} aria-hidden="true" />
+                              {new Date(`${t.scheduledDate as string}T${(t.scheduledTime as string) || '08:00'}:00`).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                             </p>
                           )}
                         </div>
@@ -1047,7 +1048,7 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch }: { worker:
                 : worker.proximity.transportAllowance <= 10 ? 'text-amber-800'
                 : 'text-red-800'
               }`}>
-                📍 {worker.proximity.roadKm}km from job location
+                {worker.proximity.roadKm}km from job
                 {worker.proximity.transportAllowance > 0
                   ? ` · GH₵${worker.proximity.transportAllowance} transport added`
                   : ' · Nearby — no transport needed'}

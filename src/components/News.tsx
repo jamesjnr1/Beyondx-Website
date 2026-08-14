@@ -1,4 +1,5 @@
 import { useMemo } from 'react'
+import { Newspaper } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { useReveal } from '../hooks/useReveal'
 
@@ -115,7 +116,7 @@ function LaunchCard({ item, visible }: { item: NewsItem; visible: boolean }) {
         animate={visible ? { opacity: 1, y: 0 } : {}}
         transition={{ delay: 0.15, duration: 0.6 }}
       >
-        {item.title} <span aria-hidden="true">🎉</span>
+        {item.title}
       </motion.h3>
 
       {/* Body */}
@@ -163,7 +164,7 @@ export default function News() {
           </span>
           {!hasNews && (
             <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-forest-600/10">
-              <img src="/icons/news.png" alt="" className="h-9 w-9 object-contain" />
+              <Newspaper size={36} className="text-forest-600" aria-hidden="true" />
             </div>
           )}
         </motion.div>
