@@ -539,6 +539,11 @@ export default function EmployerDashboard() {
                             {workerName && t.location ? ' · ' : ''}{t.location || ''}
                             {t.duration ? ` · ${t.duration}` : ''}
                           </p>
+                          {(t.scheduledDate as string) && (
+                            <p className="mt-0.5 text-xs font-medium text-forest-700">
+                              🕐 {new Date(`${t.scheduledDate as string}T${(t.scheduledTime as string) || '08:00'}:00`).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          )}
                         </div>
                         <div className="shrink-0 text-right">
                           <p className={s.color + ' text-sm font-semibold'}>{s.label}</p>
@@ -1163,6 +1168,8 @@ function PostTask({ onDone }: { onDone: (msg: string) => void }) {
   const [location, setLocation] = useState('')
   const [duration, setDuration] = useState('1 Day')
   const [workersNeeded, setWorkersNeeded] = useState(1)
+  const [scheduledDate, setScheduledDate] = useState('')
+  const [scheduledTime, setScheduledTime] = useState('08:00')
   const cat = allCategories.find((c) => c.title === taskType)
   const rate = cat ? cat.rate : 0
   const days = duration === 'Half Day' ? 0.5 : parseFloat(duration) || 1
@@ -1172,13 +1179,21 @@ function PostTask({ onDone }: { onDone: (msg: string) => void }) {
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
+  // Minimum date = today
+  const today = new Date().toISOString().split('T')[0]
+
   const submit = async () => {
     if (!taskType || busy) return
     if (cat?.mode !== 'remote' && !location) return
     setErr(null); setBusy(true)
     try {
-      await tasksApi.create({ taskType, description, location: cat?.mode === 'remote' ? 'Remote' : location, duration, pay: parseFloat(pay) || 0, workersNeeded })
-      setDescription(''); setLocation(''); setWorkersNeeded(1)
+      await tasksApi.create({
+        taskType, description,
+        location: cat?.mode === 'remote' ? 'Remote' : location,
+        duration, pay: parseFloat(pay) || 0, workersNeeded,
+        ...(scheduledDate ? { scheduledDate, scheduledTime } : {}),
+      })
+      setDescription(''); setLocation(''); setWorkersNeeded(1); setScheduledDate(''); setScheduledTime('08:00')
       onDone(`"${taskType}" is now open for workers to accept.`)
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : 'Please try again.')
@@ -1224,6 +1239,20 @@ function PostTask({ onDone }: { onDone: (msg: string) => void }) {
             <label className="block"><span className="mb-1 block text-xs font-medium text-ink-700">Workers needed</span>
               <input type="number" min={1} max={50} value={workersNeeded} onChange={(e) => setWorkersNeeded(Math.max(1, parseInt(e.target.value, 10) || 1))} className={inp} />
             </label>
+          </div>
+          {/* When does the job start? */}
+          <div className="rounded-xl border border-ink-900/10 bg-white px-4 py-3">
+            <p className="mb-2 text-xs font-semibold text-ink-700">When does the job start? <span className="font-normal text-ink-700/60">(optional — workers get a reminder 1 hour before)</span></p>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block">
+                <span className="mb-1 block text-xs text-ink-700">Date</span>
+                <input type="date" min={today} value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} className={inp} />
+              </label>
+              <label className="block">
+                <span className="mb-1 block text-xs text-ink-700">Time</span>
+                <input type="time" value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} className={inp} />
+              </label>
+            </div>
           </div>
           <div className="block">
             <span className="mb-1 block text-xs font-medium text-ink-700">Cost breakdown</span>

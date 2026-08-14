@@ -56,6 +56,8 @@ export type Worker = {
   totalEarned?: number
   homeArea?: string
   proximity?: WorkerProximity
+  scheduledDate?: string
+  scheduledTime?: string
   [k: string]: unknown
 }
 
@@ -268,6 +270,8 @@ export const tasks = {
       pay: number
       workerId?: string | number
       workersNeeded?: number
+      scheduledDate?: string
+      scheduledTime?: string
     },
     token = session.employerToken(),
   ) => request<{ task?: Task }>('/api/tasks', { method: 'POST', body: payload, token }),

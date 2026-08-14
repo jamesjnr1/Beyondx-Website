@@ -444,6 +444,11 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
         <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-700">
           {task.location && <span className="inline-flex items-center gap-1"><MapPin size={13} aria-hidden="true" /> {task.location}</span>}
           {task.duration && <span className="inline-flex items-center gap-1"><Calendar size={13} aria-hidden="true" /> {task.duration}</span>}
+          {(task.scheduledDate as string) && (
+            <span className="inline-flex items-center gap-1 font-medium text-forest-700">
+              🕐 {new Date(`${task.scheduledDate as string}T${(task.scheduledTime as string) || '08:00'}:00`).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+            </span>
+          )}
           <span className="font-semibold text-ink-900">{cedis(task.pay)}</span>
         </div>
         {/* Transport allowance — shown when the task has one attached */}
