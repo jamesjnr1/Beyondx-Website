@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
-import { MapPin, Calendar, Check, Star, RotateCcw, Info, RefreshCw, AlertCircle, Camera, Plus, Trash2, Phone, Building2, AlertTriangle, ChevronRight } from 'lucide-react'
+import { MapPin, Calendar, Check, Star, RotateCcw, Info, RefreshCw, AlertCircle, Camera, Plus, Trash2, Phone, AlertTriangle, ChevronRight } from 'lucide-react'
 import DashboardHeader from './DashboardHeader'
 import ReferralCard from '../components/ReferralCard'
 import ProfileModal, { type Profile } from '../components/ProfileModal'
@@ -454,7 +454,7 @@ function Empty({ text }: { text: string }) {
 
 function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
   const empPhone = typeof task.employer === 'object' ? (task.employer as Record<string, unknown>)?.phone as string | undefined : undefined
-  const empContact = typeof task.employer === 'object' ? (task.employer as Record<string, unknown>)?.contactPerson as string | undefined : undefined
+  const empOrg = typeof task.employer === 'object' ? (task.employer as Record<string, unknown>)?.orgName as string | undefined : undefined
 
   const isOffer = task.status === 'offered'
   const expiresAt = task.offerExpiresAt as string | undefined
@@ -462,70 +462,109 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
   const filledSlots = (task.filledSlots as number) || 0
   const slotsRemaining = (task.slotsRemaining as number) ?? (slotsNeeded - filledSlots)
   const hoursLeft = expiresAt ? Math.round((new Date(expiresAt).getTime() - Date.now()) / 3600000) : null
+  const hasSchedule = !!(task.scheduledDate as string)
+  const scheduledLabel = hasSchedule
+    ? new Date(`${task.scheduledDate as string}T${(task.scheduledTime as string) || '08:00'}:00`).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+    : null
+  const transportAmt = (task.transportAllowance as number) || 0
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl bg-cream-50 p-4 shadow-sm ring-1 ring-ink-900/5 sm:p-5">
-      <div className="min-w-0">
-        <p className="text-sm font-semibold text-ink-900">{task.taskType || 'Task'}</p>
-        {/* Job description — shown when the employer has added one */}
+    <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-ink-900/8">
+      {/* Top accent bar for offers */}
+      {isOffer && <div className="h-1 bg-forest-600" />}
+
+      <div className="p-4 sm:p-5">
+        {/* Header row: title + pay */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-base font-bold text-ink-900 leading-snug">{task.taskType || 'Task'}</p>
+            {empOrg && <p className="mt-0.5 text-xs text-ink-700/60">{empOrg}</p>}
+          </div>
+          <div className="shrink-0 text-right">
+            <p className="text-base font-bold text-forest-700">{cedis(task.pay)}</p>
+            {transportAmt > 0 && (
+              <p className="text-[10px] text-ink-700/60">+GH₵{transportAmt} travel</p>
+            )}
+          </div>
+        </div>
+
+        {/* Key details row */}
+        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
+          {task.location && (
+            <span className="inline-flex items-center gap-1.5 text-xs text-ink-700">
+              <MapPin size={12} className="text-ink-700/50" aria-hidden="true" />{task.location}
+            </span>
+          )}
+          {task.duration && (
+            <span className="inline-flex items-center gap-1.5 text-xs text-ink-700">
+              <Calendar size={12} className="text-ink-700/50" aria-hidden="true" />{task.duration}
+            </span>
+          )}
+          {scheduledLabel && (
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-forest-700">
+              <span aria-hidden="true">🕐</span>{scheduledLabel}
+            </span>
+          )}
+        </div>
+
+        {/* Description */}
         {task.description && task.description !== task.taskType && !task.description.includes('Payment Ref') && (
-          <p className="mt-2 whitespace-pre-line rounded-lg bg-ink-900/[0.03] px-3 py-2.5 text-sm leading-relaxed text-ink-800">
+          <p className="mt-3 whitespace-pre-line rounded-lg bg-ink-900/[0.03] px-3 py-2.5 text-sm leading-relaxed text-ink-700 ring-1 ring-ink-900/5">
             {task.description}
           </p>
         )}
-        <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-sm text-ink-700">
-          {task.location && <span className="inline-flex items-center gap-1"><MapPin size={13} aria-hidden="true" /> {task.location}</span>}
-          {task.duration && <span className="inline-flex items-center gap-1"><Calendar size={13} aria-hidden="true" /> {task.duration}</span>}
-          {(task.scheduledDate as string) && (
-            <span className="inline-flex items-center gap-1 font-medium text-forest-700">
-              🕐 {new Date(`${task.scheduledDate as string}T${(task.scheduledTime as string) || '08:00'}:00`).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-            </span>
-          )}
-          <span className="font-semibold text-ink-900">{cedis(task.pay)}</span>
-        </div>
-        {/* Transport allowance — shown when the task has one attached */}
-        {isOffer && (task.transportAllowance as number) > 0 && (
-          <div className="mt-2 rounded-lg bg-forest-600/8 px-3 py-2">
-            <p className="text-xs font-semibold text-forest-800">
-              🚌 GH₵{task.transportAllowance as number} transport allowance included
-            </p>
-            <p className="mt-0.5 text-xs text-ink-700/70">
-              This job is some distance from your home area. BeyondX has added a transport allowance on top of your full {cedis(task.pay)} pay — you receive both.
+
+        {/* Transport allowance notice */}
+        {isOffer && transportAmt > 0 && (
+          <div className="mt-3 flex items-start gap-2 rounded-lg bg-forest-600/8 px-3 py-2.5">
+            <span className="mt-px shrink-0 text-sm" aria-hidden="true">🚌</span>
+            <p className="text-xs leading-relaxed text-forest-800">
+              <strong>GH₵{transportAmt} transport allowance</strong> added — this job is far from your home area. You receive this on top of your full {cedis(task.pay)}.
             </p>
           </div>
         )}
-        {/* Multi-slot / expiry urgency — only relevant while the offer is still pending */}
+
+        {/* Urgency notices */}
         {isOffer && (slotsNeeded > 1 || hoursLeft !== null) && (
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs font-medium text-amber-700">
-            {slotsNeeded > 1 && <span>This job needs {slotsNeeded} workers — first to accept get it.</span>}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {slotsNeeded > 1 && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 ring-1 ring-amber-200">
+                {slotsNeeded} workers needed
+              </span>
+            )}
             {hoursLeft !== null && (
-              <span>{hoursLeft > 0 ? `Offer expires in ${hoursLeft}h` : 'Offer expiring soon'}</span>
+              <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 ring-1 ring-red-200">
+                Expires in {hoursLeft}h
+              </span>
             )}
           </div>
         )}
-        {/* Open multi-worker task — show remaining spots */}
-        {!isOffer && task.status === 'open' && slotsNeeded > 1 && (
-          <p className="mt-2 rounded-lg bg-forest-600/8 px-3 py-2 text-xs font-medium text-forest-800">
-            {slotsRemaining > 0
-              ? `${slotsRemaining} of ${slotsNeeded} spots still open`
-              : `All ${slotsNeeded} spots filled`}
+        {!isOffer && slotsNeeded > 1 && (
+          <p className="mt-3 text-xs font-medium text-forest-700">
+            {slotsRemaining} of {slotsNeeded} spots still open
           </p>
         )}
-        {/* Employer info — name, contact, phone only */}
-        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-ink-900/6 pt-2 text-xs text-ink-700">
-          <span className="inline-flex items-center gap-1">
-            <Building2 size={12} aria-hidden="true" />
-            <span className="font-medium text-ink-900">{employerName(task)}</span>
-          </span>
-          {empContact && <span>{empContact}</span>}
-          {empPhone && (
-            <a href={`tel:${empPhone}`} className="inline-flex items-center gap-1 text-forest-700 hover:underline">
-              <Phone size={12} aria-hidden="true" /> {empPhone}
-            </a>
-          )}
-        </div>
+
+        {/* Payment pending notice */}
+        {task.status === 'payment_pending' && (
+          <div className="mt-3 flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2.5 ring-1 ring-amber-200">
+            <span className="text-sm" aria-hidden="true">⏳</span>
+            <p className="text-xs font-medium text-amber-900">Payment is being verified — you'll be dispatched once confirmed</p>
+          </div>
+        )}
       </div>
-      {children && <div className="flex shrink-0 gap-2">{children}</div>}
+
+      {/* Divider + action row */}
+      {children && (
+        <div className="flex items-center justify-between border-t border-ink-900/6 px-4 py-3 sm:px-5">
+          {empPhone ? (
+            <a href={`tel:${empPhone}`} className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-700/60 hover:text-ink-900">
+              <Phone size={12} aria-hidden="true" />{empPhone}
+            </a>
+          ) : <span />}
+          <div className="flex items-center gap-2">{children}</div>
+        </div>
+      )}
     </div>
   )
 }
@@ -784,7 +823,7 @@ export default function WorkerDashboard() {
 
         {/* Home area — shown prominently; editable below in HomeAreaCard */}
         {me?.homeArea ? (
-          <div className="flex items-center gap-2 rounded-xl bg-cream-50 px-4 py-2.5 ring-1 ring-ink-900/8">
+          <div className="flex items-center gap-2 rounded-xl bg-cream-50 px-4 py-2.5">
             <MapPin size={14} className="shrink-0 text-forest-600" aria-hidden="true" />
             <span className="text-sm text-ink-700">Based in <strong className="text-ink-900">{me.homeArea as string}</strong></span>
           </div>
