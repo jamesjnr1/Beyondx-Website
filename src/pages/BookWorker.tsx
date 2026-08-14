@@ -6,7 +6,7 @@ import {
   allCategories, TOOL_SURCHARGE_RATE, VEHICLE_SURCHARGES,
   logisticsRate,
 } from '../data'
-import { PLATFORM_FEE_FLAT, MOMO_NUMBER, MOMO_NAME, BEYONDX_PHONE, INTERCITY_MIN_JOB_VALUE, TRANSPORT_TIERS } from '../lib/payments'
+import { PLATFORM_FEE_FLAT, MOMO_NUMBER, MOMO_NAME, BEYONDX_PHONE, INTERCITY_MIN_JOB_VALUE } from '../lib/payments'
 import { tasks as tasksApi, workers as workersApi, ApiError } from '../lib/api'
 import type { Worker } from '../lib/api'
 import type { ScreeningAnswers } from './EmployerDashboard'
