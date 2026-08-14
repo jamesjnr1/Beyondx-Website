@@ -8,13 +8,13 @@ export const PLATFORM_FEE_FLAT = 20 // GH₵20 per completed job
 
 // Transport tiers — must match proximity.js on the backend
 export const TRANSPORT_TIERS = {
-  local:     { label: 'Local',             allowance: 0,  description: 'Metro area — no transport charge' },
-  regional:  { label: 'Regional',          allowance: 20, description: 'Cross-suburb — two trotro legs there and back' },
-  extended:  { label: 'Extended regional', allowance: 50, description: 'Full journey each way — Nsawam / Aburi / Dodowa' },
-  intercity: { label: 'Intercity',         allowance: 80, description: 'Long-distance assignment — full round-trip bus fare' },
+  local:     { label: 'Local',             allowance: 8,   description: 'Metro area — small flat contribution' },
+  regional:  { label: 'Regional',          allowance: 40,  description: 'Cross-suburb — round-trip trotro with transfer' },
+  extended:  { label: 'Extended regional', allowance: 90,  description: 'Intercity bus round trip plus waiting and taxi buffer' },
+  intercity: { label: 'Intercity',         allowance: 200, description: 'Full round-trip bus fare, food, and transit day compensation' },
 } as const
 
-export const INTERCITY_MIN_JOB_VALUE = 150 // GH₵ — intercity blocked below this
+export const INTERCITY_MIN_JOB_VALUE = 200 // GH₵ — job must justify a full transit day
 
 export type PayMethod = { id: string; name: string; ussd: string }
 
