@@ -176,6 +176,7 @@ function BookingForm({ state, onDone, onError }: {
 
   const submit = async () => {
     if (!payRef.trim() || !method || !jobDescription.trim() || busy || intercityBlocked) return
+    if (cat?.mode !== 'remote' && !location.trim()) return
     setBusy(true)
     try {
       await tasksApi.dispatch({
@@ -290,7 +291,7 @@ function BookingForm({ state, onDone, onError }: {
         ) : (
           <div>
             <label htmlFor="bw-loc" className="mb-1.5 block text-sm font-medium text-ink-900">
-              {cat?.distancePricing ? 'Pickup location' : 'Job location'}
+              {cat?.distancePricing ? 'Pickup location' : 'Job location'} <span className="text-red-500">*</span>
             </label>
             <input id="bw-loc" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Tema" className={inp} />
           </div>
@@ -474,9 +475,9 @@ function BookingForm({ state, onDone, onError }: {
         <input id="bw-ref" value={payRef} onChange={(e) => setPayRef(e.target.value)} placeholder="e.g. 1234567890" className={inp} />
       </div>
 
-      <button onClick={submit} disabled={!payRef.trim() || !method || !jobDescription.trim() || busy}
+      <button onClick={submit} disabled={!payRef.trim() || !method || !jobDescription.trim() || (cat?.mode !== 'remote' && !location.trim()) || busy || intercityBlocked}
         className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-ink-900 px-6 py-4 text-sm font-semibold text-cream-50 transition-all hover:bg-ink-800 active:scale-[0.98] disabled:opacity-40">
-        {busy ? 'Submitting…' : intercityBlocked ? `Minimum GH₵${INTERCITY_MIN_JOB_VALUE} required for intercity` : `Submit booking — ${cedis(pay)}`}
+        {busy ? 'Submitting…' : intercityBlocked ? `Minimum GH₵${INTERCITY_MIN_JOB_VALUE} required for intercity` : (cat?.mode !== 'remote' && !location.trim()) ? 'Enter job location to continue' : `Submit booking — ${cedis(pay)}`}
       </button>
       <p className="mt-2.5 text-center text-xs text-ink-700/50">
         Worker is notified only after BeyondX verifies your payment.
