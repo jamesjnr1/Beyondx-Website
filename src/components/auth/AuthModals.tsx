@@ -575,68 +575,26 @@ function WorkerRegister() {
   // alone. If used, it just verifies an email to attach to the account.
   const [googleEmail, setGoogleEmail] = useState<string | null>(null)
   // Phone verification is NOT optional — it's the one contact detail every
-  // worker has, and it's how we confirm the signup is a real, reachable
-  // person before an account is created.
-  const [phoneVerified, setPhoneVerified] = useState(false)
-  const [phoneCodeSent, setPhoneCodeSent] = useState(false)
-  const [phoneCode, setPhoneCode] = useState('')
-  const [phoneBusy, setPhoneBusy] = useState(false)
-  const [phoneErr, setPhoneErr] = useState<string | null>(null)
-  const [phoneResent, setPhoneResent] = useState(false)
-  // Remote-skill lock is now admin-controlled (set on account by BeyondX team)
-  // rather than self-reported at registration. No dropdown shown to workers.
+  // OTP state — temporarily disabled while Arkesel carrier delivery is resolved.
+  // const [phoneVerified] = useState(false)
   const [fieldErr, setFieldErr] = useState<Record<string, string>>({})
   const [skills, setSkills] = useState<string[]>([])
   const set = (k: keyof typeof f) => (v: string) => {
-    // Editing the phone after it's verified means it's no longer verified —
-    // the code that was confirmed belonged to the old number.
-    if (k === 'phone' && phoneVerified) { setPhoneVerified(false); setPhoneCodeSent(false); setPhoneCode('') }
     setF({ ...f, [k]: v })
   }
   const toggleSkill = (s: string) => setSkills((c) => (c.includes(s) ? c.filter((x) => x !== s) : [...c, s]))
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
-  const sendPhoneCode = async () => {
-    setPhoneErr(null); setPhoneBusy(true)
-    try {
-      const r = await fetch('https://beyondx-backend-production-1a08.up.railway.app/api/otp/send', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: f.phone.trim() }),
-      })
-      const data = await r.json().catch(() => ({}))
-      if (!r.ok) throw new Error(data.error || 'Could not send a code.')
-      setPhoneCodeSent(true)
-    } catch (e2) {
-      setPhoneErr(e2 instanceof Error ? e2.message : 'Could not send a code.')
-    } finally {
-      setPhoneBusy(false)
-    }
-  }
-
-  const verifyPhoneCode = async () => {
-    setPhoneErr(null); setPhoneBusy(true)
-    try {
-      const r = await fetch('https://beyondx-backend-production-1a08.up.railway.app/api/otp/verify', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: f.phone.trim(), code: phoneCode.trim() }),
-      })
-      const data = await r.json().catch(() => ({}))
-      if (!r.ok) throw new Error(data.error || 'Could not verify that code.')
-      setPhoneVerified(true)
-    } catch (e2) {
-      setPhoneErr(e2 instanceof Error ? e2.message : 'Could not verify that code.')
-    } finally {
-      setPhoneBusy(false)
-    }
-  }
+  // sendPhoneCode and verifyPhoneCode disabled with OTP — restore when SMS works
 
   const validateStep = (n: number) => {
     if (n === 1) {
       const errs = v.check({ name: v.fullName(f.name), phone: v.phone(f.phone) })
       setFieldErr(errs)
       if (Object.keys(errs).length) return false
-      if (!phoneVerified) { setPhoneErr('Verify your phone number to continue.'); return false }
+      // Phone OTP temporarily optional — SMS carrier delivery issue with Arkesel.
+      // Workers can register without verifying; admin verifies manually via console.
       return true
     }
     if (n === 2) {
@@ -724,53 +682,8 @@ function WorkerRegister() {
           <Field label="Phone Number" type="tel" placeholder="0241234567" value={f.phone} onChange={set('phone')} error={fieldErr.phone} />
           <Field label="Area / Neighbourhood" placeholder="e.g. Madina, Tema, Dansoman" value={f.homeArea} onChange={set('homeArea')} hint="Helps match you to nearby jobs — employers see how close you are." />
 
-          {phoneVerified ? (
-            <p className="flex items-center gap-1.5 rounded-lg bg-forest-600/10 px-3 py-2 text-xs font-medium text-forest-700">
-              <ShieldCheck size={13} aria-hidden="true" /> Phone number verified
-            </p>
-          ) : phoneCodeSent ? (
-            <div className="rounded-lg bg-cream-100 p-3 ring-1 ring-ink-900/5">
-              <p className="mb-2 text-xs leading-relaxed text-ink-700">
-                Enter the code we texted to {f.phone || 'your phone'}.
-              </p>
-              <div className="flex gap-2">
-                <input
-                  value={phoneCode}
-                  onChange={(e) => { setPhoneCode(e.target.value); setPhoneErr(null) }}
-                  onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); verifyPhoneCode() } }}
-                  inputMode="numeric"
-                  placeholder="Code"
-                  className="w-full rounded-lg border border-ink-900/15 bg-white px-3 py-2 text-center tracking-widest text-ink-900 outline-none focus:border-forest-500 focus:ring-2 focus:ring-forest-500/20"
-                />
-                <button
-                  type="button"
-                  disabled={phoneBusy || !phoneCode.trim()}
-                  onClick={verifyPhoneCode}
-                  className="shrink-0 rounded-lg bg-forest-600 px-4 text-sm font-semibold text-cream-50 disabled:opacity-60"
-                >
-                  {phoneBusy ? '…' : 'Verify'}
-                </button>
-              </div>
-              <button
-                type="button"
-                disabled={phoneResent || phoneBusy}
-                onClick={async () => { await sendPhoneCode(); setPhoneResent(true) }}
-                className="mt-2 text-xs font-medium text-forest-700 underline-offset-2 hover:underline disabled:text-ink-700/40 disabled:no-underline"
-              >
-                {phoneResent ? 'Sent again' : 'Resend code'}
-              </button>
-            </div>
-          ) : (
-            <button
-              type="button"
-              disabled={phoneBusy || !f.phone.trim()}
-              onClick={sendPhoneCode}
-              className="w-full rounded-lg border border-forest-600 px-4 py-2.5 text-sm font-semibold text-forest-700 transition-colors hover:bg-forest-600/5 disabled:opacity-50"
-            >
-              {phoneBusy ? 'Sending…' : 'Verify my phone number'}
-            </button>
-          )}
-          <FormError message={phoneErr} />
+          {/* Phone OTP temporarily disabled — SMS not delivering due to Arkesel carrier issue.
+              Re-enable by restoring the phoneVerified check in validateStep and this UI block. */}
 
 
           <div className="flex items-center gap-3 pt-1 text-xs text-ink-700/50">
