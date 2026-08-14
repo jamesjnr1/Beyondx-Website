@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
-import { MapPin, Calendar, Check, Star, RotateCcw, Info, RefreshCw, AlertCircle, Camera, Plus, Trash2, Phone, Building2, AlertTriangle } from 'lucide-react'
+import { MapPin, Calendar, Check, Star, RotateCcw, Info, RefreshCw, AlertCircle, Camera, Plus, Trash2, Phone, Building2, AlertTriangle, ChevronRight } from 'lucide-react'
 import DashboardHeader from './DashboardHeader'
 import ReferralCard from '../components/ReferralCard'
 import ProfileModal, { type Profile } from '../components/ProfileModal'
@@ -105,6 +105,7 @@ function FileUploadButton({
 
 function HomeAreaCard({ worker, onSaved }: { worker: Worker | null; onSaved: (p: Record<string, unknown>) => void }) {
   const current = (worker?.homeArea as string) || ''
+  const [open, setOpen] = useState(false)
   const [area, setArea] = useState(current)
   const [busy, setBusy] = useState(false)
   const [saved, setSaved] = useState(false)
@@ -128,36 +129,49 @@ function HomeAreaCard({ worker, onSaved }: { worker: Worker | null; onSaved: (p:
   }
 
   return (
-    <div className="rounded-2xl bg-cream-50 p-5 shadow-sm ring-1 ring-ink-900/5">
-      <div className="mb-3 flex items-center gap-2">
-        <MapPin size={16} className="shrink-0 text-forest-600" aria-hidden="true" />
-        <p className="text-sm font-semibold text-ink-900">Your home area</p>
-      </div>
-      {!current && (
-        <p className="mb-3 flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-900 ring-1 ring-amber-200">
-          <span className="mt-0.5 shrink-0 text-base leading-none">📍</span>
-          Adding your area helps BeyondX match you to nearby jobs — and adds a transport allowance to your pay when jobs are far from you.
-        </p>
+    <div className="rounded-2xl bg-cream-50 shadow-sm ring-1 ring-ink-900/5">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center justify-between px-5 py-4 text-left"
+        aria-expanded={open}
+      >
+        <div className="flex items-center gap-2">
+          <MapPin size={15} className="shrink-0 text-forest-600" aria-hidden="true" />
+          <div>
+            <p className="text-sm font-semibold text-ink-900">Your home area</p>
+            <p className="mt-0.5 text-xs text-ink-700/60">{current || 'Not set — tap to add'}</p>
+          </div>
+        </div>
+        <ChevronRight size={16} className={`shrink-0 text-ink-700/50 transition-transform ${open ? 'rotate-90' : ''}`} aria-hidden="true" />
+      </button>
+      {open && (
+        <div className="border-t border-ink-900/8 px-5 pb-5 pt-4">
+          {!current && (
+            <p className="mb-3 flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-900 ring-1 ring-amber-200">
+              <span className="mt-0.5 shrink-0 text-base leading-none">📍</span>
+              Adding your area helps BeyondX match you to nearby jobs — and adds a transport allowance to your pay when jobs are far from you.
+            </p>
+          )}
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={area}
+              onChange={(e) => { setArea(e.target.value); setSaved(false) }}
+              onKeyDown={(e) => { if (e.key === 'Enter') save() }}
+              placeholder="e.g. Madina, Tema, Dansoman, Osu…"
+              className="flex-1 rounded-xl border border-ink-900/15 bg-white px-3.5 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-500 focus:ring-2 focus:ring-forest-500/20 placeholder:text-ink-700/40"
+            />
+            <button
+              onClick={save}
+              disabled={busy || !area.trim() || area.trim() === current}
+              className="shrink-0 rounded-xl bg-forest-600 px-4 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 disabled:opacity-50"
+            >
+              {busy ? 'Saving…' : saved ? '✓ Saved' : 'Save'}
+            </button>
+          </div>
+          {err && <p className="mt-2 text-xs text-red-700">{err}</p>}
+        </div>
       )}
-      <div className="flex gap-2">
-        <input
-          type="text"
-          value={area}
-          onChange={(e) => { setArea(e.target.value); setSaved(false) }}
-          onKeyDown={(e) => { if (e.key === 'Enter') save() }}
-          placeholder="e.g. Madina, Tema, Dansoman, Osu…"
-          className="flex-1 rounded-xl border border-ink-900/15 bg-white px-3.5 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-500 focus:ring-2 focus:ring-forest-500/20 placeholder:text-ink-700/40"
-        />
-        <button
-          onClick={save}
-          disabled={busy || !area.trim() || area.trim() === current}
-          className="shrink-0 rounded-xl bg-forest-600 px-4 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 disabled:opacity-50"
-        >
-          {busy ? 'Saving…' : saved ? '✓ Saved' : 'Save'}
-        </button>
-      </div>
-      {err && <p className="mt-2 text-xs text-red-700">{err}</p>}
-      {current && !saved && <p className="mt-2 text-xs text-ink-700/60">Currently: <strong>{current}</strong></p>}
     </div>
   )
 }
@@ -170,6 +184,7 @@ function WorkExperienceCard({
   onSaved: (patch: Record<string, unknown>) => void
 }) {
   const workerId = (worker?.workerId as string) || 'worker'
+  const [open, setOpen] = useState(false)
   const [expEntries, setExpEntries] = useState<ExperienceEntry[]>(() =>
     parseJSON<ExperienceEntry[]>(worker?.experienceEntries, [])
   )
@@ -216,19 +231,34 @@ function WorkExperienceCard({
     finally { setSaving(false) }
   }
 
+  const expCount = expEntries.length
+  const certCount = certs.length
+  const summary = [
+    expCount > 0 ? `${expCount} experience${expCount > 1 ? 's' : ''}` : null,
+    certCount > 0 ? `${certCount} cert${certCount > 1 ? 's' : ''}` : null,
+  ].filter(Boolean).join(' · ') || 'None added yet'
+
   const inp = 'w-full rounded-lg border border-ink-900/12 bg-white px-3 py-2 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/20'
 
   return (
     <div className="mt-4 rounded-2xl border border-ink-900/8 bg-cream-50 shadow-sm">
-      {/* Header */}
-      <div className="border-b border-ink-900/8 px-5 py-4">
-        <p className="text-sm font-semibold text-ink-900">Work experience & certifications</p>
-        <p className="mt-0.5 text-xs text-ink-700/60">
-          Experience photos are private — only BeyondX sees them. Certifications are visible to employers.
-        </p>
-      </div>
+      {/* Accordion header — always visible, click to expand */}
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center justify-between px-5 py-4 text-left"
+        aria-expanded={open}
+      >
+        <div>
+          <p className="text-sm font-semibold text-ink-900">Work experience & certifications</p>
+          <p className="mt-0.5 text-xs text-ink-700/60">{summary}</p>
+        </div>
+        <ChevronRight size={16} className={`shrink-0 text-ink-700/50 transition-transform ${open ? 'rotate-90' : ''}`} aria-hidden="true" />
+      </button>
 
-      {/* Tabs — plain text, no icons */}
+      {/* Expandable body */}
+      {open && (
+        <div className="border-t border-ink-900/8">
+        {/* Tabs — plain text, no icons */}
       <div className="flex border-b border-ink-900/8">
         {([['exp', 'Experience'], ['certs', 'Certifications']] as const).map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)}
@@ -364,6 +394,8 @@ function WorkExperienceCard({
           </button>
         </div>
       </div>
+      </div>
+      )}
     </div>
   )
 }
