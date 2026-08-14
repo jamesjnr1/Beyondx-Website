@@ -28,7 +28,14 @@
     --tw-ring-shadow: 0 0 #0000;
     --tw-ring-offset-shadow: 0 0 #0000;
   }
-  :focus-visible {
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [role="button"]:focus-visible,
+  [role="tab"]:focus-visible,
+  [role="link"]:focus-visible {
     outline: 2px solid theme('colors.forest.600') !important;
     outline-offset: 2px;
   }

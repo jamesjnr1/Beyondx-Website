@@ -777,7 +777,7 @@ export default function WorkerDashboard() {
         <ReferralCard code={(me?.workerId as string) || 'BX-—'} referrals={0} />
 
         {/* Profile completion card — single unified section, no stacked boxes */}
-        <div className="rounded-2xl bg-cream-50 ring-1 ring-ink-900/8 overflow-hidden">
+        <div className="rounded-2xl bg-cream-50 ring-1 ring-ink-900/8 overflow-hidden outline-none">
           {/* Home area row */}
           <button
             onClick={() => {
@@ -802,7 +802,7 @@ export default function WorkerDashboard() {
           </div>
 
           {/* Experience row */}
-          <div className="border-t border-ink-900/6">
+          <div className="border-t border-ink-900/6 outline-none">
             <WorkExperienceCard worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
           </div>
         </div>
