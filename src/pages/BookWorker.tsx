@@ -255,7 +255,7 @@ function BookingForm({ state, onDone, onError }: {
 
         {/* Minimum day notice */}
         {cat?.minDays && days < cat.minDays && (
-          <p className="rounded-xl bg-amber-50 px-3 py-2.5 text-xs text-amber-800 ring-1 ring-amber-200">
+          <p className="rounded-xl bg-amber-50 px-3 py-2.5 text-xs text-amber-800 border border-amber-200">
             Minimum {cat.minDays}-day booking for {cat.title}. Duration adjusted automatically.
           </p>
         )}
@@ -328,7 +328,7 @@ function BookingForm({ state, onDone, onError }: {
         <div className="grid grid-cols-3 gap-3">
           {PAYMENT_METHODS.map((m) => (
             <button key={m.id} type="button" aria-pressed={method === m.id} onClick={() => setMethod(m.id)}
-              className={`flex h-16 items-center justify-center rounded-xl border bg-white p-2 transition-all ${method === m.id ? 'border-ink-900 ring-2 ring-ink-900/20' : 'border-ink-900/12 hover:border-ink-900/30'}`}>
+              className={`flex h-16 items-center justify-center rounded-xl border bg-white p-2 transition-all ${method === m.id ? 'border-ink-900 border-2 border-ink-900/20' : 'border-ink-900/12 hover:border-ink-900/30'}`}>
               <img src={m.logo} alt={m.alt} className="max-h-9 w-auto object-contain" />
             </button>
           ))}

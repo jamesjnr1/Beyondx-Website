@@ -497,7 +497,7 @@ function EmployerRegister() {
         </>)}
 
         {step === 2 && accountType === 'individual' && (<>
-          <div className="rounded-xl bg-forest-600/6 p-4 ring-1 ring-forest-600/15">
+          <div className="rounded-xl bg-forest-600/6 p-4 border border-forest-600/15">
             <p className="text-sm font-medium text-ink-900">Identity verification</p>
             <p className="mt-1 text-xs leading-relaxed text-ink-700">
               We collect your Ghana Card number to confirm you are a real, traceable individual.
@@ -510,7 +510,7 @@ function EmployerRegister() {
         </>)}
 
         {step === 2 && accountType === 'enterprise' && (<>
-          <div className="rounded-xl bg-forest-600/6 p-4 ring-1 ring-forest-600/15">
+          <div className="rounded-xl bg-forest-600/6 p-4 border border-forest-600/15">
             <p className="text-sm font-medium text-ink-900">Business verification</p>
             <p className="mt-1 text-xs leading-relaxed text-ink-700">
               We verify registered businesses through the Ghana Registrar General's records.

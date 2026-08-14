@@ -254,7 +254,7 @@ export default function EmployerDashboard() {
         {tab === 'hire' && (
           <div className="mt-6">
             {!DISPATCH_ENABLED && (
-              <div className="mb-4 rounded-xl bg-clay-400/10 p-4 ring-1 ring-clay-400/25">
+              <div className="mb-4 rounded-xl bg-clay-400/10 p-4 border border-clay-400/25">
                 <p className="flex items-start gap-2 text-sm leading-relaxed text-ink-800">
                   <Info size={16} aria-hidden="true" className="mt-0.5 shrink-0 text-clay-500" />
                   <span><span className="font-semibold">Dispatch is paused for now.</span> {DISPATCH_PAUSED_MESSAGE}</span>
@@ -939,7 +939,7 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch }: { worker:
             <X size={18} aria-hidden="true" />
           </button>
           {worker.photoUrl ? (
-            <img src={worker.photoUrl as string} alt="" className="mx-auto h-16 w-16 rounded-full object-cover ring-2 ring-cream-50/30" />
+            <img src={worker.photoUrl as string} alt="" className="mx-auto h-16 w-16 rounded-full object-cover border-2 border-cream-50/30" />
           ) : (
             <span aria-hidden="true" className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-cream-50 font-serif text-xl font-bold text-forest-700 shadow-md">
               {wInitials(worker)}
@@ -981,8 +981,8 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch }: { worker:
               worker.proximity.transportAllowance === 0
                 ? 'bg-forest-600/10'
                 : worker.proximity.transportAllowance <= 10
-                ? 'bg-amber-50 ring-1 ring-amber-200'
-                : 'bg-red-50 ring-1 ring-red-200'
+                ? 'bg-amber-50 border border-amber-200'
+                : 'bg-red-50 border border-red-200'
             }`}>
               <p className={`text-xs font-semibold ${
                 worker.proximity.transportAllowance === 0 ? 'text-forest-700'
@@ -1088,7 +1088,7 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch }: { worker:
               <Send size={15} aria-hidden="true" /> {worker.isBusy ? 'Currently on a job' : `Dispatch ${wName(worker).split(' ')[0]}`}
             </button>
           ) : (
-            <div className="rounded-xl bg-clay-400/10 p-3.5 ring-1 ring-clay-400/25">
+            <div className="rounded-xl bg-clay-400/10 p-3.5 border border-clay-400/25">
               <p className="flex items-start gap-2 text-xs leading-relaxed text-ink-800">
                 <Info size={14} aria-hidden="true" className="mt-0.5 shrink-0 text-clay-500" />
                 <span><span className="font-semibold">Dispatch is paused for now.</span> {DISPATCH_PAUSED_MESSAGE}</span>
@@ -1275,7 +1275,7 @@ function PostTask({ onDone }: { onDone: (msg: string) => void }) {
           </div>
           <div className="block">
             <span className="mb-1 block text-xs font-medium text-ink-700">Cost breakdown</span>
-            <div className="rounded-xl bg-forest-600/5 px-4 py-3 ring-1 ring-forest-600/15 space-y-1">
+            <div className="rounded-xl bg-forest-600/5 px-4 py-3 border border-forest-600/15 space-y-1">
               <div className="flex justify-between text-sm text-ink-700">
                 <span>Per worker ({duration})</span>
                 <span className="font-semibold text-ink-900">{cedis(workerGets + fee)}</span>

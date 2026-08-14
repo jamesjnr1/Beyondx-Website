@@ -483,12 +483,12 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
         {isOffer && (slotsNeeded > 1 || hoursLeft !== null) && (
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {slotsNeeded > 1 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 ring-1 ring-amber-200">
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 border border-amber-200">
                 {slotsNeeded} workers needed
               </span>
             )}
             {hoursLeft !== null && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 ring-1 ring-red-200">
+              <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 border border-red-200">
                 Expires in {hoursLeft}h
               </span>
             )}
@@ -502,7 +502,7 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
 
         {/* Payment pending notice */}
         {task.status === 'payment_pending' && (
-          <div className="mt-3 flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2.5 ring-1 ring-amber-200">
+          <div className="mt-3 flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2.5 border border-amber-200">
             <span className="text-sm" aria-hidden="true">⏳</span>
             <p className="text-xs font-medium text-amber-900">Payment is being verified — you'll be dispatched once confirmed</p>
           </div>
@@ -858,13 +858,13 @@ export default function WorkerDashboard() {
               {tab === 'mine' && (
                 <>
                   {mine.some(t => t.status === 'payment_pending') && (
-                    <p className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-900 ring-1 ring-amber-200">
+                    <p className="flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-900 border border-amber-200">
                       <span className="mt-0.5 shrink-0 text-base leading-none">⏳</span>
                       BeyondX is verifying the employer's payment. Once confirmed — usually within a few minutes — you'll be officially dispatched and can begin the job.
                     </p>
                   )}
                   {mine.length > 0 && mine.some(t => t.status !== 'payment_pending') && (
-                    <p className="flex items-start gap-2 rounded-xl bg-forest-600/5 p-3 text-xs leading-relaxed text-ink-700 ring-1 ring-forest-600/15">
+                    <p className="flex items-start gap-2 rounded-xl bg-forest-600/5 p-3 text-xs leading-relaxed text-ink-700 border border-forest-600/15">
                       <Info size={13} aria-hidden="true" className="mt-0.5 shrink-0 text-forest-600" />
                       Mark a task complete when you finish. Your employer confirms the work, then BeyondX releases your payment.
                     </p>
@@ -873,7 +873,7 @@ export default function WorkerDashboard() {
                     <div key={t.id}>
                       <TaskCard task={t}>
                         {t.status === 'payment_pending' ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 ring-1 ring-amber-200">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 border border-amber-200">
                             ⏳ Payment being verified
                           </span>
                         ) : t.status === 'pending_confirmation' ? (

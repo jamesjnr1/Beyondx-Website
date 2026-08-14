@@ -43,7 +43,7 @@ export default function ProfileEditor({
             {avatar ? <img src={avatar} alt="Profile" className="h-full w-full object-cover" /> : initials}
           </div>
           <button onClick={() => fileRef.current?.click()}
-            className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-forest-600 text-cream-50 shadow ring-2 ring-cream-50 transition-colors hover:bg-forest-500">
+            className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-forest-600 text-cream-50 shadow border-2 border-cream-50 transition-colors hover:bg-forest-500">
             <Camera size={15} />
           </button>
           <input ref={fileRef} type="file" accept="image/*" onChange={pickFile} className="hidden" />

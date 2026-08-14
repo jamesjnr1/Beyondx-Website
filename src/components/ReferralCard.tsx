@@ -93,7 +93,7 @@ function ActiveReferralCard({ code, referrals = 0 }: { code: string; referrals?:
           <label htmlFor="referral-link" className="mb-2 block text-xs uppercase tracking-wide text-cream-50/60">
             Your referral link
           </label>
-          <div className="flex items-center gap-2 rounded-xl bg-cream-50/10 p-2 ring-1 ring-cream-50/20">
+          <div className="flex items-center gap-2 rounded-xl bg-cream-50/10 p-2 border border-cream-50/20">
             <input
               id="referral-link"
               readOnly

@@ -131,7 +131,6 @@ html.a11y-contrast .gradient-text {
   -webkit-text-fill-color: currentColor !important;
   color: #2f5c00 !important;
 }
-html.a11y-contrast .ring-ink-900\/5,
 html.a11y-contrast .border-ink-900\/8,
 html.a11y-contrast .border-ink-900\/10,
 html.a11y-contrast .border-ink-900\/15 {
