@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
-import { ArrowLeft, CheckCircle, MapPin, Bus } from 'lucide-react'
+import { ArrowLeft, CheckCircle, MapPin, Bus, AlertTriangle, Info, BedDouble } from 'lucide-react'
 import JobLocationMap from '../components/JobLocationMap'
 import Logo from '../components/Logo'
 import {
   allCategories, TOOL_SURCHARGE_RATE, VEHICLE_SURCHARGES,
   logisticsRate,
 } from '../data'
-import { PLATFORM_FEE_FLAT, MOMO_NUMBER, BEYONDX_PHONE } from '../lib/payments'
+import { PLATFORM_FEE_FLAT, MOMO_NUMBER, MOMO_NAME, BEYONDX_PHONE, INTERCITY_MIN_JOB_VALUE, TRANSPORT_TIERS } from '../lib/payments'
 import { tasks as tasksApi, workers as workersApi, ApiError } from '../lib/api'
 import type { Worker } from '../lib/api'
 import type { ScreeningAnswers } from './EmployerDashboard'
@@ -137,7 +137,7 @@ function BookingForm({ state, onDone, onError }: {
 
   // Transport allowance — computed live from worker home area + job location
   const workerHomeArea = (worker.homeArea as string) || ''
-  const [transport, setTransport] = useState<{ available: boolean; roadKm: number | null; transportAllowance: number; tier: string } | null>(null)
+  const [transport, setTransport] = useState<{ available: boolean; roadKm: number | null; transportAllowance: number; tier: string; tierLabel?: string; tierDescription?: string; isIntercity?: boolean; overnightNote?: boolean } | null>(null)
 
   useEffect(() => {
     if (!workerHomeArea || !location.trim() || cat?.mode === 'remote') {
@@ -167,12 +167,15 @@ function BookingForm({ state, onDone, onError }: {
   const effectiveDays = cat?.distancePricing ? 1 : (cat?.minDays ? Math.max(days, cat.minDays) : days)
   const workerGets = isPerDay ? baseRate * effectiveDays : baseRate
   const transportAllowance = (cat?.mode !== 'remote' && transport?.available) ? (transport.transportAllowance ?? 0) : 0
+  const isIntercity = Boolean(transport?.isIntercity)
+  const overnightNote = Boolean(transport?.overnightNote)
+  const intercityBlocked = isIntercity && workerGets < INTERCITY_MIN_JOB_VALUE
   const fee = PLATFORM_FEE_FLAT
   const pay = workerGets + transportAllowance + fee
   const duration = effectiveDays === 0.5 ? 'Half Day' : effectiveDays === 1 ? '1 Day' : `${effectiveDays} Days`
 
   const submit = async () => {
-    if (!payRef.trim() || !method || !jobDescription.trim() || busy) return
+    if (!payRef.trim() || !method || !jobDescription.trim() || busy || intercityBlocked) return
     setBusy(true)
     try {
       await tasksApi.dispatch({
@@ -300,29 +303,74 @@ function BookingForm({ state, onDone, onError }: {
           </div>
         )}
 
-        {/* Worker home area indicator */}
+        {/* Worker home area + distance tier indicator */}
         {workerHomeArea && cat?.mode !== 'remote' && (
-          <div className="flex items-start gap-2 rounded-xl border border-ink-900/10 bg-cream-100 px-3 py-2.5">
-            <MapPin size={14} className="mt-0.5 shrink-0 text-forest-600" aria-hidden="true" />
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-ink-900">{wName(worker).split(' ')[0]}'s home area: <span className="text-forest-700">{workerHomeArea}</span></p>
-              {transport?.available && (
-                <p className={`mt-0.5 text-xs ${transport.transportAllowance > 0 ? 'text-amber-700' : 'text-forest-700'}`}>
-                  {transport.roadKm}km road distance ·{' '}
-                  {transport.transportAllowance > 0
-                    ? `GH₵${transport.transportAllowance} transport allowance added`
-                    : 'No transport allowance needed'}
-                </p>
-              )}
-              {location.trim() && !transport && <p className="mt-0.5 text-xs text-ink-700/50">Enter job location to calculate transport</p>}
+          <div className={`rounded-xl border px-3 py-3 ${isIntercity ? 'border-red-200 bg-red-50' : transport?.available && transport.transportAllowance > 0 ? 'border-amber-200 bg-amber-50' : 'border-ink-900/10 bg-cream-100'}`}>
+            <div className="flex items-start gap-2">
+              <MapPin size={14} className={`mt-0.5 shrink-0 ${isIntercity ? 'text-red-600' : 'text-forest-600'}`} aria-hidden="true" />
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium text-ink-900">
+                    {wName(worker).split(' ')[0]}'s home: <span className="text-forest-700">{workerHomeArea}</span>
+                  </p>
+                  {transport?.available && (
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                      isIntercity ? 'bg-red-100 text-red-700'
+                      : transport.transportAllowance > 0 ? 'bg-amber-100 text-amber-800'
+                      : 'bg-forest-600/10 text-forest-700'
+                    }`}>
+                      {transport.tierLabel}
+                    </span>
+                  )}
+                </div>
+                {transport?.available && (
+                  <p className="mt-1 text-xs text-ink-700/70">
+                    {transport.roadKm}km road · {transport.tierDescription}
+                    {transport.transportAllowance > 0 && (
+                      <span className="ml-1 font-semibold text-ink-900">· GH₵{transport.transportAllowance} added</span>
+                    )}
+                  </p>
+                )}
+                {location.trim() && !transport && (
+                  <p className="mt-0.5 text-xs text-ink-700/50">Calculating distance…</p>
+                )}
+              </div>
             </div>
+            {/* Intercity warnings */}
+            {isIntercity && (
+              <div className="mt-3 space-y-2 border-t border-red-200 pt-3">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle size={13} className="mt-0.5 shrink-0 text-red-600" aria-hidden="true" />
+                  <p className="text-xs font-semibold text-red-800">This is a long-distance assignment</p>
+                </div>
+                <p className="text-xs leading-relaxed text-red-700 pl-5">
+                  The worker is travelling {transport?.roadKm}km for this job. They will see this flagged as intercity before accepting so they can plan accordingly.
+                </p>
+                {intercityBlocked && (
+                  <div className="flex items-start gap-2 rounded-lg bg-red-100 px-3 py-2">
+                    <Info size={12} className="mt-0.5 shrink-0 text-red-700" aria-hidden="true" />
+                    <p className="text-xs text-red-800">
+                      Intercity dispatch requires a minimum job value of <strong>GH₵{INTERCITY_MIN_JOB_VALUE}</strong>. Increase the duration or rate to proceed.
+                    </p>
+                  </div>
+                )}
+                {overnightNote && (
+                  <div className="flex items-start gap-2 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2">
+                    <BedDouble size={12} className="mt-0.5 shrink-0 text-amber-700" aria-hidden="true" />
+                    <p className="text-xs text-amber-800">
+                      At this distance the worker may not be able to return the same day. Consider whether an overnight allowance or accommodation needs to be arranged.
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
         {!workerHomeArea && cat?.mode !== 'remote' && (
-          <p className="flex items-center gap-1.5 text-xs text-amber-700">
+          <div className="flex items-center gap-1.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-800">
             <MapPin size={11} aria-hidden="true" />
-            Worker hasn't set a home area — transport allowance can't be calculated automatically.
-          </p>
+            Worker hasn't set a home area — transport allowance will be calculated on dispatch.
+          </div>
         )}
 
         {/* Job description — required */}
@@ -356,39 +404,56 @@ function BookingForm({ state, onDone, onError }: {
         )}
       </div>
 
-      {/* Price */}
-      <div className="mt-8 rounded-2xl bg-ink-900 px-6 py-5">
-        <p className="text-xs font-medium uppercase tracking-widest text-cream-50/50">Total to pay BeyondX</p>
-        <p className="mt-2 font-serif text-4xl font-semibold text-cream-50">{cedis(pay)}</p>
-        <div className="mt-3 space-y-1.5 border-t border-cream-50/10 pt-3 text-xs text-cream-50/50">
-          <div className="flex items-center justify-between">
-            <span>Worker pay</span>
-            <span>{cedis(workerGets)}</span>
+      {/* Price breakdown — full itemised bill */}
+      <div className="mt-8 overflow-hidden rounded-2xl bg-ink-900">
+        <div className="px-6 pt-5 pb-4">
+          <p className="text-xs font-medium uppercase tracking-widest text-cream-50/40">Total to pay BeyondX</p>
+          <p className="mt-1.5 font-serif text-5xl font-semibold text-cream-50">{cedis(pay)}</p>
+        </div>
+        <div className="space-y-0 border-t border-cream-50/10 px-6 pb-5 pt-3">
+          {/* Worker pay row */}
+          <div className="flex items-center justify-between py-1.5">
+            <span className="text-xs text-cream-50/60">
+              Worker pay
+              {isPerDay && <span className="ml-1 text-cream-50/40">({cedis(baseRate)}/day × {effectiveDays === 0.5 ? '½' : effectiveDays}d)</span>}
+            </span>
+            <span className="text-sm font-medium text-cream-50">{cedis(workerGets)}</span>
           </div>
+          {/* Transport allowance row */}
           {transportAllowance > 0 && (
-            <div className="flex items-center justify-between">
-              <span className="flex items-center gap-1"><Bus size={10} aria-hidden="true" /> Transport allowance ({transport?.roadKm}km)</span>
-              <span>+ {cedis(transportAllowance)}</span>
+            <div className="flex items-center justify-between py-1.5">
+              <span className="flex items-center gap-1.5 text-xs text-cream-50/60">
+                <Bus size={11} aria-hidden="true" />
+                Transport allowance
+                {transport?.tierLabel && <span className="text-cream-50/40">({transport.tierLabel} · {transport.roadKm}km)</span>}
+              </span>
+              <span className="text-sm font-medium text-cream-50">+ {cedis(transportAllowance)}</span>
             </div>
           )}
-          <div className="flex items-center justify-between">
-            <span>BeyondX service fee</span>
-            <span>+ {cedis(fee)}</span>
+          {/* Service fee row */}
+          <div className="flex items-center justify-between py-1.5">
+            <span className="text-xs text-cream-50/60">BeyondX service fee</span>
+            <span className="text-sm font-medium text-cream-50">+ {cedis(fee)}</span>
           </div>
-          <div className="flex items-center justify-between border-t border-cream-50/10 pt-1.5 text-cream-50/70 font-semibold">
-            <span>Total</span>
-            <span>{cedis(pay)}</span>
+          {/* Total */}
+          <div className="flex items-center justify-between border-t border-cream-50/15 pt-3 mt-1">
+            <span className="text-xs font-semibold uppercase tracking-widest text-cream-50/50">Total</span>
+            <span className="font-serif text-xl font-semibold text-cream-50">{cedis(pay)}</span>
           </div>
         </div>
       </div>
 
       {/* Where to send it */}
-      <div className="mt-4 rounded-2xl border border-forest-600/20 bg-forest-600/5 px-5 py-4">
-        <p className="text-xs font-medium uppercase tracking-widest text-ink-700">Send payment to</p>
-        <p className="mt-1 font-serif text-2xl font-semibold text-ink-900">{MOMO_NUMBER}</p>
-        <p className="mt-1 text-xs text-ink-700">
-          MTN Mobile Money, registered to BeyondX. Questions? Call or WhatsApp {BEYONDX_PHONE}.
-        </p>
+      <div className="mt-4 overflow-hidden rounded-2xl border border-forest-600/20 bg-forest-600/5">
+        <div className="border-b border-forest-600/15 px-5 py-3">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-ink-700/50">Send payment to</p>
+        </div>
+        <div className="px-5 py-4">
+          <p className="font-serif text-3xl font-semibold tracking-tight text-ink-900">{MOMO_NUMBER}</p>
+          <p className="mt-1 text-sm font-medium text-ink-900">{MOMO_NAME}</p>
+          <p className="mt-1 text-xs text-ink-700/60">MTN Mobile Money · Registered to BeyondX</p>
+          <p className="mt-2 text-xs text-ink-700/60">Questions? Call or WhatsApp <span className="font-medium text-ink-900">{BEYONDX_PHONE}</span></p>
+        </div>
       </div>
 
       {/* Payment */}
@@ -411,7 +476,7 @@ function BookingForm({ state, onDone, onError }: {
 
       <button onClick={submit} disabled={!payRef.trim() || !method || !jobDescription.trim() || busy}
         className="mt-6 flex w-full items-center justify-center gap-2 rounded-xl bg-ink-900 px-6 py-4 text-sm font-semibold text-cream-50 transition-all hover:bg-ink-800 active:scale-[0.98] disabled:opacity-40">
-        {busy ? 'Submitting…' : `Submit booking — ${cedis(pay)}`}
+        {busy ? 'Submitting…' : intercityBlocked ? `Minimum GH₵${INTERCITY_MIN_JOB_VALUE} required for intercity` : `Submit booking — ${cedis(pay)}`}
       </button>
       <p className="mt-2.5 text-center text-xs text-ink-700/50">
         Worker is notified only after BeyondX verifies your payment.

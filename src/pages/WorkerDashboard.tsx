@@ -424,6 +424,7 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
     ? new Date(`${task.scheduledDate as string}T${(task.scheduledTime as string) || '08:00'}:00`).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
     : null
   const transportAmt = (task.transportAllowance as number) || 0
+  const isIntercityJob = transportAmt >= 80  // Tier 4
 
   return (
     <div className={`overflow-hidden rounded-2xl bg-white shadow-sm border ${isOffer ? 'border-forest-600/30' : 'border-ink-900/8'}`}>
@@ -432,6 +433,13 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
         <div className="flex items-center gap-2 bg-forest-600 px-4 py-2">
           <span className="flex h-1.5 w-1.5 rounded-full bg-cream-50 animate-pulse" aria-hidden="true" />
           <span className="text-xs font-semibold text-cream-50">Direct offer — respond to secure this job</span>
+        </div>
+      )}
+      {/* Intercity flag — shown before worker commits */}
+      {isIntercityJob && (
+        <div className="flex items-center gap-2 bg-red-600 px-4 py-2">
+          <AlertTriangle size={13} className="shrink-0 text-cream-50" aria-hidden="true" />
+          <span className="text-xs font-semibold text-cream-50">Long-distance assignment — review travel requirements before accepting</span>
         </div>
       )}
 
@@ -497,11 +505,18 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
 
         {/* Transport allowance notice */}
         {isOffer && transportAmt > 0 && (
-          <div className="mt-3 flex items-start gap-2 rounded-lg bg-forest-600/8 px-3 py-2.5">
-            <Bus size={14} aria-hidden="true" className="mt-0.5 shrink-0 text-forest-700" />
-            <p className="text-xs leading-relaxed text-forest-800">
-              <strong>GH₵{transportAmt} transport allowance</strong> included — this job is farther from your home area. Paid on top of your full {cedis(task.pay)}.
-            </p>
+          <div className={`mt-3 flex items-start gap-2 rounded-lg px-3 py-2.5 ${isIntercityJob ? 'bg-red-50 border border-red-200' : 'bg-forest-600/8'}`}>
+            <Bus size={14} aria-hidden="true" className={`mt-0.5 shrink-0 ${isIntercityJob ? 'text-red-600' : 'text-forest-700'}`} />
+            <div>
+              <p className="text-xs leading-relaxed text-ink-800">
+                <strong>GH₵{transportAmt} transport allowance</strong> included on top of your {cedis(task.pay)} rate.
+              </p>
+              {isIntercityJob && (
+                <p className="mt-1 text-xs text-red-700">
+                  This is a long-distance job. Factor in travel time both ways before accepting.
+                </p>
+              )}
+            </div>
           </div>
         )}
 
