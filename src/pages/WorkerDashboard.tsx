@@ -103,75 +103,31 @@ function FileUploadButton({
   )
 }
 
-function HomeAreaCard({ worker, onSaved }: { worker: Worker | null; onSaved: (p: Record<string, unknown>) => void }) {
-  const current = (worker?.homeArea as string) || ''
-  const [open, setOpen] = useState(false)
-  const [area, setArea] = useState(current)
+function HomeAreaInline({ worker, onSaved }: { worker: Worker | null; onSaved: (p: Record<string, unknown>) => void }) {
+  const [area, setArea] = useState((worker?.homeArea as string) || '')
   const [busy, setBusy] = useState(false)
   const [saved, setSaved] = useState(false)
-  const [err, setErr] = useState<string | null>(null)
-
   useEffect(() => { setArea((worker?.homeArea as string) || '') }, [worker?.homeArea])
-
   const save = async () => {
     if (!area.trim() || busy) return
-    setBusy(true); setErr(null)
+    setBusy(true)
     try {
       await workersApi.updateMe({ homeArea: area.trim() })
       onSaved({ homeArea: area.trim() })
-      setSaved(true)
-      setTimeout(() => setSaved(false), 3000)
-    } catch {
-      setErr('Could not save — please try again.')
-    } finally {
-      setBusy(false)
-    }
+      setSaved(true); setTimeout(() => setSaved(false), 2000)
+    } catch { /* silent */ } finally { setBusy(false) }
   }
-
   return (
-    <div className="rounded-2xl bg-cream-50 shadow-sm ring-1 ring-ink-900/5">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between px-5 py-4 text-left"
-        aria-expanded={open}
-      >
-        <div className="flex items-center gap-2">
-          <MapPin size={15} className="shrink-0 text-forest-600" aria-hidden="true" />
-          <div>
-            <p className="text-sm font-semibold text-ink-900">Your home area</p>
-            <p className="mt-0.5 text-xs text-ink-700/60">{current || 'Not set — tap to add'}</p>
-          </div>
-        </div>
-        <ChevronRight size={16} className={`shrink-0 text-ink-700/50 transition-transform ${open ? 'rotate-90' : ''}`} aria-hidden="true" />
+    <div className="flex gap-2">
+      <input type="text" value={area} onChange={(e) => setArea(e.target.value)}
+        onKeyDown={(e) => e.key === 'Enter' && save()}
+        placeholder="e.g. Madina, Tema, Dansoman…"
+        className="flex-1 rounded-lg border border-ink-900/15 bg-white px-3 py-2 text-sm text-ink-900 outline-none focus:border-forest-500 focus:ring-2 focus:ring-forest-500/15"
+      />
+      <button onClick={save} disabled={busy || !area.trim()}
+        className="shrink-0 rounded-lg bg-forest-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+        {busy ? '…' : saved ? '✓' : 'Save'}
       </button>
-      {open && (
-        <div className="border-t border-ink-900/8 px-5 pb-5 pt-4">
-          {!current && (
-            <p className="mb-3 flex items-start gap-2 rounded-xl bg-amber-50 p-3 text-xs leading-relaxed text-amber-900 ring-1 ring-amber-200">
-              <span className="mt-0.5 shrink-0 text-base leading-none">📍</span>
-              Adding your area helps BeyondX match you to nearby jobs — and adds a transport allowance to your pay when jobs are far from you.
-            </p>
-          )}
-          <div className="flex gap-2">
-            <input
-              type="text"
-              value={area}
-              onChange={(e) => { setArea(e.target.value); setSaved(false) }}
-              onKeyDown={(e) => { if (e.key === 'Enter') save() }}
-              placeholder="e.g. Madina, Tema, Dansoman, Osu…"
-              className="flex-1 rounded-xl border border-ink-900/15 bg-white px-3.5 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-500 focus:ring-2 focus:ring-forest-500/20 placeholder:text-ink-700/40"
-            />
-            <button
-              onClick={save}
-              disabled={busy || !area.trim() || area.trim() === current}
-              className="shrink-0 rounded-xl bg-forest-600 px-4 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 disabled:opacity-50"
-            >
-              {busy ? 'Saving…' : saved ? '✓ Saved' : 'Save'}
-            </button>
-          </div>
-          {err && <p className="mt-2 text-xs text-red-700">{err}</p>}
-        </div>
-      )}
     </div>
   )
 }
@@ -241,11 +197,11 @@ function WorkExperienceCard({
   const inp = 'w-full rounded-lg border border-ink-900/12 bg-white px-3 py-2 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/20'
 
   return (
-    <div className="mt-4 rounded-2xl border border-ink-900/8 bg-cream-50 shadow-sm">
-      {/* Accordion header — always visible, click to expand */}
+    <div className="rounded-none bg-transparent">
+      {/* Accordion header */}
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between px-5 py-4 text-left"
+        className="flex w-full items-center justify-between px-4 py-3.5 text-left hover:bg-ink-900/[0.02] transition-colors"
         aria-expanded={open}
       >
         <div>
@@ -257,9 +213,8 @@ function WorkExperienceCard({
 
       {/* Expandable body */}
       {open && (
-        <div className="border-t border-ink-900/8">
-        {/* Tabs — plain text, no icons */}
-      <div className="flex border-b border-ink-900/8">
+        <div className="border-t border-ink-900/6">
+        <div className="flex border-b border-ink-900/6">
         {([['exp', 'Experience'], ['certs', 'Certifications']] as const).map(([id, label]) => (
           <button key={id} onClick={() => setTab(id)}
             className={`relative flex-1 py-3 text-sm font-medium transition-colors focus:outline-none ${tab === id ? 'text-ink-900' : 'text-ink-700/50 hover:text-ink-900'}`}>
@@ -821,23 +776,36 @@ export default function WorkerDashboard() {
 
         <ReferralCard code={(me?.workerId as string) || 'BX-—'} referrals={0} />
 
-        {/* Home area — shown prominently; editable below in HomeAreaCard */}
-        {me?.homeArea ? (
-          <div className="flex items-center gap-2 rounded-xl bg-cream-50 px-4 py-2.5">
-            <MapPin size={14} className="shrink-0 text-forest-600" aria-hidden="true" />
-            <span className="text-sm text-ink-700">Based in <strong className="text-ink-900">{me.homeArea as string}</strong></span>
+        {/* Profile completion card — single unified section, no stacked boxes */}
+        <div className="rounded-2xl bg-cream-50 ring-1 ring-ink-900/8 overflow-hidden">
+          {/* Home area row */}
+          <button
+            onClick={() => {
+              const card = document.getElementById('home-area-inline')
+              if (card) card.classList.toggle('hidden')
+            }}
+            className="flex w-full items-center justify-between px-4 py-3.5 text-left hover:bg-ink-900/[0.02] transition-colors"
+          >
+            <div className="flex items-center gap-2.5">
+              <MapPin size={15} className="shrink-0 text-forest-600" aria-hidden="true" />
+              <div>
+                <span className="text-sm font-semibold text-ink-900">Home area</span>
+                <span className="ml-2 text-sm text-ink-700/60">
+                  {(me?.homeArea as string) || <span className="text-amber-700">Not set</span>}
+                </span>
+              </div>
+            </div>
+            <ChevronRight size={15} className="shrink-0 text-ink-700/40" />
+          </button>
+          <div id="home-area-inline" className="hidden border-t border-ink-900/6 px-4 pb-4 pt-3">
+            <HomeAreaInline worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
           </div>
-        ) : (
-          <div className="flex items-center gap-2 rounded-xl bg-amber-50 px-4 py-2.5 ring-1 ring-amber-200">
-            <MapPin size={14} className="shrink-0 text-amber-700" aria-hidden="true" />
-            <span className="text-sm text-amber-900">No home area set — add yours below to get matched to nearby jobs.</span>
+
+          {/* Experience row */}
+          <div className="border-t border-ink-900/6">
+            <WorkExperienceCard worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
           </div>
-        )}
-
-        <WorkExperienceCard worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
-
-        {/* Home area — for proximity matching */}
-        <HomeAreaCard worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
+        </div>
 
         <div className="mt-8 flex items-center gap-2 overflow-x-auto border-b border-ink-900/10 pb-px" role="tablist" aria-label="Worker sections">
           {tabs.map((t) => (
