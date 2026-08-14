@@ -13,31 +13,29 @@
   ::selection {
     @apply bg-forest-500/20 text-forest-800;
   }
-  /* Remove ALL browser default blue focus outlines — applies on tap and click */
+  /* Nuclear outline kill — no blue or any browser outline on anything, ever */
   *,
+  *::before,
+  *::after {
+    -webkit-tap-highlight-color: transparent !important;
+    -webkit-touch-callout: none;
+  }
   *:focus,
+  *:focus-visible,
   *:focus-within,
   *:active {
     outline: none !important;
-    -webkit-tap-highlight-color: transparent;
+    outline-width: 0 !important;
+    outline-color: transparent !important;
+    outline-style: none !important;
   }
-  /* Override Tailwind's default blue ring color — prevents any ring-2 without
+  /* Override Tailwind's default blue ring CSS vars — prevents any ring-* without
      an explicit color from rendering blue */
   :root {
-    --tw-ring-color: transparent;
-    --tw-ring-shadow: 0 0 #0000;
-    --tw-ring-offset-shadow: 0 0 #0000;
-  }
-  button:focus-visible,
-  a:focus-visible,
-  input:focus-visible,
-  select:focus-visible,
-  textarea:focus-visible,
-  [role="button"]:focus-visible,
-  [role="tab"]:focus-visible,
-  [role="link"]:focus-visible {
-    outline: 2px solid theme('colors.forest.600') !important;
-    outline-offset: 2px;
+    --tw-ring-color: transparent !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    --tw-ring-offset-shadow: 0 0 #0000 !important;
+    --tw-ring-offset-color: transparent !important;
   }
   @media (prefers-reduced-motion: reduce) {
     html { scroll-behavior: auto; }
