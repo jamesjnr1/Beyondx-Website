@@ -31,7 +31,8 @@
   --amb:var(--clay-700);--amb-bg:var(--clay-50);--amb-b:var(--clay-200);
   --f:'DM Sans',system-ui,sans-serif;--d:'Fraunces',Georgia,serif;--m:'JetBrains Mono',ui-monospace,monospace;--off:var(--ink-50);--bd:var(--ink-100);
 }
-*{margin:0;padding:0;box-sizing:border-box;outline:none;}
+*{margin:0;padding:0;box-sizing:border-box;outline:none;-webkit-tap-highlight-color:transparent;}
+*:focus,*:focus-within,*:active{outline:none;}
 body{background:var(--bg);color:var(--ink);font-family:var(--f);font-size:13.5px;-webkit-font-smoothing:antialiased;}
 /* ─ Login page ─────────────────────────────────── */
 .login{display:flex;min-height:100vh;background:var(--cream-50);}

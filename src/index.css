@@ -13,11 +13,15 @@
   ::selection {
     @apply bg-forest-500/20 text-forest-800;
   }
-  /* Remove ALL browser default focus outlines — no blue rings anywhere */
-  * {
+  /* Remove ALL browser default blue focus outlines — applies on tap and click */
+  *,
+  *:focus,
+  *:focus-within,
+  *:active {
     outline: none !important;
+    -webkit-tap-highlight-color: transparent;
   }
-  /* Keyboard users only — subtle green ring for accessibility */
+  /* Keyboard-only focus ring — green, not blue */
   :focus-visible {
     outline: 2px solid theme('colors.forest.600') !important;
     outline-offset: 2px;
