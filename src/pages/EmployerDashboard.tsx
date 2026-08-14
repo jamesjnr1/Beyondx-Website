@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, Star, Send, Phone, Plus, X, ShieldCheck, CircleCheck, Info, RefreshCw, AlertCircle, Copy, Check, Award } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Star, Send, Phone, Plus, X, ShieldCheck, CircleCheck, Info, RefreshCw, AlertCircle, Copy, Check, Award, Map } from 'lucide-react'
+import JobLocationMap from '../components/JobLocationMap'
 import DashboardHeader from './DashboardHeader'
 import ProfileModal from '../components/ProfileModal'
 import Toast, { type ToastMsg } from '../components/Toast'
@@ -521,6 +522,16 @@ export default function EmployerDashboard() {
               const active = taskList.filter((t) => ['open', 'payment_pending', 'offered', 'accepted'].includes(String(t.status)))
               const done = taskList.filter((t) => ['employer_confirmed', 'completed', 'payment_rejected'].includes(String(t.status)))
 
+              // Progress steps for the employer pipeline
+              const STEPS = ['open', 'offered', 'accepted', 'pending_confirmation', 'completed']
+              const stepIdx = (status?: string) => {
+                if (status === 'payment_pending') return 0
+                if (status === 'payment_rejected') return -1
+                if (status === 'cancelled') return -1
+                if (status === 'employer_confirmed') return 4
+                return Math.max(0, STEPS.indexOf(status || 'open'))
+              }
+
               const TaskItem = ({ t }: { t: Task }) => {
                 const s = st(t.status)
                 const { workerName } = dispatchDetails(t)
@@ -529,6 +540,9 @@ export default function EmployerDashboard() {
                 const slots = Number(t.slotsNeeded) || 1
                 const filled = Number(t.filledSlots) || 0
                 const acceptedWorkers = (t as unknown as { acceptedWorkers?: {id: string; status: string; acceptedBy?: {fullName?: string; phone?: string}}[] }).acceptedWorkers
+                const [showMap, setShowMap] = useState(false)
+                const currentStep = stepIdx(t.status as string)
+                const isTerminal = ['completed', 'employer_confirmed', 'payment_rejected', 'cancelled'].includes(t.status as string)
 
                 return (
                   <div className={`rounded-2xl bg-cream-50 shadow-sm border border-ink-900/8`}>
@@ -570,6 +584,34 @@ export default function EmployerDashboard() {
                         </div>
                       )}
 
+                      {/* Progress stepper — only for active (non-terminal) jobs */}
+                      {!isTerminal && currentStep >= 0 && (
+                        <div className="mt-4 flex items-center gap-0">
+                          {['Finding', 'Notified', 'On job', 'Done'].map((label, i) => {
+                            const active = i === Math.min(currentStep, 3)
+                            const done = i < Math.min(currentStep, 3)
+                            return (
+                              <div key={label} className="flex flex-1 flex-col items-center">
+                                <div className="flex w-full items-center">
+                                  {i > 0 && <div className={`h-0.5 flex-1 ${done ? 'bg-forest-600' : 'bg-ink-900/10'}`} />}
+                                  <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold transition-colors ${
+                                    done ? 'bg-forest-600 text-cream-50' :
+                                    active ? 'bg-forest-600 text-cream-50 shadow-md' :
+                                    'bg-ink-900/8 text-ink-700/40'
+                                  }`}>
+                                    {done ? '✓' : i + 1}
+                                  </div>
+                                  {i < 3 && <div className={`h-0.5 flex-1 ${(i < currentStep && currentStep <= 3) ? 'bg-forest-600' : 'bg-ink-900/10'}`} />}
+                                </div>
+                                <span className={`mt-1 text-[10px] font-medium ${active ? 'text-forest-700' : done ? 'text-ink-700/60' : 'text-ink-700/30'}`}>
+                                  {label}
+                                </span>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      )}
+
                       {/* Status note */}
                       {s.note && !isUrgent && (
                         <p className="mt-2.5 text-xs leading-relaxed text-ink-700/70">{s.note}</p>
@@ -595,6 +637,22 @@ export default function EmployerDashboard() {
                           >
                             <ShieldCheck size={15} aria-hidden="true" /> Confirm work & release payment
                           </button>
+                        </div>
+                      )}
+
+                      {/* Job location map */}
+                      {t.location && t.location !== 'Remote' && (
+                        <button
+                          onClick={() => setShowMap((v) => !v)}
+                          className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-forest-700 hover:underline"
+                        >
+                          <Map size={12} aria-hidden="true" />
+                          {showMap ? 'Hide map' : 'View job location on map'}
+                        </button>
+                      )}
+                      {showMap && t.location && t.location !== 'Remote' && (
+                        <div className="mt-2">
+                          <JobLocationMap location={t.location as string} heightClass="h-48" showOpenLink />
                         </div>
                       )}
 

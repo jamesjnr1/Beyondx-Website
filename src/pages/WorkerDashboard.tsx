@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
-import { MapPin, Calendar, Check, Star, RotateCcw, Info, RefreshCw, AlertCircle, Camera, Plus, Trash2, Phone, AlertTriangle, ChevronRight } from 'lucide-react'
+import { MapPin, Calendar, Check, Star, RotateCcw, Info, RefreshCw, AlertCircle, Camera, Plus, Trash2, Phone, AlertTriangle, ChevronRight, Map } from 'lucide-react'
+import JobLocationMap from '../components/JobLocationMap'
 import DashboardHeader from './DashboardHeader'
 import ReferralCard from '../components/ReferralCard'
 import ProfileModal, { type Profile } from '../components/ProfileModal'
@@ -410,6 +411,7 @@ function Empty({ text }: { text: string }) {
 function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
   const empPhone = typeof task.employer === 'object' ? (task.employer as Record<string, unknown>)?.phone as string | undefined : undefined
   const empOrg = typeof task.employer === 'object' ? (task.employer as Record<string, unknown>)?.orgName as string | undefined : undefined
+  const [showMap, setShowMap] = useState(false)
 
   const isOffer = task.status === 'offered'
   const expiresAt = task.offerExpiresAt as string | undefined
@@ -445,9 +447,21 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
 
         {/* Key details row */}
         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
-          {task.location && (
+          {task.location && task.location !== 'Remote' && (
+            <button
+              onClick={() => setShowMap((v) => !v)}
+              className="inline-flex items-center gap-1.5 text-xs text-ink-700 hover:text-forest-700 transition-colors"
+              aria-expanded={showMap}
+              aria-label={showMap ? 'Hide map' : 'Show location on map'}
+            >
+              <MapPin size={12} className={showMap ? 'text-forest-600' : 'text-ink-700/50'} aria-hidden="true" />
+              {task.location}
+              <Map size={11} className={showMap ? 'text-forest-600' : 'text-ink-700/30'} aria-hidden="true" />
+            </button>
+          )}
+          {task.location === 'Remote' && (
             <span className="inline-flex items-center gap-1.5 text-xs text-ink-700">
-              <MapPin size={12} className="text-ink-700/50" aria-hidden="true" />{task.location}
+              <MapPin size={12} className="text-ink-700/50" aria-hidden="true" />Remote
             </span>
           )}
           {task.duration && (
@@ -467,6 +481,13 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
           <p className="mt-3 whitespace-pre-line rounded-lg bg-ink-900/[0.03] px-3 py-2.5 text-sm leading-relaxed text-ink-700 border border-ink-900/8">
             {task.description}
           </p>
+        )}
+
+        {/* Job location map — expands when worker taps the location pill */}
+        {showMap && task.location && task.location !== 'Remote' && (
+          <div className="mt-3">
+            <JobLocationMap location={task.location as string} heightClass="h-44" showOpenLink />
+          </div>
         )}
 
         {/* Transport allowance notice */}

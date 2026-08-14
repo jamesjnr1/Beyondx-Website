@@ -132,9 +132,10 @@ function LocationMap({ lat, lng, accuracy, stale }: { lat: number; lng: number; 
       // A single dropped tile is normal on a patchy connection — only give up
       // if nothing loads at all within a few seconds.
       let loadedAny = false
-      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
         maxZoom: 19,
-        attribution: '&copy; OpenStreetMap contributors',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+        subdomains: 'abcd',
       })
         .on('tileload', () => { loadedAny = true })
         .addTo(map)
@@ -142,19 +143,19 @@ function LocationMap({ lat, lng, accuracy, stale }: { lat: number; lng: number; 
 
       haloRef.current = L.circle([lat, lng], {
         radius: accuracy || 25,
-        color: '#6BAB21',
+        color: stale ? '#8f6128' : '#6BAB21',
         weight: 1,
-        fillColor: '#6BAB21',
+        fillColor: stale ? '#8f6128' : '#6BAB21',
         fillOpacity: 0.12,
       }).addTo(map)
 
-      markerRef.current = L.circleMarker([lat, lng], {
-        radius: 8,
-        color: '#ffffff',
-        weight: 3,
-        fillColor: stale ? '#8f6128' : '#6BAB21',
-        fillOpacity: 1,
-      }).addTo(map)
+      const pinSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="32" height="40" viewBox="0 0 32 40">
+        <path d="M16 0C7.163 0 0 7.163 0 16c0 10 16 24 16 24S32 26 32 16C32 7.163 24.837 0 16 0z" fill="${stale ? '#8f6128' : '#6BAB21'}"/>
+        <circle cx="16" cy="16" r="7" fill="white"/>
+        <circle cx="16" cy="16" r="4" fill="${stale ? '#8f6128' : '#6BAB21'}"/>
+      </svg>`
+      const pinIcon = L.divIcon({ html: pinSvg, iconSize: [32, 40], iconAnchor: [16, 40], className: '' })
+      markerRef.current = L.marker([lat, lng], { icon: pinIcon }).addTo(map) as unknown as L.CircleMarker
 
       mapRef.current = map
       // The panel is inside a card that may still be sizing when the map mounts.
@@ -174,7 +175,6 @@ function LocationMap({ lat, lng, accuracy, stale }: { lat: number; lng: number; 
     const map = mapRef.current
     if (!map) return
     markerRef.current?.setLatLng([lat, lng])
-    markerRef.current?.setStyle({ fillColor: stale ? '#8f6128' : '#6BAB21' })
     haloRef.current?.setLatLng([lat, lng])
     if (accuracy) haloRef.current?.setRadius(accuracy)
     map.panTo([lat, lng], { animate: true })
@@ -194,7 +194,7 @@ function LocationMap({ lat, lng, accuracy, stale }: { lat: number; lng: number; 
       ref={boxRef}
       role="img"
       aria-label="Map showing the worker's current location"
-      className="mb-3 h-48 w-full overflow-hidden rounded-xl border border-ink-900/10 sm:h-56"
+      className="mb-3 h-52 w-full overflow-hidden rounded-xl border border-ink-900/10 sm:h-64"
     />
   )
 }

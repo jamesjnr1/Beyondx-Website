@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { ArrowLeft, CheckCircle } from 'lucide-react'
+import JobLocationMap from '../components/JobLocationMap'
 import Logo from '../components/Logo'
 import {
   allCategories, TOOL_SURCHARGE_RATE, VEHICLE_SURCHARGES,
@@ -269,6 +270,14 @@ function BookingForm({ state, onDone, onError }: {
               {cat?.distancePricing ? 'Pickup location' : 'Job location'}
             </label>
             <input id="bw-loc" value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Tema" className={inp} />
+          </div>
+        )}
+
+        {/* Location map preview */}
+        {location.trim() && cat?.mode !== 'remote' && (
+          <div>
+            <p className="mb-1.5 text-xs font-medium text-ink-700">Job site</p>
+            <JobLocationMap location={location} heightClass="h-40" showOpenLink />
           </div>
         )}
 
