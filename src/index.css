@@ -21,7 +21,13 @@
     outline: none !important;
     -webkit-tap-highlight-color: transparent;
   }
-  /* Keyboard-only focus ring — green, not blue */
+  /* Override Tailwind's default blue ring color — prevents any ring-2 without
+     an explicit color from rendering blue */
+  :root {
+    --tw-ring-color: transparent;
+    --tw-ring-shadow: 0 0 #0000;
+    --tw-ring-offset-shadow: 0 0 #0000;
+  }
   :focus-visible {
     outline: 2px solid theme('colors.forest.600') !important;
     outline-offset: 2px;

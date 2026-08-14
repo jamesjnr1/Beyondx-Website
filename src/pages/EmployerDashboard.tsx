@@ -235,7 +235,7 @@ export default function EmployerDashboard() {
           <div className="flex items-center gap-1" role="tablist" aria-label="Employer sections">
             {([['hire', 'Hire Workers'], ['post', 'Post a Task'], ['history', (() => { const n = taskList.filter(t => t.status === 'pending_confirmation').length; return n > 0 ? `My Jobs (${n})` : 'My Jobs' })()], ['support', 'Support']] as const).map(([id, label]) => (
               <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
-                className={`shrink-0 rounded-md px-3 py-2 text-sm font-medium transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40 ${tab === id ? 'bg-forest-600/10 text-forest-700' : 'text-ink-700/70 hover:text-ink-900 hover:bg-ink-900/4'}`}>
+                className={`shrink-0 rounded-md px-3 py-2 text-sm font-medium transition-colors focus:outline-none ${tab === id ? 'bg-forest-600/10 text-forest-700' : 'text-ink-700/70 hover:text-ink-900 hover:bg-ink-900/4'}`}>
                 {label}
                 {id === 'history' && taskList.filter(t => t.status === 'pending_confirmation').length > 0 && (
                   <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-white">
@@ -293,7 +293,7 @@ export default function EmployerDashboard() {
                         <button
                           onClick={() => pickCategory(c.title)}
                           aria-label={`${c.title} — ${count} worker${count === 1 ? '' : 's'} available`}
-                          className="group flex h-full w-full flex-col rounded-2xl border border-ink-900/8 bg-cream-50 p-5 text-left transition-all hover:border-ink-900/20 hover:shadow-md active:scale-[0.99] focus:outline-none focus-visible:ring-2 focus-visible:ring-ink-900/30"
+                          className="group flex h-full w-full flex-col rounded-2xl border border-ink-900/8 bg-cream-50 p-5 text-left transition-all hover:border-ink-900/20 hover:shadow-md active:scale-[0.99] focus:outline-none"
                         >
                           <Icon size={20} aria-hidden="true" className="text-forest-600" />
                           <span className="mt-3 block font-serif text-base font-semibold text-ink-900">{c.title}</span>
@@ -439,7 +439,7 @@ export default function EmployerDashboard() {
                                     className="h-4 w-4 shrink-0 rounded border-ink-900/30 text-forest-600 focus:ring-forest-600/30"
                                   />
                                   <button onClick={() => setViewing(w)} aria-label={`View ${wName(w)}'s profile`}
-                                    className="flex flex-1 items-center gap-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-forest-600/40">
+                                    className="flex flex-1 items-center gap-3 text-left focus:outline-none">
                                     {w.photoUrl ? <img src={w.photoUrl as string} alt="" className="h-11 w-11 shrink-0 rounded-full object-cover" />
                                       : <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-forest-600 text-sm font-bold text-cream-50">{wInitials(w)}</span>}
                                     <span className="min-w-0 flex-1">
@@ -526,6 +526,9 @@ export default function EmployerDashboard() {
                 const { workerName } = dispatchDetails(t)
                 const rev = t.reviews?.[0]?.rating
                 const isUrgent = t.status === 'pending_confirmation'
+                const slots = Number(t.slotsNeeded) || 1
+                const filled = Number(t.filledSlots) || 0
+                const acceptedWorkers = (t as unknown as { acceptedWorkers?: {id: string; status: string; acceptedBy?: {fullName?: string; phone?: string}}[] }).acceptedWorkers
 
                 return (
                   <div className={`rounded-2xl bg-cream-50 shadow-sm border border-ink-900/8`}>
@@ -535,8 +538,10 @@ export default function EmployerDashboard() {
                         <div className="min-w-0">
                           <p className="font-serif text-base font-semibold text-ink-900">{t.taskType || 'Task'}</p>
                           <p className="mt-0.5 text-sm text-ink-700">
-                            {workerName && <span className="font-medium text-ink-800">{workerName}</span>}
-                            {workerName && t.location ? ' · ' : ''}{t.location || ''}
+                            {slots > 1
+                              ? <span className="font-medium text-ink-800">{filled}/{slots} workers confirmed</span>
+                              : workerName && <span className="font-medium text-ink-800">{workerName}</span>}
+                            {(workerName || slots > 1) && t.location ? ' · ' : ''}{t.location || ''}
                             {t.duration ? ` · ${t.duration}` : ''}
                           </p>
                           {(t.scheduledDate as string) && (
@@ -550,6 +555,20 @@ export default function EmployerDashboard() {
                           {rev && <div className="mt-1 flex items-center justify-end gap-1"><Stars n={Number(rev)} /></div>}
                         </div>
                       </div>
+
+                      {/* Multi-worker: show list of accepted workers */}
+                      {slots > 1 && acceptedWorkers && acceptedWorkers.length > 0 && (
+                        <div className="mt-3 space-y-1">
+                          {acceptedWorkers.map((w, i) => (
+                            <div key={w.id} className="flex items-center gap-2 text-xs text-ink-700">
+                              <span className="h-1.5 w-1.5 rounded-full bg-forest-600" />
+                              <span className="font-medium">{w.acceptedBy?.fullName || `Worker ${i + 1}`}</span>
+                              {w.acceptedBy?.phone && <span className="text-ink-700/50">· {w.acceptedBy.phone}</span>}
+                              <span className={`ml-auto font-medium ${w.status === 'completed' ? 'text-forest-600' : 'text-ink-700/60'}`}>{w.status}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
 
                       {/* Status note */}
                       {s.note && !isUrgent && (
@@ -572,7 +591,7 @@ export default function EmployerDashboard() {
                           <p className="text-sm text-ink-700">The worker has marked this job as complete.</p>
                           <button
                             onClick={() => setRating(t)}
-                            className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-forest-600 px-5 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40"
+                            className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-forest-600 px-5 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] focus:outline-none"
                           >
                             <ShieldCheck size={15} aria-hidden="true" /> Confirm work & release payment
                           </button>
@@ -1064,7 +1083,7 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch }: { worker:
               onClick={onDispatch}
               disabled={!!worker.isBusy}
               aria-label={`Dispatch ${wName(worker)}`}
-              className="flex w-full items-center justify-center gap-1.5 rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40"
+              className="flex w-full items-center justify-center gap-1.5 rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60 focus:outline-none"
             >
               <Send size={15} aria-hidden="true" /> {worker.isBusy ? 'Currently on a job' : `Dispatch ${wName(worker).split(' ')[0]}`}
             </button>
@@ -1276,7 +1295,7 @@ function PostTask({ onDone }: { onDone: (msg: string) => void }) {
             </div>
           </div>
           {err && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">{err}</p>}
-          <button onClick={submit} disabled={busy} className="flex w-full items-center justify-center gap-1.5 rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40">
+          <button onClick={submit} disabled={busy} className="flex w-full items-center justify-center gap-1.5 rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60 focus:outline-none">
             <Plus size={16} aria-hidden="true" /> {busy ? 'Posting…' : 'Post task'}
           </button>
         </div>
