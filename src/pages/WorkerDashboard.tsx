@@ -201,7 +201,7 @@ function WorkExperienceCard({
       {/* Accordion header */}
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between px-4 py-3.5 text-left hover:bg-ink-900/[0.02] transition-colors"
+        className="flex w-full items-center justify-between px-4 py-3.5 text-left hover:bg-ink-900/[0.02] transition-colors focus:outline-none"
         aria-expanded={open}
       >
         <div>
@@ -784,7 +784,7 @@ export default function WorkerDashboard() {
               const card = document.getElementById('home-area-inline')
               if (card) card.classList.toggle('hidden')
             }}
-            className="flex w-full items-center justify-between px-4 py-3.5 text-left hover:bg-ink-900/[0.02] transition-colors"
+            className="flex w-full items-center justify-between px-4 py-3.5 text-left hover:bg-ink-900/[0.02] transition-colors focus:outline-none"
           >
             <div className="flex items-center gap-2.5">
               <MapPin size={15} className="shrink-0 text-forest-600" aria-hidden="true" />
