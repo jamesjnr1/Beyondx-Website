@@ -34,7 +34,7 @@ export default function ProfileEditor({
   const save = () => { setSaved(true); setTimeout(() => setSaved(false), 2500) }
 
   return (
-    <div className="mt-6 max-w-3xl rounded-2xl bg-cream-50 p-6 shadow-sm ring-1 ring-ink-900/5 sm:p-8">
+    <div className="mt-6 max-w-3xl rounded-2xl bg-cream-50 p-6 shadow-sm border border-ink-900/8 sm:p-8">
       <h2 className="mb-6 font-serif text-xl font-medium text-ink-900">{heading}</h2>
 
       <div className="flex flex-col items-center gap-3 sm:flex-row sm:gap-5">

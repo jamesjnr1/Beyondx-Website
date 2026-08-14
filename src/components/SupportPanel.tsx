@@ -72,7 +72,7 @@ export default function SupportPanel({
   const reporting = role === 'worker' ? 'an employer' : 'a worker'
 
   return (
-    <div className="mx-auto mt-6 max-w-xl rounded-2xl bg-cream-50 p-6 shadow-sm ring-1 ring-ink-900/5">
+    <div className="mx-auto mt-6 max-w-xl rounded-2xl bg-cream-50 p-6 shadow-sm border border-ink-900/8">
       <div className="flex items-start gap-4">
         <img
           src="/icons/support.png"

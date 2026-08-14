@@ -117,7 +117,7 @@ function Empty({ text }: { text: string }) {
 }
 function Skeleton() {
   return <div className="space-y-3" aria-hidden="true">{[0, 1, 2].map((i) => (
-    <div key={i} className="rounded-xl bg-cream-50 p-5 shadow-sm ring-1 ring-ink-900/5">
+    <div key={i} className="rounded-xl bg-cream-50 p-5 shadow-sm border border-ink-900/8">
       <div className="h-4 w-1/3 animate-pulse rounded bg-ink-900/10" />
       <div className="mt-2 h-3 w-1/2 animate-pulse rounded bg-ink-900/5" />
     </div>))}</div>
@@ -416,7 +416,7 @@ export default function EmployerDashboard() {
                       )}
 
                       {matches.length ? (
-                        <ul className="mt-3 divide-y divide-ink-900/10 overflow-hidden rounded-2xl bg-cream-50 shadow-sm ring-1 ring-ink-900/8">
+                        <ul className="mt-3 divide-y divide-ink-900/10 overflow-hidden rounded-2xl bg-cream-50 shadow-sm border border-ink-900/8">
                           {matches.map((w) => {
                             const wid = String(w.id)
                             const isSelected = selectedWorkers.has(wid)
@@ -1013,7 +1013,7 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch }: { worker:
             {skills.length ? (
               <div>
                 <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-widest text-clay-500">Certified Skills</h3>
-                <ul className="overflow-hidden rounded-xl ring-1 ring-ink-900/10">
+                <ul className="overflow-hidden rounded-xl border border-ink-900/10">
                   {skills.map((sk, i) => {
                     const c = rateFor(sk)
                     const isPicked = category === sk
@@ -1224,7 +1224,7 @@ function PostTask({ onDone }: { onDone: (msg: string) => void }) {
   const inp = 'w-full rounded-xl border border-ink-900/15 bg-white px-3 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/30'
   return (
     <div className="mt-6 max-w-xl">
-      <div className="rounded-2xl bg-cream-50 p-6 shadow-sm ring-1 ring-ink-900/5">
+      <div className="rounded-2xl bg-cream-50 p-6 shadow-sm border border-ink-900/8">
         <h2 className="mb-4 font-serif text-xl font-medium text-ink-900">Post a new task</h2>
         <div className="space-y-3">
           <label className="block">

@@ -51,7 +51,7 @@ export default function Team() {
               initial={{ opacity: 0, y: 20 }}
               animate={visible ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.4, delay: 0.05 + (i % 4) * 0.06 }}
-              className="flex flex-col items-center gap-2 rounded-xl bg-cream-50 p-4 text-center shadow-sm ring-1 ring-ink-900/5 sm:flex-row sm:gap-3 sm:text-left"
+              className="flex flex-col items-center gap-2 rounded-xl bg-cream-50 p-4 text-center shadow-sm border border-ink-900/8 sm:flex-row sm:gap-3 sm:text-left"
             >
               <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-forest-600 text-sm font-bold text-cream-50">
                 {m.initials}

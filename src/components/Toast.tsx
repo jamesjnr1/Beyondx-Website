@@ -18,7 +18,7 @@ export default function Toast({ toast, onClose }: { toast: ToastMsg; onClose: ()
     <div className="pointer-events-none fixed inset-x-0 bottom-4 z-[60] flex justify-center px-4 sm:bottom-6">
       <div
         role="status"
-        className="pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-xl border border-ink-900/10 bg-cream-50 p-4 shadow-lg ring-1 ring-ink-900/5"
+        className="pointer-events-auto flex w-full max-w-md items-start gap-3 rounded-xl border border-ink-900/10 bg-cream-50 p-4 shadow-lg border border-ink-900/8"
       >
         <span
           aria-hidden="true"

@@ -379,7 +379,7 @@ function Stars({ n }: { n: number }) {
 
 function Stat({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl bg-cream-50 p-4 shadow-sm ring-1 ring-ink-900/5">
+    <div className="flex items-center gap-3 rounded-xl bg-cream-50 p-4 shadow-sm border border-ink-900/8">
       <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-forest-600/10 text-forest-600">{icon}</span>
       <span>
         <span className="block text-lg font-semibold text-ink-900">{value}</span>
@@ -393,7 +393,7 @@ function Skeleton() {
   return (
     <div className="space-y-3" aria-hidden="true">
       {[0, 1, 2].map((i) => (
-        <div key={i} className="rounded-xl bg-cream-50 p-5 shadow-sm ring-1 ring-ink-900/5">
+        <div key={i} className="rounded-xl bg-cream-50 p-5 shadow-sm border border-ink-900/8">
           <div className="h-3 w-24 animate-pulse rounded bg-ink-900/10" />
           <div className="mt-3 h-4 w-2/3 animate-pulse rounded bg-ink-900/10" />
           <div className="mt-2 h-3 w-1/2 animate-pulse rounded bg-ink-900/5" />
@@ -424,7 +424,7 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
   const transportAmt = (task.transportAllowance as number) || 0
 
   return (
-    <div className="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-ink-900/8">
+    <div className="overflow-hidden rounded-2xl bg-white shadow-sm border border-ink-900/8">
       {/* Top accent bar for offers */}
       {isOffer && <div className="h-1 bg-forest-600" />}
 
@@ -464,7 +464,7 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
 
         {/* Description */}
         {task.description && task.description !== task.taskType && !task.description.includes('Payment Ref') && (
-          <p className="mt-3 whitespace-pre-line rounded-lg bg-ink-900/[0.03] px-3 py-2.5 text-sm leading-relaxed text-ink-700 ring-1 ring-ink-900/5">
+          <p className="mt-3 whitespace-pre-line rounded-lg bg-ink-900/[0.03] px-3 py-2.5 text-sm leading-relaxed text-ink-700 border border-ink-900/8">
             {task.description}
           </p>
         )}
@@ -777,7 +777,7 @@ export default function WorkerDashboard() {
         <ReferralCard code={(me?.workerId as string) || 'BX-—'} referrals={0} />
 
         {/* Profile completion card — single unified section, no stacked boxes */}
-        <div className="rounded-2xl bg-cream-50 ring-1 ring-ink-900/8 overflow-hidden outline-none">
+        <div className="rounded-2xl bg-cream-50 border border-ink-900/8 overflow-hidden">
           {/* Home area row */}
           <button
             onClick={() => {
@@ -885,7 +885,7 @@ export default function WorkerDashboard() {
                           </button>
                         )}
                       </TaskCard>
-                      <div className="-mt-1 rounded-b-xl bg-cream-50 px-4 pb-4 shadow-sm ring-1 ring-ink-900/5 sm:px-5">
+                      <div className="-mt-1 rounded-b-xl bg-cream-50 px-4 pb-4 shadow-sm border border-ink-900/8 sm:px-5">
                         <LocationShare
                           taskId={t.id}
                           workerId={(me?.workerId as string) || undefined}
@@ -910,7 +910,7 @@ export default function WorkerDashboard() {
               {tab === 'history' && (history.length ? history.map((t) => {
                 const rating = t.reviews?.[0]?.rating
                 return (
-                  <div key={t.id} className="rounded-xl bg-cream-50 p-4 shadow-sm ring-1 ring-ink-900/5 sm:p-5">
+                  <div key={t.id} className="rounded-xl bg-cream-50 p-4 shadow-sm border border-ink-900/8 sm:p-5">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div>
                         <span className="mb-1 inline-block rounded-full bg-ink-900/5 px-2.5 py-0.5 text-xs font-medium text-ink-700">{t.taskType || 'Task'}</span>

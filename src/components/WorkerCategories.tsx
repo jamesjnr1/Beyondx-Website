@@ -44,7 +44,7 @@ function CategoryTile({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.3, margin: '0px 0px -10% 0px' }}
       transition={{ duration: 0.45, delay }}
-      className="overflow-hidden rounded-xl bg-cream-50 shadow-sm ring-1 ring-ink-900/5 sm:rounded-2xl"
+      className="overflow-hidden rounded-xl bg-cream-50 shadow-sm border border-ink-900/8 sm:rounded-2xl"
     >
       <div className="img-zoom relative overflow-hidden">
         <img
@@ -100,7 +100,7 @@ export default function WorkerCategories() {
             initial={{ opacity: 0, y: 20 }}
             animate={visible ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5 }}
-            className="overflow-hidden rounded-xl bg-cream-50 shadow-sm ring-1 ring-ink-900/5 sm:rounded-2xl"
+            className="overflow-hidden rounded-xl bg-cream-50 shadow-sm border border-ink-900/8 sm:rounded-2xl"
           >
             <div className="img-zoom relative overflow-hidden">
               <img

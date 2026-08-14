@@ -182,7 +182,7 @@ function LocationMap({ lat, lng, accuracy, stale }: { lat: number; lng: number; 
 
   if (failed) {
     return (
-      <p className="mb-3 rounded-xl bg-cream-100 p-3 text-xs leading-relaxed text-ink-700 ring-1 ring-ink-900/10">
+      <p className="mb-3 rounded-xl bg-cream-100 p-3 text-xs leading-relaxed text-ink-700 border border-ink-900/10">
         The map could not load — this is usually a slow connection. The position and
         map link below still work.
       </p>
@@ -194,7 +194,7 @@ function LocationMap({ lat, lng, accuracy, stale }: { lat: number; lng: number; 
       ref={boxRef}
       role="img"
       aria-label="Map showing the worker's current location"
-      className="mb-3 h-48 w-full overflow-hidden rounded-xl ring-1 ring-ink-900/10 sm:h-56"
+      className="mb-3 h-48 w-full overflow-hidden rounded-xl border border-ink-900/10 sm:h-56"
     />
   )
 }

@@ -111,7 +111,7 @@ export default function ProfileModal({
 
         <div className="mb-5 flex items-center gap-4">
           {p.avatar
-            ? <img src={p.avatar} alt="Your profile picture" className="h-20 w-20 rounded-full object-cover ring-1 ring-ink-900/10" />
+            ? <img src={p.avatar} alt="Your profile picture" className="h-20 w-20 rounded-full object-cover border border-ink-900/10" />
             : <span aria-hidden="true" className="flex h-20 w-20 items-center justify-center rounded-full bg-forest-600 text-2xl font-bold text-cream-50">{(p.name || '?').slice(0, 1)}</span>}
           <div>
             <button type="button" disabled={uploading} onClick={() => fileRef.current?.click()}

@@ -164,7 +164,7 @@ export default function Notifications({ role, tasks }: { role: 'worker' | 'emplo
           <div
             role="dialog"
             aria-label="Notifications"
-            className="absolute right-0 z-50 mt-2 flex max-h-[70vh] w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl bg-cream-50 shadow-xl ring-1 ring-ink-900/10"
+            className="absolute right-0 z-50 mt-2 flex max-h-[70vh] w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl bg-cream-50 shadow-xl border border-ink-900/10"
           >
             <div className="flex shrink-0 items-center justify-between border-b border-ink-900/10 px-4 py-3">
               <h2 className="font-serif text-base font-medium text-ink-900">Notifications</h2>

@@ -218,7 +218,7 @@ function BookingForm({ state, onDone, onError }: {
 
         {/* Logistics */}
         {cat?.distancePricing && (
-          <div className="space-y-3 rounded-xl bg-cream-100 p-4 ring-1 ring-ink-900/8">
+          <div className="space-y-3 rounded-xl bg-cream-100 p-4 border border-ink-900/8">
             <p className="text-xs font-semibold uppercase tracking-widest text-ink-700/50">Logistics</p>
             <div>
               <label htmlFor="bw-dist" className="mb-1 block text-sm font-medium text-ink-900">Distance (km)</label>
