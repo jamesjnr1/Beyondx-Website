@@ -252,7 +252,7 @@ function EmployerTypeChoice({ onChoose }: { onChoose: (t: EmployerType) => void 
             onClick={() => onChoose(type)}
             className="group flex w-full items-center gap-4 rounded-xl border border-ink-900/12 bg-cream-50 p-5 text-left transition-all hover:border-forest-600/50 hover:bg-forest-600/4 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40 active:scale-[0.99]"
           >
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-forest-600/10 text-forest-700">
+            <span className="shrink-0 text-forest-700">
               <Icon size={22} aria-hidden="true" strokeWidth={1.5} />
             </span>
             <span className="min-w-0 flex-1">

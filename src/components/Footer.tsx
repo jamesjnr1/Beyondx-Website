@@ -80,7 +80,7 @@ export default function Footer() {
         <div className="mt-8 border-t border-ink-900/8 pt-5 sm:mt-12 sm:pt-6">
           <p className="text-xs leading-relaxed text-ink-700/60 text-pretty">
             Every worker on this platform is individually vetted by our team before
-            being listed. © {new Date().getFullYear()} BeyondX. Same Hands. New Start.
+            being listed. © {new Date().getFullYear()} BeyondX. Where Work Meets Skill.
           </p>
         </div>
       </div>

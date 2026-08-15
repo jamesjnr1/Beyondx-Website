@@ -28,7 +28,7 @@ export default function Testimonial() {
             not where they're stuck. Every job completed on our platform
             builds proof of skill and reliability — the kind that gets someone
             past the one mark that's followed them for years.{' '}
-            <span className="italic gradient-text">Same hands, new start.</span>"
+            <span className="italic gradient-text">Where work meets skill.</span>"
           </blockquote>
 
           <div className="mt-5 flex flex-col items-center gap-2 sm:mt-8 sm:gap-3">

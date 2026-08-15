@@ -38,8 +38,8 @@ export default function Hero() {
               Skills-Verified Hiring
             </p>
             <h1 className="font-serif text-5xl font-medium leading-[1.05] text-cream-50 text-balance sm:text-6xl lg:text-7xl">
-              Same Hands.
-              <span className="block italic gradient-text">New Start.</span>
+              Where Work
+              <span className="block italic gradient-text">Meets Skill.</span>
             </h1>
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-cream-200/90 text-pretty">
               BeyondX connects Greater Accra employers with vetted, skill-matched

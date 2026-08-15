@@ -26,21 +26,21 @@ export default function DashboardHeader({
         <h1 className="min-w-0 truncate font-serif text-base font-medium text-ink-900 sm:text-lg">{title}</h1>
 
         {/* Right cluster */}
-        <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
+        <div className="ml-auto flex shrink-0 items-center gap-4">
           <Notifications role={role === 'WORKER' ? 'worker' : 'employer'} tasks={tasks} />
           {onEditProfile && (
             <button onClick={onEditProfile} aria-label="Edit your profile"
-              className="flex items-center gap-2 rounded-full border border-ink-900/15 py-1 pl-1 pr-1 text-sm font-medium text-ink-800 transition-colors hover:bg-ink-900/5 active:scale-[0.98] sm:pr-3.5">
+              className="flex items-center gap-2 text-sm font-medium text-ink-700 transition-colors hover:text-ink-900">
               {avatar
                 ? <img src={avatar} alt="" className="h-7 w-7 rounded-[9999px] object-cover" />
-                : <span aria-hidden="true" className="flex h-7 w-7 items-center justify-center rounded-full bg-forest-600 text-cream-50"><UserRound size={15} /></span>}
+                : <span aria-hidden="true" className="flex h-7 w-7 items-center justify-center rounded-[9999px] bg-forest-600 text-cream-50"><UserRound size={15} /></span>}
               <span className="hidden sm:inline">{name ? name.split(' ')[0] : 'Profile'}</span>
             </button>
           )}
-          <button onClick={logout} aria-label="Log out and return home"
-            className="flex h-9 w-9 items-center justify-center rounded-full border border-ink-900/15 text-ink-700 transition-colors hover:bg-ink-900/5 active:scale-[0.98] sm:w-auto sm:gap-1.5 sm:px-3">
+          <button onClick={logout} aria-label="Log out"
+            className="flex items-center gap-1.5 text-sm font-medium text-ink-700 transition-colors hover:text-ink-900">
             <LogOut size={15} aria-hidden="true" />
-            <span className="hidden sm:inline text-sm font-medium text-ink-800">Log Out</span>
+            <span className="hidden sm:inline">Log Out</span>
           </button>
         </div>
       </div>
