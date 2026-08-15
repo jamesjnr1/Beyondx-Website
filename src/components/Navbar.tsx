@@ -72,7 +72,7 @@ export default function Navbar() {
             onClick={() => openAuth('employer-login')}
             className="rounded-full bg-forest-600 px-5 py-2 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.97]"
           >
-            Hire Workers
+            Employer Login
           </button>
         </div>
 
@@ -103,8 +103,8 @@ export default function Navbar() {
               <button onClick={() => { setOpen(false); openAuth('worker-login') }} className="mt-2 rounded-full border border-ink-900/15 px-5 py-2.5 text-center text-sm font-medium text-ink-800 transition-colors hover:bg-ink-900/5">
                 Worker Login
               </button>
-              <button onClick={() => { setOpen(false); openAuth('employer-login') }} className="rounded bg-forest-600 px-5 py-2.5 text-center text-sm font-semibold text-cream-50">
-                Hire Workers
+              <button onClick={() => { setOpen(false); openAuth('employer-login') }} className="rounded-full bg-forest-600 px-5 py-2.5 text-center text-sm font-semibold text-cream-50">
+                Employer Login
               </button>
             </div>
           </motion.div>

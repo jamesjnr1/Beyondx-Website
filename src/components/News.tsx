@@ -163,7 +163,7 @@ export default function News() {
             News &amp; Events
           </span>
           {!hasNews && (
-            <div className="mx-auto mb-6">
+            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-forest-600/10">
               <Newspaper size={36} className="text-forest-600" aria-hidden="true" />
             </div>
           )}

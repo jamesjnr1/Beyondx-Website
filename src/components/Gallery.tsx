@@ -16,7 +16,7 @@ export default function Gallery() {
           <span className="mb-4 inline-block text-sm font-semibold uppercase tracking-widest text-clay-500">
             Gallery
           </span>
-          <div className="mx-auto mb-6 text-forest-600">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-forest-600/10">
             <Images size={36} className="text-forest-600" aria-hidden="true" />
           </div>
           <h2 className="font-serif text-3xl font-medium leading-tight text-ink-900 text-balance sm:text-4xl lg:text-5xl">

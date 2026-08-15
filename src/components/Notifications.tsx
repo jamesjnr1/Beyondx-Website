@@ -148,7 +148,7 @@ export default function Notifications({ role, tasks }: { role: 'worker' | 'emplo
         onClick={toggle}
         aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'}
         aria-expanded={open}
-        className="relative flex h-9 w-9 items-center justify-center text-ink-700 transition-colors hover:text-ink-900 focus:outline-none"
+        className="relative flex h-9 w-9 items-center justify-center rounded-full border border-ink-900/15 text-ink-700 transition-colors hover:bg-ink-900/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40"
       >
         <Bell size={17} aria-hidden="true" />
         {unread > 0 && (
