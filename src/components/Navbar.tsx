@@ -59,19 +59,18 @@ export default function Navbar() {
           })}
         </div>
 
-        <div className="hidden items-center gap-6 md:flex">
+        <div className="hidden items-center gap-3 md:flex">
           <button
             onClick={() => openAuth('worker-login')}
-            className={`group relative text-sm font-medium transition-colors ${
-              dark ? 'text-cream-200/90 hover:text-cream-50' : 'text-ink-700 hover:text-ink-900'
+            className={`rounded-full border px-5 py-2 text-sm font-medium transition-all active:scale-[0.97] ${
+              dark ? 'border-cream-50/30 text-cream-50 hover:bg-cream-50/10' : 'border-ink-900/15 text-ink-800 hover:bg-ink-900/5'
             }`}
           >
             Worker Login
-            <span className={`absolute -bottom-1 left-0 h-0.5 bg-clay-400 transition-all duration-300 w-0 group-hover:w-full`} />
           </button>
           <button
             onClick={() => openAuth('employer-login')}
-            className="rounded bg-forest-600 px-5 py-2 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.97]"
+            className="rounded-full bg-forest-600 px-5 py-2 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.97]"
           >
             Hire Workers
           </button>
@@ -101,7 +100,7 @@ export default function Navbar() {
                   {t.label}
                 </button>
               ))}
-              <button onClick={() => { setOpen(false); openAuth('worker-login') }} className="mt-2 px-3 py-2.5 text-left text-sm font-medium text-ink-700 hover:text-forest-600">
+              <button onClick={() => { setOpen(false); openAuth('worker-login') }} className="mt-2 rounded-full border border-ink-900/15 px-5 py-2.5 text-center text-sm font-medium text-ink-800 transition-colors hover:bg-ink-900/5">
                 Worker Login
               </button>
               <button onClick={() => { setOpen(false); openAuth('employer-login') }} className="rounded bg-forest-600 px-5 py-2.5 text-center text-sm font-semibold text-cream-50">

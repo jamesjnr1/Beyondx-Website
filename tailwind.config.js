@@ -2,19 +2,6 @@
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
-    // Override the entire borderRadius scale so every rounded-* class produces
-    // a tighter, sharper corner — inspired by clean editorial sites (no bubbles).
-    borderRadius: {
-      none: '0px',
-      sm:   '2px',
-      DEFAULT: '3px',
-      md:   '4px',
-      lg:   '5px',
-      xl:   '6px',
-      '2xl':'8px',
-      '3xl':'10px',
-      full: '6px',   // kills pill-shapes: buttons/badges become clean rectangles
-    },
     extend: {
       // Tightened type scale. Small sizes keep their defaults so body copy stays
       // readable (16px base, 14px minimum for secondary text); the display sizes
