@@ -32,7 +32,7 @@ export default function Testimonial() {
           </blockquote>
 
           <div className="mt-5 flex flex-col items-center gap-2 sm:mt-8 sm:gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-forest-500 to-forest-700 font-serif text-base font-bold text-cream-50 shadow-md sm:h-14 sm:w-14 sm:text-lg">
+            <div className="flex h-11 w-11 items-center justify-center rounded-[9999px] bg-gradient-to-br from-forest-500 to-forest-700 font-serif text-base font-bold text-cream-50 shadow-md sm:h-14 sm:w-14 sm:text-lg">
               SA
             </div>
             <div>

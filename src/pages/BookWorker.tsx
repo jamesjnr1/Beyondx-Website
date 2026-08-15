@@ -203,8 +203,8 @@ function BookingForm({ state, onDone, onError }: {
       {/* Worker summary */}
       <div className="mb-6 flex items-center gap-4 rounded-2xl border border-ink-900/10 bg-cream-50 px-5 py-4">
         {worker.photoUrl
-          ? <img src={worker.photoUrl as string} alt="" className="h-12 w-12 rounded-full object-cover" />
-          : <span className="flex h-12 w-12 items-center justify-center rounded-full bg-forest-600 text-base font-bold text-cream-50">
+          ? <img src={worker.photoUrl as string} alt="" className="h-12 w-12 rounded-[9999px] object-cover" />
+          : <span className="flex h-12 w-12 items-center justify-center rounded-[9999px] bg-forest-600 text-base font-bold text-cream-50">
               {wName(worker).slice(0, 2).toUpperCase()}
             </span>}
         <div>

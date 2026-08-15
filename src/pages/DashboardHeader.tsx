@@ -32,7 +32,7 @@ export default function DashboardHeader({
             <button onClick={onEditProfile} aria-label="Edit your profile"
               className="flex items-center gap-2 rounded-full border border-ink-900/15 py-1 pl-1 pr-1 text-sm font-medium text-ink-800 transition-colors hover:bg-ink-900/5 active:scale-[0.98] sm:pr-3.5">
               {avatar
-                ? <img src={avatar} alt="" className="h-7 w-7 rounded-full object-cover" />
+                ? <img src={avatar} alt="" className="h-7 w-7 rounded-[9999px] object-cover" />
                 : <span aria-hidden="true" className="flex h-7 w-7 items-center justify-center rounded-full bg-forest-600 text-cream-50"><UserRound size={15} /></span>}
               <span className="hidden sm:inline">{name ? name.split(' ')[0] : 'Profile'}</span>
             </button>

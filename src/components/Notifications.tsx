@@ -152,7 +152,7 @@ export default function Notifications({ role, tasks }: { role: 'worker' | 'emplo
       >
         <Bell size={17} aria-hidden="true" />
         {unread > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-forest-600 px-1 text-[10px] font-bold text-cream-50">
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-[9999px] bg-forest-600 px-1 text-[10px] font-bold text-cream-50">
             {unread > 9 ? '9+' : unread}
           </span>
         )}

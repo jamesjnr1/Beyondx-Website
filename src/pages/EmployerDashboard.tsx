@@ -441,8 +441,8 @@ export default function EmployerDashboard() {
                                   />
                                   <button onClick={() => setViewing(w)} aria-label={`View ${wName(w)}'s profile`}
                                     className="flex flex-1 items-center gap-3 text-left focus:outline-none">
-                                    {w.photoUrl ? <img src={w.photoUrl as string} alt="" className="h-11 w-11 shrink-0 rounded-full object-cover" />
-                                      : <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-forest-600 text-sm font-bold text-cream-50">{wInitials(w)}</span>}
+                                    {w.photoUrl ? <img src={w.photoUrl as string} alt="" className="h-11 w-11 shrink-0 rounded-[9999px] object-cover" />
+                                      : <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[9999px] bg-forest-600 text-sm font-bold text-cream-50">{wInitials(w)}</span>}
                                     <span className="min-w-0 flex-1">
                                       <span className="flex items-center gap-2">
                                         <span className="block truncate font-serif text-base font-medium text-ink-900">{wName(w)}</span>
@@ -576,7 +576,7 @@ export default function EmployerDashboard() {
                         <div className="mt-3 space-y-1">
                           {acceptedWorkers.map((w, i) => (
                             <div key={w.id} className="flex items-center gap-2 text-xs text-ink-700">
-                              <span className="h-1.5 w-1.5 rounded-full bg-forest-600" />
+                              <span className="h-1.5 w-1.5 rounded-[9999px] bg-forest-600" />
                               <span className="font-medium">{w.acceptedBy?.fullName || `Worker ${i + 1}`}</span>
                               {w.acceptedBy?.phone && <span className="text-ink-700/50">· {w.acceptedBy.phone}</span>}
                               <span className={`ml-auto font-medium ${w.status === 'completed' ? 'text-forest-600' : 'text-ink-700/60'}`}>{w.status}</span>
@@ -998,9 +998,9 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch }: { worker:
             <X size={18} aria-hidden="true" />
           </button>
           {worker.photoUrl ? (
-            <img src={worker.photoUrl as string} alt="" className="mx-auto h-16 w-16 rounded-full object-cover border-2 border-cream-50/30" />
+            <img src={worker.photoUrl as string} alt="" className="mx-auto h-16 w-16 rounded-[9999px] object-cover border-2 border-cream-50/30" />
           ) : (
-            <span aria-hidden="true" className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-cream-50 font-serif text-xl font-bold text-forest-700 shadow-md">
+            <span aria-hidden="true" className="mx-auto flex h-16 w-16 items-center justify-center rounded-[9999px] bg-cream-50 font-serif text-xl font-bold text-forest-700 shadow-md">
               {wInitials(worker)}
             </span>
           )}

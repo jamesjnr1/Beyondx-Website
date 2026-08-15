@@ -39,7 +39,7 @@ export default function ProfileEditor({
 
       <div className="flex flex-col items-center gap-3 sm:flex-row sm:gap-5">
         <div className="relative">
-          <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-forest-600 text-2xl font-bold text-cream-50">
+          <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-[9999px] bg-forest-600 text-2xl font-bold text-cream-50">
             {avatar ? <img src={avatar} alt="Profile" className="h-full w-full object-cover" /> : initials}
           </div>
           <button onClick={() => fileRef.current?.click()}

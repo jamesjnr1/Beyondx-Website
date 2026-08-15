@@ -450,7 +450,7 @@ function EmployerRegister() {
     return (
       <Modal title="Enter your code" subtitle="One more step to confirm it's really you">
         <div className="space-y-4 text-center">
-          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-forest-600/10">
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[9999px] bg-forest-600/10">
             <Mail size={26} className="text-forest-600" />
           </div>
           <p className="text-sm leading-relaxed text-ink-700">

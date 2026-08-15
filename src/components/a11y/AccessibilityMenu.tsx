@@ -22,7 +22,7 @@ function Toggle({
         role="switch"
         aria-checked={checked}
         onClick={() => onChange(!checked)}
-        className={`relative mt-0.5 h-7 w-12 shrink-0 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/50 ${
+        className={`relative mt-0.5 h-7 w-12 shrink-0 rounded-[9999px] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/50 ${
           checked ? 'bg-forest-600' : 'bg-ink-900/20'
         }`}
       >
@@ -59,7 +59,7 @@ export default function AccessibilityMenu() {
         aria-expanded={open}
         aria-haspopup="dialog"
         aria-label="Accessibility options"
-        className="fixed bottom-4 left-4 z-[70] flex h-14 w-14 items-center justify-center rounded-full bg-forest-600 text-cream-50 shadow-lg transition-all hover:bg-forest-500 active:scale-95 focus:outline-none focus-visible:ring-4 focus-visible:ring-forest-600/40 sm:bottom-6 sm:left-6"
+        className="fixed bottom-4 left-4 z-[70] flex h-14 w-14 items-center justify-center rounded-[9999px] bg-forest-600 text-cream-50 shadow-lg transition-all hover:bg-forest-500 active:scale-95 focus:outline-none focus-visible:ring-4 focus-visible:ring-forest-600/40 sm:bottom-6 sm:left-6"
       >
         <Accessibility size={26} aria-hidden="true" />
       </button>

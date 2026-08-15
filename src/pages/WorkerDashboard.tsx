@@ -431,7 +431,7 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
       {/* Accent bar for direct offers */}
       {isOffer && (
         <div className="flex items-center gap-2 bg-forest-600 px-4 py-2">
-          <span className="flex h-1.5 w-1.5 rounded-full bg-cream-50 animate-pulse" aria-hidden="true" />
+          <span className="flex h-1.5 w-1.5 rounded-[9999px] bg-cream-50 animate-pulse" aria-hidden="true" />
           <span className="text-xs font-semibold text-cream-50">Direct offer — respond to secure this job</span>
         </div>
       )}
