@@ -69,7 +69,7 @@ body{background:var(--bg);color:var(--ink);font-family:var(--f);font-size:13.5px
 .sb-brand{padding:14px 16px 12px;border-bottom:1px solid rgba(255,255,255,.08);}
 .sb-name{font-size:14px;font-weight:600;color:#fff;letter-spacing:-.2px;font-family:var(--d);}
 .sb-tag{font-size:9px;color:rgba(255,255,255,.3);font-family:var(--f);letter-spacing:.8px;text-transform:uppercase;margin-top:2px;}
-.sb-nav{padding:4px 0;flex:1;}
+.sb-nav{padding:4px 0;flex:1;overflow-y:auto;}
 .sb-group{display:block;}
 .sb-grp{font-size:9px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.25);padding:7px 16px 3px;font-family:var(--f);}
 .sb-a{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;font-size:12px;font-weight:500;color:rgba(255,255,255,.55);cursor:pointer;border-left:2px solid transparent;transition:all .12s;}
@@ -798,13 +798,13 @@ function showEmployerDetail(employerId){
   document.getElementById('detailOverlay').classList.add('on');
 }
 function pc(t){
-  const w=t.acceptedBy;const wp=parseFloat(t.pay).toFixed(2);const fp=(parseFloat(t.pay)*.15).toFixed(2);
-  return`<div class="pc"><div class="pc-hd"><div><div class="pc-n">${w?.fullName||'Unknown Worker'}</div><div class="pc-tk">${t.taskType} &middot; ${t.location} &middot; ${t.duration}</div></div><div style="text-align:right"><div class="pc-aml">Send to worker</div><div class="pc-am">GH&#8373; ${wp}</div></div></div><div class="pc-g"><div class="pc-f"><div class="pc-fl">Mobile Money Number</div><div class="pc-fv ph">${w?.phone||'Not on record'}</div></div><div class="pc-f"><div class="pc-fl">Worker ID</div><div class="pc-fv">${w?.workerId||'&mdash;'}</div></div><div class="pc-f"><div class="pc-fl">Employer</div><div class="pc-fv">${t.employer?.orgName||'&mdash;'}</div></div><div class="pc-f"><div class="pc-fl">BeyondX Keeps</div><div class="pc-fv">GH&#8373; ${fp}</div></div></div><div class="pc-nt">Send GH&#8373; ${wp} via Mobile Money to the number above, then confirm below.</div><button class="btn-p" onclick="mkp('${t.id}','${w?.fullName||''}','${wp}')">I Have Sent GH&#8373; ${wp} &mdash; Mark as Paid</button></div>`;
+  const w=t.acceptedBy;const wp=(parseFloat(t.pay)+(t.transportAllowance||0)).toFixed(2);const fp=(20).toFixed(2);
+  return`<div class="pc"><div class="pc-hd"><div><div class="pc-n">${w?.fullName||'Unknown Worker'}</div><div class="pc-tk">${t.taskType} &middot; ${t.location} &middot; ${t.duration}</div></div><div style="text-align:right"><div class="pc-aml">Send to worker</div><div class="pc-am">GH&#8373; ${wp}</div></div></div><div class="pc-g"><div class="pc-f"><div class="pc-fl">Mobile Money Number</div><div class="pc-fv ph">${w?.phone||'Not on record'}</div></div><div class="pc-f"><div class="pc-fl">Worker ID</div><div class="pc-fv">${w?.workerId||'&mdash;'}</div></div><div class="pc-f"><div class="pc-fl">Employer</div><div class="pc-fv">${t.employer?.orgName||'&mdash;'}</div></div><div class="pc-f"><div class="pc-fl">Service Fee</div><div class="pc-fv">GH&#8373; ${fp} flat</div></div></div><div class="pc-nt">Send GH&#8373; ${wp} via Mobile Money to the number above, then confirm below.</div><button class="btn-p" onclick="mkp('${t.id}','${w?.fullName||''}','${wp}')">I Have Sent GH&#8373; ${wp} &mdash; Mark as Paid</button></div>`;
 }
 function tl(list){
   if(!list.length)return`<div class="empty">No tasks here</div>`;
   const bm={open:['bo','Open'],accepted:['ba','In Progress'],pending_confirmation:['bp','Awaiting Payment'],completed:['bd','Completed']};
-  return list.map(t=>{const w=t.acceptedBy;const[bc,bl]=bm[t.status]||['bo','Unknown'];const wp=parseFloat(t.pay).toFixed(2);
+  return list.map(t=>{const w=t.acceptedBy;const[bc,bl]=bm[t.status]||['bo','Unknown'];const wp=(parseFloat(t.pay)+(t.transportAllowance||0)).toFixed(2);
   return`<div class="tsk"><div class="tsk-tp"><div><div class="tsk-n">${t.taskType}</div><div class="tsk-m">${t.location} &middot; ${t.duration} &middot; ${new Date(t.createdAt).toLocaleDateString()}</div></div><span class="badge ${bc}">${bl}</span></div><div class="tsk-b"><div class="tr"><span class="tr-k">Employer</span><span class="tr-v">${t.employer?.orgName||'&mdash;'}</span></div><div class="tr"><span class="tr-k">Worker</span><span class="tr-v">${w?.fullName||'Unassigned'}${w?.phone?' &middot; '+w.phone:''}</span></div><div class="tr"><span class="tr-k">Employer Paid</span><span class="tr-v">GH&#8373; ${parseFloat(t.pay).toFixed(2)}</span></div><div class="tr"><span class="tr-k">Worker Gets</span><span class="tr-v g">GH&#8373; ${wp}</span></div></div>${t.status==='pending_confirmation'?`<button class="btn-ps" onclick="mkp('${t.id}','${w?.fullName||''}','${wp}')">Confirm Payment Sent</button>`:''}${t.status==='open'?`<button class="btn-ps" onclick="showAssignPanel('${t.id}')">Assign a worker</button>`:''}</div>`;
   }).join('');
 }
@@ -945,7 +945,7 @@ function vpCard(t){
       <div class="tr"><span class="tr-k">Employer</span><span class="tr-v">${t.employer?.orgName||'&mdash;'}</span></div>
       <div class="tr"><span class="tr-k">Worker</span><span class="tr-v">${w?.fullName||'Unassigned'}</span></div>
       ${jobDesc?`<div class="tr"><span class="tr-k">Description</span><span class="tr-v" style="max-width:400px">${anEsc(jobDesc)}</span></div>`:''}
-      <div class="tr"><span class="tr-k">Amount</span><span class="tr-v">GH&#8373; ${(parseFloat(t.pay)+20).toFixed(2)} total (GH&#8373; ${wp} to worker)</span></div>
+      <div class="tr"><span class="tr-k">Amount</span><span class="tr-v">GH&#8373; ${(parseFloat(t.pay)+(t.transportAllowance||0)+20).toFixed(2)} total (GH&#8373; ${wp} to worker)</span></div>
       <div class="tr"><span class="tr-k">Payment ref</span><span class="tr-v" style="font-weight:600;color:var(--ink)">${anEsc(ref)}</span></div>
     </div>
     <div style="display:flex;gap:8px;margin-top:10px;">
