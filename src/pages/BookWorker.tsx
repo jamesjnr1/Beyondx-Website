@@ -409,7 +409,7 @@ function BookingForm({ state, onDone, onError }: {
       <div className="mt-8 overflow-hidden rounded-2xl bg-ink-900">
         <div className="px-6 pt-5 pb-4">
           <p className="text-xs font-medium uppercase tracking-widest text-cream-50/40">Total to pay BeyondX</p>
-          <p className="mt-1.5 font-serif text-5xl font-semibold text-cream-50">{cedis(pay)}</p>
+          <p className="mt-1.5 font-serif text-4xl font-semibold text-cream-50 sm:text-5xl">{cedis(pay)}</p>
         </div>
         <div className="space-y-0 border-t border-cream-50/10 px-6 pb-5 pt-3">
           {/* Worker pay row */}

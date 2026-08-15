@@ -27,8 +27,8 @@ export default function PlatformDesign() {
             transition={{ duration: 0.6 }}
             className="rounded-2xl border border-ink-900/8 bg-cream-50 p-8 shadow-sm"
           >
-            <div className="mb-5 text-forest-600">
-              <TrendingUp size={22} aria-hidden="true" className="text-forest-600" />
+            <div className="mb-5">
+              <TrendingUp size={28} aria-hidden="true" className="text-forest-600" />
             </div>
             <h3 className="font-serif text-xl font-semibold text-ink-900">Rank Progression</h3>
             <p className="mt-3 text-sm leading-relaxed text-ink-700">
@@ -52,8 +52,8 @@ export default function PlatformDesign() {
             transition={{ duration: 0.6, delay: 0.12 }}
             className="rounded-2xl border border-ink-900/8 bg-cream-50 p-8 shadow-sm"
           >
-            <div className="mb-5 text-forest-600">
-              <Wallet size={24} className="text-forest-600" aria-hidden="true" />
+            <div className="mb-5">
+              <Wallet size={28} className="text-forest-600" aria-hidden="true" />
             </div>
             <h3 className="font-serif text-xl font-semibold text-ink-900">In-App Payments</h3>
             <p className="mt-3 text-sm leading-relaxed text-ink-700">

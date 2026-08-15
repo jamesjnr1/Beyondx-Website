@@ -40,8 +40,8 @@ export default function Pillars() {
               transition={{ duration: 0.6, delay: i * 0.15 }}
               className="h-full w-[78%] shrink-0 snap-center rounded-2xl border border-cream-50/10 bg-cream-50/5 p-5 text-center transition-all duration-300 hover:border-forest-400/30 hover:bg-cream-50/10 sm:w-auto sm:shrink sm:p-8"
             >
-              <div className="mx-auto mb-4 text-forest-600 sm:mb-5">
-                <span className="font-serif text-base font-bold text-cream-50 sm:text-xl">
+              <div className="mx-auto mb-4 sm:mb-5">
+                <span className="font-serif text-3xl font-light text-forest-400 sm:text-4xl opacity-60">
                   {i + 1}
                 </span>
               </div>

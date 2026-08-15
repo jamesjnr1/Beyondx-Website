@@ -858,7 +858,7 @@ export default function WorkerDashboard() {
             </button>
           ))}
           <button onClick={() => { setLoading(true); load() }} aria-label="Refresh tasks"
-            className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full border border-ink-900/15 px-3 py-1.5 text-xs font-medium text-ink-700 hover:bg-ink-900/5">
+            className="ml-auto flex shrink-0 items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-ink-700/60 hover:text-ink-900 transition-colors">
             <RefreshCw size={13} aria-hidden="true" /> Refresh
           </button>
         </div>

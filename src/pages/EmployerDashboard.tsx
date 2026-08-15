@@ -227,13 +227,7 @@ export default function EmployerDashboard() {
           </div>
         )}
 
-        <div className="flex items-center justify-between border-b border-ink-900/10 pb-0">
-          {/* Page title on the left */}
-          <p className="text-xs font-semibold uppercase tracking-widest text-ink-700/40">
-            {tab === 'hire' ? 'Browse workers' : tab === 'post' ? 'Post a task' : tab === 'history' ? 'Jobs' : 'Help'}
-          </p>
-          {/* Tabs on the right */}
-          <div className="flex items-center gap-1" role="tablist" aria-label="Employer sections">
+        <div className="flex items-center gap-1 overflow-x-auto border-b border-ink-900/10 pb-px [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Employer sections">
             {([['hire', 'Hire Workers'], ['post', 'Post a Task'], ['history', (() => { const n = taskList.filter(t => t.status === 'pending_confirmation').length; return n > 0 ? `My Jobs (${n})` : 'My Jobs' })()], ['support', 'Support']] as const).map(([id, label]) => (
               <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
                 className={`shrink-0 rounded-md px-3 py-2 text-sm font-medium transition-colors focus:outline-none ${tab === id ? 'bg-forest-600/10 text-forest-700' : 'text-ink-700/70 hover:text-ink-900 hover:bg-ink-900/4'}`}>
@@ -249,7 +243,6 @@ export default function EmployerDashboard() {
               className="ml-1 rounded-md p-2 text-ink-700/50 hover:bg-ink-900/5 hover:text-ink-700">
               <RefreshCw size={13} aria-hidden="true" />
             </button>
-          </div>
         </div>
 
         {tab === 'hire' && (
