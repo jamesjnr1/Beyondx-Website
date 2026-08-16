@@ -427,139 +427,116 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
   const isIntercityJob = transportAmt >= 80  // Tier 4
 
   return (
-    <div className={`overflow-hidden rounded-2xl bg-white shadow-sm border ${isOffer ? 'border-forest-600/30' : 'border-ink-900/8'}`}>
-      {/* Accent bar for direct offers */}
+    <div className={`overflow-hidden rounded-2xl bg-white border ${isOffer ? 'border-forest-600/25' : 'border-ink-900/8'} shadow-sm`}>
+
+      {/* Offer / intercity banner */}
       {isOffer && (
         <div className="flex items-center gap-2 bg-forest-600 px-4 py-2">
           <span className="flex h-1.5 w-1.5 rounded-[9999px] bg-cream-50 animate-pulse" aria-hidden="true" />
           <span className="text-xs font-semibold text-cream-50">Direct offer — respond to secure this job</span>
         </div>
       )}
-      {/* Intercity flag — shown before worker commits */}
       {isIntercityJob && (
         <div className="flex items-center gap-2 bg-red-600 px-4 py-2">
-          <AlertTriangle size={13} className="shrink-0 text-cream-50" aria-hidden="true" />
-          <span className="text-xs font-semibold text-cream-50">Long-distance assignment — review travel requirements before accepting</span>
+          <AlertTriangle size={12} className="shrink-0 text-cream-50" aria-hidden="true" />
+          <span className="text-xs font-semibold text-cream-50">Long-distance assignment — review before accepting</span>
         </div>
       )}
 
-      <div className="p-4 sm:p-5">
-        {/* Header row: title + pay */}
-        <div className="flex items-start justify-between gap-3">
+      <div className="px-4 py-4 sm:px-5 sm:py-5">
+
+        {/* Title + pay */}
+        <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-base font-bold text-ink-900 leading-snug">{task.taskType || 'Task'}</p>
-            {empOrg && <p className="mt-0.5 text-xs text-ink-700/60">{empOrg}</p>}
+            <p className="font-semibold leading-snug text-ink-900">{task.taskType || 'Task'}</p>
+            {empOrg && <p className="mt-0.5 text-xs text-ink-700/50">{empOrg}</p>}
           </div>
           <div className="shrink-0 text-right">
-            <p className="text-base font-bold text-forest-700">{cedis(task.pay)}</p>
+            <p className="font-semibold text-forest-700">{cedis(task.pay)}</p>
             {transportAmt > 0 && (
-              <p className="text-[10px] text-ink-700/60">+GH₵{transportAmt} travel</p>
+              <p className="mt-0.5 text-[11px] text-ink-700/50">+ GH₵{transportAmt} transport</p>
             )}
           </div>
         </div>
 
-        {/* Key details row */}
-        <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5">
+        {/* Meta row — location · duration · schedule */}
+        <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1">
           {task.location && task.location !== 'Remote' && (
-            <button
-              onClick={() => setShowMap((v) => !v)}
-              className="inline-flex items-center gap-1.5 text-xs text-ink-700 hover:text-forest-700 transition-colors"
-              aria-expanded={showMap}
-              aria-label={showMap ? 'Hide map' : 'Show location on map'}
-            >
-              <MapPin size={12} className={showMap ? 'text-forest-600' : 'text-ink-700/50'} aria-hidden="true" />
+            <button onClick={() => setShowMap(v => !v)}
+              className="inline-flex items-center gap-1 text-xs text-ink-700/60 hover:text-forest-700 transition-colors"
+              aria-expanded={showMap}>
+              <MapPin size={11} className={showMap ? 'text-forest-600' : ''} aria-hidden="true" />
               {task.location}
-              <Map size={11} className={showMap ? 'text-forest-600' : 'text-ink-700/30'} aria-hidden="true" />
+              <Map size={10} className="opacity-40" aria-hidden="true" />
             </button>
           )}
           {task.location === 'Remote' && (
-            <span className="inline-flex items-center gap-1.5 text-xs text-ink-700">
-              <MapPin size={12} className="text-ink-700/50" aria-hidden="true" />Remote
+            <span className="inline-flex items-center gap-1 text-xs text-ink-700/60">
+              <MapPin size={11} aria-hidden="true" />Remote
             </span>
           )}
           {task.duration && (
-            <span className="inline-flex items-center gap-1.5 text-xs text-ink-700">
-              <Calendar size={12} className="text-ink-700/50" aria-hidden="true" />{task.duration}
+            <span className="inline-flex items-center gap-1 text-xs text-ink-700/60">
+              <Calendar size={11} aria-hidden="true" />{task.duration}
             </span>
           )}
           {scheduledLabel && (
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-forest-700">
-              <Clock size={12} aria-hidden="true" className="text-forest-600" />{scheduledLabel}
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-forest-700">
+              <Clock size={11} aria-hidden="true" />{scheduledLabel}
             </span>
           )}
         </div>
 
-        {/* Description */}
+        {/* Description — plain text, no box */}
         {task.description && task.description !== task.taskType && !task.description.includes('Payment Ref') && (
-          <p className="mt-3 whitespace-pre-line rounded-lg bg-ink-900/[0.03] px-3 py-2.5 text-sm leading-relaxed text-ink-700 border border-ink-900/8">
+          <p className="mt-3 text-sm leading-relaxed text-ink-700/75 whitespace-pre-line">
             {task.description}
           </p>
         )}
 
-        {/* Job location map — expands when worker taps the location pill */}
+        {/* Map */}
         {showMap && task.location && task.location !== 'Remote' && (
           <div className="mt-3">
             <JobLocationMap location={task.location as string} heightClass="h-44" showOpenLink />
           </div>
         )}
 
-        {/* Transport allowance notice */}
+        {/* Transport notice */}
         {isOffer && transportAmt > 0 && (
-          <div className={`mt-3 flex items-start gap-2 rounded-lg px-3 py-2.5 ${isIntercityJob ? 'bg-red-50 border border-red-200' : 'bg-forest-600/8'}`}>
-            <Bus size={14} aria-hidden="true" className={`mt-0.5 shrink-0 ${isIntercityJob ? 'text-red-600' : 'text-forest-700'}`} />
-            <div>
-              <p className="text-xs leading-relaxed text-ink-800">
-                <strong>GH₵{transportAmt} transport allowance</strong> included on top of your {cedis(task.pay)} rate.
-              </p>
-              {isIntercityJob && (
-                <p className="mt-1 text-xs text-red-700">
-                  This is a long-distance job. Factor in travel time both ways before accepting.
-                </p>
-              )}
-            </div>
+          <div className={`mt-3 flex items-start gap-2 rounded-xl px-3 py-2.5 text-xs ${isIntercityJob ? 'bg-red-50 text-red-800' : 'bg-forest-600/6 text-forest-800'}`}>
+            <Bus size={13} aria-hidden="true" className="mt-0.5 shrink-0" />
+            <p><strong>GH₵{transportAmt} transport allowance</strong> added to your {cedis(task.pay)} rate.
+            {isIntercityJob && <span className="ml-1 text-red-700">Factor in travel time both ways.</span>}
+            </p>
           </div>
         )}
 
-        {/* Urgency notices */}
-        {isOffer && (slotsNeeded > 1 || hoursLeft !== null) && (
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            {slotsNeeded > 1 && slotsRemaining > 0 && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 border border-amber-200">
-                <Users size={11} aria-hidden="true" />
-                {slotsRemaining} spot{slotsRemaining !== 1 ? 's' : ''} left
-              </span>
-            )}
-            {hoursLeft !== null && (
-              <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2.5 py-1 text-xs font-semibold text-red-700 border border-red-200">
-                Expires in {hoursLeft}h
-              </span>
-            )}
-          </div>
-        )}
-        {!isOffer && slotsNeeded > 1 && slotsRemaining > 0 && (
-          <p className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-forest-700">
-            <Users size={12} aria-hidden="true" />
-            {slotsRemaining} of {slotsNeeded} spots remaining
+        {/* Slots + expiry */}
+        {(isOffer || !isOffer) && slotsNeeded > 1 && slotsRemaining > 0 && (
+          <p className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-forest-700">
+            <Users size={11} aria-hidden="true" />
+            {isOffer ? `${slotsRemaining} spot${slotsRemaining !== 1 ? 's' : ''} left` : `${slotsRemaining} of ${slotsNeeded} spots remaining`}
           </p>
         )}
+        {isOffer && hoursLeft !== null && (
+          <p className="mt-1.5 text-xs font-medium text-red-600">Offer expires in {hoursLeft}h</p>
+        )}
 
-        {/* Payment pending notice */}
+        {/* Payment pending */}
         {task.status === 'payment_pending' && (
-          <div className="mt-3 flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-2.5 border border-amber-200">
-            <Loader2 size={13} aria-hidden="true" className="shrink-0 animate-spin text-amber-700" />
-            <p className="text-xs font-medium text-amber-900">Verifying payment — you'll be dispatched once confirmed</p>
+          <div className="mt-3 flex items-center gap-2 rounded-xl bg-amber-50 px-3 py-2.5 text-xs font-medium text-amber-800">
+            <Loader2 size={12} aria-hidden="true" className="shrink-0 animate-spin" />
+            Verifying payment — you'll be dispatched once confirmed
           </div>
         )}
       </div>
 
-      {/* Divider + action row */}
+      {/* Footer */}
       {children && (
         <div className="flex items-center justify-between border-t border-ink-900/6 px-4 py-3 sm:px-5">
-          {empPhone ? (
-            <a href={`tel:${empPhone}`} className="inline-flex items-center gap-1.5 text-xs font-medium text-ink-700/60 hover:text-ink-900">
-              <Phone size={12} aria-hidden="true" />{empPhone}
-            </a>
-          ) : <span />}
+          {empPhone
+            ? <a href={`tel:${empPhone}`} className="inline-flex items-center gap-1.5 text-xs text-ink-700/40 hover:text-ink-900 transition-colors"><Phone size={11} aria-hidden="true" />{empPhone}</a>
+            : <span />}
           <div className="flex items-center gap-2">{children}</div>
         </div>
       )}
