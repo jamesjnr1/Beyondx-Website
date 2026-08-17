@@ -35,9 +35,9 @@ export default function Team() {
             <span className="italic gradient-text">Team</span>
           </h2>
           <p className="mt-4 text-lg leading-relaxed text-ink-700 text-pretty">
-            BeyondX was designed and built by eleven students at Ashesi University,
-            driven by the belief that technology can be a genuine force for justice
-            and second chances.
+            BeyondX is built by a lean founding team out of Ashesi University,
+            connecting employers across Greater Accra with skilled, verified workers
+            through a fast, mobile-first platform.
           </p>
           <p className="mt-3 text-sm font-medium uppercase tracking-wide text-ink-700/70">
             Team Rainbow · 11 Members · Foundation of Design Thinking &amp; Entrepreneurship
