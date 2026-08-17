@@ -393,7 +393,7 @@ function EmployerRegister() {
     if (n === 2) {
       const errs = accountType === 'individual'
         ? v.check({ ghanaCard: v.ghanaCard(f.ghanaCard) })
-        : v.check({ businessReg: v.businessReg(f.businessReg), industry: v.required('Industry')(f.industry), companySize: v.required('Company size')(f.companySize) })
+        : v.check({ industry: v.required('Industry')(f.industry), companySize: v.required('Company size')(f.companySize) })
       setFieldErr(errs); return Object.keys(errs).length === 0
     }
     const errs = v.check({ email: v.email(f.email), password: v.password(f.password) })
@@ -517,7 +517,7 @@ function EmployerRegister() {
               Your account will be marked as verified once confirmed — usually within 1 working day.
             </p>
           </div>
-          <Field label="Ghana Business Registration Number" placeholder="e.g. CS-12345" value={f.businessReg} onChange={set('businessReg')} error={fieldErr.businessReg} />
+          <Field label="Ghana Business Registration Number (optional)" placeholder="e.g. CS-12345" value={f.businessReg} onChange={set('businessReg')} />
           <Select label="Industry" options={INDUSTRIES} placeholder="Select your industry" value={f.industry} onChange={set('industry')} error={fieldErr.industry} />
           <Select label="Company Size" options={COMPANY_SIZES} placeholder="Select size" value={f.companySize} onChange={set('companySize')} error={fieldErr.companySize} />
         </>)}
