@@ -80,6 +80,16 @@ const newsItems: NewsItem[] = [
     ],
     featured: true,
   },
+  {
+    date: 'August 22, 2026',
+    title: 'First job. Full day. Five stars.',
+    body: [
+      'Our first completed job — a deep cleaning at HealthPlan Facility, Ashaiman — set the tone for everything BeyondX stands for.',
+      '"A team of 4 arrived at our facility at 7:40am to handle a deep cleaning job: cobwebs, high dusting, and scraping paint spillage off the floors. What we expected to take about 3 hours ended up taking the full day — they finished at 8:47pm. They stayed meticulous and hardworking throughout, even as the scope grew. We\'d use them again." — HealthPlan Facility, Ashaiman',
+      'And from the workers themselves: "Fair pay, respectful client, worth the long day."',
+      'The hours ran over. The scope grew. The team stayed. The client was treated fairly and the workers were compensated fully. That\'s the BeyondX promise working in both directions.',
+    ],
+  },
 ]
 
 function LaunchCard({ item, visible }: { item: NewsItem; visible: boolean }) {
