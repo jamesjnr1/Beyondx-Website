@@ -3,7 +3,7 @@ import { HeartHandshake, ChevronLeft } from 'lucide-react'
 import { contact, session } from '../../lib/api'
 
 export const WORKER_QUESTIONS = [
-  'How did you hear about BeyondX?',
+  'How did you hear about BeyondX? (e.g. a friend, Facebook/Instagram ad, Google, WhatsApp, AI assistant like ChatGPT, or somewhere else — please be specific)',
   'What made you decide to sign up?',
   'What kind of work do you do or are best at?',
   'Did you have any questions or concerns before joining?',
@@ -12,7 +12,7 @@ export const WORKER_QUESTIONS = [
 ]
 
 export const EMPLOYER_QUESTIONS = [
-  'How did you hear about BeyondX?',
+  'How did you hear about BeyondX? (e.g. a friend, Facebook/Instagram ad, Google, WhatsApp, AI assistant like ChatGPT, or somewhere else — please be specific)',
   'What made you consider trying the platform?',
   'What kind of tasks or roles are you looking to fill?',
   'Did you have any concerns or hesitations before reaching out?',

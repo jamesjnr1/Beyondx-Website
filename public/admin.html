@@ -1446,35 +1446,36 @@ async function loadDisputes(){
     const r=await fetch(API+'/admin/disputes',{headers:{'x-admin-password':pass}});
     const d=await r.json();
     if(!r.ok) throw new Error(d.error||'Error');
-    const pending=d.disputes.filter(x=>x.status==='pending').length;
+    const pending=(d.disputes||[]).filter(x=>x.status==='pending').length;
     const badge=document.getElementById('disputesBadge');
     if(badge){if(pending>0){badge.textContent=pending;badge.style.display='';}else badge.style.display='none';}
-    el.innerHTML=`
-      <div class="tc">
-        <div class="tc-h"><span class="tc-ht">Scope Disputes</span><span class="tc-hm">${d.disputes.length} total</span></div>
-        ${d.disputes.length?`<table><thead><tr><th>Task</th><th>Worker</th><th>Employer</th><th>Original</th><th>Requested</th><th>Status</th><th>Flagged</th><th>Action</th></tr></thead>
-        <tbody>${d.disputes.map(x=>`<tr>
-          <td class="tn">${anEsc(x.task?.taskType||'—')}<br><span style="font-size:10px;color:var(--ink3)">${anEsc(x.task?.location||'')}</span></td>
-          <td>${anEsc(x.worker?.fullName||'—')}</td>
-          <td style="font-size:11px">${anEsc(x.task?.employer?.orgName||'—')}</td>
-          <td class="tm">GH₵${x.originalPrice}</td>
-          <td class="tm">${x.requestedPrice>x.originalPrice*1.2?'<span style="color:#dc2626;font-weight:700">':''}GH₵${x.requestedPrice}${x.requestedPrice>x.originalPrice*1.2?'</span>':''}</td>
-          <td><span class="badge ${x.status==='pending'?'bp':x.status==='approved'?'bd':'bo'}">${x.status}</span></td>
-          <td class="tm">${new Date(x.createdAt).toLocaleDateString()}</td>
-          <td>${x.status==='pending'?`
-            <div style="display:flex;gap:4px;flex-direction:column">
-              <input id="adj_${x.id}" placeholder="Adjusted price" style="width:120px;padding:4px 8px;border:1px solid var(--b);border-radius:6px;font-size:11px"/>
-              <div style="display:flex;gap:4px">
-                <button class="btn-r" onclick="resolveDispute('${x.id}','approved')">✓ Approve</button>
-                <button class="btn-r" onclick="resolveDispute('${x.id}','rejected')">✕ Reject</button>
-              </div>
-            </div>`:'<span style="font-size:11px;color:var(--ink3)">Resolved</span>'}
-          </td>
-        </tr>
-        <tr><td colspan="8" style="padding:0 14px 10px;font-size:11.5px;color:var(--ink3)"><em>${anEsc(x.reason)}</em>${x.adminNote?` — Admin: ${anEsc(x.adminNote)}`:''}</td></tr>`).join('')}</tbody></table>`
-        :`<div class="empty">No scope disputes yet</div>`}
-      </div>`;
-  }catch(e){document.getElementById('disputesContent').innerHTML=`<div class="empty">${e.message}</div>`;}
+    if(!d.disputes||!d.disputes.length){el.innerHTML='<div class="tc"><div class="tc-h"><span class="tc-ht">Scope Disputes</span><span class="tc-hm">0 total</span></div><div class="empty">No scope disputes yet</div></div>';return;}
+    let rows='';
+    d.disputes.forEach(function(x){
+      const overThreshold = x.requestedPrice > x.originalPrice*1.2;
+      const statusBadge = x.status==='pending'?'bp':x.status==='approved'?'bd':'bo';
+      const actionCell = x.status==='pending'
+        ? '<div style="display:flex;gap:4px;flex-direction:column"><input id="adj_'+x.id+'" placeholder="Adjusted price" style="width:120px;padding:4px 8px;border:1px solid var(--b);border-radius:6px;font-size:11px"/><div style="display:flex;gap:4px"><button class="btn-r" onclick="resolveDispute(\''+x.id+'\',\'approved\')">&#10003; Approve</button><button class="btn-r" onclick="resolveDispute(\''+x.id+'\',\'rejected\')">&#10007; Reject</button></div></div>'
+        : '<span style="font-size:11px;color:var(--ink3)">Resolved</span>';
+      const priceCell = overThreshold
+        ? '<span style="color:#dc2626;font-weight:700">GH&#8373;'+x.requestedPrice+'</span>'
+        : 'GH&#8373;'+x.requestedPrice;
+      rows += '<tr>'
+        +'<td class="tn">'+anEsc(x.task&&x.task.taskType||'—')+'<br><span style="font-size:10px;color:var(--ink3)">'+anEsc(x.task&&x.task.location||'')+'</span></td>'
+        +'<td>'+anEsc(x.worker&&x.worker.fullName||'—')+'</td>'
+        +'<td style="font-size:11px">'+anEsc(x.task&&x.task.employer&&x.task.employer.orgName||'—')+'</td>'
+        +'<td class="tm">GH&#8373;'+x.originalPrice+'</td>'
+        +'<td class="tm">'+priceCell+'</td>'
+        +'<td><span class="badge '+statusBadge+'">'+x.status+'</span></td>'
+        +'<td class="tm">'+new Date(x.createdAt).toLocaleDateString()+'</td>'
+        +'<td>'+actionCell+'</td>'
+        +'</tr>'
+        +'<tr><td colspan="8" style="padding:0 14px 10px;font-size:11.5px;color:var(--ink3)"><em>'+anEsc(x.reason)+'</em>'+(x.adminNote?' — Admin: '+anEsc(x.adminNote):'')+'</td></tr>';
+    });
+    el.innerHTML='<div class="tc"><div class="tc-h"><span class="tc-ht">Scope Disputes</span><span class="tc-hm">'+(d.disputes.length)+' total</span></div>'
+      +'<table><thead><tr><th>Task</th><th>Worker</th><th>Employer</th><th>Original</th><th>Requested</th><th>Status</th><th>Flagged</th><th>Action</th></tr></thead>'
+      +'<tbody>'+rows+'</tbody></table></div>';
+  }catch(e){document.getElementById('disputesContent').innerHTML='<div class="empty">'+e.message+'</div>';}
 }
 async function resolveDispute(id,status){
   const adj=document.getElementById('adj_'+id)?.value;
@@ -1491,27 +1492,25 @@ async function loadCoordinators(){
     const r=await fetch(API+'/admin/coordinators',{headers:{'x-admin-password':pass}});
     const d=await r.json();
     if(!r.ok) throw new Error(d.error||'Error');
-    el.innerHTML=`
-      <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
-        <button class="btn-r" onclick="exportCoordinatorsCsv(window._coordData)">Export CSV</button>
-      </div>
-      <div class="tc">
-        <div class="tc-h"><span class="tc-ht">Coordinator Channel</span><span class="tc-hm">${d.coordinators.length} coordinators</span></div>
-        ${d.coordinators.length?`<table><thead><tr><th>Name</th><th>Org</th><th>Phone</th><th>Jobs</th><th>Workers</th><th>Commission</th><th>Avg Job Value</th><th>Joined</th></tr></thead>
-        <tbody>${d.coordinators.map(c=>`<tr class="trow" onclick="showCoordDetail('${c.id}')">
-          <td class="tn">${anEsc(c.fullName)}</td>
-          <td style="font-size:11px">${anEsc(c.orgName||'—')}</td>
-          <td class="tm">${anEsc(c.phone)}</td>
-          <td class="tg">${c.totalJobs}</td>
-          <td class="tg">${c.totalWorkers}</td>
-          <td class="tg">GH₵${c.totalCommission.toFixed(0)}</td>
-          <td class="tm">GH₵${c.avgJobValue.toFixed(0)}</td>
-          <td class="tm">${new Date(c.createdAt).toLocaleDateString()}</td>
-        </tr>`).join('')}</tbody></table>`
-        :`<div class="empty">No coordinators yet</div>`}
-      </div>`;
     window._coordData=d.coordinators;
-  }catch(e){document.getElementById('coordinatorsContent').innerHTML=`<div class="empty">${e.message}</div>`;}
+    let rows='';
+    (d.coordinators||[]).forEach(function(c){
+      rows+='<tr class="trow" onclick="showCoordDetail(&apos;'+c.id+'&apos;)">'
+        +'<td class="tn">'+anEsc(c.fullName)+'</td>'
+        +'<td style="font-size:11px">'+anEsc(c.orgName||'—')+'</td>'
+        +'<td class="tm">'+anEsc(c.phone)+'</td>'
+        +'<td class="tg">'+c.totalJobs+'</td>'
+        +'<td class="tg">'+c.totalWorkers+'</td>'
+        +'<td class="tg">GH&#8373;'+c.totalCommission.toFixed(0)+'</td>'
+        +'<td class="tm">GH&#8373;'+c.avgJobValue.toFixed(0)+'</td>'
+        +'<td class="tm">'+new Date(c.createdAt).toLocaleDateString()+'</td>'
+        +'</tr>';
+    });
+    el.innerHTML='<div style="display:flex;justify-content:flex-end;margin-bottom:10px"><button class="btn-r" onclick="exportCoordinatorsCsv(window._coordData)">Export CSV</button></div>'
+      +'<div class="tc"><div class="tc-h"><span class="tc-ht">Coordinator Channel</span><span class="tc-hm">'+(d.coordinators||[]).length+' coordinators</span></div>'
+      +(rows?'<table><thead><tr><th>Name</th><th>Org</th><th>Phone</th><th>Jobs</th><th>Workers</th><th>Commission</th><th>Avg Job Value</th><th>Joined</th></tr></thead><tbody>'+rows+'</tbody></table>':'<div class="empty">No coordinators yet</div>')
+      +'</div>';
+  }catch(e){document.getElementById('coordinatorsContent').innerHTML='<div class="empty">'+e.message+'</div>';}
 }
 function showCoordDetail(id){
   const c=(window._coordData||[]).find(x=>x.id===id);
@@ -1842,27 +1841,39 @@ async function ntSend(){
   const message = document.getElementById('ntMessage').value.trim();
   if(!title){ showToast('Give the notification a title.'); return; }
   if(!message){ showToast('Write a message first.'); return; }
-  if(!confirm(`Publish this notification to ${NT_LABEL[ntAud].toLowerCase()}?\n\n${title}\n${message}`)) return;
+  if(!confirm(`Send SMS to ${NT_LABEL[ntAud]?.toLowerCase()||ntAud}?\n\n${title}\n${message}`)) return;
 
-  showToast('Publishing…');
+  // Build a single ≤160 char SMS from the title + message
+  const sms = `BeyondX: ${title} — ${message}`.slice(0,158);
+
+  showToast('Sending…');
   try{
-    const r = await fetch('/api/notifications',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','x-admin-secret':pass},
-      body:JSON.stringify({audience:ntAud, title, body:message})
-    });
-    const d = await r.json().catch(()=>({}));
-    if(!r.ok){
-      ntAlert('Could not publish', d.error || `HTTP ${r.status}`);
-      showToast('Could not publish.');
-      return;
+    // Fetch the right audience phone numbers then blast each one
+    let phones = [];
+    if(ntAud === 'workers' || ntAud === 'all'){
+      const wr = await fetch(API+'/admin/workers',{headers:{'x-admin-password':pass}}).then(r=>r.json()).catch(()=>({workers:[]}));
+      phones.push(...(wr.workers||[]).filter(w=>w.phone).map(w=>w.phone));
     }
+    if(ntAud === 'employers' || ntAud === 'all'){
+      const er = await fetch(API+'/admin/employers',{headers:{'x-admin-password':pass}}).then(r=>r.json()).catch(()=>({employers:[]}));
+      phones.push(...(er.employers||[]).filter(e=>e.phone).map(e=>e.phone));
+    }
+    phones = [...new Set(phones)];
+    if(!phones.length){ showToast('No phone numbers found for this audience.'); return; }
+    let sent=0, failed=0;
+    for(const phone of phones){
+      const r = await fetch(API+'/admin/send-sms',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','x-admin-password':pass},
+        body:JSON.stringify({phone, message:sms})
+      });
+      if(r.ok) sent++; else failed++;
+    }
+    showToast(`Sent to ${sent} number${sent!==1?'s':''}${failed>0?' ('+failed+' failed)':''}.`);
     document.getElementById('ntAlert').innerHTML='';
-    showToast('Notification published.');
     ntClear();
-    ntLoad();
   }catch(e){
-    ntAlert('Could not publish', e.message);
+    showToast('Could not send: '+e.message);
   }
 }
 
