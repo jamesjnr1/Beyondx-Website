@@ -70,17 +70,6 @@ type NewsItem = {
 
 const newsItems: NewsItem[] = [
   {
-    date: 'August 2026',
-    title: "BeyondX is officially live.",
-    body: [
-      'After months of building alongside workers, employers, and our community in Accra, BeyondX is officially launched.',
-      'Every worker on our platform is verified — skills checked, identity confirmed, background reviewed — so employers can hire with confidence, and workers can find dignified, fairly paid work.',
-      "From facility cleaning to skilled trades, event support to logistics, we're connecting Greater Accra's workforce with the people who need them — safely, fairly, and transparently.",
-      'Thank you to everyone who believed in this from the start. This is just the beginning.',
-    ],
-    featured: true,
-  },
-  {
     date: 'August 22, 2026',
     title: 'First job. Full day. Five stars.',
     body: [
@@ -89,6 +78,7 @@ const newsItems: NewsItem[] = [
       'And from the workers themselves: "Fair pay, respectful client, worth the long day."',
       'The hours ran over. The scope grew. The team stayed. The client was treated fairly and the workers were compensated fully. That\'s the BeyondX promise working in both directions.',
     ],
+    featured: true,
   },
 ]
 
