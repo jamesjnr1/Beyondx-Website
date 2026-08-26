@@ -1541,29 +1541,38 @@ function exportCoordinatorsCsv(data){
 // ── PRICE TIERS ───────────────────────────────────────────────────────────
 async function loadPricing(){
   const el=document.getElementById('pricingContent');
-  el.innerHTML='<div class="empty">Loading…</div>';
+  el.innerHTML='<div class="empty">Loading...</div>';
   try{
     const r=await fetch(API+'/admin/price-tiers',{headers:{'x-admin-password':pass}});
     const d=await r.json();
     if(!r.ok) throw new Error(d.error||'Error');
-    // Group by category
     const grouped={};
-    d.tiers.forEach(t=>{if(!grouped[t.category])grouped[t.category]={};grouped[t.category][t.tier]=t;});
-    el.innerHTML=`
-      <div class="tc">
-        <div class="tc-h"><span class="tc-ht">Price Tiers</span><span class="tc-hm">GH₵ per worker · edit and save per row</span></div>
-        <table><thead><tr><th>Category</th><th>Small</th><th>Medium</th><th>Large</th><th>Materials surcharge (if not provided)</th></tr></thead>
-        <tbody>${Object.entries(grouped).map(([cat,tiers])=>{
-          const sm=tiers['small'],md=tiers['medium'],lg=tiers['large'];
-          return`<tr>
-            <td class="tn">${anEsc(cat)}</td>
-            ${['small','medium','large'].map(tier=>{const t=tiers[tier];return t?`<td><div style="display:flex;gap:4px;align-items:center"><span style="font-size:11px;color:var(--ink3)">GH₵</span><input id="pt_${t.id}" value="${t.basePrice}" style="width:64px;padding:4px 6px;border:1px solid var(--b);border-radius:6px;font-size:12px" onchange="saveTier('${t.id}',this.value,document.getElementById('ms_${t.id}')?.value)"/></div></td>`:'<td>—</td>';}).join('')}
-            <td>${sm?`<input id="ms_${sm.id}" value="${sm.materialsSurcharge||0}" style="width:60px;padding:4px 6px;border:1px solid var(--b);border-radius:6px;font-size:12px"/> <span style="font-size:10px;color:var(--ink3)">GH₵</span>`:'—'}</td>
-          </tr>`;
-        }).join('')}</tbody></table>
-      </div>
-      <p style="font-size:11px;color:var(--ink3);padding:10px 0">Changes take effect immediately for new scope quotes. Existing quotes are not affected.</p>`;
-  }catch(e){document.getElementById('pricingContent').innerHTML=`<div class="empty">${e.message}</div>`;}
+    (d.tiers||[]).forEach(function(t){if(!grouped[t.category])grouped[t.category]={};grouped[t.category][t.tier]=t;});
+    var rows='';
+    Object.keys(grouped).sort().forEach(function(cat){
+      var tiers=grouped[cat];
+      var sm=tiers['small'],md=tiers['medium'],lg=tiers['large'];
+      function tc(t){
+        if(!t)return '<td>&mdash;</td>';
+        return '<td><input class="pt-input" data-tid="'+t.id+'" data-field="base" value="'+t.basePrice+'" style="width:64px;padding:4px 6px;border:1px solid var(--b);border-radius:6px;font-size:12px"/></td>';
+      }
+      var ms=sm?'<td><input class="pt-input" data-tid="'+sm.id+'" data-field="ms" value="'+(sm.materialsSurcharge||0)+'" style="width:60px;padding:4px 6px;border:1px solid var(--b);border-radius:6px;font-size:12px"/></td>':'<td>&mdash;</td>';
+      rows+='<tr><td class="tn">'+anEsc(cat)+'</td>'+tc(sm)+tc(md)+tc(lg)+ms+'</tr>';
+    });
+    el.innerHTML='<div class="tc"><div class="tc-h"><span class="tc-ht">Price Tiers</span><span class="tc-hm">GH&#8373; per worker &middot; edit then press Enter or click away to save</span></div>'
+      +'<table><thead><tr><th>Category</th><th>Small</th><th>Medium</th><th>Large</th><th>Materials surcharge</th></tr></thead><tbody>'+rows+'</tbody></table></div>'
+      +'<p style="font-size:11px;color:var(--ink3);padding:10px 0">Changes take effect immediately for new quotes.</p>';
+    el.querySelectorAll('.pt-input').forEach(function(inp){
+      inp.addEventListener('change',function(){
+        var tid=inp.dataset.tid, field=inp.dataset.field, val=inp.value;
+        var baseInput=el.querySelector('.pt-input[data-tid="'+tid+'"][data-field="base"]');
+        var msInput=el.querySelector('.pt-input[data-tid="'+tid+'"][data-field="ms"]');
+        var base=baseInput?baseInput.value:val;
+        var msSurcharge=msInput?msInput.value:null;
+        saveTier(tid,base,msSurcharge);
+      });
+    });
+  }catch(e){el.innerHTML='<div class="empty">'+e.message+'</div>';}
 }
 async function saveTier(id,basePrice,materialsSurcharge){
   const r=await fetch(API+'/admin/price-tiers/'+id,{method:'PATCH',headers:{'Content-Type':'application/json','x-admin-password':pass},body:JSON.stringify({basePrice,materialsSurcharge})});
