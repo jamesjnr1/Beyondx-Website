@@ -12,6 +12,8 @@ import { categories, remoteCategories, allCategories } from '../data'
 import { PLATFORM_FEE_FLAT } from '../lib/payments'
 import { openBookingWindow } from './BookWorker'
 import type { BookingState } from './BookWorker'
+import CoordinatorQuoteModal from '../components/CoordinatorQuoteModal'
+import { isCoordinator, getApplication } from '../lib/coordinator'
 
 const cedis = (n?: number | string) => `GH\u20b5 ${Number(n || 0).toLocaleString()}`
 const wName = (w: Worker) => (w.fullName as string) || (w.name as string) || 'Worker'
@@ -133,6 +135,7 @@ export default function EmployerDashboard() {
   const [screeningAnswers, setScreeningAnswers] = useState<ScreeningAnswers>(DEFAULT_SCREENING)
   const [selectedWorkers, setSelectedWorkers] = useState<Set<string | number>>(new Set())
   const [viewing, setViewing] = useState<Worker | null>(null)
+  const [quoteRequestWorker, setQuoteRequestWorker] = useState<Worker | null>(null)
   const openDispatch = (worker: Worker) => {
     const state: BookingState = { worker, category: pickedCategory, screening: screeningAnswers }
     openBookingWindow(state)
@@ -439,6 +442,11 @@ export default function EmployerDashboard() {
                                     <span className="min-w-0 flex-1">
                                       <span className="flex items-center gap-2">
                                         <span className="block truncate font-serif text-base font-medium text-ink-900">{wName(w)}</span>
+                                        {isCoordinator(w) && (
+                                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-forest-600/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-forest-700">
+                                            Team
+                                          </span>
+                                        )}
                                         {isBackgroundFlagged(w) && !highRisk && (
                                           <span className="shrink-0 text-[11px] font-semibold text-forest-700">Priority</span>
                                         )}
@@ -446,6 +454,11 @@ export default function EmployerDashboard() {
                                           <span className="shrink-0 text-[11px] font-medium text-amber-700">Has tools</span>
                                         )}
                                       </span>
+                                      {isCoordinator(w) && (
+                                        <span className="mt-0.5 block text-xs text-ink-700/70">
+                                          Team of {getApplication(w)?.teamSize ?? '—'} · {(getApplication(w)?.categories || []).join(', ') || 'Multiple categories'}
+                                        </span>
+                                      )}
                                       <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-700">
                                         {w.rating && Number(w.rating) > 0
                                           ? <span className="inline-flex items-center gap-0.5"><Star size={12} aria-hidden="true" className="fill-forest-600 text-forest-600" /> {Number(w.rating).toFixed(1)}</span>
@@ -693,7 +706,18 @@ export default function EmployerDashboard() {
 
       <Toast toast={toast} onClose={() => setToast(null)} />
 
-      {viewing && <WorkerProfileModal worker={viewing} category={pickedCategory} onClose={() => setViewing(null)} onDispatch={() => { const w = viewing; setViewing(null); if (w) openDispatch(w) }} />}
+      {viewing && (
+        <WorkerProfileModal
+          worker={viewing}
+          category={pickedCategory}
+          onClose={() => setViewing(null)}
+          onDispatch={() => { const w = viewing; setViewing(null); if (w) openDispatch(w) }}
+          onRequestQuote={() => { const w = viewing; setViewing(null); if (w) setQuoteRequestWorker(w) }}
+        />
+      )}
+      {quoteRequestWorker && (
+        <CoordinatorQuoteModal worker={quoteRequestWorker} onClose={() => setQuoteRequestWorker(null)} />
+      )}
       {/* DispatchModal replaced by BookWorker window — dispatching state kept for multi-dispatch queue */}
       {rating && <RateModal task={rating} onClose={() => setRating(null)} onDone={afterConfirm} onError={(m) => setToast({ id: Date.now(), kind: 'info', title: 'Could not confirm', detail: m })} />}
       {editing && profile !== undefined && (
@@ -969,11 +993,13 @@ function TaskScreening({
   )
 }
 
-function WorkerProfileModal({ worker, category, onClose, onDispatch }: { worker: Worker; category?: string | null; onClose: () => void; onDispatch: () => void }) {
+function WorkerProfileModal({ worker, category, onClose, onDispatch, onRequestQuote }: { worker: Worker; category?: string | null; onClose: () => void; onDispatch: () => void; onRequestQuote: () => void }) {
   useEsc(onClose)
   const skills = wSkills(worker)
   const rateFor = (title: string) => allCategories.find((c) => c.title === title)
   const picked = category ? rateFor(category) : undefined
+  const coordinator = isCoordinator(worker)
+  const application = coordinator ? getApplication(worker) : null
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/50 p-4" onClick={onClose}>
       {/* Fixed height with an internal scroll area: the header and the action
@@ -999,7 +1025,7 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch }: { worker:
           )}
           <h2 id="wp-title" className="mt-2.5 font-serif text-xl font-medium leading-snug text-cream-50">{wName(worker)}</h2>
           <p className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-cream-200/90">
-            <ShieldCheck size={13} aria-hidden="true" /> BeyondX Verified · Certified Worker
+            <ShieldCheck size={13} aria-hidden="true" /> BeyondX Verified · {coordinator ? 'Coordinator Team' : 'Certified Worker'}
           </p>
           {worker.rating && Number(worker.rating) > 0 ? (
             <p className="mt-1.5">
@@ -1018,14 +1044,37 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch }: { worker:
               <span className="text-xs text-ink-700">Tasks completed</span>
             </div>
             <div className="rounded-xl bg-forest-600/10 p-3.5 text-center">
-              <span className="block font-serif text-xl font-semibold text-ink-900">
-                {picked ? cedis(picked.rate) : '—'}
-              </span>
-              <span className="text-xs text-ink-700">
-                {picked ? `${picked.rateUnit || 'per day'} · ${picked.title.split(' ')[0]}` : 'Standard rate'}
-              </span>
+              {coordinator ? (
+                <>
+                  <span className="block font-serif text-xl font-semibold text-ink-900">Custom quote</span>
+                  <span className="text-xs text-ink-700">Set by BeyondX for team jobs</span>
+                </>
+              ) : (
+                <>
+                  <span className="block font-serif text-xl font-semibold text-ink-900">
+                    {picked ? cedis(picked.rate) : '—'}
+                  </span>
+                  <span className="text-xs text-ink-700">
+                    {picked ? `${picked.rateUnit || 'per day'} · ${picked.title.split(' ')[0]}` : 'Standard rate'}
+                  </span>
+                </>
+              )}
             </div>
           </div>
+
+          {coordinator && (
+            <div className="mx-5 mt-3 rounded-xl border border-forest-600/20 bg-forest-600/5 px-4 py-3">
+              <p className="text-xs font-semibold text-forest-800">
+                Team of {application?.teamSize ?? '—'}{application?.yearsOperating ? ` · ${application.yearsOperating} yr${application.yearsOperating === 1 ? '' : 's'} operating` : ''}
+              </p>
+              {application?.categories?.length ? (
+                <p className="mt-1 text-xs text-ink-700/80">Covers: {application.categories.join(', ')}</p>
+              ) : null}
+              <p className="mt-1.5 text-[11px] leading-relaxed text-ink-700/60">
+                Custom quote for team jobs — pricing is confirmed by BeyondX once the scope is reviewed.
+              </p>
+            </div>
+          )}
 
           {/* Proximity & transport allowance — shown when available */}
           {worker.proximity?.available && (
@@ -1130,7 +1179,15 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch }: { worker:
 
         {/* Action stays pinned */}
         <div className="shrink-0 border-t border-ink-900/10 bg-cream-50 p-4">
-          {DISPATCH_ENABLED ? (
+          {coordinator ? (
+            <button
+              onClick={onRequestQuote}
+              aria-label={`Request a quote from ${wName(worker)}`}
+              className="flex w-full items-center justify-center gap-1.5 rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] focus:outline-none"
+            >
+              <Send size={15} aria-hidden="true" /> Request a quote
+            </button>
+          ) : DISPATCH_ENABLED ? (
             <button
               onClick={onDispatch}
               disabled={!!worker.isBusy}
