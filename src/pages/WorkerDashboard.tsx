@@ -383,11 +383,11 @@ function Stars({ n }: { n: number }) {
 
 function Stat({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-xl bg-cream-50 p-4 shadow-sm border border-ink-900/8">
-      <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-forest-600/10 text-forest-600">{icon}</span>
-      <span>
-        <span className="block text-lg font-semibold text-ink-900">{value}</span>
-        <span className="block text-xs text-ink-700">{label}</span>
+    <div className="flex items-center gap-3 rounded-2xl border border-ink-900/8 bg-cream-50 px-4 py-3.5">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-forest-600/10 text-forest-600">{icon}</span>
+      <span className="min-w-0">
+        <span className="block truncate font-serif text-lg font-semibold text-ink-900">{value}</span>
+        <span className="block truncate text-xs text-ink-700/60">{label}</span>
       </span>
     </div>
   )
