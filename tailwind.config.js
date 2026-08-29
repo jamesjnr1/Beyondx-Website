@@ -20,7 +20,7 @@ export default {
         '7xl': ['3.5rem', { lineHeight: '3.65rem' }],    // 56px  (was 72)
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        sans: ['Poppins', 'system-ui', 'sans-serif'],
         serif: ['Fraunces', 'Georgia', 'serif'],
       },
       colors: {

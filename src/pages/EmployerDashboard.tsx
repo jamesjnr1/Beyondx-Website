@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight, Star, Send, Phone, Plus, X, ShieldCheck, CircleCheck, Info, RefreshCw, AlertCircle, Copy, Check, Award, Map, Clock, MapPin } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Star, Send, Phone, Plus, X, ShieldCheck, CircleCheck, Info, RefreshCw, AlertCircle, Copy, Check, Award, Map, Clock, MapPin, Briefcase, Users, Wallet } from 'lucide-react'
 import JobLocationMap from '../components/JobLocationMap'
 import DashboardHeader from './DashboardHeader'
 import ProfileModal from '../components/ProfileModal'
@@ -210,6 +210,16 @@ export default function EmployerDashboard() {
     setSelectedWorkers(new Set())
   }
 
+  // "Active" = still in flight; a job only counts toward spend once BeyondX has
+  // actually paid a worker for it (employer_confirmed/completed), so a
+  // cancelled or never-verified booking doesn't inflate the figure.
+  const activeJobsCount = taskList.filter((t) => !['completed', 'cancelled', 'expired', 'payment_rejected'].includes(t.status || '')).length
+  const workersHiredCount = new Set(taskList.map((t) => t.acceptedBy).filter(Boolean)).size
+  const now = new Date()
+  const spendThisMonth = taskList
+    .filter((t) => (t.status === 'completed' || t.status === 'employer_confirmed') && t.createdAt && new Date(t.createdAt).getMonth() === now.getMonth() && new Date(t.createdAt).getFullYear() === now.getFullYear())
+    .reduce((sum, t) => sum + Number(t.pay || 0), 0)
+
   const afterConfirm = (worker: string) => {
     setRating(null)
     setAnnounce(`Work confirmed for ${worker}.`)
@@ -229,6 +239,30 @@ export default function EmployerDashboard() {
             <button onClick={() => { setLoading(true); load() }} className="shrink-0 rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-cream-50 hover:bg-red-700">Try again</button>
           </div>
         )}
+
+        <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="flex items-center gap-3 rounded-2xl border border-ink-900/8 bg-cream-50 px-4 py-3.5">
+            <Briefcase size={18} aria-hidden="true" className="shrink-0 text-forest-600" />
+            <div className="min-w-0">
+              <p className="truncate text-xs text-ink-700/60">Active jobs</p>
+              <p className="truncate font-serif text-lg font-semibold text-ink-900">{activeJobsCount}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 rounded-2xl border border-ink-900/8 bg-cream-50 px-4 py-3.5">
+            <Users size={18} aria-hidden="true" className="shrink-0 text-forest-600" />
+            <div className="min-w-0">
+              <p className="truncate text-xs text-ink-700/60">Workers hired</p>
+              <p className="truncate font-serif text-lg font-semibold text-ink-900">{workersHiredCount}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 rounded-2xl border border-ink-900/8 bg-cream-50 px-4 py-3.5">
+            <Wallet size={18} aria-hidden="true" className="shrink-0 text-forest-600" />
+            <div className="min-w-0">
+              <p className="truncate text-xs text-ink-700/60">Spend this month</p>
+              <p className="truncate font-serif text-lg font-semibold text-ink-900">{cedis(spendThisMonth)}</p>
+            </div>
+          </div>
+        </div>
 
         <div className="flex items-center gap-1 overflow-x-auto border-b border-ink-900/10 pb-px [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Employer sections">
             {([['hire', 'Hire Workers'], ['post', 'Post a Task'], ['history', (() => { const n = taskList.filter(t => t.status === 'pending_confirmation').length; return n > 0 ? `My Jobs (${n})` : 'My Jobs' })()], ['support', 'Support']] as const).map(([id, label]) => (
