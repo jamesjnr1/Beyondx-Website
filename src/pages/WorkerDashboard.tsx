@@ -7,8 +7,11 @@ import ProfileModal, { type Profile } from '../components/ProfileModal'
 import Toast, { type ToastMsg } from '../components/Toast'
 import SupportPanel from '../components/SupportPanel'
 import LocationShare from '../components/LocationShare'
+import CoordinatorApply from '../components/CoordinatorApply'
+import CoordinatorDashboard from './CoordinatorDashboard'
 import { tasks as tasksApi, workers as workersApi, media, contact, session, ApiError, type Task, type Worker } from '../lib/api'
 import { isRemote } from '../data'
+import { isCoordinator } from '../lib/coordinator'
 
 // ---------------------------------------------------------------------------
 // Work Experience & Certifications Card
@@ -771,6 +774,10 @@ export default function WorkerDashboard() {
     { id: 'support', label: 'Support' },
   ] as const
 
+  // Approved Coordinators get a different dashboard entirely (team
+  // management, bulk-job quoting, payout splits) — see CoordinatorDashboard.
+  if (isCoordinator(me)) return <CoordinatorDashboard />
+
   return (
     <div className="min-h-screen bg-cream-100">
       <DashboardHeader role="WORKER" title="Worker Dashboard" name={displayName} avatar={photo} onEditProfile={() => setEditing(true)} tasks={[...offers, ...mine, ...history]} />
@@ -795,6 +802,8 @@ export default function WorkerDashboard() {
         </div>
 
         <ReferralCard code={(me?.workerId as string) || 'BX-—'} referrals={0} />
+
+        <CoordinatorApply worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
 
         {/* Profile completion card — single unified section, no stacked boxes */}
         <div className="rounded-2xl bg-cream-50 border border-ink-900/8 overflow-hidden">

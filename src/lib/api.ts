@@ -42,6 +42,8 @@ export type WorkerProximity = {
   tier: 'nearby' | 'short' | 'medium' | 'far' | 'very_far' | 'unknown'
 }
 
+export type WorkerRole = 'worker' | 'coordinator'
+
 export type Worker = {
   id?: string | number
   workerId?: string
@@ -58,6 +60,19 @@ export type Worker = {
   proximity?: WorkerProximity
   scheduledDate?: string
   scheduledTime?: string
+  /** Defaults to 'worker' when absent. Set to 'coordinator' once BeyondX approves
+   *  a Coordinator application — see src/lib/coordinator.ts. */
+  role?: WorkerRole
+  /** JSON-stringified CoordinatorApplication, or the object itself once parsed. */
+  coordinatorApplication?: unknown
+  /** JSON-stringified TeamMember[]. */
+  coordinatorTeam?: unknown
+  /** JSON-stringified CoordinatorDispute[]. */
+  coordinatorDisputes?: unknown
+  /** JSON-stringified Record<taskId, CoordinatorQuote>. */
+  coordinatorQuotes?: unknown
+  /** JSON-stringified Record<taskId, PayoutSplitRecord>. */
+  coordinatorPayoutSplits?: unknown
   [k: string]: unknown
 }
 
