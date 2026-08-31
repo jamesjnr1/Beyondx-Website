@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { ChevronLeft, ChevronRight, Star, Send, Phone, Plus, X, ShieldCheck, CircleCheck, Info, RefreshCw, AlertCircle, Copy, Check, Award, Map, Clock, MapPin, Briefcase, Users, Wallet } from 'lucide-react'
 import JobLocationMap from '../components/JobLocationMap'
 import DashboardHeader from './DashboardHeader'
@@ -81,6 +81,13 @@ const STATUS: Record<string, { label: string; color: string; bar: string; note?:
 }
 const st = (s?: string) => STATUS[s || 'open'] || STATUS.open
 
+const greeting = () => {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good morning'
+  if (h < 17) return 'Good afternoon'
+  return 'Good evening'
+}
+
 // Dispatch writes "Worker: <name> (<id>) | Payment Ref: <ref>" into the description.
 function dispatchDetails(t: Task) {
   const d = String(t.description || '')
@@ -115,8 +122,27 @@ function useEsc(onClose: () => void) {
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
 }
-function Empty({ text }: { text: string }) {
-  return <div className="rounded-xl border border-dashed border-ink-900/15 p-10 text-center text-sm text-ink-700">{text}</div>
+function Empty({ text, icon }: { text: string; icon?: ReactNode }) {
+  return (
+    <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-ink-900/15 bg-cream-50/50 p-10 text-center">
+      {icon && <span className="flex h-11 w-11 items-center justify-center rounded-full bg-ink-900/5 text-ink-700/50">{icon}</span>}
+      <p className="text-sm text-ink-700">{text}</p>
+    </div>
+  )
+}
+
+function Stat({ icon, label, value, highlight }: { icon: ReactNode; label: string; value: string; highlight?: boolean }) {
+  return (
+    <div className={`flex items-center gap-3.5 rounded-2xl border px-4 py-4 transition-shadow hover:shadow-sm sm:py-5 ${
+      highlight ? 'border-forest-600/15 bg-gradient-to-br from-forest-600 to-forest-700 text-cream-50' : 'border-ink-900/8 bg-cream-50'
+    }`}>
+      <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${highlight ? 'bg-cream-50/15 text-cream-50' : 'bg-forest-600/10 text-forest-600'}`}>{icon}</span>
+      <span className="min-w-0">
+        <span className={`block truncate font-serif text-xl font-semibold ${highlight ? 'text-cream-50' : 'text-ink-900'}`}>{value}</span>
+        <span className={`block truncate text-xs ${highlight ? 'text-cream-50/75' : 'text-ink-700/60'}`}>{label}</span>
+      </span>
+    </div>
+  )
 }
 function Skeleton() {
   return <div className="space-y-3" aria-hidden="true">{[0, 1, 2].map((i) => (
@@ -215,6 +241,7 @@ export default function EmployerDashboard() {
   // cancelled or never-verified booking doesn't inflate the figure.
   const activeJobsCount = taskList.filter((t) => !['completed', 'cancelled', 'expired', 'payment_rejected'].includes(t.status || '')).length
   const workersHiredCount = new Set(taskList.map((t) => t.acceptedBy).filter(Boolean)).size
+  const pendingConfirmCount = taskList.filter((t) => t.status === 'pending_confirmation').length
   const now = new Date()
   const spendThisMonth = taskList
     .filter((t) => (t.status === 'completed' || t.status === 'employer_confirmed') && t.createdAt && new Date(t.createdAt).getMonth() === now.getMonth() && new Date(t.createdAt).getFullYear() === now.getFullYear())
@@ -240,34 +267,28 @@ export default function EmployerDashboard() {
           </div>
         )}
 
-        <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <div className="flex items-center gap-3 rounded-2xl border border-ink-900/8 bg-cream-50 px-4 py-3.5">
-            <Briefcase size={18} aria-hidden="true" className="shrink-0 text-forest-600" />
-            <div className="min-w-0">
-              <p className="truncate text-xs text-ink-700/60">Active jobs</p>
-              <p className="truncate font-serif text-lg font-semibold text-ink-900">{activeJobsCount}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 rounded-2xl border border-ink-900/8 bg-cream-50 px-4 py-3.5">
-            <Users size={18} aria-hidden="true" className="shrink-0 text-forest-600" />
-            <div className="min-w-0">
-              <p className="truncate text-xs text-ink-700/60">Workers hired</p>
-              <p className="truncate font-serif text-lg font-semibold text-ink-900">{workersHiredCount}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3 rounded-2xl border border-ink-900/8 bg-cream-50 px-4 py-3.5">
-            <Wallet size={18} aria-hidden="true" className="shrink-0 text-forest-600" />
-            <div className="min-w-0">
-              <p className="truncate text-xs text-ink-700/60">Spend this month</p>
-              <p className="truncate font-serif text-lg font-semibold text-ink-900">{cedis(spendThisMonth)}</p>
-            </div>
-          </div>
+        <div className="mb-5">
+          <h1 className="font-serif text-2xl font-medium text-ink-900 sm:text-[26px]">{greeting()}, {orgName}</h1>
+          <p className="mt-0.5 text-sm text-ink-700/70">
+            {pendingConfirmCount > 0
+              ? `${pendingConfirmCount} job${pendingConfirmCount === 1 ? '' : 's'} waiting on your confirmation.`
+              : activeJobsCount > 0
+                ? `${activeJobsCount} active job${activeJobsCount === 1 ? '' : 's'} right now.`
+                : 'No active jobs — post one or hire a worker to get started.'}
+          </p>
         </div>
 
-        <div className="flex items-center gap-1 overflow-x-auto border-b border-ink-900/10 pb-px [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="tablist" aria-label="Employer sections">
+        <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <Stat icon={<Briefcase size={20} />} label="Active jobs" value={`${activeJobsCount}`} highlight />
+          <Stat icon={<Users size={20} className="text-forest-600" />} label="Workers hired" value={`${workersHiredCount}`} />
+          <Stat icon={<Wallet size={20} className="text-forest-600" />} label="Spend this month" value={cedis(spendThisMonth)} />
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-1 overflow-x-auto rounded-full bg-ink-900/5 p-1" role="tablist" aria-label="Employer sections">
             {([['hire', 'Hire Workers'], ['post', 'Post a Task'], ['history', (() => { const n = taskList.filter(t => t.status === 'pending_confirmation').length; return n > 0 ? `My Jobs (${n})` : 'My Jobs' })()], ['support', 'Support']] as const).map(([id, label]) => (
               <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
-                className={`shrink-0 rounded-md px-3 py-2 text-sm font-medium transition-colors focus:outline-none ${tab === id ? 'bg-forest-600/10 text-forest-700' : 'text-ink-700/70 hover:text-ink-900 hover:bg-ink-900/4'}`}>
+                className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition-colors focus:outline-none ${tab === id ? 'bg-cream-50 text-forest-700 shadow-sm' : 'text-ink-700 hover:text-ink-900'}`}>
                 {label}
                 {id === 'history' && taskList.filter(t => t.status === 'pending_confirmation').length > 0 && (
                   <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-white">
@@ -276,10 +297,11 @@ export default function EmployerDashboard() {
                 )}
               </button>
             ))}
-            <button onClick={() => { setLoading(true); load() }} aria-label="Refresh"
-              className="ml-1 rounded-md p-2 text-ink-700/50 hover:bg-ink-900/5 hover:text-ink-700">
-              <RefreshCw size={13} aria-hidden="true" />
-            </button>
+          </div>
+          <button onClick={() => { setLoading(true); load() }} aria-label="Refresh"
+            className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-ink-700/60 transition-colors hover:bg-ink-900/5 hover:text-ink-900">
+            <RefreshCw size={13} aria-hidden="true" /> Refresh
+          </button>
         </div>
 
         {tab === 'hire' && (
@@ -531,7 +553,7 @@ export default function EmployerDashboard() {
                         </ul>
                       ) : (
                         <div className="mt-4">
-                          <Empty text={highRisk
+                          <Empty icon={<Users size={20} aria-hidden="true" />} text={highRisk
                             ? `No workers cleared for this task type yet. Post a task and we'll match someone.`
                             : `No workers are certified for ${pickedCategory} yet. Post a task instead and we'll match someone as soon as they join.`
                           } />
@@ -587,7 +609,7 @@ export default function EmployerDashboard() {
                 const isTerminal = ['completed', 'employer_confirmed', 'payment_rejected', 'cancelled'].includes(t.status as string)
 
                 return (
-                  <div className={`rounded-2xl bg-cream-50 shadow-sm border border-ink-900/8`}>
+                  <div className={`rounded-2xl bg-cream-50 shadow-sm border border-ink-900/8 transition-shadow hover:shadow-md`}>
                     <div className="p-5">
                       {/* Header */}
                       <div className="flex items-start justify-between gap-3">
@@ -734,7 +756,7 @@ export default function EmployerDashboard() {
                 </div>
               )
             })() : (
-              <Empty text="No jobs yet. Go to Hire Workers to dispatch your first worker." />
+              <Empty icon={<Briefcase size={20} aria-hidden="true" />} text="No jobs yet. Go to Hire Workers to dispatch your first worker." />
             )}
           </div>
         )}
