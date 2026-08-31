@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion'
 import { useReveal } from '../hooks/useReveal'
 import { categories, remoteCategories } from '../data'
+import { REMOTE_JOBS_ENABLED } from '../lib/config'
 
 const REMOTE_IMAGES: Record<string, string> = {
   'Data Entry & Digitisation': '/categories/remote/data-entry.jpg',
@@ -84,7 +85,7 @@ export default function WorkerCategories() {
           </h2>
           <p className="mt-3 text-base text-ink-700 text-pretty sm:mt-4 sm:text-lg">
             Workers are vetted and matched to employer needs throughout
-            Greater Accra &mdash; on site or remote.
+            Greater Accra{REMOTE_JOBS_ENABLED ? ' — on site or remote.' : '.'}
           </p>
         </div>
 
@@ -94,7 +95,7 @@ export default function WorkerCategories() {
             lead. Its text sits below the photo too, for the same reason as
             the grid tiles: never clipped, however large the text gets. */}
         <div className="mt-10 sm:mt-16">
-          <SectionLabel>On the field</SectionLabel>
+          {REMOTE_JOBS_ENABLED && <SectionLabel>On the field</SectionLabel>}
 
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -137,27 +138,29 @@ export default function WorkerCategories() {
         {/* Remote — same card system as the field grid, real photos rather
             than a solid colour stand-in. Six items split evenly into two
             rows regardless of column count, so there's no orphan tile here
-            either. */}
-        <div className="mt-10 sm:mt-20">
-          <SectionLabel>Remote</SectionLabel>
+            either. Hidden while REMOTE_JOBS_ENABLED is off — see lib/config.ts. */}
+        {REMOTE_JOBS_ENABLED && (
+          <div className="mt-10 sm:mt-20">
+            <SectionLabel>Remote</SectionLabel>
 
-          <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
-            {remoteCategories.map((cat, i) => (
-              <CategoryTile
-                key={cat.title}
-                image={REMOTE_IMAGES[cat.title] || cat.image}
-                title={cat.title}
-                description={cat.description}
-                delay={(i % 3) * 0.06}
-              />
-            ))}
+            <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
+              {remoteCategories.map((cat, i) => (
+                <CategoryTile
+                  key={cat.title}
+                  image={REMOTE_IMAGES[cat.title] || cat.image}
+                  title={cat.title}
+                  description={cat.description}
+                  delay={(i % 3) * 0.06}
+                />
+              ))}
+            </div>
+
+            <p className="mt-5 text-center text-xs leading-relaxed text-ink-700/80 sm:mt-6 sm:text-sm">
+              These are the categories we support today. As BeyondX grows, more
+              will be added based on demand from workers and employers.
+            </p>
           </div>
-
-          <p className="mt-5 text-center text-xs leading-relaxed text-ink-700/80 sm:mt-6 sm:text-sm">
-            These are the categories we support today. As BeyondX grows, more
-            will be added based on demand from workers and employers.
-          </p>
-        </div>
+        )}
       </div>
     </section>
   )

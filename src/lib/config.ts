@@ -23,3 +23,12 @@ export const REFERRALS_ENABLED = false
 /** Shown on the worker dashboard while referrals are paused. */
 export const REFERRALS_PAUSED_MESSAGE =
   'Our referral rewards programme is coming soon. Once there is steady work on the platform, you will be able to invite people and earn for every person who joins and gets verified.'
+
+/**
+ * Remote categories (data entry, customer support, etc.) are hidden while
+ * we focus on on-the-field work. The categories themselves stay in
+ * `data.ts` — this just keeps them out of every selection UI (homepage,
+ * worker sign-up, employer hire/post flows) until we're ready to bring
+ * them back. Set this to `true` to turn remote jobs back on.
+ */
+export const REMOTE_JOBS_ENABLED = false

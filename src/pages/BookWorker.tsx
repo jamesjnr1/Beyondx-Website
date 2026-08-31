@@ -3,10 +3,11 @@ import { ArrowLeft, CheckCircle, MapPin, Bus, AlertTriangle, Info, BedDouble } f
 import JobLocationMap from '../components/JobLocationMap'
 import Logo from '../components/Logo'
 import {
-  allCategories, TOOL_SURCHARGE_RATE, VEHICLE_SURCHARGES,
+  categories, allCategories, TOOL_SURCHARGE_RATE, VEHICLE_SURCHARGES,
   logisticsRate,
 } from '../data'
 import { PLATFORM_FEE_FLAT, MOMO_NUMBER, MOMO_NAME, BEYONDX_PHONE, INTERCITY_MIN_JOB_VALUE } from '../lib/payments'
+import { REMOTE_JOBS_ENABLED } from '../lib/config'
 import { tasks as tasksApi, workers as workersApi, ApiError } from '../lib/api'
 import type { Worker } from '../lib/api'
 import type { ScreeningAnswers } from './EmployerDashboard'
@@ -221,7 +222,7 @@ function BookingForm({ state, onDone, onError }: {
         <div>
           <label htmlFor="bw-task" className="mb-1.5 block text-sm font-medium text-ink-900">Task type</label>
           <select id="bw-task" value={taskType} onChange={(e) => setTaskType(e.target.value)} className={inp}>
-            {allCategories.map((c) => <option key={c.title}>{c.title}</option>)}
+            {(REMOTE_JOBS_ENABLED ? allCategories : categories).map((c) => <option key={c.title}>{c.title}</option>)}
           </select>
         </div>
 

@@ -17,8 +17,9 @@
 
 import type { Worker } from './api'
 import { categories, remoteCategories } from '../data'
+import { REMOTE_JOBS_ENABLED } from './config'
 
-export const ALL_CATEGORY_TITLES = [...categories, ...remoteCategories].map((c) => c.title)
+export const ALL_CATEGORY_TITLES = (REMOTE_JOBS_ENABLED ? [...categories, ...remoteCategories] : categories).map((c) => c.title)
 
 export type CoordinatorStatus = 'pending' | 'approved' | 'denied'
 

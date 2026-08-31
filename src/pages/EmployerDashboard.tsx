@@ -7,7 +7,7 @@ import Toast, { type ToastMsg } from '../components/Toast'
 import SupportPanel from '../components/SupportPanel'
 import LiveLocation from '../components/LiveLocation'
 import { tasks as tasksApi, workers as workersApi, employers as employersApi, contact, session, ApiError, type Task, type Worker, type Employer } from '../lib/api'
-import { DISPATCH_ENABLED, DISPATCH_PAUSED_MESSAGE } from '../lib/config'
+import { DISPATCH_ENABLED, DISPATCH_PAUSED_MESSAGE, REMOTE_JOBS_ENABLED } from '../lib/config'
 import { categories, remoteCategories, allCategories } from '../data'
 import { PLATFORM_FEE_FLAT } from '../lib/payments'
 import { openBookingWindow } from './BookWorker'
@@ -301,22 +301,24 @@ export default function EmployerDashboard() {
                   Choose the type of work — we'll show you verified workers ready for the job.
                 </p>
 
-                <div className="mt-4 inline-flex rounded-full bg-ink-900/5 p-1" role="tablist" aria-label="Work location">
-                  {([['field', 'On the field'], ['remote', 'Remote']] as const).map(([id, label]) => (
-                    <button
-                      key={id}
-                      role="tab"
-                      aria-selected={workMode === id}
-                      onClick={() => setWorkMode(id)}
-                      className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${workMode === id ? 'bg-cream-50 text-ink-900 shadow-sm' : 'text-ink-700 hover:text-ink-900'}`}
-                    >
-                      {label}
-                    </button>
-                  ))}
-                </div>
+                {REMOTE_JOBS_ENABLED && (
+                  <div className="mt-4 inline-flex rounded-full bg-ink-900/5 p-1" role="tablist" aria-label="Work location">
+                    {([['field', 'On the field'], ['remote', 'Remote']] as const).map(([id, label]) => (
+                      <button
+                        key={id}
+                        role="tab"
+                        aria-selected={workMode === id}
+                        onClick={() => setWorkMode(id)}
+                        className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${workMode === id ? 'bg-cream-50 text-ink-900 shadow-sm' : 'text-ink-700 hover:text-ink-900'}`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 <ul className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {(workMode === 'field' ? categories : remoteCategories).map((c) => {
+                  {(REMOTE_JOBS_ENABLED && workMode === 'remote' ? remoteCategories : categories).map((c) => {
                     const Icon = c.icon
                     const count = workerList.filter((w) => wSkills(w).includes(c.title)).length
                     return (
@@ -1325,7 +1327,7 @@ function RateModal({ task, onClose, onDone, onError }: { task: Task; onClose: ()
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 function PostTask({ onDone }: { onDone: (msg: string) => void }) {
-  const [taskType, setTaskType] = useState(allCategories[0].title)
+  const [taskType, setTaskType] = useState(categories[0].title)
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState('')
   const [duration, setDuration] = useState('1 Day')
@@ -1373,12 +1375,16 @@ function PostTask({ onDone }: { onDone: (msg: string) => void }) {
           <label className="block">
             <span className="mb-1 block text-xs font-medium text-ink-700">Task type</span>
             <select value={taskType} onChange={(e) => setTaskType(e.target.value)} className={inp}>
-              <optgroup label="On the field">
-                {categories.map((c) => <option key={c.title}>{c.title}</option>)}
-              </optgroup>
-              <optgroup label="Remote">
-                {remoteCategories.map((c) => <option key={c.title}>{c.title}</option>)}
-              </optgroup>
+              {REMOTE_JOBS_ENABLED ? (<>
+                <optgroup label="On the field">
+                  {categories.map((c) => <option key={c.title}>{c.title}</option>)}
+                </optgroup>
+                <optgroup label="Remote">
+                  {remoteCategories.map((c) => <option key={c.title}>{c.title}</option>)}
+                </optgroup>
+              </>) : (
+                categories.map((c) => <option key={c.title}>{c.title}</option>)
+              )}
             </select>
           </label>
           <label className="block">
