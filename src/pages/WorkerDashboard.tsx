@@ -368,6 +368,13 @@ function WorkExperienceCard({
 
 const cedis = (n?: number | string) => `GH\u20b5 ${Number(n || 0).toLocaleString()}`
 
+const greeting = () => {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good morning'
+  if (h < 17) return 'Good afternoon'
+  return 'Good evening'
+}
+
 const employerName = (t: Task) =>
   typeof t.employer === 'string' ? t.employer : t.employer?.orgName || t.employer?.name || 'BeyondX employer'
 
@@ -381,13 +388,15 @@ function Stars({ n }: { n: number }) {
   )
 }
 
-function Stat({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
+function Stat({ icon, label, value, highlight }: { icon: ReactNode; label: string; value: string; highlight?: boolean }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl border border-ink-900/8 bg-cream-50 px-4 py-3.5">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-forest-600/10 text-forest-600">{icon}</span>
+    <div className={`flex items-center gap-3.5 rounded-2xl border px-4 py-4 transition-shadow hover:shadow-sm sm:py-5 ${
+      highlight ? 'border-forest-600/15 bg-gradient-to-br from-forest-600 to-forest-700 text-cream-50' : 'border-ink-900/8 bg-cream-50'
+    }`}>
+      <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${highlight ? 'bg-cream-50/15 text-cream-50' : 'bg-forest-600/10 text-forest-600'}`}>{icon}</span>
       <span className="min-w-0">
-        <span className="block truncate font-serif text-lg font-semibold text-ink-900">{value}</span>
-        <span className="block truncate text-xs text-ink-700/60">{label}</span>
+        <span className={`block truncate font-serif text-xl font-semibold ${highlight ? 'text-cream-50' : 'text-ink-900'}`}>{value}</span>
+        <span className={`block truncate text-xs ${highlight ? 'text-cream-50/75' : 'text-ink-700/60'}`}>{label}</span>
       </span>
     </div>
   )
@@ -407,8 +416,13 @@ function Skeleton() {
   )
 }
 
-function Empty({ text }: { text: string }) {
-  return <div className="rounded-xl border border-dashed border-ink-900/15 p-10 text-center text-sm text-ink-700">{text}</div>
+function Empty({ text, icon }: { text: string; icon?: ReactNode }) {
+  return (
+    <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-ink-900/15 bg-cream-50/50 p-10 text-center">
+      {icon && <span className="flex h-11 w-11 items-center justify-center rounded-full bg-ink-900/5 text-ink-700/50">{icon}</span>}
+      <p className="text-sm text-ink-700">{text}</p>
+    </div>
+  )
 }
 
 function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
@@ -430,7 +444,7 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
   const isIntercityJob = transportAmt >= 80  // Tier 4
 
   return (
-    <div className={`overflow-hidden rounded-2xl bg-white border ${isOffer ? 'border-forest-600/25' : 'border-ink-900/8'} shadow-sm`}>
+    <div className={`overflow-hidden rounded-2xl bg-white border transition-shadow hover:shadow-md ${isOffer ? 'border-forest-600/25' : 'border-ink-900/8'} shadow-sm`}>
 
       {/* Offer / intercity banner */}
       {isOffer && (
@@ -795,56 +809,72 @@ export default function WorkerDashboard() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <Stat icon={<Star size={20} className="text-forest-600" />} label="Your rating" value={me?.rating && Number(me.rating) > 0 ? `${Number(me.rating).toFixed(1)} / 5` : '—'} />
-          <Stat icon={<ClipboardList size={20} className="text-forest-600" />} label="Tasks completed" value={`${completed}`} />
-          <Stat icon={<Wallet size={20} className="text-forest-600" />} label="Total earned" value={cedis(earned)} />
+        <div className="mb-5">
+          <h1 className="font-serif text-2xl font-medium text-ink-900 sm:text-[26px]">{greeting()}, {displayName.split(' ')[0]}</h1>
+          <p className="mt-0.5 text-sm text-ink-700/70">
+            {available.length > 0
+              ? `${available.length} job${available.length === 1 ? '' : 's'} available right now.`
+              : "You're all caught up — check back soon for new jobs."}
+          </p>
         </div>
 
-        <ReferralCard code={(me?.workerId as string) || 'BX-—'} referrals={0} />
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <Stat icon={<Star size={20} className="text-forest-600" />} label="Your rating" value={me?.rating && Number(me.rating) > 0 ? `${Number(me.rating).toFixed(1)} / 5` : '—'} />
+            <Stat icon={<ClipboardList size={20} className="text-forest-600" />} label="Tasks completed" value={`${completed}`} />
+            <Stat icon={<Wallet size={20} />} label="Total earned" value={cedis(earned)} highlight />
+          </div>
 
-        <CoordinatorApply worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
+          <ReferralCard code={(me?.workerId as string) || 'BX-—'} referrals={0} />
 
-        {/* Profile completion card — single unified section, no stacked boxes */}
-        <div className="rounded-2xl bg-cream-50 border border-ink-900/8 overflow-hidden">
-          {/* Home area row */}
-          <button
-            onClick={() => {
-              const card = document.getElementById('home-area-inline')
-              if (card) card.classList.toggle('hidden')
-            }}
-            className="flex w-full items-center justify-between px-4 py-3.5 text-left hover:bg-ink-900/[0.02] transition-colors focus:outline-none"
-          >
-            <div className="flex items-center gap-2.5">
-              <MapPin size={15} className="shrink-0 text-forest-600" aria-hidden="true" />
-              <div>
-                <span className="text-sm font-semibold text-ink-900">Home area</span>
-                <span className="ml-2 text-sm text-ink-700/60">
-                  {(me?.homeArea as string) || <span className="text-amber-700">Not set</span>}
-                </span>
+          <CoordinatorApply worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
+
+          {/* Profile completion card — single unified section, no stacked boxes */}
+          <div>
+            <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-ink-700/50">Your profile</h2>
+            <div className="rounded-2xl bg-cream-50 border border-ink-900/8 overflow-hidden">
+              {/* Home area row */}
+              <button
+                onClick={() => {
+                  const card = document.getElementById('home-area-inline')
+                  if (card) card.classList.toggle('hidden')
+                }}
+                className="flex w-full items-center justify-between px-4 py-3.5 text-left hover:bg-ink-900/[0.02] transition-colors focus:outline-none"
+              >
+                <div className="flex items-center gap-2.5">
+                  <MapPin size={15} className="shrink-0 text-forest-600" aria-hidden="true" />
+                  <div>
+                    <span className="text-sm font-semibold text-ink-900">Home area</span>
+                    <span className="ml-2 text-sm text-ink-700/60">
+                      {(me?.homeArea as string) || <span className="text-amber-700">Not set</span>}
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight size={15} className="shrink-0 text-ink-700/40" />
+              </button>
+              <div id="home-area-inline" className="hidden border-t border-ink-900/6 px-4 pb-4 pt-3">
+                <HomeAreaInline worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
+              </div>
+
+              {/* Experience row */}
+              <div className="border-t border-ink-900/6 outline-none">
+                <WorkExperienceCard worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
               </div>
             </div>
-            <ChevronRight size={15} className="shrink-0 text-ink-700/40" />
-          </button>
-          <div id="home-area-inline" className="hidden border-t border-ink-900/6 px-4 pb-4 pt-3">
-            <HomeAreaInline worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
-          </div>
-
-          {/* Experience row */}
-          <div className="border-t border-ink-900/6 outline-none">
-            <WorkExperienceCard worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
           </div>
         </div>
 
-        <div className="mt-8 flex items-center gap-2 overflow-x-auto border-b border-ink-900/10 pb-px" role="tablist" aria-label="Worker sections">
-          {tabs.map((t) => (
-            <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
-              className={`shrink-0 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors focus:outline-none ${tab === t.id ? 'border-forest-600 text-forest-700' : 'border-transparent text-ink-700 hover:text-ink-900'}`}>
-              {t.label}
-            </button>
-          ))}
+        <div className="mt-8 flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-1 overflow-x-auto rounded-full bg-ink-900/5 p-1" role="tablist" aria-label="Worker sections">
+            {tabs.map((t) => (
+              <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
+                className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition-colors focus:outline-none ${tab === t.id ? 'bg-cream-50 text-forest-700 shadow-sm' : 'text-ink-700 hover:text-ink-900'}`}>
+                {t.label}
+              </button>
+            ))}
+          </div>
           <button onClick={() => { setLoading(true); load() }} aria-label="Refresh tasks"
-            className="ml-auto flex shrink-0 items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-ink-700/60 hover:text-ink-900 transition-colors">
+            className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-ink-700/60 transition-colors hover:bg-ink-900/5 hover:text-ink-900">
             <RefreshCw size={13} aria-hidden="true" /> Refresh
           </button>
         </div>
@@ -880,7 +910,7 @@ export default function WorkerDashboard() {
                     </button>
                   )}
                 </TaskCard>
-              )) : <Empty text="No jobs available right now. Check back soon." />)}
+              )) : <Empty text="No jobs available right now. Check back soon." icon={<ClipboardList size={20} aria-hidden="true" />} />)}
 
               {tab === 'mine' && (
                 <>
@@ -922,7 +952,7 @@ export default function WorkerDashboard() {
                         />
                       </div>
                     </div>
-                  )}) : <Empty text="You haven't accepted any tasks yet." />}
+                  )}) : <Empty text="You haven't accepted any tasks yet." icon={<Check size={20} aria-hidden="true" />} />}
                 </>
               )}
 
@@ -932,7 +962,7 @@ export default function WorkerDashboard() {
                     <RotateCcw size={13} aria-hidden="true" /> Declined
                   </span>
                 </TaskCard>
-              )) : <Empty text="You haven't declined any offers in this session." />)}
+              )) : <Empty text="You haven't declined any offers in this session." icon={<RotateCcw size={20} aria-hidden="true" />} />)}
 
               {tab === 'history' && (history.length ? history.map((t) => {
                 const rating = t.reviews?.[0]?.rating
@@ -956,7 +986,7 @@ export default function WorkerDashboard() {
                     </div>
                   </div>
                 )
-              }) : <Empty text="No completed tasks yet." />)}
+              }) : <Empty text="No completed tasks yet." icon={<Star size={20} aria-hidden="true" />} />)}
             </>
           )}
         </div>
