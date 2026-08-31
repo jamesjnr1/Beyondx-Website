@@ -8,7 +8,7 @@ const REWARD = 20
 export default function ReferralCard({ code, referrals = 0 }: { code: string; referrals?: number }) {
   if (!REFERRALS_ENABLED) {
     return (
-      <div className="mt-6 overflow-hidden rounded-2xl bg-forest-700/95 p-6 text-cream-50 shadow-sm sm:p-7">
+      <div className="overflow-hidden rounded-2xl bg-forest-700/95 p-6 text-cream-50 shadow-sm sm:p-7">
         <span className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-cream-50/15 px-3 py-1 text-xs font-medium">
           <Gift size={14} aria-hidden="true" /> Refer &amp; Earn
         </span>
@@ -71,7 +71,7 @@ function ActiveReferralCard({ code, referrals = 0 }: { code: string; referrals?:
   }
 
   return (
-    <div className="mt-6 overflow-hidden rounded-2xl bg-forest-700 text-cream-50 shadow-sm">
+    <div className="overflow-hidden rounded-2xl bg-forest-700 text-cream-50 shadow-sm">
       <div className="flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-7">
         <div className="max-w-md">
           <span className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-cream-50/15 px-3 py-1 text-xs font-medium">
