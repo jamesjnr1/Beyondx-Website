@@ -6,6 +6,7 @@ import { auth, session, referral, contact, ApiError } from '../../lib/api'
 import OnboardingQuestions from './OnboardingQuestions'
 import * as v from '../../lib/validate'
 import { categories, remoteCategories } from '../../data'
+import { REMOTE_JOBS_ENABLED } from '../../lib/config'
 import GoogleSignInButton from './GoogleSignInButton'
 import { supabase } from '../../lib/supabase'
 import { getVisitorId } from '../../lib/track'
@@ -722,7 +723,8 @@ function WorkerRegister() {
               })}
             </div>
 
-            <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-clay-500">Remote</p>
+            {REMOTE_JOBS_ENABLED && (<>
+              <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-clay-500">Remote</p>
               <div className="grid grid-cols-2 gap-2">
                 {REMOTE_SKILLS.map((sk) => {
                   const active = skills.includes(sk)
@@ -733,6 +735,7 @@ function WorkerRegister() {
                   )
                 })}
               </div>
+            </>)}
           </div>
         )}
         {step === 3 && (<>
