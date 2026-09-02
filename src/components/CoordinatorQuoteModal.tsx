@@ -1,45 +1,56 @@
 // src/components/CoordinatorQuoteModal.tsx
 //
 // Employer-facing request flow for Coordinator (team) profiles. Coordinator
-// jobs don't have instant pricing — BeyondX quotes them — so this collects
-// the job brief and sends it to BeyondX via the existing lead/contact
-// endpoint (the same one used for onboarding enquiries) rather than the
-// single-worker payment flow in BookWorker.tsx. BeyondX follows up with the
-// employer directly to confirm price before any payment happens.
+// jobs don't have instant pricing — the coordinator inspects the scope and
+// quotes a price, then BeyondX staff approve or reject that quote — so this
+// creates a real, trackable CoordinatorJobRequest (see src/lib/api.ts)
+// rather than just emailing BeyondX. The employer can follow its status the
+// whole way through in their "Coordinator Requests" tab.
 
 import { useState } from 'react'
 import { X, CheckCircle, Users } from 'lucide-react'
-import { contact, session, ApiError, type Worker } from '../lib/api'
+import { coordinatorRequests, ApiError, type Worker, type CoordinatorJobRequest } from '../lib/api'
 import { getApplication } from '../lib/coordinator'
 
 const inp = 'w-full rounded-lg border border-ink-900/12 bg-white px-3 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/20'
 const wName = (w: Worker) => (w.fullName as string) || (w.name as string) || 'this team'
 
-export default function CoordinatorQuoteModal({ worker, onClose }: { worker: Worker; onClose: () => void }) {
-  const employer = session.employer()
+export default function CoordinatorQuoteModal({
+  worker, category, onClose, onSent,
+}: {
+  worker: Worker
+  category?: string | null
+  onClose: () => void
+  onSent?: (request: CoordinatorJobRequest) => void
+}) {
+  const application = getApplication(worker)
+  const taskType = category || application?.categories?.[0] || 'General Task'
   const [description, setDescription] = useState('')
   const [location, setLocation] = useState('')
-  const [quantity, setQuantity] = useState('')
+  const [duration, setDuration] = useState('1 Day')
+  const [workersNeeded, setWorkersNeeded] = useState('')
+  const [materialsProvided, setMaterialsProvided] = useState(false)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
   const [sent, setSent] = useState(false)
 
-  const valid = description.trim().length > 5
+  const valid = description.trim().length > 5 && location.trim().length > 0
 
   const submit = async () => {
     if (!valid || busy) return
     setBusy(true)
     setErr(null)
     try {
-      await contact.send({
-        name: (employer?.contactPerson as string) || (employer?.orgName as string) || 'Employer',
-        email: employer?.email as string | undefined,
-        phone: employer?.phone as string | undefined,
-        category: 'Coordinator team job quote request',
-        message: `Quote request for ${wName(worker)} (team of ${getApplication(worker)?.teamSize ?? '—'}). ` +
-          `Roles/quantity: ${quantity.trim() || 'not specified'}. Location: ${location.trim() || 'not specified'}. ` +
-          `Job: ${description.trim()}`,
+      const { request } = await coordinatorRequests.create({
+        coordinatorWorkerId: (worker.workerId as string) || '',
+        taskType,
+        description: description.trim(),
+        location: location.trim(),
+        duration,
+        workersNeeded: workersNeeded ? Math.max(1, parseInt(workersNeeded, 10)) : undefined,
+        materialsProvided,
       })
+      onSent?.(request)
       setSent(true)
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : 'Could not send your request. Please try again.')
@@ -61,14 +72,14 @@ export default function CoordinatorQuoteModal({ worker, onClose }: { worker: Wor
         {sent ? (
           <div className="p-8 text-center">
             <CheckCircle size={44} className="mx-auto mb-3 text-forest-600" strokeWidth={1.5} />
-            <p className="font-serif text-lg font-medium text-ink-900">Quote requested</p>
-            <p className="mt-2 text-sm text-ink-700">BeyondX will review the scope with {wName(worker)} and follow up with pricing before anything is booked.</p>
+            <p className="font-serif text-lg font-medium text-ink-900">Request sent</p>
+            <p className="mt-2 text-sm text-ink-700">{wName(worker)} will review the scope and quote a price. You'll see it in your Coordinator Requests once BeyondX approves it.</p>
             <button onClick={onClose} className="mt-6 w-full rounded-xl bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 hover:bg-forest-500">Close</button>
           </div>
         ) : (
-          <div className="space-y-4 p-5">
+          <div className="nice-scroll max-h-[75vh] space-y-4 overflow-y-auto p-5">
             <p className="text-xs leading-relaxed text-ink-700/70">
-              Custom quote for team jobs — describe the work and BeyondX will confirm pricing with you directly, since {wName(worker)} handles scope and assignment for their team.
+              Describe the job — {wName(worker)} handles scope and assignment for their team, and BeyondX confirms pricing before anything is booked.
             </p>
             <div>
               <label className="mb-1 block text-xs font-medium text-ink-700">Job description</label>
@@ -76,13 +87,27 @@ export default function CoordinatorQuoteModal({ worker, onClose }: { worker: Wor
                 placeholder="What needs doing, over what period…" className={inp} />
             </div>
             <div>
-              <label className="mb-1 block text-xs font-medium text-ink-700">Quantity / roles needed</label>
-              <input value={quantity} onChange={(e) => setQuantity(e.target.value)} placeholder="e.g. 4 cleaners, 1 supervisor" className={inp} />
-            </div>
-            <div>
               <label className="mb-1 block text-xs font-medium text-ink-700">Location</label>
-              <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Job site" className={inp} />
+              <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Airport City, Accra" className={inp} />
             </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-ink-700">Duration</label>
+                <select value={duration} onChange={(e) => setDuration(e.target.value)} className={inp}>
+                  <option>Half Day</option><option>1 Day</option><option>2 Days</option><option>3 Days</option><option>5 Days</option>
+                </select>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-ink-700">Workers needed</label>
+                <input type="number" min={1} value={workersNeeded} onChange={(e) => setWorkersNeeded(e.target.value)}
+                  placeholder={`e.g. ${application?.teamSize ?? 4}`} className={inp} />
+              </div>
+            </div>
+            <label className="flex cursor-pointer items-center gap-2 rounded-lg border border-ink-900/12 bg-white px-3 py-2.5 text-sm text-ink-800">
+              <input type="checkbox" checked={materialsProvided} onChange={(e) => setMaterialsProvided(e.target.checked)}
+                className="h-4 w-4 rounded border-ink-900/30 text-forest-600 focus:ring-forest-600/30" />
+              I'll provide materials/supplies for this job
+            </label>
             {err && <p className="text-xs text-red-700">{err}</p>}
             <button onClick={submit} disabled={!valid || busy}
               className="w-full rounded-xl bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 hover:bg-forest-500 disabled:opacity-50">

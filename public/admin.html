@@ -303,6 +303,7 @@ tr:hover td{background:var(--bg);}
         <div class="sb-grp">Operations</div>
         <div class="sb-a" onclick="nav('disputes',this)">Scope Disputes <span class="sb-bdg" id="disputesBadge" style="display:none;">0</span></div>
         <div class="sb-a" onclick="nav('coordapps',this)">Coordinator Applications <span class="sb-bdg" id="coordAppsBadge" style="display:none;">0</span></div>
+        <div class="sb-a" onclick="nav('coordreqs',this)">Coordinator Requests <span class="sb-bdg" id="coordReqsBadge" style="display:none;">0</span></div>
         <div class="sb-a" onclick="nav('coordinators',this)">Coordinator Channel</div>
         <div class="sb-a" onclick="nav('pricing',this)">Price Tiers</div>
       </div>
@@ -387,6 +388,7 @@ tr:hover td{background:var(--bg);}
       <div class="sec" id="sec-leads"><div id="leadsContent"></div></div>
       <div class="sec" id="sec-disputes"><div id="disputesContent"></div></div>
       <div class="sec" id="sec-coordapps"><div id="coordAppsContent"></div></div>
+      <div class="sec" id="sec-coordreqs"><div id="coordReqsContent"></div></div>
       <div class="sec" id="sec-coordinators"><div id="coordinatorsContent"></div></div>
       <div class="sec" id="sec-pricing"><div id="pricingContent"></div></div>
       <div class="sec" id="sec-employers"><input class="srch" id="eSearch" placeholder="Search employers by organisation or phone…" oninput="eSearchInput()"/><div class="tc"><div class="tc-h"><span class="tc-ht">Employers</span><span class="tc-hm" id="ec"></span></div><table><thead><tr><th>Organisation</th><th>Phone</th><th>Tasks</th><th>Completed</th><th>Total Spent</th></tr></thead><tbody id="et"></tbody></table><div id="etMore"></div></div></div>
@@ -623,7 +625,7 @@ function nav(id,el){
   document.querySelectorAll('.sb-a').forEach(n=>n.classList.remove('on'));
   document.getElementById('sec-'+id).classList.add('on');
   el.classList.add('on');
-  const T={overview:'Overview',verify:'Verify Payments',payouts:'Pay Now',active:'In Progress',open:'Open Tasks',completed:'Completed Tasks',all:'All Tasks',workers:'Workers',employers:'Employers',history:'Work History',transactions:'Transactions',messages:'SMS Log',analytics:'Site Analytics',payconfirm:'Payment Confirmations',notify:'Send Notification',inbox:'Support & Reports',leads:'Market Day Leads',disputes:'Scope Disputes',coordapps:'Coordinator Applications',coordinators:'Coordinator Channel',pricing:'Price Tiers'};
+  const T={overview:'Overview',verify:'Verify Payments',payouts:'Pay Now',active:'In Progress',open:'Open Tasks',completed:'Completed Tasks',all:'All Tasks',workers:'Workers',employers:'Employers',history:'Work History',transactions:'Transactions',messages:'SMS Log',analytics:'Site Analytics',payconfirm:'Payment Confirmations',notify:'Send Notification',inbox:'Support & Reports',leads:'Market Day Leads',disputes:'Scope Disputes',coordapps:'Coordinator Applications',coordreqs:'Coordinator Requests',coordinators:'Coordinator Channel',pricing:'Price Tiers'};
   document.getElementById('pageTitle').textContent=T[id]||id;
   if(id==='inbox'){ inLoad(); return; }
   if(id==='notify'){ ntChars(); ntLoad(); return; }
@@ -633,6 +635,7 @@ function nav(id,el){
   if(id==='leads'){ loadLeads(); return; }
   if(id==='disputes'){ loadDisputes(); return; }
   if(id==='coordapps'){ loadCoordApps(); return; }
+  if(id==='coordreqs'){ loadCoordReqs(); return; }
   if(id==='coordinators'){ loadCoordinators(); return; }
   if(id==='pricing'){ loadPricing(); return; }
   if(id!=='overview')rs(id);
@@ -1537,6 +1540,55 @@ async function resolveCoordApp(workerId,action){
   else showToast('Could not resolve application');
 }
 
+// ── COORDINATOR JOB REQUESTS ─────────────────────────────────────────────
+// An employer dispatches a job straight to a coordinator; once the
+// coordinator accepts and quotes a price, it lands here for approval before
+// it becomes a real Task the employer can pay for. Distinct from
+// "Coordinator Applications" above (which approves someone *becoming* a
+// coordinator in the first place).
+const CR_STATUS_LABEL={pending_coordinator:'Awaiting coordinator',quoted:'Awaiting approval',admin_approved:'Approved',admin_rejected:'Rejected',declined:'Declined by coordinator'};
+async function loadCoordReqs(){
+  const el=document.getElementById('coordReqsContent');
+  el.innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const r=await fetch(API+'/admin/coordinator-requests?status=all',{headers:{'x-admin-password':pass}});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.error||'Error');
+    const reqs=d.requests||[];
+    window._coordReqsData=reqs;
+    const actionable=reqs.filter(x=>x.status==='quoted').length;
+    const badge=document.getElementById('coordReqsBadge');
+    if(badge){if(actionable>0){badge.textContent=actionable;badge.style.display='';}else badge.style.display='none';}
+    if(!reqs.length){el.innerHTML='<div class="tc"><div class="tc-h"><span class="tc-ht">Coordinator Requests</span><span class="tc-hm">0 total</span></div><div class="empty">No coordinator job requests yet</div></div>';return;}
+    let rows='';
+    reqs.forEach(function(x){
+      const statusBadge=x.status==='quoted'?'bp':x.status==='admin_approved'?'bd':x.status==='pending_coordinator'?'bp':'bo';
+      const actionCell=x.status==='quoted'
+        ? '<div style="display:flex;gap:4px;flex-direction:column"><input id="coordreqnote_'+x.id+'" placeholder="Note (optional)" style="width:150px;padding:4px 8px;border:1px solid var(--b);border-radius:6px;font-size:11px"/><div style="display:flex;gap:4px"><button class="btn-r" onclick="resolveCoordReq(\''+x.id+'\',\'approve\')">&#10003; Approve</button><button class="btn-r" onclick="resolveCoordReq(\''+x.id+'\',\'reject\')">&#10007; Reject</button></div></div>'
+        : '<span style="font-size:11px;color:var(--ink3)">'+(x.adminNote?anEsc(x.adminNote):(CR_STATUS_LABEL[x.status]||x.status))+'</span>';
+      rows+='<tr>'
+        +'<td class="tn">'+anEsc(x.taskType)+'<br><span style="font-size:10px;color:var(--ink3)">'+anEsc(x.location)+' · '+anEsc(x.duration)+'</span></td>'
+        +'<td style="font-size:11px">'+anEsc(x.employer?.orgName||'—')+'<br><span style="font-size:10px;color:var(--ink3)">'+anEsc(x.employer?.phone||'')+'</span></td>'
+        +'<td style="font-size:11px">'+anEsc(x.coordinator?.fullName||'—')+'<br><span style="font-size:10px;color:var(--ink3)">'+anEsc(x.coordinator?.workerId||'')+'</span></td>'
+        +'<td class="tg">'+(x.quotedPrice!=null?('GH₵ '+Number(x.quotedPrice).toLocaleString()):'—')+'</td>'
+        +'<td><span class="badge '+statusBadge+'">'+anEsc(CR_STATUS_LABEL[x.status]||x.status)+'</span></td>'
+        +'<td class="tm">'+new Date(x.createdAt).toLocaleDateString()+'</td>'
+        +'<td>'+actionCell+'</td>'
+        +'</tr>'
+        +(x.quoteNote||x.description?'<tr><td colspan="7" style="padding:0 14px 10px;font-size:11.5px;color:var(--ink3)"><em>'+anEsc(x.quoteNote||x.description||'')+'</em></td></tr>':'');
+    });
+    el.innerHTML='<div class="tc"><div class="tc-h"><span class="tc-ht">Coordinator Requests</span><span class="tc-hm">'+reqs.length+' total</span></div>'
+      +'<table><thead><tr><th>Job</th><th>Employer</th><th>Coordinator</th><th>Quote</th><th>Status</th><th>Submitted</th><th>Action</th></tr></thead>'
+      +'<tbody>'+rows+'</tbody></table></div>';
+  }catch(e){document.getElementById('coordReqsContent').innerHTML='<div class="empty">'+e.message+'</div>';}
+}
+async function resolveCoordReq(id,action){
+  const note=document.getElementById('coordreqnote_'+id)?.value;
+  const r=await fetch(API+'/admin/coordinator-requests/'+id,{method:'PATCH',headers:{'Content-Type':'application/json','x-admin-password':pass},body:JSON.stringify({action,adminNote:note||undefined})});
+  if(r.ok){showToast(action==='approve'?'Coordinator request approved':'Coordinator request rejected');loadCoordReqs();}
+  else showToast('Could not resolve request');
+}
+
 // ── COORDINATOR CHANNEL ───────────────────────────────────────────────────
 async function loadCoordinators(){
   const el=document.getElementById('coordinatorsContent');
@@ -2304,6 +2356,11 @@ window.login=function(){
       fetch(API_URL+'/admin/coordinator-applications',{headers:{'x-admin-password':p}}).then(r=>r.json()).then(d=>{
         const pending=(d.applications||[]).length;
         const b=document.getElementById('coordAppsBadge');
+        if(b){if(pending>0){b.textContent=pending;b.style.display='';}else b.style.display='none';}
+      }).catch(()=>{});
+      fetch(API_URL+'/admin/coordinator-requests',{headers:{'x-admin-password':p}}).then(r=>r.json()).then(d=>{
+        const pending=(d.requests||[]).length;
+        const b=document.getElementById('coordReqsBadge');
         if(b){if(pending>0){b.textContent=pending;b.style.display='';}else b.style.display='none';}
       }).catch(()=>{});
       fetch(API_URL+'/admin/leads',{headers:{'x-admin-password':p}}).then(r=>r.json()).then(d=>{
