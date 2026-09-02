@@ -12,14 +12,17 @@
 
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import {
-  Users, Plus, Trash2, ClipboardList, Wallet, AlertTriangle, Star,
-  RefreshCw, AlertCircle,
+  Plus, Trash2, ClipboardList, Wallet, AlertTriangle, Star,
+  RefreshCw, AlertCircle, CheckCircle2, XCircle, Clock, Inbox,
 } from 'lucide-react'
 import DashboardHeader from './DashboardHeader'
 import Toast, { type ToastMsg } from '../components/Toast'
 import SupportPanel from '../components/SupportPanel'
 import ProfileModal, { type Profile } from '../components/ProfileModal'
-import { tasks as tasksApi, workers as workersApi, contact, session, ApiError, type Task, type Worker } from '../lib/api'
+import {
+  tasks as tasksApi, workers as workersApi, contact, session, ApiError, type Task, type Worker,
+  coordinatorRequests, type CoordinatorJobRequest, type CoordinatorRequestStatus,
+} from '../lib/api'
 import {
   ALL_CATEGORY_TITLES, getApplication, getTeam, getActiveTeam, getQuotes, getDisputes,
   getPayoutSplits, type TeamMember, type CoordinatorQuote, type CoordinatorDispute, type PayoutSplitRecord,
@@ -517,13 +520,248 @@ function DisputesTab({
   )
 }
 
+/* ---------------------------- Requests tab -------------------------------- */
+//
+// A dispatch straight from an employer to this coordinator (see
+// CoordinatorQuoteModal / POST /api/coordinator-requests). It doesn't become
+// a real Task until this coordinator quotes a price and BeyondX approves it
+// — that's what this tab is for.
+
+const REQUEST_STATUS: Record<CoordinatorRequestStatus, { label: string; color: string }> = {
+  pending_coordinator: { label: 'Awaiting your quote', color: 'text-amber-700' },
+  quoted: { label: 'Quoted — awaiting BeyondX', color: 'text-amber-700' },
+  admin_approved: { label: 'Approved', color: 'text-forest-700' },
+  admin_rejected: { label: 'Rejected by BeyondX', color: 'text-red-700' },
+  declined: { label: 'You declined', color: 'text-ink-700/50' },
+}
+
+function RequestQuoteForm({ request, onQuoted, onDeclined }: {
+  request: CoordinatorJobRequest
+  onQuoted: (r: CoordinatorJobRequest) => void
+  onDeclined: (r: CoordinatorJobRequest) => void
+}) {
+  const [price, setPrice] = useState('')
+  const [note, setNote] = useState('')
+  const [busy, setBusy] = useState<'quote' | 'decline' | null>(null)
+  const [err, setErr] = useState<string | null>(null)
+
+  const submitQuote = async () => {
+    const p = parseFloat(price)
+    if (!p || busy) return
+    setBusy('quote'); setErr(null)
+    try {
+      const { request: updated } = await coordinatorRequests.quote(request.id, p, note.trim() || undefined)
+      onQuoted(updated)
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : 'Could not send your quote. Please try again.')
+    } finally { setBusy(null) }
+  }
+
+  const decline = async () => {
+    if (busy) return
+    setBusy('decline'); setErr(null)
+    try {
+      const { request: updated } = await coordinatorRequests.decline(request.id)
+      onDeclined(updated)
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : 'Could not decline. Please try again.')
+      setBusy(null)
+    }
+  }
+
+  return (
+    <div className="mt-3 space-y-2 border-t border-ink-900/6 pt-3">
+      <div className="flex items-end gap-2">
+        <div className="flex-1">
+          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-ink-700/50">Your price (GH₵)</label>
+          <input type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} placeholder="e.g. 1200" className={inp} />
+        </div>
+      </div>
+      <textarea value={note} onChange={(e) => setNote(e.target.value)} rows={2}
+        placeholder="Note for BeyondX (optional)…" className={inp} />
+      {err && <p className="text-xs text-red-700">{err}</p>}
+      <div className="flex justify-end gap-2">
+        <button onClick={decline} disabled={!!busy}
+          className="rounded-lg border border-ink-900/15 px-3.5 py-1.5 text-xs font-medium text-ink-700 hover:bg-ink-900/5 disabled:opacity-50">
+          {busy === 'decline' ? 'Declining…' : 'Decline'}
+        </button>
+        <button onClick={submitQuote} disabled={!price || !!busy}
+          className="rounded-lg bg-forest-600 px-3.5 py-1.5 text-xs font-semibold text-cream-50 disabled:opacity-50">
+          {busy === 'quote' ? 'Sending…' : 'Accept & send quote'}
+        </button>
+      </div>
+      <p className="text-[11px] text-ink-700/50">Your quote goes to BeyondX for review before it reaches the employer.</p>
+    </div>
+  )
+}
+
+function RequestCard({ request, onUpdate }: { request: CoordinatorJobRequest; onUpdate: (r: CoordinatorJobRequest) => void }) {
+  const s = REQUEST_STATUS[request.status]
+  return (
+    <div className="rounded-2xl border border-ink-900/8 bg-cream-50 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-ink-900">{request.taskType}</p>
+          <p className="mt-0.5 text-xs text-ink-700/70">
+            {request.employer?.orgName || 'Employer'} · {request.location} · {request.duration}
+            {request.workersNeeded > 1 ? ` · ${request.workersNeeded} workers` : ''}
+          </p>
+          {request.description && <p className="mt-1 text-xs text-ink-700/60 line-clamp-2">{request.description}</p>}
+          <p className="mt-1 text-[11px] text-ink-700/50">{request.materialsProvided ? 'Employer provides materials' : 'Materials not provided by employer'}</p>
+        </div>
+        <span className={`shrink-0 text-xs font-semibold ${s.color}`}>{s.label}</span>
+      </div>
+
+      {request.status === 'pending_coordinator' && (
+        <RequestQuoteForm request={request} onQuoted={onUpdate} onDeclined={onUpdate} />
+      )}
+
+      {request.status === 'quoted' && (
+        <p className="mt-3 border-t border-ink-900/6 pt-3 text-xs text-ink-700/70">
+          You quoted GH₵ {Number(request.quotedPrice || 0).toLocaleString()}. BeyondX is reviewing it.
+        </p>
+      )}
+
+      {request.status === 'admin_approved' && (
+        <p className="mt-3 border-t border-ink-900/6 pt-3 text-xs text-forest-700">
+          Approved at GH₵ {Number(request.quotedPrice || 0).toLocaleString()} — the job is now in your Active Jobs, waiting on the employer's payment.
+        </p>
+      )}
+
+      {request.status === 'admin_rejected' && (
+        <p className="mt-3 border-t border-ink-900/6 pt-3 text-xs text-red-700">
+          BeyondX rejected this quote.{request.adminNote ? ` "${request.adminNote}"` : ''}
+        </p>
+      )}
+    </div>
+  )
+}
+
+function RequestsTab({ requests, onUpdate }: { requests: CoordinatorJobRequest[]; onUpdate: (r: CoordinatorJobRequest) => void }) {
+  const sorted = [...requests].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="font-serif text-lg font-medium text-ink-900">Job requests</h2>
+        <p className="mt-0.5 text-xs text-ink-700/60">Jobs employers have sent you directly. Accept and quote a price, or decline.</p>
+      </div>
+      {sorted.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-ink-900/15 py-8 text-center text-sm text-ink-700/60">
+          No job requests yet.
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {sorted.map((r) => <RequestCard key={r.id} request={r} onUpdate={onUpdate} />)}
+        </div>
+      )}
+    </div>
+  )
+}
+
+/* --------------------------- Active jobs tab ------------------------------ */
+//
+// What happens after a request is approved and a real Task exists: the
+// employer pays, the coordinator accepts the offer, does the job, and marks
+// it done for the employer to confirm.
+
+function ActiveJobCard({ task, onChanged }: { task: Task; onChanged: () => void }) {
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+
+  const act = async (fn: () => Promise<unknown>) => {
+    if (busy) return
+    setBusy(true); setErr(null)
+    try { await fn(); onChanged() }
+    catch (e) { setErr(e instanceof ApiError ? e.message : 'Something went wrong. Please try again.') }
+    finally { setBusy(false) }
+  }
+
+  return (
+    <div className="rounded-2xl border border-ink-900/8 bg-cream-50 p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-ink-900">{task.taskType || 'Job'}</p>
+          <p className="mt-0.5 text-xs text-ink-700/70">{task.location || ''}{task.duration ? ` · ${task.duration}` : ''}</p>
+        </div>
+        <span className="shrink-0 text-xs font-semibold text-ink-900">GH₵ {Number(task.pay || 0).toLocaleString()}</span>
+      </div>
+
+      {err && <p className="mt-2 text-xs text-red-700">{err}</p>}
+
+      {task.status === 'offered' && (
+        <div className="mt-3 flex items-center gap-2 border-t border-ink-900/6 pt-3">
+          <button onClick={() => act(() => tasksApi.declineOffer(task.id))} disabled={busy}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-ink-900/15 px-3.5 py-1.5 text-xs font-medium text-ink-700 hover:bg-ink-900/5 disabled:opacity-50">
+            <XCircle size={13} /> Decline
+          </button>
+          <button onClick={() => act(() => tasksApi.acceptOffer(task.id))} disabled={busy}
+            className="inline-flex items-center gap-1.5 rounded-lg bg-forest-600 px-3.5 py-1.5 text-xs font-semibold text-cream-50 disabled:opacity-50">
+            <CheckCircle2 size={13} /> Accept job
+          </button>
+        </div>
+      )}
+
+      {task.status === 'payment_pending' && (
+        <p className="mt-3 flex items-center gap-1.5 border-t border-ink-900/6 pt-3 text-xs text-amber-700">
+          <Clock size={13} /> Waiting for the employer to submit payment.
+        </p>
+      )}
+
+      {task.status === 'accepted' && (
+        <div className="mt-3 border-t border-ink-900/6 pt-3">
+          <button onClick={() => act(() => tasksApi.workerDone(task.id))} disabled={busy}
+            className="rounded-lg bg-forest-600 px-3.5 py-1.5 text-xs font-semibold text-cream-50 disabled:opacity-50">
+            {busy ? 'Saving…' : 'Mark job done'}
+          </button>
+        </div>
+      )}
+
+      {task.status === 'pending_confirmation' && (
+        <p className="mt-3 flex items-center gap-1.5 border-t border-ink-900/6 pt-3 text-xs text-amber-700">
+          <Clock size={13} /> Waiting for the employer to confirm completion.
+        </p>
+      )}
+
+      {(task.status === 'completed' || task.status === 'employer_confirmed') && (
+        <p className="mt-3 flex items-center gap-1.5 border-t border-ink-900/6 pt-3 text-xs text-forest-700">
+          <CheckCircle2 size={13} /> Completed.
+        </p>
+      )}
+    </div>
+  )
+}
+
+function ActiveJobsTab({ tasks, onReload }: { tasks: Task[]; onReload: () => void }) {
+  const order: Record<string, number> = { offered: 0, accepted: 1, payment_pending: 2, pending_confirmation: 3, completed: 4, employer_confirmed: 4 }
+  const sorted = [...tasks].sort((a, b) => (order[a.status as string] ?? 9) - (order[b.status as string] ?? 9))
+  return (
+    <div className="space-y-4">
+      <div>
+        <h2 className="font-serif text-lg font-medium text-ink-900">Active jobs</h2>
+        <p className="mt-0.5 text-xs text-ink-700/60">Jobs from approved requests — accept the offer once the employer has paid, then mark it done when finished.</p>
+      </div>
+      {sorted.length === 0 ? (
+        <p className="rounded-xl border border-dashed border-ink-900/15 py-8 text-center text-sm text-ink-700/60">
+          No active jobs yet.
+        </p>
+      ) : (
+        <div className="space-y-3">
+          {sorted.map((t) => <ActiveJobCard key={String(t.id)} task={t} onChanged={onReload} />)}
+        </div>
+      )}
+    </div>
+  )
+}
+
 /* ------------------------------ Main export ------------------------------ */
 
 export default function CoordinatorDashboard() {
-  const [tab, setTab] = useState<'team' | 'jobs' | 'payouts' | 'disputes' | 'support'>('team')
+  const [tab, setTab] = useState<'team' | 'requests' | 'active' | 'jobs' | 'payouts' | 'disputes' | 'support'>('requests')
   const [me, setMe] = useState<Worker | null>(session.worker())
   const [openTasks, setOpenTasks] = useState<Task[]>([])
   const [history, setHistory] = useState<Task[]>([])
+  const [coordRequests, setCoordRequests] = useState<CoordinatorJobRequest[]>([])
+  const [myTasks, setMyTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [editing, setEditing] = useState(false)
@@ -532,11 +770,14 @@ export default function CoordinatorDashboard() {
   const load = useCallback(async () => {
     setError(null)
     try {
-      const [openRes, histRes, meRes] = await Promise.all([
+      const [openRes, histRes, meRes, reqRes, mineRes] = await Promise.all([
         tasksApi.open(), tasksApi.workerHistory(), workersApi.me().catch(() => null),
+        coordinatorRequests.forMe().catch(() => null), tasksApi.mine().catch(() => null),
       ])
       setOpenTasks((openRes?.tasks || []).filter((t) => t.status === 'open'))
       setHistory(histRes?.tasks || [])
+      setCoordRequests(reqRes?.requests || [])
+      setMyTasks((mineRes?.tasks || []).filter((t) => t.status !== 'open'))
       if (meRes?.worker) { setMe(meRes.worker); session.patchWorker(meRes.worker) }
     } catch (e) {
       setError(e instanceof ApiError ? e.message : 'Could not load your dashboard.')
@@ -550,11 +791,14 @@ export default function CoordinatorDashboard() {
     setMe((m) => ({ ...(m || {}), ...patch }))
   }
 
-  const team = getActiveTeam(me)
   const application = getApplication(me)
-  const tabs: { id: typeof tab; label: string }[] = [
+  const pendingRequests = coordRequests.filter((r) => r.status === 'pending_coordinator').length
+  const activeCount = myTasks.length
+  const tabs: { id: typeof tab; label: string; badge?: number }[] = [
+    { id: 'requests', label: 'Requests', badge: pendingRequests || undefined },
+    { id: 'active', label: 'Active jobs', badge: activeCount || undefined },
     { id: 'team', label: 'Team' },
-    { id: 'jobs', label: 'Job requests' },
+    { id: 'jobs', label: 'Bulk jobs' },
     { id: 'payouts', label: 'Payouts' },
     { id: 'disputes', label: 'Disputes' },
     { id: 'support', label: 'Support' },
@@ -583,16 +827,17 @@ export default function CoordinatorDashboard() {
         )}
 
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <Stat icon={<Users size={20} className="text-forest-600" />} label="Team size" value={`${team.length}`} />
-          <Stat icon={<ClipboardList size={20} className="text-forest-600" />} label="Open team jobs" value={`${openTasks.filter((t) => Number(t.workersNeeded ?? 1) > 1).length}`} />
+          <Stat icon={<Inbox size={20} className="text-forest-600" />} label="Pending requests" value={`${pendingRequests}`} />
+          <Stat icon={<ClipboardList size={20} className="text-forest-600" />} label="Active jobs" value={`${activeCount}`} />
           <Stat icon={<Wallet size={20} className="text-forest-600" />} label="Total earned" value={cedis(Number(me?.totalEarned || 0))} />
         </div>
 
         <div className="mt-6 flex items-center gap-2 overflow-x-auto border-b border-ink-900/10 pb-px">
           {tabs.map((t) => (
             <button key={t.id} onClick={() => setTab(t.id)}
-              className={`shrink-0 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors ${tab === t.id ? 'border-forest-600 text-forest-700' : 'border-transparent text-ink-700 hover:text-ink-900'}`}>
+              className={`shrink-0 inline-flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors ${tab === t.id ? 'border-forest-600 text-forest-700' : 'border-transparent text-ink-700 hover:text-ink-900'}`}>
               {t.label}
+              {!!t.badge && <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-forest-600 px-1 text-[9px] font-bold text-cream-50">{t.badge}</span>}
             </button>
           ))}
           <button onClick={() => { setLoading(true); load() }} className="ml-auto flex shrink-0 items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-ink-700/60 hover:text-ink-900">
@@ -605,6 +850,13 @@ export default function CoordinatorDashboard() {
             <p className="py-10 text-center text-sm text-ink-700/60">Loading…</p>
           ) : (
             <>
+              {tab === 'requests' && (
+                <RequestsTab
+                  requests={coordRequests}
+                  onUpdate={(r) => setCoordRequests((prev) => prev.map((x) => x.id === r.id ? r : x))}
+                />
+              )}
+              {tab === 'active' && <ActiveJobsTab tasks={myTasks} onReload={load} />}
               {tab === 'team' && <TeamTab worker={me} onSaved={onSaved} />}
               {tab === 'jobs' && <JobsTab worker={me} tasks={openTasks} onSaved={onSaved} onToast={setToast} />}
               {tab === 'payouts' && <PayoutsTab worker={me} history={history} onSaved={onSaved} onToast={setToast} />}

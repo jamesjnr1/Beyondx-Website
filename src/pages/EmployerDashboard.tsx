@@ -6,10 +6,13 @@ import ProfileModal from '../components/ProfileModal'
 import Toast, { type ToastMsg } from '../components/Toast'
 import SupportPanel from '../components/SupportPanel'
 import LiveLocation from '../components/LiveLocation'
-import { tasks as tasksApi, workers as workersApi, employers as employersApi, contact, session, ApiError, type Task, type Worker, type Employer } from '../lib/api'
+import {
+  tasks as tasksApi, workers as workersApi, employers as employersApi, coordinatorRequests as coordinatorRequestsApi,
+  contact, session, ApiError, type Task, type Worker, type Employer, type CoordinatorJobRequest,
+} from '../lib/api'
 import { DISPATCH_ENABLED, DISPATCH_PAUSED_MESSAGE, REMOTE_JOBS_ENABLED } from '../lib/config'
 import { categories, remoteCategories, allCategories } from '../data'
-import { PLATFORM_FEE_FLAT } from '../lib/payments'
+import { PLATFORM_FEE_FLAT, MOMO_NUMBER, MOMO_NAME, PAY_METHODS } from '../lib/payments'
 import { openBookingWindow } from './BookWorker'
 import type { BookingState } from './BookWorker'
 import CoordinatorQuoteModal from '../components/CoordinatorQuoteModal'
@@ -152,8 +155,136 @@ function Skeleton() {
     </div>))}</div>
 }
 
+const CR_STATUS: Record<string, { label: string; color: string }> = {
+  pending_coordinator: { label: 'Awaiting coordinator', color: 'text-ink-600' },
+  quoted:               { label: 'Quoted — awaiting BeyondX', color: 'text-amber-700' },
+  admin_approved:       { label: 'Approved', color: 'text-forest-700' },
+  admin_rejected:       { label: 'Not approved', color: 'text-red-700' },
+  declined:             { label: 'Declined by coordinator', color: 'text-red-700' },
+}
+
+function CoordinatorRequestPayForm({ request, onPaid }: { request: CoordinatorJobRequest; onPaid: () => void }) {
+  const [method, setMethod] = useState(PAY_METHODS[0].id)
+  const [ref, setRef] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+
+  const submit = async () => {
+    if (!ref.trim() || busy || !request.taskId) return
+    setBusy(true)
+    setErr(null)
+    try {
+      await tasksApi.submitPaymentRef(request.taskId, ref.trim())
+      onPaid()
+    } catch (e) {
+      setErr(e instanceof ApiError ? e.message : 'Could not submit payment. Please try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="mt-3 space-y-2.5 rounded-xl border border-forest-600/20 bg-forest-600/5 p-3.5">
+      <p className="text-xs leading-relaxed text-ink-800">
+        Send <span className="font-semibold">{cedis(Number(request.quotedPrice || 0))}</span> to{' '}
+        <span className="font-semibold">{MOMO_NUMBER}</span> ({MOMO_NAME}), then enter the reference below.
+      </p>
+      <div className="flex flex-wrap gap-1.5">
+        {PAY_METHODS.map((m) => (
+          <button key={m.id} type="button" onClick={() => setMethod(m.id)}
+            className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${method === m.id ? 'border-forest-600 bg-forest-600/10 text-forest-700' : 'border-ink-900/15 text-ink-700 hover:bg-ink-900/5'}`}>
+            {m.name}
+          </button>
+        ))}
+      </div>
+      <div className="flex gap-2">
+        <input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="Transaction reference"
+          className="flex-1 rounded-lg border border-ink-900/15 bg-white px-3 py-2 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/20" />
+        <button onClick={submit} disabled={!ref.trim() || busy}
+          className="shrink-0 rounded-lg bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 hover:bg-forest-500 disabled:opacity-50">
+          {busy ? 'Submitting…' : 'Submit payment'}
+        </button>
+      </div>
+      {err && <p className="text-xs text-red-700">{err}</p>}
+    </div>
+  )
+}
+
+function CoordinatorRequestCard({ request, task, onPaid }: { request: CoordinatorJobRequest; task: Task | undefined; onPaid: () => void }) {
+  const [payOpen, setPayOpen] = useState(false)
+  const status = CR_STATUS[request.status] || { label: request.status, color: 'text-ink-600' }
+  const taskStatus = task?.status as string | undefined
+  const paymentRef = task?.paymentRef as string | undefined
+  const isPaidAwaitingVerification = request.status === 'admin_approved' && taskStatus === 'payment_pending' && !!paymentRef
+  const isDispatched = request.status === 'admin_approved' && !!taskStatus && taskStatus !== 'payment_pending'
+
+  return (
+    <div className="rounded-2xl border border-ink-900/8 bg-cream-50 p-4 sm:p-5">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-ink-900">{request.taskType}</p>
+          <p className="mt-0.5 text-xs text-ink-700/70">
+            {request.coordinator?.fullName || 'Coordinator'} · {request.location}
+            {request.workersNeeded > 1 ? ` · ${request.workersNeeded} workers` : ''}
+          </p>
+          {request.description && <p className="mt-1.5 text-xs text-ink-700/60 line-clamp-2">{request.description}</p>}
+        </div>
+        <span className={`shrink-0 text-xs font-semibold ${status.color}`}>
+          {isDispatched ? 'Dispatched' : isPaidAwaitingVerification ? 'Payment submitted' : status.label}
+        </span>
+      </div>
+
+      {request.status === 'quoted' && request.quotedPrice != null && (
+        <p className="mt-2.5 text-xs text-ink-700/70">
+          {request.coordinator?.fullName || 'The coordinator'} quoted <span className="font-semibold text-ink-900">{cedis(request.quotedPrice)}</span> — BeyondX is reviewing.
+        </p>
+      )}
+      {request.status === 'admin_rejected' && (
+        <p className="mt-2.5 text-xs text-red-700">{request.adminNote || 'BeyondX did not approve this quote.'}</p>
+      )}
+      {request.status === 'declined' && (
+        <p className="mt-2.5 text-xs text-red-700">The coordinator declined this job.</p>
+      )}
+      {request.status === 'admin_approved' && request.quotedPrice != null && isDispatched && (
+        <p className="mt-2.5 text-xs text-forest-700">Paid and dispatched — track progress in My Jobs.</p>
+      )}
+      {request.status === 'admin_approved' && request.quotedPrice != null && !isDispatched && isPaidAwaitingVerification && (
+        <p className="mt-2.5 text-xs text-amber-700">Payment reference submitted — BeyondX is verifying it before dispatch.</p>
+      )}
+      {request.status === 'admin_approved' && request.quotedPrice != null && !isDispatched && !isPaidAwaitingVerification && (
+        payOpen ? (
+          <CoordinatorRequestPayForm request={request} onPaid={() => { setPayOpen(false); onPaid() }} />
+        ) : (
+          <div className="mt-2.5 flex items-center justify-between gap-3">
+            <p className="text-xs text-ink-700/70">Approved at <span className="font-semibold text-ink-900">{cedis(request.quotedPrice)}</span> — pay to dispatch.</p>
+            <button onClick={() => setPayOpen(true)}
+              className="shrink-0 rounded-full bg-forest-600 px-4 py-2 text-xs font-semibold text-cream-50 hover:bg-forest-500">
+              Pay now
+            </button>
+          </div>
+        )
+      )}
+    </div>
+  )
+}
+
+function CoordinatorRequestsTab({ requests, tasks, onReload }: { requests: CoordinatorJobRequest[]; tasks: Task[]; onReload: () => void }) {
+  const findTask = (taskId: string | null | undefined) => tasks.find((t) => String(t.id) === String(taskId))
+  return (
+    <div className="space-y-3">
+      {requests.length === 0 ? (
+        <Empty icon={<Users size={20} aria-hidden="true" />} text="No coordinator requests yet. Request a team quote from a Coordinator's profile in Hire Workers." />
+      ) : (
+        requests.map((r) => (
+          <CoordinatorRequestCard key={r.id} request={r} task={findTask(r.taskId)} onPaid={onReload} />
+        ))
+      )}
+    </div>
+  )
+}
+
 export default function EmployerDashboard() {
-  const [tab, setTab] = useState<'hire' | 'post' | 'history' | 'support'>('hire')
+  const [tab, setTab] = useState<'hire' | 'post' | 'history' | 'coordinator-requests' | 'support'>('hire')
   const [workMode, setWorkMode] = useState<'field' | 'remote'>('field')
   const [pickedCategory, setPickedCategory] = useState<string | null>(null)
   const [taskFlags, setTaskFlags] = useState<TaskFlags>(DEFAULT_FLAGS)
@@ -180,6 +311,7 @@ export default function EmployerDashboard() {
 
   const [workerList, setWorkerList] = useState<Worker[]>([])
   const [taskList, setTaskList] = useState<Task[]>([])
+  const [coordRequests, setCoordRequests] = useState<CoordinatorJobRequest[]>([])
   const [profile, setProfile] = useState<Employer | null>(session.employer())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -190,13 +322,15 @@ export default function EmployerDashboard() {
   const load = useCallback(async () => {
     setError(null)
     try {
-      const [wRes, tRes, pRes] = await Promise.all([
+      const [wRes, tRes, pRes, crRes] = await Promise.all([
         workersApi.list(jobLocationFilter.trim() || undefined),
         tasksApi.all(),
         employersApi.profile().catch(() => null),
+        coordinatorRequestsApi.mine().catch(() => null),
       ])
       setWorkerList(wRes?.workers || [])
       setTaskList(tRes?.tasks || [])
+      setCoordRequests(crRes?.requests || [])
       const emp = (pRes as { employer?: Employer } | null)?.employer
       if (emp) { setProfile(emp); session.patchEmployer(emp) }
     } catch (e) {
@@ -286,13 +420,24 @@ export default function EmployerDashboard() {
 
         <div className="flex items-center gap-3">
           <div className="flex min-w-0 items-center gap-1 overflow-x-auto rounded-full bg-ink-900/5 p-1" role="tablist" aria-label="Employer sections">
-            {([['hire', 'Hire Workers'], ['post', 'Post a Task'], ['history', (() => { const n = taskList.filter(t => t.status === 'pending_confirmation').length; return n > 0 ? `My Jobs (${n})` : 'My Jobs' })()], ['support', 'Support']] as const).map(([id, label]) => (
+            {([
+              ['hire', 'Hire Workers'],
+              ['post', 'Post a Task'],
+              ['history', (() => { const n = taskList.filter(t => t.status === 'pending_confirmation').length; return n > 0 ? `My Jobs (${n})` : 'My Jobs' })()],
+              ['coordinator-requests', 'Coordinator Requests'],
+              ['support', 'Support'],
+            ] as const).map(([id, label]) => (
               <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
                 className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition-colors focus:outline-none ${tab === id ? 'bg-cream-50 text-forest-700 shadow-sm' : 'text-ink-700 hover:text-ink-900'}`}>
                 {label}
                 {id === 'history' && taskList.filter(t => t.status === 'pending_confirmation').length > 0 && (
                   <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-white">
                     {taskList.filter(t => t.status === 'pending_confirmation').length}
+                  </span>
+                )}
+                {id === 'coordinator-requests' && coordRequests.filter(r => r.status === 'admin_approved').length > 0 && (
+                  <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-white">
+                    {coordRequests.filter(r => r.status === 'admin_approved').length}
                   </span>
                 )}
               </button>
@@ -760,6 +905,10 @@ export default function EmployerDashboard() {
             )}
           </div>
         )}
+
+        {tab === 'coordinator-requests' && (
+          <CoordinatorRequestsTab requests={coordRequests} tasks={taskList} onReload={load} />
+        )}
       </main>
 
       <Toast toast={toast} onClose={() => setToast(null)} />
@@ -774,7 +923,15 @@ export default function EmployerDashboard() {
         />
       )}
       {quoteRequestWorker && (
-        <CoordinatorQuoteModal worker={quoteRequestWorker} onClose={() => setQuoteRequestWorker(null)} />
+        <CoordinatorQuoteModal
+          worker={quoteRequestWorker}
+          category={pickedCategory}
+          onClose={() => setQuoteRequestWorker(null)}
+          onSent={(request) => {
+            setCoordRequests((prev) => [request, ...prev])
+            setToast({ id: Date.now(), kind: 'success', title: 'Request sent', detail: `Track it in Coordinator Requests.` })
+          }}
+        />
       )}
       {/* DispatchModal replaced by BookWorker window — dispatching state kept for multi-dispatch queue */}
       {rating && <RateModal task={rating} onClose={() => setRating(null)} onDone={afterConfirm} onError={(m) => setToast({ id: Date.now(), kind: 'info', title: 'Could not confirm', detail: m })} />}

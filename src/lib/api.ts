@@ -324,6 +324,84 @@ export const tasks = {
 
   review: (id: string | number, rating: number, comment: string, token = session.employerToken()) =>
     request<unknown>(`/api/tasks/${id}/review`, { method: 'POST', body: { rating, comment }, token }),
+
+  // Attach a MoMo reference to a task that already exists but has none yet —
+  // used after a coordinator job request is admin-approved (see
+  // coordinatorRequests below), where BeyondX creates the task before the
+  // employer has had a chance to pay.
+  submitPaymentRef: (id: string | number, paymentRef: string, token = session.employerToken()) =>
+    request<unknown>(`/api/tasks/${id}/payment-ref`, { method: 'PATCH', body: { paymentRef }, token }),
+}
+
+/* ------------------------- coordinator job requests --------------------- */
+//
+// An employer sends a job to a Worker whose role is 'coordinator' — unlike a
+// normal dispatch, this isn't instantly priced. The coordinator inspects the
+// scope and quotes a price, BeyondX staff approve or reject it, and only on
+// approval does a real Task (and payment collection) exist at all.
+// Lifecycle: pending_coordinator -> quoted -> admin_approved (task created)
+//                                           -> admin_rejected
+//                                -> declined
+
+export type CoordinatorRequestStatus =
+  | 'pending_coordinator' | 'quoted' | 'admin_approved' | 'admin_rejected' | 'declined'
+
+export type CoordinatorJobRequest = {
+  id: string
+  employerId: string
+  coordinatorId: string
+  taskType: string
+  description?: string | null
+  location: string
+  duration: string
+  workersNeeded: number
+  materialsProvided: boolean
+  scheduledDate?: string | null
+  scheduledTime?: string | null
+  status: CoordinatorRequestStatus
+  quotedPrice?: number | null
+  quoteNote?: string | null
+  quotedAt?: string | null
+  adminNote?: string | null
+  resolvedAt?: string | null
+  taskId?: string | null
+  createdAt: string
+  employer?: { orgName?: string; phone?: string }
+  coordinator?: { fullName?: string; phone?: string; workerId?: string }
+}
+
+export const coordinatorRequests = {
+  // Employer sends a job to a coordinator.
+  create: (
+    payload: {
+      coordinatorWorkerId: string
+      taskType: string
+      description?: string
+      location: string
+      duration?: string
+      workersNeeded?: number
+      materialsProvided?: boolean
+      scheduledDate?: string
+      scheduledTime?: string
+    },
+    token = session.employerToken(),
+  ) => request<{ request: CoordinatorJobRequest }>('/api/coordinator-requests', { method: 'POST', body: payload, token }),
+
+  // Employer's own requests, newest first.
+  mine: (token = session.employerToken()) =>
+    request<{ requests: CoordinatorJobRequest[] }>('/api/coordinator-requests/mine', { token }),
+
+  // Coordinator's own inbox.
+  forMe: (token = session.workerToken()) =>
+    request<{ requests: CoordinatorJobRequest[] }>('/api/coordinator-requests/for-me', { token }),
+
+  // Coordinator accepts & quotes a price.
+  quote: (id: string, price: number, note: string | undefined, token = session.workerToken()) =>
+    request<{ request: CoordinatorJobRequest }>(`/api/coordinator-requests/${id}/quote`, { method: 'PATCH', body: { price, note }, token }),
+
+  // Coordinator declines the job outright.
+  decline: (id: string, token = session.workerToken()) =>
+    request<{ request: CoordinatorJobRequest }>(`/api/coordinator-requests/${id}/decline`, { method: 'PATCH', token }),
 }
 
 /* ------------------------------- employers ----------------------------- */
