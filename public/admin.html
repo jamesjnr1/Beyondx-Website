@@ -302,6 +302,7 @@ tr:hover td{background:var(--bg);}
       <div class="sb-group">
         <div class="sb-grp">Operations</div>
         <div class="sb-a" onclick="nav('disputes',this)">Scope Disputes <span class="sb-bdg" id="disputesBadge" style="display:none;">0</span></div>
+        <div class="sb-a" onclick="nav('coordapps',this)">Coordinator Applications <span class="sb-bdg" id="coordAppsBadge" style="display:none;">0</span></div>
         <div class="sb-a" onclick="nav('coordinators',this)">Coordinator Channel</div>
         <div class="sb-a" onclick="nav('pricing',this)">Price Tiers</div>
       </div>
@@ -385,6 +386,7 @@ tr:hover td{background:var(--bg);}
       <div class="sec" id="sec-messages"><div id="smsFormBox"></div><div id="smsDataBox"></div></div>
       <div class="sec" id="sec-leads"><div id="leadsContent"></div></div>
       <div class="sec" id="sec-disputes"><div id="disputesContent"></div></div>
+      <div class="sec" id="sec-coordapps"><div id="coordAppsContent"></div></div>
       <div class="sec" id="sec-coordinators"><div id="coordinatorsContent"></div></div>
       <div class="sec" id="sec-pricing"><div id="pricingContent"></div></div>
       <div class="sec" id="sec-employers"><input class="srch" id="eSearch" placeholder="Search employers by organisation or phone…" oninput="eSearchInput()"/><div class="tc"><div class="tc-h"><span class="tc-ht">Employers</span><span class="tc-hm" id="ec"></span></div><table><thead><tr><th>Organisation</th><th>Phone</th><th>Tasks</th><th>Completed</th><th>Total Spent</th></tr></thead><tbody id="et"></tbody></table><div id="etMore"></div></div></div>
@@ -621,7 +623,7 @@ function nav(id,el){
   document.querySelectorAll('.sb-a').forEach(n=>n.classList.remove('on'));
   document.getElementById('sec-'+id).classList.add('on');
   el.classList.add('on');
-  const T={overview:'Overview',verify:'Verify Payments',payouts:'Pay Now',active:'In Progress',open:'Open Tasks',completed:'Completed Tasks',all:'All Tasks',workers:'Workers',employers:'Employers',history:'Work History',transactions:'Transactions',messages:'SMS Log',analytics:'Site Analytics',payconfirm:'Payment Confirmations',notify:'Send Notification',inbox:'Support & Reports',leads:'Market Day Leads',disputes:'Scope Disputes',coordinators:'Coordinator Channel',pricing:'Price Tiers'};
+  const T={overview:'Overview',verify:'Verify Payments',payouts:'Pay Now',active:'In Progress',open:'Open Tasks',completed:'Completed Tasks',all:'All Tasks',workers:'Workers',employers:'Employers',history:'Work History',transactions:'Transactions',messages:'SMS Log',analytics:'Site Analytics',payconfirm:'Payment Confirmations',notify:'Send Notification',inbox:'Support & Reports',leads:'Market Day Leads',disputes:'Scope Disputes',coordapps:'Coordinator Applications',coordinators:'Coordinator Channel',pricing:'Price Tiers'};
   document.getElementById('pageTitle').textContent=T[id]||id;
   if(id==='inbox'){ inLoad(); return; }
   if(id==='notify'){ ntChars(); ntLoad(); return; }
@@ -630,6 +632,7 @@ function nav(id,el){
   if(id==='analytics'){ loadVisitorFunnel(); if(!anData)loadAnalytics(); anStartAuto(); return; }
   if(id==='leads'){ loadLeads(); return; }
   if(id==='disputes'){ loadDisputes(); return; }
+  if(id==='coordapps'){ loadCoordApps(); return; }
   if(id==='coordinators'){ loadCoordinators(); return; }
   if(id==='pricing'){ loadPricing(); return; }
   if(id!=='overview')rs(id);
@@ -1484,6 +1487,56 @@ async function resolveDispute(id,status){
   else showToast('Could not resolve dispute');
 }
 
+// ── COORDINATOR APPLICATIONS ────────────────────────────────────────────
+// A worker applies to become a Coordinator from their dashboard (stored as
+// JSON on Worker.coordinatorApplication). Distinct from "Coordinator
+// Channel" below, which is the separate standalone Coordinator account
+// type. Approving here flips Worker.role to 'coordinator'.
+async function loadCoordApps(){
+  const el=document.getElementById('coordAppsContent');
+  el.innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const r=await fetch(API+'/admin/coordinator-applications?status=all',{headers:{'x-admin-password':pass}});
+    const d=await r.json();
+    if(!r.ok) throw new Error(d.error||'Error');
+    const apps=d.applications||[];
+    window._coordAppsData=apps;
+    const pending=apps.filter(a=>a.application.status==='pending').length;
+    const badge=document.getElementById('coordAppsBadge');
+    if(badge){if(pending>0){badge.textContent=pending;badge.style.display='';}else badge.style.display='none';}
+    if(!apps.length){el.innerHTML='<div class="tc"><div class="tc-h"><span class="tc-ht">Coordinator Applications</span><span class="tc-hm">0 total</span></div><div class="empty">No coordinator applications yet</div></div>';return;}
+    let rows='';
+    apps.forEach(function(a){
+      const app=a.application;
+      const statusBadge=app.status==='pending'?'bp':app.status==='approved'?'bd':'bo';
+      const actionCell=app.status==='pending'
+        ? '<div style="display:flex;gap:4px;flex-direction:column"><input id="coordnote_'+a.workerId+'" placeholder="Note (optional)" style="width:150px;padding:4px 8px;border:1px solid var(--b);border-radius:6px;font-size:11px"/><div style="display:flex;gap:4px"><button class="btn-r" onclick="resolveCoordApp(\''+a.workerId+'\',\'approve\')">&#10003; Approve</button><button class="btn-r" onclick="resolveCoordApp(\''+a.workerId+'\',\'deny\')">&#10007; Deny</button></div></div>'
+        : '<span style="font-size:11px;color:var(--ink3)">'+(app.reviewNote?anEsc(app.reviewNote):'Resolved')+'</span>';
+      rows+='<tr>'
+        +'<td class="tn">'+anEsc(a.fullName)+'<br><span style="font-size:10px;color:var(--ink3)">'+anEsc(a.workerId)+'</span></td>'
+        +'<td style="font-size:11px">'+anEsc(a.phone||'—')+'</td>'
+        +'<td style="font-size:11px">'+anEsc(app.businessName||'—')+'</td>'
+        +'<td style="font-size:11px">'+anEsc((app.categories||[]).join(', '))+'</td>'
+        +'<td class="tg">'+anEsc(String(app.teamSize||'—'))+'</td>'
+        +'<td class="tg">'+anEsc(String(app.yearsOperating||'—'))+'</td>'
+        +'<td><span class="badge '+statusBadge+'">'+anEsc(app.status)+'</span></td>'
+        +'<td class="tm">'+new Date(app.submittedAt).toLocaleDateString()+'</td>'
+        +'<td>'+actionCell+'</td>'
+        +'</tr>'
+        +'<tr><td colspan="9" style="padding:0 14px 10px;font-size:11.5px;color:var(--ink3)"><em>'+anEsc(app.samplePastJobs||'')+'</em></td></tr>';
+    });
+    el.innerHTML='<div class="tc"><div class="tc-h"><span class="tc-ht">Coordinator Applications</span><span class="tc-hm">'+apps.length+' total</span></div>'
+      +'<table><thead><tr><th>Worker</th><th>Phone</th><th>Business</th><th>Categories</th><th>Team size</th><th>Years</th><th>Status</th><th>Submitted</th><th>Action</th></tr></thead>'
+      +'<tbody>'+rows+'</tbody></table></div>';
+  }catch(e){document.getElementById('coordAppsContent').innerHTML='<div class="empty">'+e.message+'</div>';}
+}
+async function resolveCoordApp(workerId,action){
+  const note=document.getElementById('coordnote_'+workerId)?.value;
+  const r=await fetch(API+'/admin/coordinator-applications/'+workerId,{method:'PATCH',headers:{'Content-Type':'application/json','x-admin-password':pass},body:JSON.stringify({action,reviewNote:note||undefined})});
+  if(r.ok){showToast(action==='approve'?'Coordinator application approved':'Coordinator application denied');loadCoordApps();}
+  else showToast('Could not resolve application');
+}
+
 // ── COORDINATOR CHANNEL ───────────────────────────────────────────────────
 async function loadCoordinators(){
   const el=document.getElementById('coordinatorsContent');
@@ -2246,6 +2299,11 @@ window.login=function(){
       fetch(API_URL+'/admin/disputes',{headers:{'x-admin-password':p}}).then(r=>r.json()).then(d=>{
         const pending=(d.disputes||[]).filter(x=>x.status==='pending').length;
         const b=document.getElementById('disputesBadge');
+        if(b){if(pending>0){b.textContent=pending;b.style.display='';}else b.style.display='none';}
+      }).catch(()=>{});
+      fetch(API_URL+'/admin/coordinator-applications',{headers:{'x-admin-password':p}}).then(r=>r.json()).then(d=>{
+        const pending=(d.applications||[]).length;
+        const b=document.getElementById('coordAppsBadge');
         if(b){if(pending>0){b.textContent=pending;b.style.display='';}else b.style.display='none';}
       }).catch(()=>{});
       fetch(API_URL+'/admin/leads',{headers:{'x-admin-password':p}}).then(r=>r.json()).then(d=>{
