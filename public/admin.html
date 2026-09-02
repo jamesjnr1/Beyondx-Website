@@ -303,7 +303,7 @@ tr:hover td{background:var(--bg);}
         <div class="sb-grp">Operations</div>
         <div class="sb-a" onclick="nav('disputes',this)">Scope Disputes <span class="sb-bdg" id="disputesBadge" style="display:none;">0</span></div>
         <div class="sb-a" onclick="nav('coordapps',this)">Coordinator Applications <span class="sb-bdg" id="coordAppsBadge" style="display:none;">0</span></div>
-        <div class="sb-a" onclick="nav('coordreqs',this)">Coordinator Requests <span class="sb-bdg" id="coordReqsBadge" style="display:none;">0</span></div>
+        <div class="sb-a" onclick="nav('coordteams',this)">Coordinator Teams <span class="sb-bdg" id="coordTeamsBadge" style="display:none;">0</span></div>
         <div class="sb-a" onclick="nav('coordinators',this)">Coordinator Channel</div>
         <div class="sb-a" onclick="nav('pricing',this)">Price Tiers</div>
       </div>
@@ -388,7 +388,7 @@ tr:hover td{background:var(--bg);}
       <div class="sec" id="sec-leads"><div id="leadsContent"></div></div>
       <div class="sec" id="sec-disputes"><div id="disputesContent"></div></div>
       <div class="sec" id="sec-coordapps"><div id="coordAppsContent"></div></div>
-      <div class="sec" id="sec-coordreqs"><div id="coordReqsContent"></div></div>
+      <div class="sec" id="sec-coordteams"><div id="coordTeamsContent"></div></div>
       <div class="sec" id="sec-coordinators"><div id="coordinatorsContent"></div></div>
       <div class="sec" id="sec-pricing"><div id="pricingContent"></div></div>
       <div class="sec" id="sec-employers"><input class="srch" id="eSearch" placeholder="Search employers by organisation or phone…" oninput="eSearchInput()"/><div class="tc"><div class="tc-h"><span class="tc-ht">Employers</span><span class="tc-hm" id="ec"></span></div><table><thead><tr><th>Organisation</th><th>Phone</th><th>Tasks</th><th>Completed</th><th>Total Spent</th></tr></thead><tbody id="et"></tbody></table><div id="etMore"></div></div></div>
@@ -571,6 +571,8 @@ async function load(){
     document.getElementById('tbTime').textContent='Updated '+t;
     document.getElementById('sbTime').textContent=t;
     checkSmsBadge();
+    checkVerifyBadge();
+    refreshSidebarBadges();
     render();
   }catch(e){showToast('Could not refresh');}
 }
@@ -578,6 +580,40 @@ function checkSmsBadge(){
   const recentLowBalance=smsLogs.filter(l=>l.errorType==='low_balance');
   const badge=document.getElementById('smsBadge');
   if(badge)badge.style.display=recentLowBalance.length?'inline-flex':'none';
+}
+// Sidebar badges for sections whose data doesn't live in `tasks`/`workers`
+// (and so isn't refreshed by the main load() Promise.all above). Previously
+// these only updated once, at login — a worker/employer submission made
+// after that (a dispute, a coordinator application, a lead, a support
+// message) sat invisible until an admin happened to click into that exact
+// tab. Called on every load() tick (every 15s, see setInterval below) so
+// the badge counts stay current regardless of which tab is open.
+function refreshSidebarBadges(){
+  fetch(API+'/admin/disputes',{headers:{'x-admin-password':pass}}).then(r=>r.json()).then(d=>{
+    const pending=(d.disputes||[]).filter(x=>x.status==='pending').length;
+    const b=document.getElementById('disputesBadge');
+    if(b){if(pending>0){b.textContent=pending;b.style.display='';}else b.style.display='none';}
+  }).catch(()=>{});
+  fetch(API+'/admin/coordinator-applications',{headers:{'x-admin-password':pass}}).then(r=>r.json()).then(d=>{
+    const pending=(d.applications||[]).length;
+    const b=document.getElementById('coordAppsBadge');
+    if(b){if(pending>0){b.textContent=pending;b.style.display='';}else b.style.display='none';}
+  }).catch(()=>{});
+  fetch(API+'/admin/leads',{headers:{'x-admin-password':pass}}).then(r=>r.json()).then(d=>{
+    leadsData=d.leads||[];
+    const pending=leadsData.filter(l=>!l.followedUp).length;
+    const b=document.getElementById('leadsBadge');
+    if(b){if(pending>0){b.textContent=pending;b.style.display='';}else b.style.display='none';}
+  }).catch(()=>{});
+  fetch(API+'/admin/coordinator-teams',{headers:{'x-admin-password':pass}}).then(r=>r.json()).then(d=>{
+    const cs=d.coordinators||[];
+    const openDisputes=cs.reduce((s,c)=>s+(c.disputes||[]).filter(x=>x.status!=='resolved').length,0);
+    const pendingQuotes=cs.reduce((s,c)=>s+Object.values(c.quotes||{}).filter(q=>q.status==='pending').length,0);
+    const need=openDisputes+pendingQuotes;
+    const b=document.getElementById('coordTeamsBadge');
+    if(b){if(need>0){b.textContent=need;b.style.display='';}else b.style.display='none';}
+  }).catch(()=>{});
+  inBadge();
 }
 function confirmClearData(){
   const typed = prompt('This will permanently delete ALL tasks, dispatches, and payments, and reset every worker\'s stats to zero. Workers and employers themselves will NOT be deleted.\n\nType CLEAR to confirm:');
@@ -625,7 +661,7 @@ function nav(id,el){
   document.querySelectorAll('.sb-a').forEach(n=>n.classList.remove('on'));
   document.getElementById('sec-'+id).classList.add('on');
   el.classList.add('on');
-  const T={overview:'Overview',verify:'Verify Payments',payouts:'Pay Now',active:'In Progress',open:'Open Tasks',completed:'Completed Tasks',all:'All Tasks',workers:'Workers',employers:'Employers',history:'Work History',transactions:'Transactions',messages:'SMS Log',analytics:'Site Analytics',payconfirm:'Payment Confirmations',notify:'Send Notification',inbox:'Support & Reports',leads:'Market Day Leads',disputes:'Scope Disputes',coordapps:'Coordinator Applications',coordreqs:'Coordinator Requests',coordinators:'Coordinator Channel',pricing:'Price Tiers'};
+  const T={overview:'Overview',verify:'Verify Payments',payouts:'Pay Now',active:'In Progress',open:'Open Tasks',completed:'Completed Tasks',all:'All Tasks',workers:'Workers',employers:'Employers',history:'Work History',transactions:'Transactions',messages:'SMS Log',analytics:'Site Analytics',payconfirm:'Payment Confirmations',notify:'Send Notification',inbox:'Support & Reports',leads:'Market Day Leads',disputes:'Scope Disputes',coordapps:'Coordinator Applications',coordteams:'Coordinator Teams',coordinators:'Coordinator Channel',pricing:'Price Tiers'};
   document.getElementById('pageTitle').textContent=T[id]||id;
   if(id==='inbox'){ inLoad(); return; }
   if(id==='notify'){ ntChars(); ntLoad(); return; }
@@ -634,8 +670,8 @@ function nav(id,el){
   if(id==='analytics'){ loadVisitorFunnel(); if(!anData)loadAnalytics(); anStartAuto(); return; }
   if(id==='leads'){ loadLeads(); return; }
   if(id==='disputes'){ loadDisputes(); return; }
-  if(id==='coordapps'){ loadCoordApps(); return; }
-  if(id==='coordreqs'){ loadCoordReqs(); return; }
+  if(id==='coordapps'){ loadCoordinatorApplications(); return; }
+  if(id==='coordteams'){ loadCoordinatorTeams(); return; }
   if(id==='coordinators'){ loadCoordinators(); return; }
   if(id==='pricing'){ loadPricing(); return; }
   if(id!=='overview')rs(id);
@@ -711,6 +747,20 @@ function rs(id){
   else if(id==='history')rh();
   else if(id==='transactions')rt();
   else if(id==='messages')rmData();
+  // These sections used to only load once, when the admin first clicked
+  // into the tab (see nav()) — they were never included in the 15s
+  // setInterval(load) tick below, nor in the manual "Refresh" button (which
+  // calls load() -> render() -> rs() for whatever tab is open). That meant
+  // a worker/employer submission arriving while an admin already had one of
+  // these tabs open just sat there until they navigated away and back.
+  // Refreshing them here too closes that gap.
+  else if(id==='disputes')loadDisputes();
+  else if(id==='coordapps')loadCoordinatorApplications();
+  else if(id==='coordteams')loadCoordinatorTeams();
+  else if(id==='coordinators')loadCoordinators();
+  else if(id==='leads')loadLeads();
+  else if(id==='pricing')loadPricing();
+  else if(id==='inbox')inLoad();
 }
 function stars(n){ return '★'.repeat(Math.round(n))+'☆'.repeat(5-Math.round(n)); }
 function closeDetail(){ document.getElementById('detailOverlay').classList.remove('on'); }
@@ -1491,102 +1541,140 @@ async function resolveDispute(id,status){
 }
 
 // ── COORDINATOR APPLICATIONS ────────────────────────────────────────────
-// A worker applies to become a Coordinator from their dashboard (stored as
-// JSON on Worker.coordinatorApplication). Distinct from "Coordinator
-// Channel" below, which is the separate standalone Coordinator account
-// type. Approving here flips Worker.role to 'coordinator'.
-async function loadCoordApps(){
+// Workers apply to become a Coordinator from their dashboard; the request
+// lands in Worker.coordinatorApplication and is reviewed here. Separate
+// from the "Coordinator Channel" tab below, which lists already-approved,
+// standalone Coordinator accounts and their dispatch activity.
+async function loadCoordinatorApplications(){
   const el=document.getElementById('coordAppsContent');
   el.innerHTML='<div class="empty">Loading…</div>';
   try{
     const r=await fetch(API+'/admin/coordinator-applications?status=all',{headers:{'x-admin-password':pass}});
     const d=await r.json();
     if(!r.ok) throw new Error(d.error||'Error');
-    const apps=d.applications||[];
-    window._coordAppsData=apps;
-    const pending=apps.filter(a=>a.application.status==='pending').length;
+    window._coordAppsData=d.applications||[];
+    const pending=window._coordAppsData.filter(a=>a.application.status==='pending').length;
     const badge=document.getElementById('coordAppsBadge');
     if(badge){if(pending>0){badge.textContent=pending;badge.style.display='';}else badge.style.display='none';}
-    if(!apps.length){el.innerHTML='<div class="tc"><div class="tc-h"><span class="tc-ht">Coordinator Applications</span><span class="tc-hm">0 total</span></div><div class="empty">No coordinator applications yet</div></div>';return;}
+    if(!window._coordAppsData.length){el.innerHTML='<div class="tc"><div class="tc-h"><span class="tc-ht">Coordinator Applications</span><span class="tc-hm">0 total</span></div><div class="empty">No coordinator applications yet</div></div>';return;}
     let rows='';
-    apps.forEach(function(a){
+    window._coordAppsData.forEach(function(a){
       const app=a.application;
       const statusBadge=app.status==='pending'?'bp':app.status==='approved'?'bd':'bo';
       const actionCell=app.status==='pending'
-        ? '<div style="display:flex;gap:4px;flex-direction:column"><input id="coordnote_'+a.workerId+'" placeholder="Note (optional)" style="width:150px;padding:4px 8px;border:1px solid var(--b);border-radius:6px;font-size:11px"/><div style="display:flex;gap:4px"><button class="btn-r" onclick="resolveCoordApp(\''+a.workerId+'\',\'approve\')">&#10003; Approve</button><button class="btn-r" onclick="resolveCoordApp(\''+a.workerId+'\',\'deny\')">&#10007; Deny</button></div></div>'
-        : '<span style="font-size:11px;color:var(--ink3)">'+(app.reviewNote?anEsc(app.reviewNote):'Resolved')+'</span>';
-      rows+='<tr>'
-        +'<td class="tn">'+anEsc(a.fullName)+'<br><span style="font-size:10px;color:var(--ink3)">'+anEsc(a.workerId)+'</span></td>'
-        +'<td style="font-size:11px">'+anEsc(a.phone||'—')+'</td>'
+        ? '<div style="display:flex;gap:4px;flex-direction:column"><input id="coordNote_'+a.workerId+'" placeholder="Review note (optional)" style="width:160px;padding:4px 8px;border:1px solid var(--b);border-radius:6px;font-size:11px"/><div style="display:flex;gap:4px"><button class="btn-r" onclick="reviewCoordinatorApp(\''+a.workerId+'\',\'approve\')">&#10003; Approve</button><button class="btn-r" onclick="reviewCoordinatorApp(\''+a.workerId+'\',\'deny\')">&#10007; Deny</button></div></div>'
+        : '<span style="font-size:11px;color:var(--ink3)">'+(app.reviewNote?anEsc(app.reviewNote):'Reviewed')+'</span>';
+      rows += '<tr>'
+        +'<td class="tn">'+anEsc(a.fullName||'—')+'<br><span style="font-size:10px;color:var(--ink3)">'+anEsc(a.phone||'')+'</span></td>'
         +'<td style="font-size:11px">'+anEsc(app.businessName||'—')+'</td>'
         +'<td style="font-size:11px">'+anEsc((app.categories||[]).join(', '))+'</td>'
         +'<td class="tg">'+anEsc(String(app.teamSize||'—'))+'</td>'
         +'<td class="tg">'+anEsc(String(app.yearsOperating||'—'))+'</td>'
         +'<td><span class="badge '+statusBadge+'">'+anEsc(app.status)+'</span></td>'
-        +'<td class="tm">'+new Date(app.submittedAt).toLocaleDateString()+'</td>'
+        +'<td class="tm">'+(app.submittedAt?new Date(app.submittedAt).toLocaleDateString():'—')+'</td>'
         +'<td>'+actionCell+'</td>'
         +'</tr>'
-        +'<tr><td colspan="9" style="padding:0 14px 10px;font-size:11.5px;color:var(--ink3)"><em>'+anEsc(app.samplePastJobs||'')+'</em></td></tr>';
+        +'<tr><td colspan="8" style="padding:0 14px 10px;font-size:11.5px;color:var(--ink3)"><em>'+anEsc(app.samplePastJobs||'')+'</em></td></tr>';
     });
-    el.innerHTML='<div class="tc"><div class="tc-h"><span class="tc-ht">Coordinator Applications</span><span class="tc-hm">'+apps.length+' total</span></div>'
-      +'<table><thead><tr><th>Worker</th><th>Phone</th><th>Business</th><th>Categories</th><th>Team size</th><th>Years</th><th>Status</th><th>Submitted</th><th>Action</th></tr></thead>'
+    el.innerHTML='<div class="tc"><div class="tc-h"><span class="tc-ht">Coordinator Applications</span><span class="tc-hm">'+window._coordAppsData.length+' total, '+pending+' pending</span></div>'
+      +'<table><thead><tr><th>Worker</th><th>Business</th><th>Categories</th><th>Team Size</th><th>Yrs Operating</th><th>Status</th><th>Submitted</th><th>Action</th></tr></thead>'
       +'<tbody>'+rows+'</tbody></table></div>';
   }catch(e){document.getElementById('coordAppsContent').innerHTML='<div class="empty">'+e.message+'</div>';}
 }
-async function resolveCoordApp(workerId,action){
-  const note=document.getElementById('coordnote_'+workerId)?.value;
-  const r=await fetch(API+'/admin/coordinator-applications/'+workerId,{method:'PATCH',headers:{'Content-Type':'application/json','x-admin-password':pass},body:JSON.stringify({action,reviewNote:note||undefined})});
-  if(r.ok){showToast(action==='approve'?'Coordinator application approved':'Coordinator application denied');loadCoordApps();}
-  else showToast('Could not resolve application');
+async function reviewCoordinatorApp(workerId,action){
+  const reviewNote=document.getElementById('coordNote_'+workerId)?.value;
+  const r=await fetch(API+'/admin/coordinator-applications/'+workerId,{method:'PATCH',headers:{'Content-Type':'application/json','x-admin-password':pass},body:JSON.stringify({action,reviewNote:reviewNote||undefined})});
+  if(r.ok){showToast(action==='approve'?'Coordinator application approved':'Coordinator application denied');loadCoordinatorApplications();}
+  else showToast('Could not update coordinator application');
 }
 
-// ── COORDINATOR JOB REQUESTS ─────────────────────────────────────────────
-// An employer dispatches a job straight to a coordinator; once the
-// coordinator accepts and quotes a price, it lands here for approval before
-// it becomes a real Task the employer can pay for. Distinct from
-// "Coordinator Applications" above (which approves someone *becoming* a
-// coordinator in the first place).
-const CR_STATUS_LABEL={pending_coordinator:'Awaiting coordinator',quoted:'Awaiting approval',admin_approved:'Approved',admin_rejected:'Rejected',declined:'Declined by coordinator'};
-async function loadCoordReqs(){
-  const el=document.getElementById('coordReqsContent');
+// ── COORDINATOR TEAMS (roster / team disputes / quotes / payout splits) ───
+// Everything an approved Coordinator manages for their own team — logged
+// team disputes, job quotes, payout splits, roster — lives as JSON-in-a-
+// field on their Worker row, the same pattern as coordinatorApplication
+// above. None of it had an admin view until now: a coordinator logging a
+// "Team dispute" (see CoordinatorDashboard.tsx's Disputes tab) or
+// submitting a job quote had no way to reach staff except clicking
+// "Escalate to BeyondX", which just fires a free-text support message with
+// no structured link back to the dispute record — an un-escalated dispute,
+// or any quote, was invisible to admin entirely.
+// NOTE: "Team disputes" here is unrelated to "Scope Disputes" elsewhere in
+// this sidebar — that tab is worker/employer task-price disagreements
+// (the ScopeDispute model). Don't confuse the two.
+async function loadCoordinatorTeams(){
+  const el=document.getElementById('coordTeamsContent');
   el.innerHTML='<div class="empty">Loading…</div>';
   try{
-    const r=await fetch(API+'/admin/coordinator-requests?status=all',{headers:{'x-admin-password':pass}});
+    const r=await fetch(API+'/admin/coordinator-teams',{headers:{'x-admin-password':pass}});
     const d=await r.json();
     if(!r.ok) throw new Error(d.error||'Error');
-    const reqs=d.requests||[];
-    window._coordReqsData=reqs;
-    const actionable=reqs.filter(x=>x.status==='quoted').length;
-    const badge=document.getElementById('coordReqsBadge');
-    if(badge){if(actionable>0){badge.textContent=actionable;badge.style.display='';}else badge.style.display='none';}
-    if(!reqs.length){el.innerHTML='<div class="tc"><div class="tc-h"><span class="tc-ht">Coordinator Requests</span><span class="tc-hm">0 total</span></div><div class="empty">No coordinator job requests yet</div></div>';return;}
-    let rows='';
-    reqs.forEach(function(x){
-      const statusBadge=x.status==='quoted'?'bp':x.status==='admin_approved'?'bd':x.status==='pending_coordinator'?'bp':'bo';
-      const actionCell=x.status==='quoted'
-        ? '<div style="display:flex;gap:4px;flex-direction:column"><input id="coordreqnote_'+x.id+'" placeholder="Note (optional)" style="width:150px;padding:4px 8px;border:1px solid var(--b);border-radius:6px;font-size:11px"/><div style="display:flex;gap:4px"><button class="btn-r" onclick="resolveCoordReq(\''+x.id+'\',\'approve\')">&#10003; Approve</button><button class="btn-r" onclick="resolveCoordReq(\''+x.id+'\',\'reject\')">&#10007; Reject</button></div></div>'
-        : '<span style="font-size:11px;color:var(--ink3)">'+(x.adminNote?anEsc(x.adminNote):(CR_STATUS_LABEL[x.status]||x.status))+'</span>';
-      rows+='<tr>'
-        +'<td class="tn">'+anEsc(x.taskType)+'<br><span style="font-size:10px;color:var(--ink3)">'+anEsc(x.location)+' · '+anEsc(x.duration)+'</span></td>'
-        +'<td style="font-size:11px">'+anEsc(x.employer?.orgName||'—')+'<br><span style="font-size:10px;color:var(--ink3)">'+anEsc(x.employer?.phone||'')+'</span></td>'
-        +'<td style="font-size:11px">'+anEsc(x.coordinator?.fullName||'—')+'<br><span style="font-size:10px;color:var(--ink3)">'+anEsc(x.coordinator?.workerId||'')+'</span></td>'
-        +'<td class="tg">'+(x.quotedPrice!=null?('GH₵ '+Number(x.quotedPrice).toLocaleString()):'—')+'</td>'
-        +'<td><span class="badge '+statusBadge+'">'+anEsc(CR_STATUS_LABEL[x.status]||x.status)+'</span></td>'
-        +'<td class="tm">'+new Date(x.createdAt).toLocaleDateString()+'</td>'
-        +'<td>'+actionCell+'</td>'
-        +'</tr>'
-        +(x.quoteNote||x.description?'<tr><td colspan="7" style="padding:0 14px 10px;font-size:11.5px;color:var(--ink3)"><em>'+anEsc(x.quoteNote||x.description||'')+'</em></td></tr>':'');
-    });
-    el.innerHTML='<div class="tc"><div class="tc-h"><span class="tc-ht">Coordinator Requests</span><span class="tc-hm">'+reqs.length+' total</span></div>'
-      +'<table><thead><tr><th>Job</th><th>Employer</th><th>Coordinator</th><th>Quote</th><th>Status</th><th>Submitted</th><th>Action</th></tr></thead>'
-      +'<tbody>'+rows+'</tbody></table></div>';
-  }catch(e){document.getElementById('coordReqsContent').innerHTML='<div class="empty">'+e.message+'</div>';}
+    window._coordTeamsData=d.coordinators||[];
+    const openDisputes=window._coordTeamsData.reduce((s,c)=>s+c.disputes.filter(x=>x.status!=='resolved').length,0);
+    const pendingQuotes=window._coordTeamsData.reduce((s,c)=>s+Object.values(c.quotes).filter(q=>q.status==='pending').length,0);
+    const badge=document.getElementById('coordTeamsBadge');
+    const need=openDisputes+pendingQuotes;
+    if(badge){if(need>0){badge.textContent=need;badge.style.display='';}else badge.style.display='none';}
+    if(!window._coordTeamsData.length){el.innerHTML='<div class="tc"><div class="tc-h"><span class="tc-ht">Coordinator Teams</span><span class="tc-hm">0 coordinators</span></div><div class="empty">No coordinator team activity yet</div></div>';return;}
+    el.innerHTML=window._coordTeamsData.map(function(c){
+      const disputeRows=(c.disputes||[]).slice().reverse().map(function(dp){
+        const member=(c.team||[]).find(m=>m.id===dp.memberId);
+        const sb=dp.status==='resolved'?'bd':dp.status==='escalated'?'bo':'bp';
+        const action=dp.status!=='resolved'
+          ? '<button class="btn-r" onclick="resolveCoordinatorDispute(\''+c.workerId+'\',\''+dp.id+'\')">&#10003; Mark resolved</button>'
+          : '<span style="font-size:11px;color:var(--ink3)">Resolved</span>';
+        return '<tr><td style="font-size:12px">'+anEsc(dp.summary)+(member?'<br><span style="font-size:10px;color:var(--ink3)">re: '+anEsc(member.name)+'</span>':'')+'</td>'
+          +'<td><span class="badge '+sb+'">'+anEsc(dp.status)+'</span></td>'
+          +'<td class="tm">'+new Date(dp.createdAt).toLocaleDateString()+'</td>'
+          +'<td>'+action+'</td></tr>';
+      }).join('');
+      const quoteRows=Object.entries(c.quotes||{}).map(function([taskId,q]){
+        const sb=q.status==='approved'?'bd':q.status==='denied'?'bo':'bp';
+        const action=q.status==='pending'
+          ? '<div style="display:flex;gap:4px"><button class="btn-r" onclick="reviewCoordinatorQuote(\''+c.workerId+'\',\''+taskId+'\',\'approve\')">&#10003; Approve</button><button class="btn-r" onclick="reviewCoordinatorQuote(\''+c.workerId+'\',\''+taskId+'\',\'deny\')">&#10007; Deny</button></div>'
+          : '<span style="font-size:11px;color:var(--ink3)">Reviewed</span>';
+        return '<tr><td style="font-size:11px">'+anEsc(taskId)+'</td>'
+          +'<td class="tm">GH&#8373;'+anEsc(String(q.price))+'</td>'
+          +'<td style="font-size:11px">'+anEsc(q.scopeNotes||'')+'</td>'
+          +'<td><span class="badge '+sb+'">'+anEsc(q.status)+'</span></td>'
+          +'<td>'+action+'</td></tr>';
+      }).join('');
+      const rosterRows=(c.team||[]).map(function(m){
+        return '<tr><td class="tn">'+anEsc(m.name)+'</td>'
+          +'<td style="font-size:11px">'+anEsc(m.phone||'—')+'</td>'
+          +'<td style="font-size:11px">'+anEsc((m.categories||[]).join(', '))+'</td>'
+          +'<td class="tg">'+anEsc(String(m.jobsCompleted||0))+'</td>'
+          +'<td><span class="badge '+(m.status==='active'?'bd':'bo')+'">'+anEsc(m.status)+'</span></td></tr>';
+      }).join('');
+      const payoutRows=Object.entries(c.payoutSplits||{}).map(function([taskId,ps]){
+        const lines=(ps.lines||[]).map(l=>{const m=(c.team||[]).find(x=>x.id===l.memberId);return (m?m.name:l.memberId)+' '+l.percent+'% (GH&#8373;'+l.amount+')';}).join(', ');
+        return '<tr><td style="font-size:11px">'+anEsc(taskId)+'</td>'
+          +'<td class="tm">GH&#8373;'+anEsc(String(ps.totalPayout))+'</td>'
+          +'<td style="font-size:11px">'+anEsc(lines)+'</td>'
+          +'<td class="tm">'+(ps.recordedAt?new Date(ps.recordedAt).toLocaleDateString():'—')+'</td></tr>';
+      }).join('');
+      return '<div class="tc" style="margin-bottom:16px">'
+        +'<div class="tc-h"><span class="tc-ht">'+anEsc(c.fullName)+'</span><span class="tc-hm">'+anEsc(c.phone||'')+' &middot; '+(c.team||[]).length+' team members</span></div>'
+        +'<div style="padding:10px 14px;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)">Team disputes</div>'
+        +(disputeRows?'<table><thead><tr><th>Summary</th><th>Status</th><th>Logged</th><th>Action</th></tr></thead><tbody>'+disputeRows+'</tbody></table>':'<div class="empty">No disputes logged</div>')
+        +'<div style="padding:10px 14px;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)">Job quotes</div>'
+        +(quoteRows?'<table><thead><tr><th>Task</th><th>Price</th><th>Scope notes</th><th>Status</th><th>Action</th></tr></thead><tbody>'+quoteRows+'</tbody></table>':'<div class="empty">No quotes submitted</div>')
+        +'<div style="padding:10px 14px;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)">Team roster</div>'
+        +(rosterRows?'<table><thead><tr><th>Name</th><th>Phone</th><th>Categories</th><th>Jobs</th><th>Status</th></tr></thead><tbody>'+rosterRows+'</tbody></table>':'<div class="empty">No team members added</div>')
+        +'<div style="padding:10px 14px;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--ink3)">Payout splits</div>'
+        +(payoutRows?'<table><thead><tr><th>Task</th><th>Total</th><th>Split</th><th>Recorded</th></tr></thead><tbody>'+payoutRows+'</tbody></table>':'<div class="empty">No payout splits recorded</div>')
+        +'</div>';
+    }).join('');
+  }catch(e){document.getElementById('coordTeamsContent').innerHTML='<div class="empty">'+e.message+'</div>';}
 }
-async function resolveCoordReq(id,action){
-  const note=document.getElementById('coordreqnote_'+id)?.value;
-  const r=await fetch(API+'/admin/coordinator-requests/'+id,{method:'PATCH',headers:{'Content-Type':'application/json','x-admin-password':pass},body:JSON.stringify({action,adminNote:note||undefined})});
-  if(r.ok){showToast(action==='approve'?'Coordinator request approved':'Coordinator request rejected');loadCoordReqs();}
-  else showToast('Could not resolve request');
+async function resolveCoordinatorDispute(workerId,disputeId){
+  const r=await fetch(API+'/admin/coordinator-disputes/'+workerId+'/'+disputeId,{method:'PATCH',headers:{'Content-Type':'application/json','x-admin-password':pass},body:JSON.stringify({status:'resolved'})});
+  if(r.ok){showToast('Dispute marked resolved');loadCoordinatorTeams();}
+  else showToast('Could not update dispute');
+}
+async function reviewCoordinatorQuote(workerId,taskId,action){
+  const r=await fetch(API+'/admin/coordinator-quotes/'+workerId+'/'+taskId,{method:'PATCH',headers:{'Content-Type':'application/json','x-admin-password':pass},body:JSON.stringify({action})});
+  if(r.ok){showToast(action==='approve'?'Quote approved':'Quote denied');loadCoordinatorTeams();}
+  else showToast('Could not update quote');
 }
 
 // ── COORDINATOR CHANNEL ───────────────────────────────────────────────────
@@ -2353,21 +2441,24 @@ window.login=function(){
         const b=document.getElementById('disputesBadge');
         if(b){if(pending>0){b.textContent=pending;b.style.display='';}else b.style.display='none';}
       }).catch(()=>{});
-      fetch(API_URL+'/admin/coordinator-applications',{headers:{'x-admin-password':p}}).then(r=>r.json()).then(d=>{
-        const pending=(d.applications||[]).length;
-        const b=document.getElementById('coordAppsBadge');
-        if(b){if(pending>0){b.textContent=pending;b.style.display='';}else b.style.display='none';}
-      }).catch(()=>{});
-      fetch(API_URL+'/admin/coordinator-requests',{headers:{'x-admin-password':p}}).then(r=>r.json()).then(d=>{
-        const pending=(d.requests||[]).length;
-        const b=document.getElementById('coordReqsBadge');
-        if(b){if(pending>0){b.textContent=pending;b.style.display='';}else b.style.display='none';}
-      }).catch(()=>{});
       fetch(API_URL+'/admin/leads',{headers:{'x-admin-password':p}}).then(r=>r.json()).then(d=>{
         leadsData=d.leads||[];
         const pending=leadsData.filter(l=>!l.followedUp).length;
         const b=document.getElementById('leadsBadge');
         if(b){ if(pending>0){b.textContent=pending;b.style.display='';}else{b.style.display='none';} }
+      }).catch(()=>{});
+      fetch(API_URL+'/admin/coordinator-applications',{headers:{'x-admin-password':p}}).then(r=>r.json()).then(d=>{
+        const pending=(d.applications||[]).length;
+        const b=document.getElementById('coordAppsBadge');
+        if(b){if(pending>0){b.textContent=pending;b.style.display='';}else b.style.display='none';}
+      }).catch(()=>{});
+      fetch(API_URL+'/admin/coordinator-teams',{headers:{'x-admin-password':p}}).then(r=>r.json()).then(d=>{
+        const cs=d.coordinators||[];
+        const openDisputes=cs.reduce((s,c)=>s+(c.disputes||[]).filter(x=>x.status!=='resolved').length,0);
+        const pendingQuotes=cs.reduce((s,c)=>s+Object.values(c.quotes||{}).filter(q=>q.status==='pending').length,0);
+        const need=openDisputes+pendingQuotes;
+        const b=document.getElementById('coordTeamsBadge');
+        if(b){if(need>0){b.textContent=need;b.style.display='';}else b.style.display='none';}
       }).catch(()=>{});
     }).catch(()=>{
       document.getElementById('err').style.display='block';
