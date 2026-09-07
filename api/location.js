@@ -104,8 +104,11 @@ export default async function handler(req, res) {
           missingTable: missingTable || undefined,
         })
       }
-      // Fire-and-forget: record this point in the journey history table
-      insertJourneyPoint(cfg, taskId, body?.workerId, body?.workerName, lat, lng, num(body?.accuracy))
+      // Fire-and-forget: record this point in the journey history table.
+      // `cfg` isn't a variable in this scope — { url, key, ready } are —
+      // so this call used to throw a ReferenceError caught by the outer
+      // catch below, turning every successful write into a false 500.
+      insertJourneyPoint({ url, key, ready }, taskId, body?.workerId, body?.workerName, lat, lng, num(body?.accuracy))
       return res.status(200).json({ ok: true })
     } catch (err) {
       console.error('[location] write error:', err.message)

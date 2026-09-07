@@ -877,14 +877,24 @@ export default function CoordinatorDashboard() {
           role="WORKER"
           initial={{
             avatar: me?.photoUrl as string, name: (me?.fullName as string) || (me?.name as string) || '',
-            phone: (me?.phone as string) || '', bio: '',
+            phone: (me?.phone as string) || '', bio: (me?.bio as string) || '',
           } as Profile}
           onClose={() => setEditing(false)}
           onSave={async (p) => {
-            const patch = { fullName: p.name, photoUrl: p.avatar }
-            try { await workersApi.updateMe(patch) } catch { /* handled elsewhere */ }
-            onSaved(patch)
-            setEditing(false)
+            // fullName/phone aren't included — PATCH /api/workers/me never
+            // persists them (name/phone changes go through support), and
+            // ProfileModal shows them read-only for that reason.
+            const patch: Record<string, unknown> = { bio: p.bio }
+            const photoUrl = p.avatar && /^https?:\/\//.test(p.avatar) ? p.avatar : undefined
+            if (photoUrl && photoUrl !== me?.photoUrl) patch.photoUrl = photoUrl
+            try {
+              await workersApi.updateMe(patch)
+              onSaved(patch)
+              setEditing(false)
+              setToast({ id: Date.now(), kind: 'success', title: 'Profile updated', detail: 'Your changes have been saved.' })
+            } catch (e) {
+              setToast({ id: Date.now(), kind: 'info', title: 'Could not save profile', detail: e instanceof ApiError ? e.message : 'Please try again.' })
+            }
           }}
         />
       )}
