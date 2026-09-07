@@ -127,8 +127,13 @@ export default function ProfileModal({
         <div className="space-y-3">
           {role === 'WORKER' ? (
             <>
-              <L label="Full name" htmlFor="pf-name"><input id="pf-name" value={p.name} onChange={set('name')} className={inp} /></L>
-              <L label="Phone number" htmlFor="pf-phone"><input id="pf-phone" type="tel" value={p.phone} onChange={set('phone')} className={inp} /></L>
+              <L label="Full name" htmlFor="pf-name">
+                <input id="pf-name" value={p.name} disabled className={`${inp} disabled:cursor-not-allowed disabled:opacity-70`} />
+              </L>
+              <L label="Phone number" htmlFor="pf-phone">
+                <input id="pf-phone" type="tel" value={p.phone} disabled className={`${inp} disabled:cursor-not-allowed disabled:opacity-70`} />
+              </L>
+              <p className="-mt-1.5 text-xs text-ink-700/60">Contact BeyondX support to change your name or phone number — this keeps identity verification meaningful.</p>
               <L label="Experience" htmlFor="pf-exp"><input id="pf-exp" value={p.experience || ''} onChange={set('experience')} placeholder="e.g. 3 years" className={inp} /></L>
               <L label="Skills (comma separated)" htmlFor="pf-skills"><input id="pf-skills" value={p.skills || ''} onChange={set('skills')} placeholder="Painting, Cleaning" className={inp} /></L>
               <div>
@@ -148,7 +153,10 @@ export default function ProfileModal({
             </>
           ) : (
             <>
-              <L label="Organisation name" htmlFor="pf-org"><input id="pf-org" value={p.name} onChange={set('name')} className={inp} /></L>
+              <L label="Organisation name" htmlFor="pf-org">
+                <input id="pf-org" value={p.name} disabled className={`${inp} disabled:cursor-not-allowed disabled:opacity-70`} />
+              </L>
+              <p className="-mt-1.5 text-xs text-ink-700/60">Contact BeyondX support to change your organisation name — it's tied to your account identity.</p>
               <L label="Contact person" htmlFor="pf-contact"><input id="pf-contact" value={p.contact || ''} onChange={set('contact')} className={inp} /></L>
               <L label="Phone number" htmlFor="pf-phone"><input id="pf-phone" type="tel" value={p.phone} onChange={set('phone')} className={inp} /></L>
               <L label="Region" htmlFor="pf-region"><input id="pf-region" value={p.region || ''} onChange={set('region')} className={inp} /></L>

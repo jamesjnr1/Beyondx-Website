@@ -632,7 +632,7 @@ export default function WorkerDashboard() {
     setLocationBusy(true)
     setLocationErr(null)
 
-    const performAccept = async (lat?: number, lng?: number) => {
+    const performAccept = async () => {
       const t = locationTask
       setBusyId(t.id)
       try {
@@ -641,9 +641,11 @@ export default function WorkerDashboard() {
         } else {
           await tasksApi.accept(t.id)
         }
-        if (lat !== undefined && lng !== undefined) {
-          tasksApi.updateLocation?.(t.id, lat, lng).catch(() => null)
-        }
+        // The one-time position captured here (lat/lng) only decides whether
+        // to auto-start continuous sharing below via LocationShare's
+        // autoStart — it isn't persisted itself; LocationShare's own
+        // getCurrentPosition + POST /api/location is what actually reports
+        // the worker's position once sharing begins.
         setLocationTask(null)
         setToast({ id: Date.now(), kind: 'success', title: 'Job accepted', detail: `${t.taskType || 'The task'} is now in My Tasks.` })
         setAnnounce('Job accepted')
@@ -674,8 +676,8 @@ export default function WorkerDashboard() {
     // Geolocation must be requested synchronously inside the click handler —
     // the browser blocks the permission prompt if called after any await.
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        await performAccept(pos.coords.latitude, pos.coords.longitude)
+      async () => {
+        await performAccept()
         setAutoShareTaskId(locationTask.id)
         setLocationBusy(false)
       },
@@ -776,7 +778,7 @@ export default function WorkerDashboard() {
     phone: (me?.phone as string) || '',
     experience: '',
     skills: Array.isArray(me?.skills) ? (me?.skills as string[]).join(', ') : '',
-    bio: '',
+    bio: (me?.bio as string) || '',
     hasTools: 'hasTools' in (me || {}) ? Boolean((me as Record<string,unknown>)?.hasTools) : undefined,
   }
 
@@ -1081,7 +1083,7 @@ export default function WorkerDashboard() {
             try {
               const skills = p.skills ? p.skills.split(',').map((x) => x.trim()).filter(Boolean) : []
               const photoUrl = p.avatar && /^https?:\/\//.test(p.avatar) ? p.avatar : undefined
-              const patch: Record<string, unknown> = { skills }
+              const patch: Record<string, unknown> = { skills, bio: p.bio }
               if (photoUrl && photoUrl !== me?.photoUrl) patch.photoUrl = photoUrl
               if (p.hasTools !== undefined) patch.hasTools = p.hasTools
               await workersApi.updateMe(patch)
