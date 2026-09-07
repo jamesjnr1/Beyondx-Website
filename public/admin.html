@@ -242,7 +242,6 @@ tr:hover td{background:var(--bg);}
     <div class="login-brand-features">
       <div class="lbf"><div class="lbf-dot"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div><span class="lbf-t">Verify payments and dispatch workers in one place</span></div>
       <div class="lbf"><div class="lbf-dot"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div><span class="lbf-t">Track every job from posting to payout</span></div>
-      <div class="lbf"><div class="lbf-dot"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div><span class="lbf-t">See visitor-to-signup conversion in real time</span></div>
       <div class="lbf"><div class="lbf-dot"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div><span class="lbf-t">Full oversight of Ghana's verified workforce</span></div>
     </div>
   </div>
@@ -307,10 +306,6 @@ tr:hover td{background:var(--bg);}
         <div class="sb-a" onclick="nav('coordteams',this)">Coordinator Teams <span class="sb-bdg" id="coordTeamsBadge" style="display:none;">0</span></div>
         <div class="sb-a" onclick="nav('coordinators',this)">Coordinator Channel</div>
         <div class="sb-a" onclick="nav('pricing',this)">Price Tiers</div>
-      </div>
-      <div class="sb-group">
-        <div class="sb-grp">Events</div>
-        <div class="sb-a" onclick="nav('leads',this)">Market Day Leads <span class="sb-bdg" id="leadsBadge" style="display:none;">0</span></div>
       </div>
       <div class="sb-group">
         <div class="sb-grp">Messages</div>
@@ -386,7 +381,6 @@ tr:hover td{background:var(--bg);}
       <div class="sec" id="sec-history"><div id="historyContent"></div></div>
       <div class="sec" id="sec-transactions"><div id="txContent"></div></div>
       <div class="sec" id="sec-messages"><div id="smsFormBox"></div><div id="smsDataBox"></div></div>
-      <div class="sec" id="sec-leads"><div id="leadsContent"></div></div>
       <div class="sec" id="sec-disputes"><div id="disputesContent"></div></div>
       <div class="sec" id="sec-coordapps"><div id="coordAppsContent"></div></div>
       <div class="sec" id="sec-coordreqs"><div id="coordReqsContent"></div></div>
@@ -486,23 +480,6 @@ tr:hover td{background:var(--bg);}
       </div>
 
       <div class="sec" id="sec-analytics">
-        <div class="tc" style="margin-bottom:16px;">
-          <div class="tc-h">
-            <span class="tc-ht">Visitor &rarr; Signup Funnel</span>
-            <span class="tc-hm">Self-hosted &mdash; not Vercel Analytics</span>
-          </div>
-          <div style="padding:14px 18px;">
-            <div class="an-ctl" style="margin-bottom:14px;">
-              <span class="tb-t">Range</span>
-              <button class="btn-r vfrange on" onclick="setVfRange(7,this)">7 days</button>
-              <button class="btn-r vfrange" onclick="setVfRange(30,this)">30 days</button>
-              <button class="btn-r vfrange" onclick="setVfRange(0,this)">All time</button>
-              <button class="btn-r" style="margin-left:auto;" onclick="loadVisitorFunnel()">Refresh</button>
-            </div>
-            <div id="vfStats"></div>
-            <div id="vfTable" style="margin-top:14px;"></div>
-          </div>
-        </div>
         <div id="anAlert"></div>
         <div class="an-ctl">
           <span class="tb-t">Range</span>
@@ -606,12 +583,6 @@ function refreshSidebarBadges(){
     const b=document.getElementById('coordReqsBadge');
     if(b){if(pending>0){b.textContent=pending;b.style.display='';}else b.style.display='none';}
   }).catch(()=>{});
-  fetch(API+'/admin/leads',{headers:{'x-admin-password':pass}}).then(r=>r.json()).then(d=>{
-    leadsData=d.leads||[];
-    const pending=leadsData.filter(l=>!l.followedUp).length;
-    const b=document.getElementById('leadsBadge');
-    if(b){if(pending>0){b.textContent=pending;b.style.display='';}else b.style.display='none';}
-  }).catch(()=>{});
   fetch(API+'/admin/coordinator-teams',{headers:{'x-admin-password':pass}}).then(r=>r.json()).then(d=>{
     const cs=d.coordinators||[];
     const openDisputes=cs.reduce((s,c)=>s+(c.disputes||[]).filter(x=>x.status!=='resolved').length,0);
@@ -668,14 +639,13 @@ function nav(id,el){
   document.querySelectorAll('.sb-a').forEach(n=>n.classList.remove('on'));
   document.getElementById('sec-'+id).classList.add('on');
   el.classList.add('on');
-  const T={overview:'Overview',verify:'Verify Payments',payouts:'Pay Now',active:'In Progress',open:'Open Tasks',completed:'Completed Tasks',all:'All Tasks',workers:'Workers',employers:'Employers',history:'Work History',transactions:'Transactions',messages:'SMS Log',analytics:'Site Analytics',payconfirm:'Payment Confirmations',notify:'Send Notification',inbox:'Support & Reports',leads:'Market Day Leads',disputes:'Scope Disputes',coordapps:'Coordinator Applications',coordreqs:'Coordinator Job Requests',coordteams:'Coordinator Teams',coordinators:'Coordinator Channel',pricing:'Price Tiers'};
+  const T={overview:'Overview',verify:'Verify Payments',payouts:'Pay Now',active:'In Progress',open:'Open Tasks',completed:'Completed Tasks',all:'All Tasks',workers:'Workers',employers:'Employers',history:'Work History',transactions:'Transactions',messages:'SMS Log',analytics:'Site Analytics',payconfirm:'Payment Confirmations',notify:'Send Notification',inbox:'Support & Reports',disputes:'Scope Disputes',coordapps:'Coordinator Applications',coordreqs:'Coordinator Job Requests',coordteams:'Coordinator Teams',coordinators:'Coordinator Channel',pricing:'Price Tiers'};
   document.getElementById('pageTitle').textContent=T[id]||id;
   if(id==='inbox'){ inLoad(); return; }
   if(id==='notify'){ ntChars(); ntLoad(); return; }
   if(id==='messages'){ rm(); return; }
   if(id==='payconfirm'){ pcEmployerList().then(pcPreview); pcRenderLog(); return; }
-  if(id==='analytics'){ loadVisitorFunnel(); if(!anData)loadAnalytics(); anStartAuto(); return; }
-  if(id==='leads'){ loadLeads(); return; }
+  if(id==='analytics'){ if(!anData)loadAnalytics(); anStartAuto(); return; }
   if(id==='disputes'){ loadDisputes(); return; }
   if(id==='coordapps'){ loadCoordinatorApplications(); return; }
   if(id==='coordreqs'){ loadCoordinatorRequests(); return; }
@@ -767,7 +737,6 @@ function rs(id){
   else if(id==='coordreqs')loadCoordinatorRequests();
   else if(id==='coordteams')loadCoordinatorTeams();
   else if(id==='coordinators')loadCoordinators();
-  else if(id==='leads')loadLeads();
   else if(id==='pricing')loadPricing();
   else if(id==='inbox')inLoad();
 }
@@ -1452,57 +1421,6 @@ function renderAnalytics(d){
     'Updated '+new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}) + proj + rng;
 }
 
-let vfRangeDays=7;
-function setVfRange(days,btn){
-  vfRangeDays=days;
-  document.querySelectorAll('.vfrange').forEach(b=>b.classList.remove('on'));
-  if(btn)btn.classList.add('on');
-  loadVisitorFunnel();
-}
-async function loadVisitorFunnel(){
-  const statsEl=document.getElementById('vfStats');
-  const tableEl=document.getElementById('vfTable');
-  statsEl.innerHTML='<div class="empty">Loading…</div>';
-  try{
-    const r=await fetch(API+'/admin/visitor-stats?days='+vfRangeDays,{headers:{'x-admin-password':pass}});
-    const d=await r.json();
-    if(!r.ok) throw new Error(d.error||'Server error '+r.status);
-
-    statsEl.innerHTML=`
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
-        <div class="sc"><div class="sc-l">Visitors</div><div class="sc-v">${d.totalVisitors}</div></div>
-        <div class="sc dk"><div class="sc-l">Registered</div><div class="sc-v">${d.converted}</div><div class="sc-s">${d.conversionRate.toFixed(1)}% conversion</div></div>
-        <div class="sc"><div class="sc-l">As Workers</div><div class="sc-v">${d.workerSignups}</div></div>
-        <div class="sc"><div class="sc-l">As Employers</div><div class="sc-v">${d.employerSignups}</div></div>
-      </div>`;
-
-    tableEl.innerHTML = d.recent.length ? `
-      <div class="tc">
-        <div class="tc-h"><span class="tc-ht">Recent visitors</span><span class="tc-hm">${d.recent.length} shown</span></div>
-        <table><thead><tr><th>First seen</th><th>Last seen</th><th>Landing page</th><th>Referrer</th><th>Views</th><th>Status</th></tr></thead>
-        <tbody>${d.recent.map(v=>`<tr>
-          <td class="tm">${new Date(v.firstSeenAt).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</td>
-          <td class="tm">${new Date(v.lastSeenAt).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</td>
-          <td style="font-size:11px;color:var(--ink3)">${v.firstPath||'&mdash;'}</td>
-          <td style="font-size:11px;color:var(--ink3)">${v.referrer?(v.referrer.split('://')[1]||v.referrer).slice(0,30):'Direct'}</td>
-          <td class="tg">${v.pageViews}</td>
-          <td>${v.convertedAt?`<span style="color:var(--g3);font-weight:600;font-size:11px;">Registered (${v.convertedAs})</span>`:'<span style="font-size:11px;color:var(--ink3);">Browsing only</span>'}</td>
-        </tr>`).join('')}</tbody></table>
-      </div>` : '<div class="empty">No visitor data yet.</div>';
-  }catch(e){
-    statsEl.innerHTML=`<div class="empty">Could not load visitor stats: ${e.message}</div>`;
-    tableEl.innerHTML='';
-  }
-}
-
-let leadsData=[];
-let leadsFilter='all';
-function setLeadsFilter(f,btn){
-  leadsFilter=f;
-  document.querySelectorAll('.leadfilter').forEach(b=>b.classList.remove('on'));
-  if(btn)btn.classList.add('on');
-  renderLeads();
-}
 // ── SCOPE DISPUTES ───────────────────────────────────────────────────────
 async function loadDisputes(){
   const el=document.getElementById('disputesContent');
@@ -1829,89 +1747,6 @@ async function loadPricing(){
 async function saveTier(id,basePrice,materialsSurcharge){
   const r=await fetch(API+'/admin/price-tiers/'+id,{method:'PATCH',headers:{'Content-Type':'application/json','x-admin-password':pass},body:JSON.stringify({basePrice,materialsSurcharge})});
   if(r.ok)showToast('Price updated');else showToast('Could not save');
-}
-
-async function loadLeads(){
-  const el=document.getElementById('leadsContent');
-  el.innerHTML='<div class="empty">Loading…</div>';
-  try{
-    const r=await fetch(API+'/admin/leads',{headers:{'x-admin-password':pass}});
-    const d=await r.json();
-    if(!r.ok) throw new Error(d.error||'Server error '+r.status);
-    leadsData=d.leads||[];
-    renderLeads();
-  }catch(e){
-    el.innerHTML=`<div class="empty">Could not load leads: ${e.message}</div>`;
-  }
-}
-function renderLeads(){
-  const el=document.getElementById('leadsContent');
-  const total=leadsData.length;
-  const workers=leadsData.filter(l=>l.interest==='worker').length;
-  const employers=leadsData.filter(l=>l.interest==='employer').length;
-  const followedUp=leadsData.filter(l=>l.followedUp).length;
-  const pending=total-followedUp;
-
-  const badge=document.getElementById('leadsBadge');
-  if(badge){ if(pending>0){badge.textContent=pending;badge.style.display='';}else{badge.style.display='none';} }
-
-  let list = leadsFilter==='all' ? leadsData
-    : leadsFilter==='pending' ? leadsData.filter(l=>!l.followedUp)
-    : leadsData.filter(l=>l.interest===leadsFilter);
-
-  el.innerHTML=`
-    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;">
-      <div class="sc dk"><div class="sc-l">Total Sign-ups</div><div class="sc-v">${total}</div></div>
-      <div class="sc"><div class="sc-l">Interested in Work</div><div class="sc-v">${workers}</div></div>
-      <div class="sc"><div class="sc-l">Interested in Hiring</div><div class="sc-v">${employers}</div></div>
-      <div class="sc"><div class="sc-l">Awaiting Follow-up</div><div class="sc-v">${pending}</div></div>
-    </div>
-    <div class="tc">
-      <div class="tc-h">
-        <span class="tc-ht">Market Day Leads</span>
-        <span style="display:flex;gap:6px;align-items:center;">
-          <button class="btn-r leadfilter on" onclick="setLeadsFilter('all',this)">All</button>
-          <button class="btn-r leadfilter" onclick="setLeadsFilter('pending',this)">Pending</button>
-          <button class="btn-r leadfilter" onclick="setLeadsFilter('worker',this)">Workers</button>
-          <button class="btn-r leadfilter" onclick="setLeadsFilter('employer',this)">Employers</button>
-          <button class="btn-r" onclick="exportLeadsCsv()">Export CSV</button>
-        </span>
-      </div>
-      ${list.length ? `<table><thead><tr><th>Name</th><th>Phone</th><th>Interested In</th><th>Category</th><th>Area</th><th>Notes</th><th>Signed Up</th><th>Follow-up</th></tr></thead>
-      <tbody>${list.map(l=>`<tr>
-        <td class="tn">${anEsc(l.name)}</td>
-        <td class="tm">${anEsc(l.phone)}</td>
-        <td><span class="badge ${l.interest==='worker'?'ba':l.interest==='employer'?'bo':'bd'}">${l.interest==='worker'?'Work':l.interest==='employer'?'Hiring':'Curious'}</span></td>
-        <td style="font-size:11px;color:var(--ink3)">${anEsc(l.category||'—')}</td>
-        <td style="font-size:11px;color:var(--ink3)">${anEsc(l.location||'—')}</td>
-        <td style="font-size:11px;color:var(--ink3);max-width:180px;">${anEsc(l.notes||'—')}</td>
-        <td class="tm">${new Date(l.createdAt).toLocaleString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})}</td>
-        <td><button class="btn-r ${l.followedUp?'':'on'}" style="${l.followedUp?'':'background:#f0f7e8;border-color:var(--g);color:var(--g2);'}" onclick="toggleLeadFollowUp('${l.id}',${!l.followedUp})">${l.followedUp?'✓ Done':'Mark done'}</button></td>
-      </tr>`).join('')}</tbody></table>` : `<div class="empty">No leads in this view yet</div>`}
-    </div>`;
-}
-async function toggleLeadFollowUp(id,followedUp){
-  try{
-    const r=await fetch(API+'/admin/leads/'+id,{
-      method:'PATCH',
-      headers:{'Content-Type':'application/json','x-admin-password':pass},
-      body:JSON.stringify({followedUp})
-    });
-    if(!r.ok) throw new Error('Server error '+r.status);
-    const lead=leadsData.find(l=>l.id===id);
-    if(lead) lead.followedUp=followedUp;
-    renderLeads();
-  }catch(e){ showToast('Could not update: '+e.message); }
-}
-function exportLeadsCsv(){
-  const rows=[['Name','Phone','Interested In','Category','Area','Notes','Signed Up','Followed Up']];
-  leadsData.forEach(l=>rows.push([l.name,l.phone,l.interest,l.category||'',l.location||'',l.notes||'',new Date(l.createdAt).toLocaleString(),l.followedUp?'Yes':'No']));
-  const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const blob=new Blob([csv],{type:'text/csv'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob);
-  a.download='beyondx-market-day-leads-'+new Date().toISOString().slice(0,10)+'.csv';
-  a.click();
 }
 
 function loadAnalytics(){
@@ -2499,12 +2334,6 @@ window.login=function(){
         const pending=(d.disputes||[]).filter(x=>x.status==='pending').length;
         const b=document.getElementById('disputesBadge');
         if(b){if(pending>0){b.textContent=pending;b.style.display='';}else b.style.display='none';}
-      }).catch(()=>{});
-      fetch(API_URL+'/admin/leads',{headers:{'x-admin-password':p}}).then(r=>r.json()).then(d=>{
-        leadsData=d.leads||[];
-        const pending=leadsData.filter(l=>!l.followedUp).length;
-        const b=document.getElementById('leadsBadge');
-        if(b){ if(pending>0){b.textContent=pending;b.style.display='';}else{b.style.display='none';} }
       }).catch(()=>{});
       fetch(API_URL+'/admin/coordinator-applications',{headers:{'x-admin-password':p}}).then(r=>r.json()).then(d=>{
         const pending=(d.applications||[]).length;
