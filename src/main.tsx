@@ -9,6 +9,20 @@ import { trackVisit } from './lib/track'
 // aggregated result back from our own backend.
 trackVisit()
 
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+  })
+}
+
+// Capture the browser's install prompt as early as possible — it can fire
+// before InstallPrompt.tsx has mounted, and only fires once.
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault()
+  ;(window as typeof window & { __bxInstallPrompt?: Event }).__bxInstallPrompt = e
+  window.dispatchEvent(new Event('bx-install-prompt-ready'))
+})
+
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <App />
