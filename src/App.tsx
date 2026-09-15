@@ -11,13 +11,14 @@ import NewsPage from './pages/NewsPage'
 import WorkerDashboard from './pages/WorkerDashboard'
 import EmployerDashboard from './pages/EmployerDashboard'
 import BookWorker from './pages/BookWorker'
+import InstallPrompt from './components/InstallPrompt'
 
 function Shell() {
   const { page } = useAuth()
 
-  if (page === 'book-worker') return <BookWorker />
-  if (page === 'worker-dashboard') return <><WorkerDashboard /><AccessibilityMenu /></>
-  if (page === 'employer-dashboard') return <><EmployerDashboard /><AccessibilityMenu /></>
+  if (page === 'book-worker') return <><BookWorker /><InstallPrompt /></>
+  if (page === 'worker-dashboard') return <><WorkerDashboard /><AccessibilityMenu /><InstallPrompt /></>
+  if (page === 'employer-dashboard') return <><EmployerDashboard /><AccessibilityMenu /><InstallPrompt /></>
 
   return (
     <div className="relative min-h-screen bg-cream-50 text-ink-900">
@@ -34,6 +35,7 @@ function Shell() {
       <Footer />
       <AuthModals />
       <AccessibilityMenu />
+      <InstallPrompt />
     </div>
   )
 }
