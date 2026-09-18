@@ -1,7 +1,9 @@
 import { motion } from 'framer-motion'
-import { MoveHorizontal } from 'lucide-react'
+import { Compass, HandCoins, MoveHorizontal, ShieldCheck } from 'lucide-react'
 import { useReveal } from '../hooks/useReveal'
 import { pillars } from '../data'
+
+const ICONS = [ShieldCheck, HandCoins, Compass]
 
 export default function Pillars() {
   const { ref, visible } = useReveal()
@@ -32,27 +34,29 @@ export default function Pillars() {
             the height of a single card instead. Desktop keeps the familiar
             3-column grid since there's room for it. */}
         <div className="mt-8 -mx-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-5 pb-2 sm:mt-16 sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-6 sm:overflow-visible sm:px-0 sm:pb-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {pillars.map((pillar, i) => (
-            <motion.div
-              key={pillar.title}
-              initial={{ opacity: 0, y: 30 }}
-              animate={visible ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.6, delay: i * 0.15 }}
-              className="h-full w-[78%] shrink-0 snap-center rounded-2xl border border-cream-50/10 bg-cream-50/5 p-5 text-center transition-all duration-300 hover:border-forest-400/30 hover:bg-cream-50/10 sm:w-auto sm:shrink sm:p-8"
-            >
-              <div className="mx-auto mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-forest-400 to-forest-600 shadow-lg shadow-forest-900/40 sm:mb-5 sm:h-14 sm:w-14 sm:rounded-2xl">
-                <span className="font-serif text-base font-bold text-cream-50 sm:text-xl">
-                  {i + 1}
-                </span>
-              </div>
-              <h3 className="mb-2 font-serif text-lg font-medium text-cream-50 sm:mb-3 sm:text-2xl">
-                {pillar.title}
-              </h3>
-              <p className="text-xs leading-relaxed text-cream-200/70 text-pretty sm:text-sm">
-                {pillar.description}
-              </p>
-            </motion.div>
-          ))}
+          {pillars.map((pillar, i) => {
+            const Icon = ICONS[i]
+            return (
+              <motion.div
+                key={pillar.title}
+                initial={{ opacity: 0, y: 30 }}
+                animate={visible ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.6, delay: i * 0.15 }}
+                className="group relative h-full w-[78%] shrink-0 snap-center overflow-hidden rounded-2xl border border-cream-50/10 bg-cream-50/5 p-5 text-center transition-all duration-300 hover:-translate-y-1 hover:border-forest-400/30 hover:bg-cream-50/10 sm:w-auto sm:shrink sm:p-8"
+              >
+                <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-forest-400/60 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-forest-400 to-forest-600 shadow-lg shadow-forest-900/40 transition-transform duration-300 group-hover:scale-105 sm:mb-5 sm:h-16 sm:w-16">
+                  <Icon size={26} className="text-cream-50" aria-hidden="true" strokeWidth={2} />
+                </div>
+                <h3 className="mb-2 font-serif text-lg font-medium text-cream-50 sm:mb-3 sm:text-2xl">
+                  {pillar.title}
+                </h3>
+                <p className="text-xs leading-relaxed text-cream-200/70 text-pretty sm:text-sm">
+                  {pillar.description}
+                </p>
+              </motion.div>
+            )
+          })}
         </div>
 
         <p className="mt-4 flex items-center justify-center gap-1.5 text-xs font-medium text-cream-100 sm:hidden">
