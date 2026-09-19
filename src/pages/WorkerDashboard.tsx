@@ -54,6 +54,7 @@ type Certification = {
 }
 
 function parseJSON<T>(raw: unknown, fallback: T): T {
+  if (raw == null || raw === '') return fallback
   if (Array.isArray(raw)) return raw as unknown as T
   try { return JSON.parse(String(raw)) } catch { return fallback }
 }

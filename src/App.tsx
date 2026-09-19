@@ -12,6 +12,7 @@ import WorkerDashboard from './pages/WorkerDashboard'
 import EmployerDashboard from './pages/EmployerDashboard'
 import BookWorker from './pages/BookWorker'
 import InstallPrompt from './components/InstallPrompt'
+import ErrorBoundary from './components/ErrorBoundary'
 
 function Shell() {
   const { page } = useAuth()
@@ -42,10 +43,12 @@ function Shell() {
 
 export default function App() {
   return (
-    <AccessibilityProvider>
-      <AuthProvider>
-        <Shell />
-      </AuthProvider>
-    </AccessibilityProvider>
+    <ErrorBoundary>
+      <AccessibilityProvider>
+        <AuthProvider>
+          <Shell />
+        </AuthProvider>
+      </AccessibilityProvider>
+    </ErrorBoundary>
   )
 }
