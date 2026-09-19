@@ -247,6 +247,20 @@ export const auth = {
   }) => request<EmployerAuthResponse>('/api/auth/employer-register', { method: 'POST', body: payload }),
 }
 
+/* ---------------------------------- push -------------------------------- */
+
+export type PushSubscriptionPayload = {
+  endpoint: string
+  keys: { p256dh: string; auth: string }
+}
+
+export const push = {
+  subscribe: (subscription: PushSubscriptionPayload, token: string) =>
+    request<{ ok: true }>('/api/push/subscribe', { method: 'POST', body: subscription, token }),
+  unsubscribe: (endpoint: string, token: string) =>
+    request<{ ok: true }>('/api/push/unsubscribe', { method: 'POST', body: { endpoint }, token }),
+}
+
 /* -------------------------------- workers ------------------------------ */
 
 export const workers = {

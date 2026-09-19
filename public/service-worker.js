@@ -60,3 +60,41 @@ self.addEventListener('fetch', (event) => {
       .catch(() => caches.match(request).then((cached) => cached || caches.match('/')))
   );
 });
+
+// Push notifications ---------------------------------------------------
+//
+// The payload is whatever JSON object the backend passed to
+// webpush.sendNotification() (see beyondx-backend/lib/push.js) —
+// { title, body, url }. `url` is always '/' rather than a client-routed
+// path like '/worker-dashboard': this is a single-page app with no server
+// routing for those paths (vercel.json has no catch-all rewrite), so
+// opening anything but '/' would 404. The app's own session restore logic
+// lands the signed-in user back on their dashboard once it loads.
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch { data = {}; }
+
+  const title = data.title || 'BeyondX';
+  const options = {
+    body: data.body || '',
+    icon: '/icon-192.png',
+    badge: '/icon-192.png',
+    data: { url: data.url || '/' },
+  };
+
+  event.waitUntil(self.registration.showNotification(title, options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  const url = event.notification.data?.url || '/';
+
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        if ('focus' in client) return client.focus();
+      }
+      if (clients.openWindow) return clients.openWindow(url);
+    })
+  );
+});

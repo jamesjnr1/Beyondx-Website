@@ -24,6 +24,22 @@
 
 const TABLE = 'notifications'
 
+// Same Railway backend the rest of the admin flow already falls back to
+// (see api/admin-verify-payment.js) — VAPID keys and push subscriptions
+// live there, not in Supabase, so a broadcast asks it to do the actual
+// sending rather than duplicating that plumbing here.
+const RAILWAY = process.env.RAILWAY_API || process.env.API_URL || 'https://beyondx-backend-production-1a08.up.railway.app'
+
+function broadcastPush(audience, title, body) {
+  const adminPass = process.env.ADMIN_PASSWORD || ''
+  if (!adminPass) return
+  fetch(`${RAILWAY}/admin/push-broadcast`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'x-admin-password': adminPass },
+    body: JSON.stringify({ audience, title, body }),
+  }).catch((err) => console.error('[notifications] push broadcast failed:', err.message))
+}
+
 function config() {
   const url = process.env.SUPABASE_URL
   const key = process.env.SUPABASE_SERVICE_KEY
@@ -117,6 +133,7 @@ export default async function handler(req, res) {
         console.error('[notifications] write failed', r.status, detail.slice(0, 300))
         return res.status(502).json({ error: `Could not save (${r.status}).`, reason: detail.slice(0, 200) })
       }
+      broadcastPush(audience, title, text)
       return res.status(200).json({ ok: true, notification: JSON.parse(detail || '[]')[0] || null })
     } catch (err) {
       console.error('[notifications] write error:', err.message)
