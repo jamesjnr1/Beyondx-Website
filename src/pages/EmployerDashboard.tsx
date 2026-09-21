@@ -17,6 +17,8 @@ import { openBookingWindow } from './BookWorker'
 import type { BookingState } from './BookWorker'
 import CoordinatorQuoteModal from '../components/CoordinatorQuoteModal'
 import { isCoordinator, getApplication } from '../lib/coordinator'
+import { useRefreshOnResume } from '../hooks/useRefreshOnResume'
+import NotificationsBanner from '../components/NotificationsBanner'
 
 const cedis = (n?: number | string) => `GH\u20b5 ${Number(n || 0).toLocaleString()}`
 const wName = (w: Worker) => (w.fullName as string) || (w.name as string) || 'Worker'
@@ -350,6 +352,7 @@ export default function EmployerDashboard() {
     }
   }, [jobLocationFilter])
   useEffect(() => { load() }, [load])
+  useRefreshOnResume(load)
 
   const cancelTask = async (t: Task) => {
     if (!window.confirm(`Cancel this "${t.taskType}" job? This stops the search for a worker — you won't be charged.`)) return
@@ -403,6 +406,8 @@ export default function EmployerDashboard() {
       <DashboardHeader role="EMPLOYER" title="Employer Dashboard" name={orgName} avatar={logo} onEditProfile={() => setEditing(true)} tasks={taskList} />
       <main id="main" className="mx-auto max-w-7xl px-4 py-6 sm:px-8 sm:py-8">
         <p aria-live="polite" className="sr-only">{announce}</p>
+
+        <NotificationsBanner role="employer" />
 
         {error && (
           <div className="mb-4 flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 sm:flex-row sm:items-center sm:justify-between">

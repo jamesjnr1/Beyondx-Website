@@ -12,6 +12,8 @@ import CoordinatorDashboard from './CoordinatorDashboard'
 import { tasks as tasksApi, workers as workersApi, media, contact, session, ApiError, type Task, type Worker } from '../lib/api'
 import { isRemote } from '../data'
 import { isCoordinator } from '../lib/coordinator'
+import { useRefreshOnResume } from '../hooks/useRefreshOnResume'
+import NotificationsBanner from '../components/NotificationsBanner'
 
 // ---------------------------------------------------------------------------
 // Work Experience & Certifications Card
@@ -601,6 +603,7 @@ export default function WorkerDashboard() {
   }, [])
 
   useEffect(() => { load() }, [load])
+  useRefreshOnResume(load)
 
   const act = async (t: Task, fn: () => Promise<unknown>, msg: string, detail: string) => {
     if (busyId) return
@@ -800,6 +803,8 @@ export default function WorkerDashboard() {
       <DashboardHeader role="WORKER" title="Worker Dashboard" name={displayName} avatar={photo} onEditProfile={() => setEditing(true)} tasks={[...offers, ...mine, ...history]} />
       <main id="main" className="mx-auto max-w-7xl px-4 py-6 sm:px-8 sm:py-8">
         <p aria-live="polite" className="sr-only">{announce}</p>
+
+        <NotificationsBanner role="worker" />
 
         {error && (
           <div className="mb-4 flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 sm:flex-row sm:items-center sm:justify-between">
