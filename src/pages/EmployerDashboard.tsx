@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
-import { ChevronLeft, ChevronRight, Star, Send, Phone, Plus, X, ShieldCheck, CircleCheck, Info, RefreshCw, AlertCircle, Copy, Check, Award, Map, Clock, MapPin, Briefcase, Users, Wallet } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Star, Send, Phone, Plus, X, ShieldCheck, CircleCheck, Info, RefreshCw, AlertCircle, Copy, Check, Award, Map, Clock, MapPin, Briefcase, Users, Wallet, Quote } from 'lucide-react'
 import JobLocationMap from '../components/JobLocationMap'
 import DashboardHeader from './DashboardHeader'
 import ProfileModal from '../components/ProfileModal'
@@ -21,7 +21,17 @@ import { isCoordinator, getApplication } from '../lib/coordinator'
 const cedis = (n?: number | string) => `GH\u20b5 ${Number(n || 0).toLocaleString()}`
 const wName = (w: Worker) => (w.fullName as string) || (w.name as string) || 'Worker'
 const wInitials = (w: Worker) => wName(w).split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
-const wSkills = (w: Worker): string[] => (Array.isArray(w.skills) ? (w.skills as string[]) : (w.cats as string[]) || [])
+// A coordinator's own `skills` array is what they registered with as a
+// regular worker, before their team was approved — it doesn't reflect what
+// their team actually covers (Worker.coordinatorApplication.categories).
+// Browsing by category needs both, or a coordinator never appears under any
+// category their team covers but they didn't personally register under.
+const wSkills = (w: Worker): string[] => {
+  const base = Array.isArray(w.skills) ? (w.skills as string[]) : (w.cats as string[]) || []
+  if (!isCoordinator(w)) return base
+  const covered = getApplication(w)?.categories || []
+  return Array.from(new Set([...base, ...covered]))
+}
 
 /** A worker is "background-flagged" only if they explicitly named a real
  *  prison facility at registration. Any opt-out phrasing, empty value, or
@@ -648,6 +658,11 @@ export default function EmployerDashboard() {
                                         {isCoordinator(w) && (
                                           <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-forest-600/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-forest-700">
                                             Team
+                                          </span>
+                                        )}
+                                        {Boolean(w.priority) && (
+                                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-clay-400/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-clay-600">
+                                            Featured
                                           </span>
                                         )}
                                         {isBackgroundFlagged(w) && !highRisk && (
@@ -1290,6 +1305,22 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch, onRequestQu
               </p>
             </div>
           )}
+
+          {/* Staff-curated client testimonial — separate from the computed
+              star rating above, never a substitute for it. */}
+          {worker.featuredTestimonial ? (
+            <div className="mx-5 mt-3 rounded-xl bg-cream-100 px-4 py-3.5">
+              <Quote size={16} aria-hidden="true" className="text-forest-600" />
+              <p className="mt-1.5 text-sm italic leading-relaxed text-ink-800">
+                {worker.featuredTestimonial as string}
+              </p>
+              {worker.featuredTestimonialSource ? (
+                <p className="mt-2 text-xs font-medium text-ink-700/60">
+                  — {worker.featuredTestimonialSource as string}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
 
           {/* Proximity & transport allowance — shown when available */}
           {worker.proximity?.available && (
