@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Bell, X, Megaphone, CircleCheck, Clock, Wallet } from 'lucide-react'
+import { Bell, X, Megaphone, CircleCheck, Clock, Wallet, BellRing, BellOff } from 'lucide-react'
 import type { Task } from '../lib/api'
+import { session } from '../lib/api'
+import { enablePush, disablePush, getPushStatus, type PushStatus } from '../lib/push'
 
 /**
  * Platform-wide announcements. Add an entry here and it appears for everyone,
@@ -102,6 +104,92 @@ function taskItems(role: 'worker' | 'employer', tasks: Task[]): Item[] {
 
 type Sent = { id: string; title: string; body: string; created_at: string }
 
+// Push opt-in — deliberately lives inside the notifications panel rather
+// than firing on page load, so permission is only ever requested from a
+// click the person made *because* they opened this panel, not as a
+// surprise on arrival.
+function PushOptIn({ role }: { role: 'worker' | 'employer' }) {
+  const [status, setStatus] = useState<PushStatus | null>(null)
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    getPushStatus().then(setStatus).catch(() => setStatus('unsupported'))
+  }, [])
+
+  const token = role === 'worker' ? session.workerToken() : session.employerToken()
+
+  const handleEnable = async () => {
+    if (!token || busy) return
+    setBusy(true); setError(null)
+    try {
+      const next = await enablePush(token)
+      setStatus(next)
+    } catch {
+      setError('Could not enable notifications. Please try again.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const handleDisable = async () => {
+    if (!token || busy) return
+    setBusy(true); setError(null)
+    try {
+      await disablePush(token)
+      setStatus('not-subscribed')
+    } catch {
+      setError('Could not turn off notifications.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (status === null || status === 'unsupported') return null
+
+  return (
+    <div className="shrink-0 border-t border-ink-900/10 px-4 py-3">
+      {status === 'ios-needs-install' && (
+        <p className="text-xs leading-relaxed text-ink-700">
+          <BellRing size={13} className="mr-1 inline -mt-0.5 text-forest-600" aria-hidden="true" />
+          On iPhone, add BeyondX to your Home Screen first (Share → Add to Home Screen), then come back here to enable notifications.
+        </p>
+      )}
+
+      {status === 'denied' && (
+        <p className="text-xs leading-relaxed text-ink-700">
+          <BellOff size={13} className="mr-1 inline -mt-0.5 text-ink-700/60" aria-hidden="true" />
+          Notifications are blocked for BeyondX. Enable them in your browser or phone settings to turn this back on.
+        </p>
+      )}
+
+      {status === 'not-subscribed' && (
+        <button
+          onClick={handleEnable}
+          disabled={busy}
+          className="flex w-full items-center justify-center gap-2 rounded-full bg-forest-600 px-4 py-2 text-xs font-semibold text-cream-50 transition-colors hover:bg-forest-500 disabled:opacity-60"
+        >
+          <BellRing size={13} aria-hidden="true" />
+          {busy ? 'Enabling…' : 'Enable notifications'}
+        </button>
+      )}
+
+      {status === 'subscribed' && (
+        <div className="flex items-center justify-between gap-2">
+          <span className="flex items-center gap-1.5 text-xs font-medium text-forest-700">
+            <CircleCheck size={13} aria-hidden="true" /> Notifications enabled
+          </span>
+          <button onClick={handleDisable} disabled={busy} className="text-xs font-medium text-ink-700/60 underline underline-offset-2 hover:text-ink-900 disabled:opacity-60">
+            Turn off
+          </button>
+        </div>
+      )}
+
+      {error && <p className="mt-1.5 text-xs text-red-700">{error}</p>}
+    </div>
+  )
+}
+
 export default function Notifications({ role, tasks }: { role: 'worker' | 'employer'; tasks: Task[] }) {
   const [open, setOpen] = useState(false)
   const [read, setRead] = useState<string[]>(readIds)
@@ -198,6 +286,8 @@ export default function Notifications({ role, tasks }: { role: 'worker' | 'emplo
                 </ul>
               )}
             </div>
+
+            <PushOptIn role={role} />
           </div>
         </>
       )}
