@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
-import { MapPin, Calendar, Check, Star, RotateCcw, RefreshCw, AlertCircle, Camera, Plus, Trash2, Phone, AlertTriangle, ChevronRight, Map, ClipboardList, Wallet, Bus, Clock, Users, CheckCircle2, Loader2 } from 'lucide-react'
+import { MapPin, Calendar, Check, Star, RotateCcw, RefreshCw, AlertCircle, Camera, Plus, Trash2, Phone, AlertTriangle, ChevronRight, Map, ClipboardList, Wallet, Bus, Clock, Users, CheckCircle2, Loader2, LayoutDashboard, ShieldCheck, UserRound, HelpCircle } from 'lucide-react'
 import JobLocationMap from '../components/JobLocationMap'
 import DashboardHeader from './DashboardHeader'
+import DashboardSidebar, { DashboardMobileNav, type DashboardNavItem } from '../components/DashboardSidebar'
+import ActivityFeed, { type ActivityItem } from '../components/ActivityFeed'
 import ReferralCard from '../components/ReferralCard'
 import ProfileModal, { type Profile } from '../components/ProfileModal'
 import Toast, { type ToastMsg } from '../components/Toast'
@@ -371,13 +373,6 @@ function WorkExperienceCard({
 
 const cedis = (n?: number | string) => `GH\u20b5 ${Number(n || 0).toLocaleString()}`
 
-const greeting = () => {
-  const h = new Date().getHours()
-  if (h < 12) return 'Good morning'
-  if (h < 17) return 'Good afternoon'
-  return 'Good evening'
-}
-
 const employerName = (t: Task) =>
   typeof t.employer === 'string' ? t.employer : t.employer?.orgName || t.employer?.name || 'BeyondX employer'
 
@@ -391,16 +386,17 @@ function Stars({ n }: { n: number }) {
   )
 }
 
-function Stat({ icon, label, value, highlight }: { icon: ReactNode; label: string; value: string; highlight?: boolean }) {
+function Stat({ icon, label, value, extra }: { icon: ReactNode; label: string; value: string; extra?: ReactNode }) {
   return (
-    <div className={`flex items-center gap-3.5 rounded-2xl border px-4 py-4 transition-shadow hover:shadow-sm sm:py-5 ${
-      highlight ? 'border-forest-600/15 bg-gradient-to-br from-forest-600 to-forest-700 text-cream-50' : 'border-ink-900/8 bg-cream-50'
-    }`}>
-      <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${highlight ? 'bg-cream-50/15 text-cream-50' : 'bg-forest-600/10 text-forest-600'}`}>{icon}</span>
-      <span className="min-w-0">
-        <span className={`block truncate font-serif text-xl font-semibold ${highlight ? 'text-cream-50' : 'text-ink-900'}`}>{value}</span>
-        <span className={`block truncate text-xs ${highlight ? 'text-cream-50/75' : 'text-ink-700/60'}`}>{label}</span>
-      </span>
+    <div className="rounded-2xl border border-ink-900/8 bg-white px-5 py-5 shadow-sm">
+      <div className="flex items-center gap-2.5 text-sm font-medium text-ink-700">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-forest-600/30 text-forest-600">{icon}</span>
+        <span className="truncate">{label}</span>
+      </div>
+      <div className="mt-3 flex items-center gap-2.5">
+        <span className="text-2xl font-bold text-ink-900">{value}</span>
+        {extra}
+      </div>
     </div>
   )
 }
@@ -565,7 +561,8 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
 }
 
 export default function WorkerDashboard() {
-  const [tab, setTab] = useState<'available' | 'mine' | 'declined' | 'history' | 'support'>('available')
+  const [section, setSection] = useState<'overview' | 'assignments' | 'verification' | 'earnings' | 'profile' | 'support'>('overview')
+  const [tab, setTab] = useState<'available' | 'mine' | 'declined'>('available')
   const [offers, setOffers] = useState<Task[]>([])
   const [open, setOpen] = useState<Task[]>([])
   const [mine, setMine] = useState<Task[]>([])
@@ -786,13 +783,60 @@ export default function WorkerDashboard() {
     hasTools: 'hasTools' in (me || {}) ? Boolean((me as Record<string,unknown>)?.hasTools) : undefined,
   }
 
-  const tabs = [
+  const assignmentTabs = [
     { id: 'available', label: `Available (${available.length})` },
     { id: 'mine', label: `My Tasks (${mine.length})` },
     { id: 'declined', label: `Declined (${declined.length})` },
-    { id: 'history', label: `History (${history.length})` },
-    { id: 'support', label: 'Support' },
   ] as const
+
+  const navItems: DashboardNavItem[] = [
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'assignments', label: 'My Assignments', icon: ClipboardList, badge: available.length },
+    { id: 'verification', label: 'Verification', icon: ShieldCheck },
+    { id: 'earnings', label: 'Earnings', icon: Wallet },
+    { id: 'profile', label: 'Profile', icon: UserRound },
+    { id: 'support', label: 'Support', icon: HelpCircle },
+  ]
+  // Short set for the top bar — the sidebar carries the full list.
+  const headerNavItems = navItems.filter((i) => ['overview', 'assignments', 'profile', 'support'].includes(i.id))
+
+  const activityDate = (t: Task) => t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : undefined
+
+  const recentActivity: ActivityItem[] = [
+    ...mine.map((t) => ({
+      id: `mine-${t.id}`,
+      icon: <Clock size={15} aria-hidden="true" />,
+      title: `${t.taskType || 'Task'} — in progress`,
+      detail: [employerName(t), activityDate(t)].filter(Boolean).join(' · '),
+      status: { label: 'In progress', tone: 'info' as const },
+    })),
+    ...declined.slice(0, 3).map((t) => ({
+      id: `declined-${t.id}`,
+      icon: <RotateCcw size={15} aria-hidden="true" />,
+      title: `${t.taskType || 'Task'} declined`,
+      detail: [employerName(t), activityDate(t)].filter(Boolean).join(' · '),
+      status: { label: 'Declined', tone: 'info' as const },
+    })),
+    ...history.slice(0, 5).map((t) => ({
+      id: `history-${t.id}`,
+      icon: <CheckCircle2 size={15} aria-hidden="true" />,
+      title: `${t.taskType || 'Task'} completed`,
+      detail: [employerName(t), activityDate(t)].filter(Boolean).join(' · '),
+      status: { label: 'Completed', tone: 'success' as const },
+    })),
+  ].slice(0, 8)
+
+  // The soonest scheduled task in My Tasks — falls back to the first accepted
+  // task when none carry a schedule, since any accepted job is still "next".
+  const nextAssignment = [...mine].sort((a, b) => {
+    const da = a.scheduledDate ? new Date(`${a.scheduledDate}T${a.scheduledTime || '08:00'}`).getTime() : Infinity
+    const db = b.scheduledDate ? new Date(`${b.scheduledDate}T${b.scheduledTime || '08:00'}`).getTime() : Infinity
+    return da - db
+  })[0]
+  const nextAssignmentWhen = nextAssignment?.scheduledDate
+    ? new Date(`${nextAssignment.scheduledDate}T${nextAssignment.scheduledTime || '08:00'}:00`)
+        .toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+    : undefined
 
   // Approved Coordinators get a different dashboard entirely (team
   // management, bulk-job quoting, payout splits) — see CoordinatorDashboard.
@@ -800,8 +844,11 @@ export default function WorkerDashboard() {
 
   return (
     <div className="min-h-screen bg-cream-100">
-      <DashboardHeader role="WORKER" title="Worker Dashboard" name={displayName} avatar={photo} onEditProfile={() => setEditing(true)} tasks={[...offers, ...mine, ...history]} />
-      <main id="main" className="mx-auto max-w-7xl px-4 py-6 sm:px-8 sm:py-8">
+      <DashboardHeader role="WORKER" title="Worker Dashboard" name={displayName} avatar={photo} onEditProfile={() => setEditing(true)} tasks={[...offers, ...mine, ...history]}
+        navItems={headerNavItems} active={section} onSelect={(id) => setSection(id as typeof section)} />
+      <div className="lg:flex">
+        <DashboardSidebar items={navItems} active={section} onSelect={(id) => setSection(id as typeof section)} />
+        <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-8 lg:px-10">
         <p aria-live="polite" className="sr-only">{announce}</p>
 
         <NotificationsBanner role="worker" />
@@ -817,188 +864,284 @@ export default function WorkerDashboard() {
           </div>
         )}
 
-        <div className="mb-5">
-          <h1 className="font-serif text-2xl font-medium text-ink-900 sm:text-[26px]">{greeting()}, {displayName.split(' ')[0]}</h1>
-          <p className="mt-0.5 text-sm text-ink-700/70">
-            {available.length > 0
-              ? `${available.length} job${available.length === 1 ? '' : 's'} available right now.`
-              : "You're all caught up — check back soon for new jobs."}
-          </p>
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-ink-900 sm:text-[28px]">Welcome back, {displayName.split(' ')[0]}!</h1>
+          <p className="mt-0.5 text-sm text-ink-700/70">Here's what's happening with your profile and assignments.</p>
         </div>
 
-        <div className="space-y-5">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Stat icon={<Star size={20} className="text-forest-600" />} label="Your rating" value={me?.rating && Number(me.rating) > 0 ? `${Number(me.rating).toFixed(1)} / 5` : '—'} />
-            <Stat icon={<ClipboardList size={20} className="text-forest-600" />} label="Tasks completed" value={`${completed}`} />
-            <Stat icon={<Wallet size={20} />} label="Total earned" value={cedis(earned)} highlight />
-          </div>
+        <div>
+          <DashboardMobileNav items={navItems} active={section} onSelect={(id) => setSection(id as typeof section)} />
 
-          <ReferralCard code={(me?.workerId as string) || 'BX-—'} referrals={0} />
-
-          <CoordinatorApply worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
-
-          {/* Profile completion card — single unified section, no stacked boxes */}
-          <div>
-            <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-ink-700/50">Your profile</h2>
-            <div className="rounded-2xl bg-cream-50 border border-ink-900/8 overflow-hidden">
-              {/* Home area row */}
-              <button
-                onClick={() => {
-                  const card = document.getElementById('home-area-inline')
-                  if (card) card.classList.toggle('hidden')
-                }}
-                className="flex w-full items-center justify-between px-4 py-3.5 text-left hover:bg-ink-900/[0.02] transition-colors focus:outline-none"
-              >
-                <div className="flex items-center gap-2.5">
-                  <MapPin size={15} className="shrink-0 text-forest-600" aria-hidden="true" />
-                  <div>
-                    <span className="text-sm font-semibold text-ink-900">Home area</span>
-                    <span className="ml-2 text-sm text-ink-700/60">
-                      {(me?.homeArea as string) || <span className="text-amber-700">Not set</span>}
+          <div className="min-w-0 flex-1">
+            {section === 'overview' && (
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-ink-900/8 bg-white p-6 shadow-sm">
+                    <p className="text-sm font-medium text-ink-700">Your Current Status</p>
+                    <span className="mt-5 inline-flex items-center gap-3 rounded-full bg-forest-600/15 py-2 pl-2 pr-7">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-forest-600 text-cream-50"><Check size={18} strokeWidth={3} aria-hidden="true" /></span>
+                      <span className="text-base font-semibold text-ink-900">Active</span>
                     </span>
+                    <p className="mt-3 text-sm text-ink-700/75">
+                      {offers.length > 0
+                        ? `You have ${offers.length} offer${offers.length === 1 ? '' : 's'} awaiting your response.`
+                        : "You're all set — eligible for new assignments."}
+                    </p>
+                    <button onClick={() => setSection('verification')} className="mt-4 text-sm font-medium text-forest-700 underline underline-offset-4 hover:text-forest-500">
+                      View status details →
+                    </button>
+                  </div>
+
+                  <div className="rounded-2xl border border-ink-900/8 bg-white p-6 shadow-sm">
+                    <p className="border-b border-ink-900/8 pb-3 text-sm font-semibold text-ink-900">Next Assignment</p>
+                    {nextAssignment ? (
+                      <>
+                        <p className="mt-2 font-serif text-lg font-semibold text-ink-900">{nextAssignment.taskType || 'Task'}</p>
+                        <div className="mt-1.5 space-y-1 text-sm text-ink-700/75">
+                          {nextAssignmentWhen && (
+                            <p className="flex items-center gap-1.5"><Calendar size={13} aria-hidden="true" /> {nextAssignmentWhen}</p>
+                          )}
+                          {nextAssignment.location && (
+                            <p className="flex items-center gap-1.5"><MapPin size={13} aria-hidden="true" /> {nextAssignment.location}</p>
+                          )}
+                        </div>
+                        <button onClick={() => { setSection('assignments'); setTab('mine') }}
+                          className="mt-4 rounded-lg bg-forest-600 px-7 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98]">
+                          View Details
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <p className="mt-2 text-sm text-ink-700/70">No upcoming assignment yet.</p>
+                        <button onClick={() => { setSection('assignments'); setTab('available') }}
+                          className="mt-3 rounded-full border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-800 hover:bg-ink-900/5">
+                          Browse available jobs
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
-                <ChevronRight size={15} className="shrink-0 text-ink-700/40" />
-              </button>
-              <div id="home-area-inline" className="hidden border-t border-ink-900/6 px-4 pb-4 pt-3">
-                <HomeAreaInline worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
-              </div>
 
-              {/* Experience row */}
-              <div className="border-t border-ink-900/6 outline-none">
-                <WorkExperienceCard worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
-              </div>
-            </div>
-          </div>
-        </div>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <Stat icon={<ClipboardList size={18} />} label="Completed Jobs" value={`${completed}`} />
+                  <Stat icon={<Wallet size={18} />} label="Total Earnings" value={cedis(earned)} />
+                  <Stat icon={<Star size={18} />} label="Average Rating"
+                    value={me?.rating && Number(me.rating) > 0 ? Number(me.rating).toFixed(1) : '—'}
+                    extra={me?.rating && Number(me.rating) > 0 ? <Stars n={Math.round(Number(me.rating))} /> : undefined} />
+                </div>
 
-        <div className="mt-8 flex items-center gap-3">
-          <div className="flex min-w-0 items-center gap-1 overflow-x-auto rounded-full bg-ink-900/5 p-1" role="tablist" aria-label="Worker sections">
-            {tabs.map((t) => (
-              <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
-                className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition-colors focus:outline-none ${tab === t.id ? 'bg-cream-50 text-forest-700 shadow-sm' : 'text-ink-700 hover:text-ink-900'}`}>
-                {t.label}
-              </button>
-            ))}
-          </div>
-          <button onClick={() => { setLoading(true); load() }} aria-label="Refresh tasks"
-            className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-ink-700/60 transition-colors hover:bg-ink-900/5 hover:text-ink-900">
-            <RefreshCw size={13} aria-hidden="true" /> Refresh
-          </button>
-        </div>
-
-        {tab === 'support' && (
-          <SupportPanel
-            role="worker"
-            onSent={() => setToast({ id: Date.now(), kind: 'success', title: 'Message sent', detail: 'Our team will follow up with you shortly.' })}
-            onError={(m) => setToast({ id: Date.now(), kind: 'info', title: 'Could not send', detail: m })}
-          />
-        )}
-
-        <div className="mt-6 space-y-3">
-          {tab === 'support' ? null : loading ? <Skeleton /> : (
-            <>
-              {tab === 'available' && (available.length ? available.map((t) => (
-                <TaskCard key={t.id} task={t}>
-                  {t.status === 'offered' ? (
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => declineOffer(t)} disabled={busyId === t.id}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-700 transition-colors hover:bg-ink-900/5 disabled:opacity-60">
-                        Decline
-                      </button>
-                      <button onClick={() => acceptOffer(t)} disabled={busyId === t.id}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-forest-600 px-5 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
-                        <Check size={15} aria-hidden="true" /> {busyId === t.id ? 'Accepting…' : 'Accept offer'}
-                      </button>
-                    </div>
-                  ) : (
-                    <button onClick={() => acceptOpen(t)} disabled={busyId === t.id}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-forest-600 px-5 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
-                      <Check size={15} aria-hidden="true" /> {busyId === t.id ? 'Accepting…' : 'Accept'}
-                    </button>
+                <div>
+                  {loading ? <Skeleton /> : (
+                    <ActivityFeed title="Recent Activity" items={recentActivity} empty="No activity yet — accepted and completed jobs will show up here." />
                   )}
-                </TaskCard>
-              )) : <Empty text="No jobs available right now. Check back soon." icon={<ClipboardList size={20} aria-hidden="true" />} />)}
+                </div>
 
-              {tab === 'mine' && (
-                <>
-                  {mine.length ? mine.map((t) => {
-                    // Mark Complete is only available on the scheduled day (or any day if no date set)
-                    const scheduledDate = t.scheduledDate as string | undefined
-                    const today = new Date().toISOString().split('T')[0]
-                    const canMarkDone = !scheduledDate || scheduledDate <= today
+                <ReferralCard code={(me?.workerId as string) || 'BX-—'} referrals={0} />
+              </div>
+            )}
 
+            {section === 'assignments' && (
+              <div>
+                <div className="mb-5 flex items-center gap-3">
+                  <div className="flex min-w-0 items-center gap-1 overflow-x-auto rounded-full bg-ink-900/5 p-1" role="tablist" aria-label="Assignment status">
+                    {assignmentTabs.map((t) => (
+                      <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
+                        className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition-colors focus:outline-none ${tab === t.id ? 'bg-cream-50 text-forest-700 shadow-sm' : 'text-ink-700 hover:text-ink-900'}`}>
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                  <button onClick={() => { setLoading(true); load() }} aria-label="Refresh tasks"
+                    className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-ink-700/60 transition-colors hover:bg-ink-900/5 hover:text-ink-900">
+                    <RefreshCw size={13} aria-hidden="true" /> Refresh
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {loading ? <Skeleton /> : (
+                    <>
+                      {tab === 'available' && (available.length ? available.map((t) => (
+                        <TaskCard key={t.id} task={t}>
+                          {t.status === 'offered' ? (
+                            <div className="flex items-center gap-2">
+                              <button onClick={() => declineOffer(t)} disabled={busyId === t.id}
+                                className="inline-flex items-center gap-1.5 rounded-full border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-700 transition-colors hover:bg-ink-900/5 disabled:opacity-60">
+                                Decline
+                              </button>
+                              <button onClick={() => acceptOffer(t)} disabled={busyId === t.id}
+                                className="inline-flex items-center gap-1.5 rounded-full bg-forest-600 px-5 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
+                                <Check size={15} aria-hidden="true" /> {busyId === t.id ? 'Accepting…' : 'Accept offer'}
+                              </button>
+                            </div>
+                          ) : (
+                            <button onClick={() => acceptOpen(t)} disabled={busyId === t.id}
+                              className="inline-flex items-center gap-1.5 rounded-full bg-forest-600 px-5 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
+                              <Check size={15} aria-hidden="true" /> {busyId === t.id ? 'Accepting…' : 'Accept'}
+                            </button>
+                          )}
+                        </TaskCard>
+                      )) : <Empty text="No jobs available right now. Check back soon." icon={<ClipboardList size={20} aria-hidden="true" />} />)}
+
+                      {tab === 'mine' && (
+                        <>
+                          {mine.length ? mine.map((t) => {
+                            // Mark Complete is only available on the scheduled day (or any day if no date set)
+                            const scheduledDate = t.scheduledDate as string | undefined
+                            const today = new Date().toISOString().split('T')[0]
+                            const canMarkDone = !scheduledDate || scheduledDate <= today
+
+                            return (
+                            <div key={t.id}>
+                              <TaskCard task={t}>
+                                {t.status === 'payment_pending' ? (
+                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 border border-amber-200">
+                                    <Loader2 size={11} className="animate-spin" aria-hidden="true" /> Verifying payment
+                                  </span>
+                                ) : t.status === 'pending_confirmation' ? (
+                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-ink-900/8 px-3 py-1.5 text-xs font-semibold text-ink-700">
+                                    <CheckCircle2 size={12} aria-hidden="true" className="text-forest-600" /> Awaiting confirmation
+                                  </span>
+                                ) : canMarkDone ? (
+                                  <button onClick={() => markDone(t)} disabled={busyId === t.id} aria-label={`Mark ${t.taskType || 'task'} complete`}
+                                    className="shrink-0 rounded-full bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
+                                    {busyId === t.id ? 'Saving…' : 'Mark complete'}
+                                  </button>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-ink-900/5 px-3 py-1.5 text-xs font-medium text-ink-700/60">
+                                    <Clock size={11} aria-hidden="true" /> Available on {new Date(scheduledDate + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                  </span>
+                                )}
+                              </TaskCard>
+                              <div className="-mt-1 rounded-b-xl bg-cream-50 px-4 pb-4 shadow-sm border border-ink-900/8 sm:px-5">
+                                <LocationShare
+                                  taskId={t.id}
+                                  workerId={(me?.workerId as string) || undefined}
+                                  workerName={displayName}
+                                  autoStart={autoShareTaskId === t.id}
+                                  disabled={t.status === 'pending_confirmation' || isRemote(t.taskType || '')}
+                                />
+                              </div>
+                            </div>
+                          )}) : <Empty text="You haven't accepted any tasks yet." icon={<Check size={20} aria-hidden="true" />} />}
+                        </>
+                      )}
+
+                      {tab === 'declined' && (declined.length ? declined.map((t) => (
+                        <TaskCard key={t.id} task={t}>
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-ink-900/15 px-3 py-1.5 text-xs text-ink-700">
+                            <RotateCcw size={13} aria-hidden="true" /> Declined
+                          </span>
+                        </TaskCard>
+                      )) : <Empty text="You haven't declined any offers in this session." icon={<RotateCcw size={20} aria-hidden="true" />} />)}
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {section === 'verification' && (
+              <div>
+                <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-ink-700/50">Work experience & certifications</h2>
+                <p className="mb-4 px-1 text-sm text-ink-700/70">
+                  This is how BeyondX verifies your skills. Certifications you add here can be reviewed and marked verified by our team.
+                </p>
+                <div className="rounded-2xl bg-cream-50 border border-ink-900/8 overflow-hidden">
+                  <WorkExperienceCard worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
+                </div>
+              </div>
+            )}
+
+            {section === 'earnings' && (
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <Stat icon={<Wallet size={18} />} label="Total Earnings" value={cedis(earned)} />
+                  <Stat icon={<ClipboardList size={18} />} label="Completed Jobs" value={`${completed}`} />
+                </div>
+                <div className="space-y-3">
+                  {loading ? <Skeleton /> : (history.length ? history.map((t) => {
+                    const rating = t.reviews?.[0]?.rating
                     return (
-                    <div key={t.id}>
-                      <TaskCard task={t}>
-                        {t.status === 'payment_pending' ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 border border-amber-200">
-                            <Loader2 size={11} className="animate-spin" aria-hidden="true" /> Verifying payment
-                          </span>
-                        ) : t.status === 'pending_confirmation' ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-ink-900/8 px-3 py-1.5 text-xs font-semibold text-ink-700">
-                            <CheckCircle2 size={12} aria-hidden="true" className="text-forest-600" /> Awaiting confirmation
-                          </span>
-                        ) : canMarkDone ? (
-                          <button onClick={() => markDone(t)} disabled={busyId === t.id} aria-label={`Mark ${t.taskType || 'task'} complete`}
-                            className="shrink-0 rounded-full bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
-                            {busyId === t.id ? 'Saving…' : 'Mark complete'}
-                          </button>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-ink-900/5 px-3 py-1.5 text-xs font-medium text-ink-700/60">
-                            <Clock size={11} aria-hidden="true" /> Available on {new Date(scheduledDate + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
-                          </span>
-                        )}
-                      </TaskCard>
-                      <div className="-mt-1 rounded-b-xl bg-cream-50 px-4 pb-4 shadow-sm border border-ink-900/8 sm:px-5">
-                        <LocationShare
-                          taskId={t.id}
-                          workerId={(me?.workerId as string) || undefined}
-                          workerName={displayName}
-                          autoStart={autoShareTaskId === t.id}
-                          disabled={t.status === 'pending_confirmation' || isRemote(t.taskType || '')}
-                        />
+                      <div key={t.id} className="rounded-xl bg-cream-50 p-4 shadow-sm border border-ink-900/8 sm:p-5">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <span className="mb-1 inline-block rounded-full bg-ink-900/5 px-2.5 py-0.5 text-xs font-medium text-ink-700">{t.taskType || 'Task'}</span>
+                            <h3 className="font-serif text-lg font-medium text-ink-900">{t.description || t.taskType}</h3>
+                            <p className="mt-0.5 text-sm text-ink-700">{employerName(t)}{t.location ? ` · ${t.location}` : ''}</p>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            {rating ? (
+                              <span className="text-right">
+                                <span className="block text-xs text-ink-700">Employer rated you</span>
+                                <Stars n={Number(rating)} />
+                              </span>
+                            ) : null}
+                            <span className="font-semibold text-ink-900">{cedis(t.pay)}</span>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  )}) : <Empty text="You haven't accepted any tasks yet." icon={<Check size={20} aria-hidden="true" />} />}
-                </>
-              )}
+                    )
+                  }) : <Empty text="No completed tasks yet." icon={<Star size={20} aria-hidden="true" />} />)}
+                </div>
+              </div>
+            )}
 
-              {tab === 'declined' && (declined.length ? declined.map((t) => (
-                <TaskCard key={t.id} task={t}>
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-ink-900/15 px-3 py-1.5 text-xs text-ink-700">
-                    <RotateCcw size={13} aria-hidden="true" /> Declined
-                  </span>
-                </TaskCard>
-              )) : <Empty text="You haven't declined any offers in this session." icon={<RotateCcw size={20} aria-hidden="true" />} />)}
-
-              {tab === 'history' && (history.length ? history.map((t) => {
-                const rating = t.reviews?.[0]?.rating
-                return (
-                  <div key={t.id} className="rounded-xl bg-cream-50 p-4 shadow-sm border border-ink-900/8 sm:p-5">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <span className="mb-1 inline-block rounded-full bg-ink-900/5 px-2.5 py-0.5 text-xs font-medium text-ink-700">{t.taskType || 'Task'}</span>
-                        <h3 className="font-serif text-lg font-medium text-ink-900">{t.description || t.taskType}</h3>
-                        <p className="mt-0.5 text-sm text-ink-700">{employerName(t)}{t.location ? ` · ${t.location}` : ''}</p>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        {rating ? (
-                          <span className="text-right">
-                            <span className="block text-xs text-ink-700">Employer rated you</span>
-                            <Stars n={Number(rating)} />
-                          </span>
-                        ) : null}
-                        <span className="font-semibold text-ink-900">{cedis(t.pay)}</span>
-                      </div>
+            {section === 'profile' && (
+              <div className="space-y-5">
+                <div className="flex items-center justify-between rounded-2xl border border-ink-900/8 bg-cream-50 p-4">
+                  <div className="flex items-center gap-3">
+                    {photo
+                      ? <img src={photo} alt="" className="h-12 w-12 rounded-full object-cover" />
+                      : <span className="flex h-12 w-12 items-center justify-center rounded-full bg-forest-600 text-cream-50"><UserRound size={20} /></span>}
+                    <div>
+                      <p className="font-semibold text-ink-900">{displayName}</p>
+                      <p className="text-sm text-ink-700/60">{(me?.phone as string) || ''}</p>
                     </div>
                   </div>
-                )
-              }) : <Empty text="No completed tasks yet." icon={<Star size={20} aria-hidden="true" />} />)}
-            </>
-          )}
+                  <button onClick={() => setEditing(true)}
+                    className="shrink-0 rounded-full border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-800 hover:bg-ink-900/5">
+                    Edit profile
+                  </button>
+                </div>
+
+                <div className="rounded-2xl bg-cream-50 border border-ink-900/8 overflow-hidden">
+                  <button
+                    onClick={() => {
+                      const card = document.getElementById('home-area-inline')
+                      if (card) card.classList.toggle('hidden')
+                    }}
+                    className="flex w-full items-center justify-between px-4 py-3.5 text-left hover:bg-ink-900/[0.02] transition-colors focus:outline-none"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <MapPin size={15} className="shrink-0 text-forest-600" aria-hidden="true" />
+                      <div>
+                        <span className="text-sm font-semibold text-ink-900">Home area</span>
+                        <span className="ml-2 text-sm text-ink-700/60">
+                          {(me?.homeArea as string) || <span className="text-amber-700">Not set</span>}
+                        </span>
+                      </div>
+                    </div>
+                    <ChevronRight size={15} className="shrink-0 text-ink-700/40" />
+                  </button>
+                  <div id="home-area-inline" className="hidden border-t border-ink-900/6 px-4 pb-4 pt-3">
+                    <HomeAreaInline worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
+                  </div>
+                </div>
+
+                <CoordinatorApply worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
+              </div>
+            )}
+
+            {section === 'support' && (
+              <SupportPanel
+                role="worker"
+                onSent={() => setToast({ id: Date.now(), kind: 'success', title: 'Message sent', detail: 'Our team will follow up with you shortly.' })}
+                onError={(m) => setToast({ id: Date.now(), kind: 'info', title: 'Could not send', detail: m })}
+              />
+            )}
+          </div>
         </div>
       </main>
+      </div>
 
       <Toast toast={toast} onClose={() => setToast(null)} />
 
