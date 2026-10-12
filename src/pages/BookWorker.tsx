@@ -316,7 +316,7 @@ function BookingForm({ state, onDone, onError }: {
                     {wName(worker).split(' ')[0]}'s home: <span className="text-forest-700">{workerHomeArea}</span>
                   </p>
                   {transport?.available && (
-                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[0.75rem] font-semibold ${
                       isIntercity ? 'bg-red-100 text-red-700'
                       : transport.transportAllowance > 0 ? 'bg-amber-100 text-amber-800'
                       : 'bg-forest-600/10 text-forest-700'
@@ -448,7 +448,7 @@ function BookingForm({ state, onDone, onError }: {
       {/* Where to send it */}
       <div className="mt-4 overflow-hidden rounded-2xl border border-forest-600/20 bg-forest-600/5">
         <div className="border-b border-forest-600/15 px-5 py-3">
-          <p className="text-[10px] font-semibold uppercase tracking-widest text-ink-700/50">Send payment to</p>
+          <p className="text-[0.75rem] font-semibold uppercase tracking-widest text-ink-700/50">Send payment to</p>
         </div>
         <div className="px-5 py-4">
           <p className="font-serif text-3xl font-semibold tracking-tight text-ink-900">{MOMO_NUMBER}</p>

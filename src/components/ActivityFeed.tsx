@@ -34,7 +34,7 @@ export default function ActivityFeed({ items, empty, title }: { items: ActivityI
             {item.detail && <span className="block truncate text-xs text-ink-700/60">{item.detail}</span>}
           </span>
           {item.status && (
-            <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${TONE_CLASSES[item.status.tone]}`}>
+            <span className={`shrink-0 rounded-full px-2.5 py-1 text-[0.8125rem] font-semibold ${TONE_CLASSES[item.status.tone]}`}>
               {item.status.label}
             </span>
           )}

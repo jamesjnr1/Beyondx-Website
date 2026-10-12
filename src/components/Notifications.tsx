@@ -240,7 +240,7 @@ export default function Notifications({ role, tasks }: { role: 'worker' | 'emplo
       >
         <Bell size={17} aria-hidden="true" />
         {unread > 0 && (
-          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-[9999px] bg-forest-600 px-1 text-[10px] font-bold text-cream-50">
+          <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-[9999px] bg-forest-600 px-1 text-[0.75rem] font-bold text-cream-50">
             {unread > 9 ? '9+' : unread}
           </span>
         )}
@@ -281,7 +281,7 @@ export default function Notifications({ role, tasks }: { role: 'worker' | 'emplo
                         <span className="min-w-0 flex-1">
                           <span className="flex items-baseline justify-between gap-2">
                             <span className="text-sm font-semibold text-ink-900">{i.title}</span>
-                            <span className="shrink-0 text-[11px] text-ink-700/70">{when(i.date)}</span>
+                            <span className="shrink-0 text-[0.8125rem] text-ink-700/70">{when(i.date)}</span>
                           </span>
                           <span className="mt-0.5 block text-xs leading-relaxed text-ink-700">{i.body}</span>
                         </span>

@@ -57,7 +57,7 @@ function CategoryTile({
         />
       </div>
       <div className="p-2.5 sm:p-4">
-        <h3 className="font-serif text-[13px] font-semibold leading-tight text-ink-900 sm:text-lg">
+        <h3 className="font-serif text-[0.875rem] font-semibold leading-tight text-ink-900 sm:text-lg">
           {title}
         </h3>
         <p className="mt-1 text-xs leading-snug text-ink-700 text-pretty sm:mt-1.5 sm:text-sm sm:leading-relaxed">

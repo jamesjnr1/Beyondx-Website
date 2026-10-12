@@ -200,7 +200,7 @@ function CoordinatorRequestPayForm({ request, onPaid }: { request: CoordinatorJo
       <div className="flex flex-wrap gap-1.5">
         {PAY_METHODS.map((m) => (
           <button key={m.id} type="button" onClick={() => setMethod(m.id)}
-            className={`rounded-full border px-2.5 py-1 text-[11px] font-medium ${method === m.id ? 'border-forest-600 bg-forest-600/10 text-forest-700' : 'border-ink-900/15 text-ink-700 hover:bg-ink-900/5'}`}>
+            className={`rounded-full border px-2.5 py-1 text-[0.8125rem] font-medium ${method === m.id ? 'border-forest-600 bg-forest-600/10 text-forest-700' : 'border-ink-900/15 text-ink-700 hover:bg-ink-900/5'}`}>
             {m.name}
           </button>
         ))}
@@ -449,7 +449,7 @@ export default function EmployerDashboard() {
 
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-ink-900 sm:text-[28px]">Welcome back, {orgName}!</h1>
+            <h1 className="text-2xl font-bold text-ink-900 sm:text-[1.75rem]">Welcome back, {orgName}!</h1>
             <p className="mt-0.5 text-sm text-ink-700/70">
               {pendingConfirmCount > 0
                 ? `${pendingConfirmCount} job${pendingConfirmCount === 1 ? '' : 's'} waiting on your confirmation.`
@@ -726,20 +726,20 @@ export default function EmployerDashboard() {
                                       <span className="flex items-center gap-2">
                                         <span className="block truncate font-serif text-base font-medium text-ink-900">{wName(w)}</span>
                                         {isCoordinator(w) && (
-                                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-forest-600/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-forest-700">
+                                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-forest-600/10 px-2 py-0.5 text-[0.75rem] font-semibold uppercase tracking-wide text-forest-700">
                                             Team
                                           </span>
                                         )}
                                         {Boolean(w.priority) && (
-                                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-clay-400/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-clay-600">
+                                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-clay-400/15 px-2 py-0.5 text-[0.75rem] font-semibold uppercase tracking-wide text-clay-600">
                                             Featured
                                           </span>
                                         )}
                                         {isBackgroundFlagged(w) && !highRisk && (
-                                          <span className="shrink-0 text-[11px] font-semibold text-forest-700">Priority</span>
+                                          <span className="shrink-0 text-[0.8125rem] font-semibold text-forest-700">Priority</span>
                                         )}
                                         {Boolean(w.hasTools) && (
-                                          <span className="shrink-0 text-[11px] font-medium text-amber-700">Has tools</span>
+                                          <span className="shrink-0 text-[0.8125rem] font-medium text-amber-700">Has tools</span>
                                         )}
                                       </span>
                                       {isCoordinator(w) && (
@@ -889,7 +889,7 @@ export default function EmployerDashboard() {
                               <div key={label} className="flex flex-1 flex-col items-center">
                                 <div className="flex w-full items-center">
                                   {i > 0 && <div className={`h-0.5 flex-1 ${done ? 'bg-forest-600' : 'bg-ink-900/10'}`} />}
-                                  <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[9px] font-bold transition-colors ${
+                                  <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[0.6875rem] font-bold transition-colors ${
                                     done ? 'bg-forest-600 text-cream-50' :
                                     active ? 'bg-forest-600 text-cream-50 shadow-md' :
                                     'bg-ink-900/8 text-ink-700/40'
@@ -898,7 +898,7 @@ export default function EmployerDashboard() {
                                   </div>
                                   {i < 3 && <div className={`h-0.5 flex-1 ${(i < currentStep && currentStep <= 3) ? 'bg-forest-600' : 'bg-ink-900/10'}`} />}
                                 </div>
-                                <span className={`mt-1 text-[10px] font-medium ${active ? 'text-forest-700' : done ? 'text-ink-700/60' : 'text-ink-700/30'}`}>
+                                <span className={`mt-1 text-[0.75rem] font-medium ${active ? 'text-forest-700' : done ? 'text-ink-700/60' : 'text-ink-700/30'}`}>
                                   {label}
                                 </span>
                               </div>
@@ -963,7 +963,7 @@ export default function EmployerDashboard() {
                   {urgent.length > 0 && (
                     <section>
                       <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-amber-700">
-                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-amber-600 text-[9px] font-bold text-white">{urgent.length}</span>
+                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-amber-600 text-[0.6875rem] font-bold text-white">{urgent.length}</span>
                         Need your confirmation
                       </h2>
                       <div className="space-y-3">{urgent.map((t) => <TaskItem key={String(t.id)} t={t} />)}</div>
@@ -1264,7 +1264,7 @@ function TaskScreening({
                     }`}
                   >
                     <span className="block text-sm font-semibold">{step.basicLabel}</span>
-                    <span className="mt-0.5 block text-[11px] leading-snug opacity-70">{step.basicExample}</span>
+                    <span className="mt-0.5 block text-[0.8125rem] leading-snug opacity-70">{step.basicExample}</span>
                   </button>
                   <button
                     onClick={() => answerTier(idx, 'skilled')}
@@ -1275,7 +1275,7 @@ function TaskScreening({
                     }`}
                   >
                     <span className="block text-sm font-semibold">{step.skilledLabel}</span>
-                    <span className="mt-0.5 block text-[11px] leading-snug opacity-70">{step.skilledExample}</span>
+                    <span className="mt-0.5 block text-[0.8125rem] leading-snug opacity-70">{step.skilledExample}</span>
                   </button>
                 </div>
               </div>
@@ -1373,7 +1373,7 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch, onRequestQu
               {application?.categories?.length ? (
                 <p className="mt-1 text-xs text-ink-700/80">Covers: {application.categories.join(', ')}</p>
               ) : null}
-              <p className="mt-1.5 text-[11px] leading-relaxed text-ink-700/60">
+              <p className="mt-1.5 text-[0.8125rem] leading-relaxed text-ink-700/60">
                 Custom quote for team jobs — pricing is confirmed by BeyondX once the scope is reviewed.
               </p>
             </div>
@@ -1443,12 +1443,12 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch, onRequestQu
                         <span className="min-w-0 flex-1">
                           <span className="block truncate text-sm font-medium text-ink-900">{sk}</span>
                           {c && (
-                            <span className="block text-[11px] text-ink-700">
+                            <span className="block text-[0.8125rem] text-ink-700">
                               {cedis(c.rate)} {c.rateUnit || 'per day'}
                             </span>
                           )}
                         </span>
-                        <span className="shrink-0 rounded-full bg-forest-600/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-forest-700">Certified</span>
+                        <span className="shrink-0 rounded-full bg-forest-600/10 px-2 py-0.5 text-[0.75rem] font-semibold uppercase tracking-wide text-forest-700">Certified</span>
                       </li>
                     )
                   })}
@@ -1474,17 +1474,17 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch, onRequestQu
                         <Award size={15} aria-hidden="true" className={`mt-0.5 shrink-0 ${c.verified ? 'text-forest-600' : 'text-ink-700/40'}`} />
                         <span className="min-w-0 flex-1">
                           <span className="block text-sm font-medium text-ink-900">{c.name || '—'}</span>
-                          <span className="block text-[11px] text-ink-700/70">
+                          <span className="block text-[0.8125rem] text-ink-700/70">
                             {[c.issuedBy, c.year].filter(Boolean).join(' · ')}
                           </span>
                           {c.imageUrl && (
                             <a href={c.imageUrl} target="_blank" rel="noopener noreferrer"
-                              className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-forest-700 underline-offset-2 hover:underline">
+                              className="mt-1 inline-flex items-center gap-1 text-[0.8125rem] font-medium text-forest-700 underline-offset-2 hover:underline">
                               View certificate →
                             </a>
                           )}
                         </span>
-                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${c.verified ? 'bg-forest-600/10 text-forest-700' : 'bg-ink-900/6 text-ink-700/60'}`}>
+                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[0.75rem] font-semibold ${c.verified ? 'bg-forest-600/10 text-forest-700' : 'bg-ink-900/6 text-ink-700/60'}`}>
                           {c.verified ? 'Verified' : 'Declared'}
                         </span>
                       </li>

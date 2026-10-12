@@ -3,15 +3,15 @@ export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
-      // Tightened type scale. Small sizes keep their defaults so body copy stays
-      // readable (16px base, 14px minimum for secondary text); the display sizes
-      // are pulled in, which is where the page was reading oversized.
+      // Small sizes are a step up from Tailwind's defaults so secondary copy
+      // stays comfortably readable (13px minimum, 17px body); display sizes are
+      // pulled in, which is where the page was reading oversized.
       fontSize: {
-        xs: ['0.75rem', { lineHeight: '1.05rem' }],      // 12px
-        sm: ['0.875rem', { lineHeight: '1.3rem' }],      // 14px
-        base: ['1rem', { lineHeight: '1.55rem' }],       // 16px
-        lg: ['1.0625rem', { lineHeight: '1.65rem' }],    // 17px  (was 18)
-        xl: ['1.1875rem', { lineHeight: '1.7rem' }],     // 19px  (was 20)
+        xs: ['0.8125rem', { lineHeight: '1.15rem' }],    // 13px (was 12)
+        sm: ['0.9375rem', { lineHeight: '1.4rem' }],     // 15px (was 14)
+        base: ['1.0625rem', { lineHeight: '1.65rem' }],  // 17px (was 16)
+        lg: ['1.125rem', { lineHeight: '1.75rem' }],     // 18px (was 17)
+        xl: ['1.25rem', { lineHeight: '1.8rem' }],       // 20px (was 19)
         '2xl': ['1.375rem', { lineHeight: '1.85rem' }],  // 22px  (was 24)
         '3xl': ['1.625rem', { lineHeight: '2.05rem' }],  // 26px  (was 30)
         '4xl': ['1.9375rem', { lineHeight: '2.3rem' }],  // 31px  (was 36)

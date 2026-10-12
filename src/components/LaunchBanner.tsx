@@ -55,7 +55,7 @@ export default function LaunchBanner() {
           className="fixed inset-x-0 top-0 z-[60] bg-ink-900"
         >
           <div className="mx-auto flex max-w-7xl items-center justify-center gap-3 px-5 py-2.5 sm:px-8">
-            <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-center text-[13px] font-medium text-cream-50 sm:text-sm">
+            <p className="flex flex-wrap items-center justify-center gap-x-2 gap-y-0.5 text-center text-[0.875rem] font-medium text-cream-50 sm:text-sm">
               <Megaphone size={14} className="shrink-0 text-forest-400" aria-hidden="true" />
               <span>BeyondX is officially live in Greater Accra.</span>
               <button
