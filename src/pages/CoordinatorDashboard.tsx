@@ -812,6 +812,8 @@ export default function CoordinatorDashboard() {
     { id: 'disputes', label: 'Disputes', icon: AlertTriangle },
     { id: 'support', label: 'Support', icon: HelpCircle },
   ]
+  // Short set for the top bar — the sidebar carries the full list.
+  const headerNavItems = navItems.filter((i) => ['overview', 'requests', 'team', 'support'].includes(i.id))
 
   const recentActivity: ActivityItem[] = [
     ...coordRequests.filter((r) => r.status !== 'pending_coordinator').slice(0, 4).map((r) => {
@@ -841,6 +843,9 @@ export default function CoordinatorDashboard() {
         name={(me?.fullName as string) || (me?.name as string)}
         avatar={me?.photoUrl as string}
         onEditProfile={() => setEditing(true)}
+        navItems={headerNavItems}
+        active={tab}
+        onSelect={(id) => setTab(id as typeof tab)}
       />
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-8">

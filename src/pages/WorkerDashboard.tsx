@@ -795,6 +795,8 @@ export default function WorkerDashboard() {
     { id: 'profile', label: 'Profile', icon: UserRound },
     { id: 'support', label: 'Support', icon: HelpCircle },
   ]
+  // Short set for the top bar — the sidebar carries the full list.
+  const headerNavItems = navItems.filter((i) => ['overview', 'assignments', 'profile', 'support'].includes(i.id))
 
   const activityDate = (t: Task) => t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : undefined
 
@@ -840,7 +842,8 @@ export default function WorkerDashboard() {
 
   return (
     <div className="min-h-screen bg-cream-100">
-      <DashboardHeader role="WORKER" title="Worker Dashboard" name={displayName} avatar={photo} onEditProfile={() => setEditing(true)} tasks={[...offers, ...mine, ...history]} />
+      <DashboardHeader role="WORKER" title="Worker Dashboard" name={displayName} avatar={photo} onEditProfile={() => setEditing(true)} tasks={[...offers, ...mine, ...history]}
+        navItems={headerNavItems} active={section} onSelect={(id) => setSection(id as typeof section)} />
       <main id="main" className="mx-auto max-w-7xl px-4 py-6 sm:px-8 sm:py-8">
         <p aria-live="polite" className="sr-only">{announce}</p>
 

@@ -3,9 +3,10 @@ import Logo from '../components/Logo'
 import { useAuth } from '../components/auth/AuthContext'
 import Notifications from '../components/Notifications'
 import type { Task } from '../lib/api'
+import type { DashboardNavItem } from '../components/DashboardSidebar'
 
 export default function DashboardHeader({
-  role, title, name, avatar, onEditProfile, tasks = [],
+  role, title, name, avatar, onEditProfile, tasks = [], navItems, active, onSelect,
 }: {
   role: 'WORKER' | 'EMPLOYER'
   title: string
@@ -13,6 +14,12 @@ export default function DashboardHeader({
   avatar?: string
   onEditProfile?: () => void
   tasks?: Task[]
+  /** A short, curated subset of the sidebar's sections (3-4 items), shown as
+   *  a full-width top nav bar on large screens — the sidebar itself carries
+   *  the complete list. */
+  navItems?: DashboardNavItem[]
+  active?: string
+  onSelect?: (id: string) => void
 }) {
   const { go, logout } = useAuth()
   return (
@@ -23,7 +30,29 @@ export default function DashboardHeader({
           <Logo tone="dark" className="h-7 sm:h-8" />
         </button>
         <span aria-hidden="true" className="hidden h-6 w-px shrink-0 bg-ink-900/15 sm:block" />
-        <h1 className="min-w-0 truncate font-serif text-base font-medium text-ink-900 sm:text-lg">{title}</h1>
+        <h1 className={`min-w-0 shrink-0 truncate font-serif text-base font-medium text-ink-900 sm:text-lg ${navItems && navItems.length > 0 ? 'lg:sr-only' : ''}`}>{title}</h1>
+
+        {/* Long centre nav bar — a short, curated set of top-level sections
+         *  (not the full sidebar list, which can run to 6-8 items). */}
+        {navItems && navItems.length > 0 && (
+          <nav className="hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex" aria-label="Dashboard sections">
+            {navItems.map((item) => {
+              const isActive = active === item.id
+              return (
+                <button
+                  key={item.id}
+                  onClick={() => onSelect?.(item.id)}
+                  aria-current={isActive ? 'page' : undefined}
+                  className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition-colors focus:outline-none ${
+                    isActive ? 'bg-ink-900 text-cream-50' : 'text-ink-700 hover:bg-ink-900/5 hover:text-ink-900'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              )
+            })}
+          </nav>
+        )}
 
         {/* Right cluster */}
         <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">

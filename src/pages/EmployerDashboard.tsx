@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
-import { ChevronLeft, ChevronRight, Star, Send, Phone, Plus, X, ShieldCheck, CircleCheck, Info, RefreshCw, AlertCircle, Copy, Check, Award, Map, Clock, MapPin, Briefcase, Users, Wallet, Quote } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Star, Send, Phone, Plus, X, ShieldCheck, CircleCheck, Info, RefreshCw, AlertCircle, Copy, Check, Award, Map, Clock, MapPin, Briefcase, Users, Wallet, Quote, LayoutDashboard, FilePlus, ClipboardList, Inbox, HelpCircle } from 'lucide-react'
 import JobLocationMap from '../components/JobLocationMap'
 import DashboardHeader from './DashboardHeader'
+import DashboardSidebar, { type DashboardNavItem } from '../components/DashboardSidebar'
+import ActivityFeed, { type ActivityItem } from '../components/ActivityFeed'
 import ProfileModal from '../components/ProfileModal'
 import Toast, { type ToastMsg } from '../components/Toast'
 import SupportPanel from '../components/SupportPanel'
@@ -96,13 +98,6 @@ const STATUS: Record<string, { label: string; color: string; bar: string; note?:
 }
 const st = (s?: string) => STATUS[s || 'open'] || STATUS.open
 
-const greeting = () => {
-  const h = new Date().getHours()
-  if (h < 12) return 'Good morning'
-  if (h < 17) return 'Good afternoon'
-  return 'Good evening'
-}
-
 // Dispatch writes "Worker: <name> (<id>) | Payment Ref: <ref>" into the description.
 function dispatchDetails(t: Task) {
   const d = String(t.description || '')
@@ -146,16 +141,14 @@ function Empty({ text, icon }: { text: string; icon?: ReactNode }) {
   )
 }
 
-function Stat({ icon, label, value, highlight }: { icon: ReactNode; label: string; value: string; highlight?: boolean }) {
+function Stat({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
-    <div className={`flex items-center gap-3.5 rounded-2xl border px-4 py-4 transition-shadow hover:shadow-sm sm:py-5 ${
-      highlight ? 'border-forest-600/15 bg-gradient-to-br from-forest-600 to-forest-700 text-cream-50' : 'border-ink-900/8 bg-cream-50'
-    }`}>
-      <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${highlight ? 'bg-cream-50/15 text-cream-50' : 'bg-forest-600/10 text-forest-600'}`}>{icon}</span>
-      <span className="min-w-0">
-        <span className={`block truncate font-serif text-xl font-semibold ${highlight ? 'text-cream-50' : 'text-ink-900'}`}>{value}</span>
-        <span className={`block truncate text-xs ${highlight ? 'text-cream-50/75' : 'text-ink-700/60'}`}>{label}</span>
-      </span>
+    <div className="rounded-2xl border border-ink-900/8 bg-cream-50 px-5 py-4 transition-shadow hover:shadow-sm">
+      <p className="truncate text-xs text-ink-700/60">{label}</p>
+      <div className="mt-2 flex items-center gap-2.5">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-forest-600/10 text-forest-600">{icon}</span>
+        <span className="font-serif text-2xl font-semibold text-ink-900">{value}</span>
+      </div>
     </div>
   )
 }
@@ -296,7 +289,7 @@ function CoordinatorRequestsTab({ requests, tasks, onReload }: { requests: Coord
 }
 
 export default function EmployerDashboard() {
-  const [tab, setTab] = useState<'hire' | 'post' | 'history' | 'coordinator-requests' | 'support'>('hire')
+  const [tab, setTab] = useState<'overview' | 'hire' | 'post' | 'history' | 'coordinator-requests' | 'support'>('overview')
   const [workMode, setWorkMode] = useState<'field' | 'remote'>('field')
   const [pickedCategory, setPickedCategory] = useState<string | null>(null)
   const [taskFlags, setTaskFlags] = useState<TaskFlags>(DEFAULT_FLAGS)
@@ -401,9 +394,42 @@ export default function EmployerDashboard() {
     load()
   }
 
+  const pendingApprovedRequests = coordRequests.filter((r) => r.status === 'admin_approved').length
+
+  const navItems: DashboardNavItem[] = [
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'hire', label: 'Hire Workers', icon: Users },
+    { id: 'post', label: 'Post a Task', icon: FilePlus },
+    { id: 'history', label: 'My Jobs', icon: ClipboardList, badge: pendingConfirmCount },
+    { id: 'coordinator-requests', label: 'Coordinator Requests', icon: Inbox, badge: pendingApprovedRequests },
+    { id: 'support', label: 'Support', icon: HelpCircle },
+  ]
+  // Short set for the top bar — the sidebar carries the full list.
+  const headerNavItems = navItems.filter((i) => ['overview', 'hire', 'history', 'support'].includes(i.id))
+
+  const urgentTask = taskList.find((t) => t.status === 'pending_confirmation')
+  const nextActiveTask = urgentTask || taskList.find((t) => ['open', 'payment_pending', 'offered', 'accepted'].includes(String(t.status)))
+
+  const recentActivity: ActivityItem[] = [...taskList]
+    .sort((a, b) => (b.createdAt ? new Date(b.createdAt).getTime() : 0) - (a.createdAt ? new Date(a.createdAt).getTime() : 0))
+    .slice(0, 8)
+    .map((t) => {
+      const s = st(t.status)
+      const tone: 'success' | 'info' | 'warning' = ['completed', 'employer_confirmed'].includes(String(t.status))
+        ? 'success' : t.status === 'pending_confirmation' ? 'warning' : 'info'
+      return {
+        id: String(t.id),
+        icon: <Briefcase size={15} aria-hidden="true" />,
+        title: t.taskType || 'Task',
+        detail: t.location as string | undefined,
+        status: { label: s.label, tone },
+      }
+    })
+
   return (
     <div className="min-h-screen bg-cream-100">
-      <DashboardHeader role="EMPLOYER" title="Employer Dashboard" name={orgName} avatar={logo} onEditProfile={() => setEditing(true)} tasks={taskList} />
+      <DashboardHeader role="EMPLOYER" title="Employer Dashboard" name={orgName} avatar={logo} onEditProfile={() => setEditing(true)} tasks={taskList}
+        navItems={headerNavItems} active={tab} onSelect={(id) => setTab(id as typeof tab)} />
       <main id="main" className="mx-auto max-w-7xl px-4 py-6 sm:px-8 sm:py-8">
         <p aria-live="polite" className="sr-only">{announce}</p>
 
@@ -416,55 +442,89 @@ export default function EmployerDashboard() {
           </div>
         )}
 
-        <div className="mb-5">
-          <h1 className="font-serif text-2xl font-medium text-ink-900 sm:text-[26px]">{greeting()}, {orgName}</h1>
-          <p className="mt-0.5 text-sm text-ink-700/70">
-            {pendingConfirmCount > 0
-              ? `${pendingConfirmCount} job${pendingConfirmCount === 1 ? '' : 's'} waiting on your confirmation.`
-              : activeJobsCount > 0
-                ? `${activeJobsCount} active job${activeJobsCount === 1 ? '' : 's'} right now.`
-                : 'No active jobs — post one or hire a worker to get started.'}
-          </p>
-        </div>
-
-        <div className="mb-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <Stat icon={<Briefcase size={20} />} label="Active jobs" value={`${activeJobsCount}`} highlight />
-          <Stat icon={<Users size={20} className="text-forest-600" />} label="Workers hired" value={`${workersHiredCount}`} />
-          <Stat icon={<Wallet size={20} className="text-forest-600" />} label="Spend this month" value={cedis(spendThisMonth)} />
-        </div>
-
-        <div className="flex items-center gap-3">
-          <div className="flex min-w-0 items-center gap-1 overflow-x-auto rounded-full bg-ink-900/5 p-1" role="tablist" aria-label="Employer sections">
-            {([
-              ['hire', 'Hire Workers'],
-              ['post', 'Post a Task'],
-              ['history', (() => { const n = taskList.filter(t => t.status === 'pending_confirmation').length; return n > 0 ? `My Jobs (${n})` : 'My Jobs' })()],
-              ['coordinator-requests', 'Coordinator Requests'],
-              ['support', 'Support'],
-            ] as const).map(([id, label]) => (
-              <button key={id} role="tab" aria-selected={tab === id} onClick={() => setTab(id)}
-                className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition-colors focus:outline-none ${tab === id ? 'bg-cream-50 text-forest-700 shadow-sm' : 'text-ink-700 hover:text-ink-900'}`}>
-                {label}
-                {id === 'history' && taskList.filter(t => t.status === 'pending_confirmation').length > 0 && (
-                  <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-white">
-                    {taskList.filter(t => t.status === 'pending_confirmation').length}
-                  </span>
-                )}
-                {id === 'coordinator-requests' && coordRequests.filter(r => r.status === 'admin_approved').length > 0 && (
-                  <span className="ml-1.5 inline-flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[9px] font-bold text-white">
-                    {coordRequests.filter(r => r.status === 'admin_approved').length}
-                  </span>
-                )}
-              </button>
-            ))}
+        <div className="mb-6 flex items-start justify-between gap-3">
+          <div>
+            <h1 className="font-serif text-2xl font-medium text-ink-900 sm:text-[26px]">Welcome back, {orgName}!</h1>
+            <p className="mt-0.5 text-sm text-ink-700/70">
+              {pendingConfirmCount > 0
+                ? `${pendingConfirmCount} job${pendingConfirmCount === 1 ? '' : 's'} waiting on your confirmation.`
+                : activeJobsCount > 0
+                  ? `${activeJobsCount} active job${activeJobsCount === 1 ? '' : 's'} right now.`
+                  : 'No active jobs — post one or hire a worker to get started.'}
+            </p>
           </div>
-          <button onClick={() => { setLoading(true); load() }} aria-label="Refresh"
-            className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-ink-700/60 transition-colors hover:bg-ink-900/5 hover:text-ink-900">
+          <button onClick={() => { setLoading(true); load() }} aria-label="Refresh dashboard"
+            className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-ink-700/60 transition-colors hover:bg-ink-900/5 hover:text-ink-900">
             <RefreshCw size={13} aria-hidden="true" /> Refresh
           </button>
         </div>
 
-        {tab === 'hire' && (
+        <div className="flex flex-col gap-6 lg:flex-row lg:gap-10">
+          <DashboardSidebar items={navItems} active={tab} onSelect={(id) => setTab(id as typeof tab)} />
+
+          <div className="min-w-0 flex-1">
+            {tab === 'overview' && (
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-ink-900/8 bg-cream-50 p-5">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-ink-700/50">Your Current Status</p>
+                    <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-forest-600/10 px-3 py-1.5 text-sm font-semibold text-forest-700">
+                      <CircleCheck size={15} aria-hidden="true" /> Active
+                    </span>
+                    <p className="mt-3 text-sm text-ink-700/75">
+                      {pendingConfirmCount > 0
+                        ? `${pendingConfirmCount} job${pendingConfirmCount === 1 ? '' : 's'} waiting on your confirmation.`
+                        : "You're all caught up on your jobs."}
+                    </p>
+                    <button onClick={() => setTab('history')} className="mt-2 text-sm font-medium text-forest-700 hover:text-forest-500">
+                      View My Jobs →
+                    </button>
+                  </div>
+
+                  <div className="rounded-2xl border border-ink-900/8 bg-cream-50 p-5">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-ink-700/50">Next Job</p>
+                    {nextActiveTask ? (
+                      <>
+                        <p className="mt-2 font-serif text-lg font-semibold text-ink-900">{nextActiveTask.taskType || 'Task'}</p>
+                        <div className="mt-1.5 space-y-1 text-sm text-ink-700/75">
+                          <p className={st(nextActiveTask.status).color + ' font-medium'}>{st(nextActiveTask.status).label}</p>
+                          {nextActiveTask.location && (
+                            <p className="flex items-center gap-1.5"><MapPin size={13} aria-hidden="true" /> {nextActiveTask.location}</p>
+                          )}
+                        </div>
+                        <button onClick={() => setTab('history')}
+                          className="mt-3 rounded-full bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98]">
+                          View Details
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <p className="mt-2 text-sm text-ink-700/70">No active jobs right now.</p>
+                        <button onClick={() => setTab('hire')}
+                          className="mt-3 rounded-full border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-800 hover:bg-ink-900/5">
+                          Hire a worker
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <Stat icon={<Briefcase size={18} />} label="Active Jobs" value={`${activeJobsCount}`} />
+                  <Stat icon={<Users size={18} />} label="Workers Hired" value={`${workersHiredCount}`} />
+                  <Stat icon={<Wallet size={18} />} label="Spend This Month" value={cedis(spendThisMonth)} />
+                </div>
+
+                <div>
+                  <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-ink-700/50">Recent Activity</h2>
+                  {loading ? <Skeleton /> : (
+                    <ActivityFeed items={recentActivity} empty="No activity yet — posted and hired jobs will show up here." />
+                  )}
+                </div>
+              </div>
+            )}
+
+            {tab === 'hire' && (
           <div className="mt-6">
             {!DISPATCH_ENABLED && (
               <div className="mb-4 rounded-xl bg-clay-400/10 p-4 border border-clay-400/25">
@@ -926,9 +986,11 @@ export default function EmployerDashboard() {
           </div>
         )}
 
-        {tab === 'coordinator-requests' && (
-          <CoordinatorRequestsTab requests={coordRequests} tasks={taskList} onReload={load} />
-        )}
+            {tab === 'coordinator-requests' && (
+              <CoordinatorRequestsTab requests={coordRequests} tasks={taskList} onReload={load} />
+            )}
+          </div>
+        </div>
       </main>
 
       <Toast toast={toast} onClose={() => setToast(null)} />
