@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactN
 import { MapPin, Calendar, Check, Star, RotateCcw, RefreshCw, AlertCircle, Camera, Plus, Trash2, Phone, AlertTriangle, ChevronRight, Map, ClipboardList, Wallet, Bus, Clock, Users, CheckCircle2, Loader2, LayoutDashboard, ShieldCheck, UserRound, HelpCircle } from 'lucide-react'
 import JobLocationMap from '../components/JobLocationMap'
 import DashboardHeader from './DashboardHeader'
-import DashboardSidebar, { type DashboardNavItem } from '../components/DashboardSidebar'
+import DashboardSidebar, { DashboardMobileNav, type DashboardNavItem } from '../components/DashboardSidebar'
 import ActivityFeed, { type ActivityItem } from '../components/ActivityFeed'
 import ReferralCard from '../components/ReferralCard'
 import ProfileModal, { type Profile } from '../components/ProfileModal'
@@ -388,11 +388,13 @@ function Stars({ n }: { n: number }) {
 
 function Stat({ icon, label, value, extra }: { icon: ReactNode; label: string; value: string; extra?: ReactNode }) {
   return (
-    <div className="rounded-2xl border border-ink-900/8 bg-cream-50 px-5 py-4 transition-shadow hover:shadow-sm">
-      <p className="truncate text-xs text-ink-700/60">{label}</p>
-      <div className="mt-2 flex items-center gap-2.5">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-forest-600/10 text-forest-600">{icon}</span>
-        <span className="font-serif text-2xl font-semibold text-ink-900">{value}</span>
+    <div className="rounded-2xl border border-ink-900/8 bg-white px-5 py-5 shadow-sm">
+      <div className="flex items-center gap-2.5 text-sm font-medium text-ink-700">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-forest-600/30 text-forest-600">{icon}</span>
+        <span className="truncate">{label}</span>
+      </div>
+      <div className="mt-3 flex items-center gap-2.5">
+        <span className="text-2xl font-bold text-ink-900">{value}</span>
         {extra}
       </div>
     </div>
@@ -844,7 +846,9 @@ export default function WorkerDashboard() {
     <div className="min-h-screen bg-cream-100">
       <DashboardHeader role="WORKER" title="Worker Dashboard" name={displayName} avatar={photo} onEditProfile={() => setEditing(true)} tasks={[...offers, ...mine, ...history]}
         navItems={headerNavItems} active={section} onSelect={(id) => setSection(id as typeof section)} />
-      <main id="main" className="mx-auto max-w-7xl px-4 py-6 sm:px-8 sm:py-8">
+      <div className="lg:flex">
+        <DashboardSidebar items={navItems} active={section} onSelect={(id) => setSection(id as typeof section)} />
+        <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-8 lg:px-10">
         <p aria-live="polite" className="sr-only">{announce}</p>
 
         <NotificationsBanner role="worker" />
@@ -861,34 +865,35 @@ export default function WorkerDashboard() {
         )}
 
         <div className="mb-6">
-          <h1 className="font-serif text-2xl font-medium text-ink-900 sm:text-[26px]">Welcome back, {displayName.split(' ')[0]}!</h1>
+          <h1 className="text-2xl font-bold text-ink-900 sm:text-[28px]">Welcome back, {displayName.split(' ')[0]}!</h1>
           <p className="mt-0.5 text-sm text-ink-700/70">Here's what's happening with your profile and assignments.</p>
         </div>
 
-        <div className="flex flex-col gap-6 lg:flex-row lg:gap-10">
-          <DashboardSidebar items={navItems} active={section} onSelect={(id) => setSection(id as typeof section)} />
+        <div>
+          <DashboardMobileNav items={navItems} active={section} onSelect={(id) => setSection(id as typeof section)} />
 
           <div className="min-w-0 flex-1">
             {section === 'overview' && (
               <div className="space-y-5">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-ink-900/8 bg-cream-50 p-5">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-ink-700/50">Your Current Status</p>
-                    <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-forest-600/10 px-3 py-1.5 text-sm font-semibold text-forest-700">
-                      <CheckCircle2 size={15} aria-hidden="true" /> Active
+                  <div className="rounded-2xl border border-ink-900/8 bg-white p-6 shadow-sm">
+                    <p className="text-sm font-medium text-ink-700">Your Current Status</p>
+                    <span className="mt-5 inline-flex items-center gap-3 rounded-full bg-forest-600/15 py-2 pl-2 pr-7">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-forest-600 text-cream-50"><Check size={18} strokeWidth={3} aria-hidden="true" /></span>
+                      <span className="text-base font-semibold text-ink-900">Active</span>
                     </span>
                     <p className="mt-3 text-sm text-ink-700/75">
                       {offers.length > 0
                         ? `You have ${offers.length} offer${offers.length === 1 ? '' : 's'} awaiting your response.`
                         : "You're all set — eligible for new assignments."}
                     </p>
-                    <button onClick={() => setSection('verification')} className="mt-2 text-sm font-medium text-forest-700 hover:text-forest-500">
+                    <button onClick={() => setSection('verification')} className="mt-4 text-sm font-medium text-forest-700 underline underline-offset-4 hover:text-forest-500">
                       View status details →
                     </button>
                   </div>
 
-                  <div className="rounded-2xl border border-ink-900/8 bg-cream-50 p-5">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-ink-700/50">Next Assignment</p>
+                  <div className="rounded-2xl border border-ink-900/8 bg-white p-6 shadow-sm">
+                    <p className="border-b border-ink-900/8 pb-3 text-sm font-semibold text-ink-900">Next Assignment</p>
                     {nextAssignment ? (
                       <>
                         <p className="mt-2 font-serif text-lg font-semibold text-ink-900">{nextAssignment.taskType || 'Task'}</p>
@@ -901,7 +906,7 @@ export default function WorkerDashboard() {
                           )}
                         </div>
                         <button onClick={() => { setSection('assignments'); setTab('mine') }}
-                          className="mt-3 rounded-full bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98]">
+                          className="mt-4 rounded-lg bg-forest-600 px-7 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98]">
                           View Details
                         </button>
                       </>
@@ -926,9 +931,8 @@ export default function WorkerDashboard() {
                 </div>
 
                 <div>
-                  <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-ink-700/50">Recent Activity</h2>
                   {loading ? <Skeleton /> : (
-                    <ActivityFeed items={recentActivity} empty="No activity yet — accepted and completed jobs will show up here." />
+                    <ActivityFeed title="Recent Activity" items={recentActivity} empty="No activity yet — accepted and completed jobs will show up here." />
                   )}
                 </div>
 
@@ -1137,6 +1141,7 @@ export default function WorkerDashboard() {
           </div>
         </div>
       </main>
+      </div>
 
       <Toast toast={toast} onClose={() => setToast(null)} />
 

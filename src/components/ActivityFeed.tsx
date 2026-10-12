@@ -18,19 +18,14 @@ const TONE_CLASSES: Record<ActivityTone, string> = {
 
 /** "Recent Activity" list shared across dashboards. Dates/status are only
  *  shown when the underlying record actually carries them — never invented. */
-export default function ActivityFeed({ items, empty }: { items: ActivityItem[]; empty: string }) {
-  if (!items.length) {
-    return (
-      <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-ink-900/15 bg-cream-50/50 p-8 text-center">
-        <p className="text-sm text-ink-700">{empty}</p>
-      </div>
-    )
-  }
-
+export default function ActivityFeed({ items, empty, title }: { items: ActivityItem[]; empty: string; title?: string }) {
   return (
-    <ul className="divide-y divide-ink-900/6 overflow-hidden rounded-2xl border border-ink-900/8 bg-cream-50">
+    <div className="rounded-2xl border border-ink-900/8 bg-white p-5 shadow-sm sm:p-6">
+      {title && <h2 className="mb-2 text-base font-semibold text-ink-900">{title}</h2>}
+      {items.length ? (
+    <ul className="divide-y divide-ink-900/8">
       {items.map((item) => (
-        <li key={item.id} className="flex items-center gap-3 px-4 py-3.5 sm:px-5">
+        <li key={item.id} className="flex items-center gap-3 py-3.5">
           <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-forest-600/10 text-forest-600">
             {item.icon}
           </span>
@@ -46,5 +41,9 @@ export default function ActivityFeed({ items, empty }: { items: ActivityItem[]; 
         </li>
       ))}
     </ul>
+      ) : (
+        <p className="py-6 text-center text-sm text-ink-700/70">{empty}</p>
+      )}
+    </div>
   )
 }

@@ -22,32 +22,36 @@ export default function DashboardHeader({
   onSelect?: (id: string) => void
 }) {
   const { go, logout } = useAuth()
+  const hasNav = !!navItems && navItems.length > 0
+  const initials = (name || '').split(' ').filter(Boolean).map((p) => p[0]).slice(0, 2).join('').toUpperCase()
   return (
-    <header className="sticky top-0 z-40 border-b border-ink-900/10 bg-cream-50/90 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4 sm:px-8">
-        {/* Far left: logo + dashboard title */}
-        <button onClick={() => go('home')} aria-label="Go to BeyondX home" className="shrink-0">
-          <Logo tone="dark" className="h-7 sm:h-8" />
-        </button>
-        <span aria-hidden="true" className="hidden h-6 w-px shrink-0 bg-ink-900/15 sm:block" />
-        <h1 className={`min-w-0 shrink-0 truncate font-serif text-base font-medium text-ink-900 sm:text-lg ${navItems && navItems.length > 0 ? 'lg:sr-only' : ''}`}>{title}</h1>
+    <header className="sticky top-0 z-40 border-b border-ink-900/10 bg-cream-50">
+      <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:pl-0 lg:pr-8">
+        {/* Logo sits directly above the sidebar rail on desktop */}
+        <div className="flex shrink-0 items-center lg:w-60 lg:pl-7">
+          <button onClick={() => go('home')} aria-label="Go to BeyondX home" className="shrink-0">
+            <Logo tone="dark" className="h-7 sm:h-8" />
+          </button>
+        </div>
+        <span aria-hidden="true" className={`hidden h-6 w-px shrink-0 bg-ink-900/15 sm:block ${hasNav ? 'lg:hidden' : ''}`} />
+        <h1 className={`min-w-0 truncate font-serif text-base font-medium text-ink-900 sm:text-lg ${hasNav ? 'lg:sr-only' : ''}`}>{title}</h1>
 
-        {/* Long centre nav bar — a short, curated set of top-level sections
-         *  (not the full sidebar list, which can run to 6-8 items). */}
-        {navItems && navItems.length > 0 && (
-          <nav className="hidden min-w-0 flex-1 items-center justify-center gap-1 lg:flex" aria-label="Dashboard sections">
-            {navItems.map((item) => {
+        {/* Top links, starting at the content column's edge like the mockup */}
+        {hasNav && (
+          <nav className="hidden min-w-0 items-center gap-1 lg:flex lg:pl-6" aria-label="Main sections">
+            {navItems!.map((item) => {
               const isActive = active === item.id
               return (
                 <button
                   key={item.id}
                   onClick={() => onSelect?.(item.id)}
                   aria-current={isActive ? 'page' : undefined}
-                  className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition-colors focus:outline-none ${
-                    isActive ? 'bg-ink-900 text-cream-50' : 'text-ink-700 hover:bg-ink-900/5 hover:text-ink-900'
+                  className={`relative shrink-0 px-3.5 py-5 text-sm font-medium transition-colors focus:outline-none ${
+                    isActive ? 'text-ink-900' : 'text-ink-700/70 hover:text-ink-900'
                   }`}
                 >
                   {item.label}
+                  {isActive && <span aria-hidden="true" className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-forest-600" />}
                 </button>
               )
             })}
@@ -57,20 +61,19 @@ export default function DashboardHeader({
         {/* Right cluster */}
         <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
           <Notifications role={role === 'WORKER' ? 'worker' : 'employer'} tasks={tasks} />
-          {onEditProfile && (
-            <button onClick={onEditProfile} aria-label="Edit your profile"
-              className="flex items-center gap-2 rounded-full border border-ink-900/15 py-1 pl-1 pr-1 text-sm font-medium text-ink-800 transition-colors hover:bg-ink-900/5 active:scale-[0.98] sm:pr-3.5">
-              {avatar
-                ? <img src={avatar} alt="" className="h-7 w-7 rounded-[9999px] object-cover" />
-                : <span aria-hidden="true" className="flex h-7 w-7 items-center justify-center rounded-full bg-forest-600 text-cream-50"><UserRound size={15} /></span>}
-              <span className="hidden sm:inline">{name ? name.split(' ')[0] : 'Profile'}</span>
-            </button>
-          )}
           <button onClick={logout} aria-label="Log out and return home"
             className="flex h-9 w-9 items-center justify-center rounded-full border border-ink-900/15 text-ink-700 transition-colors hover:bg-ink-900/5 active:scale-[0.98] sm:w-auto sm:gap-1.5 sm:px-3">
             <LogOut size={15} aria-hidden="true" />
             <span className="hidden sm:inline text-sm font-medium text-ink-800">Log Out</span>
           </button>
+          {onEditProfile && (
+            <button onClick={onEditProfile} aria-label="Edit your profile" title={name || 'Profile'}
+              className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-ink-900 text-sm font-semibold text-cream-50 transition-transform hover:opacity-90 active:scale-[0.96]">
+              {avatar
+                ? <img src={avatar} alt="" className="h-full w-full object-cover" />
+                : initials || <UserRound size={16} aria-hidden="true" />}
+            </button>
+          )}
         </div>
       </div>
     </header>
