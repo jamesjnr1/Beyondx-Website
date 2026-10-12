@@ -123,7 +123,7 @@ function ApplyModal({
 
         <div className="shrink-0 border-t border-ink-900/8 p-4">
           <button onClick={submit} disabled={!valid || busy}
-            className="w-full rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 hover:bg-forest-500 disabled:opacity-50">
+            className="w-full rounded-md bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 hover:bg-forest-500 disabled:opacity-50">
             {busy ? 'Submitting…' : 'Submit application'}
           </button>
         </div>

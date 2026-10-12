@@ -4,7 +4,6 @@ import JobLocationMap from '../components/JobLocationMap'
 import DashboardHeader from './DashboardHeader'
 import DashboardSidebar, { DashboardMobileNav, type DashboardNavItem } from '../components/DashboardSidebar'
 import ActivityFeed, { type ActivityItem } from '../components/ActivityFeed'
-import ReferralCard from '../components/ReferralCard'
 import ProfileModal, { type Profile } from '../components/ProfileModal'
 import Toast, { type ToastMsg } from '../components/Toast'
 import SupportPanel from '../components/SupportPanel'
@@ -328,7 +327,7 @@ function WorkExperienceCard({
                       </p>
                     )}
                     <div className="mt-2 flex items-center gap-1.5">
-                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.75rem] font-semibold ${c.verified ? 'bg-forest-600/10 text-forest-700' : 'bg-ink-900/8 text-ink-700/70'}`}>
+                      <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[0.75rem] font-semibold ${c.verified ? 'bg-forest-600/10 text-forest-700' : 'bg-ink-900/8 text-ink-700/70'}`}>
                         {c.verified ? 'BeyondX Verified' : 'Declared — pending review'}
                       </span>
                     </div>
@@ -353,7 +352,7 @@ function WorkExperienceCard({
             {tab === 'exp' ? 'Your photos are private — employers only see text.' : 'Certifications show as badges on your employer profile after BeyondX review.'}
           </p>
           <button onClick={save} disabled={saving}
-            className="rounded-full bg-forest-600 px-5 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
+            className="rounded-md bg-forest-600 px-5 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
             {saving ? 'Saving…' : saved ? 'Saved' : 'Save'}
           </button>
         </div>
@@ -858,7 +857,7 @@ export default function WorkerDashboard() {
             <p className="flex items-start gap-2 text-sm text-red-700">
               <AlertCircle size={16} aria-hidden="true" className="mt-0.5 shrink-0" /> {error}
             </p>
-            <button onClick={() => { setLoading(true); load() }} className="shrink-0 rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-cream-50 hover:bg-red-700">
+            <button onClick={() => { setLoading(true); load() }} className="shrink-0 rounded-md bg-red-600 px-4 py-2 text-xs font-semibold text-cream-50 hover:bg-red-700">
               Try again
             </button>
           </div>
@@ -878,10 +877,9 @@ export default function WorkerDashboard() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="rounded-2xl border border-ink-900/8 bg-white p-6 shadow-sm">
                     <p className="text-sm font-medium text-ink-700">Your Current Status</p>
-                    <span className="mt-5 inline-flex items-center gap-3 rounded-full bg-forest-600/15 py-2 pl-2 pr-7">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-forest-600 text-cream-50"><Check size={18} strokeWidth={3} aria-hidden="true" /></span>
-                      <span className="text-base font-semibold text-ink-900">Active</span>
-                    </span>
+                    <p className="mt-4 flex items-center gap-2 text-lg font-semibold text-forest-700">
+                      <Check size={20} strokeWidth={3} aria-hidden="true" /> Active
+                    </p>
                     <p className="mt-3 text-sm text-ink-700/75">
                       {offers.length > 0
                         ? `You have ${offers.length} offer${offers.length === 1 ? '' : 's'} awaiting your response.`
@@ -896,7 +894,7 @@ export default function WorkerDashboard() {
                     <p className="border-b border-ink-900/8 pb-3 text-sm font-semibold text-ink-900">Next Assignment</p>
                     {nextAssignment ? (
                       <>
-                        <p className="mt-2 font-serif text-lg font-semibold text-ink-900">{nextAssignment.taskType || 'Task'}</p>
+                        <p className="mt-3 text-lg font-semibold text-ink-900">{nextAssignment.taskType || 'Task'}</p>
                         <div className="mt-1.5 space-y-1 text-sm text-ink-700/75">
                           {nextAssignmentWhen && (
                             <p className="flex items-center gap-1.5"><Calendar size={13} aria-hidden="true" /> {nextAssignmentWhen}</p>
@@ -914,7 +912,7 @@ export default function WorkerDashboard() {
                       <>
                         <p className="mt-2 text-sm text-ink-700/70">No upcoming assignment yet.</p>
                         <button onClick={() => { setSection('assignments'); setTab('available') }}
-                          className="mt-3 rounded-full border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-800 hover:bg-ink-900/5">
+                          className="mt-3 rounded-md border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-800 hover:bg-ink-900/5">
                           Browse available jobs
                         </button>
                       </>
@@ -935,24 +933,22 @@ export default function WorkerDashboard() {
                     <ActivityFeed title="Recent Activity" items={recentActivity} empty="No activity yet — accepted and completed jobs will show up here." />
                   )}
                 </div>
-
-                <ReferralCard code={(me?.workerId as string) || 'BX-—'} referrals={0} />
               </div>
             )}
 
             {section === 'assignments' && (
               <div>
                 <div className="mb-5 flex items-center gap-3">
-                  <div className="flex min-w-0 items-center gap-1 overflow-x-auto rounded-full bg-ink-900/5 p-1" role="tablist" aria-label="Assignment status">
+                  <div className="flex min-w-0 items-center gap-1 overflow-x-auto rounded-md bg-ink-900/5 p-1" role="tablist" aria-label="Assignment status">
                     {assignmentTabs.map((t) => (
                       <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
-                        className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition-colors focus:outline-none ${tab === t.id ? 'bg-cream-50 text-forest-700 shadow-sm' : 'text-ink-700 hover:text-ink-900'}`}>
+                        className={`shrink-0 rounded-md px-3.5 py-2 text-sm font-medium transition-colors focus:outline-none ${tab === t.id ? 'bg-cream-50 text-forest-700 shadow-sm' : 'text-ink-700 hover:text-ink-900'}`}>
                         {t.label}
                       </button>
                     ))}
                   </div>
                   <button onClick={() => { setLoading(true); load() }} aria-label="Refresh tasks"
-                    className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-ink-700/60 transition-colors hover:bg-ink-900/5 hover:text-ink-900">
+                    className="ml-auto flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium text-ink-700/60 transition-colors hover:bg-ink-900/5 hover:text-ink-900">
                     <RefreshCw size={13} aria-hidden="true" /> Refresh
                   </button>
                 </div>
@@ -965,17 +961,17 @@ export default function WorkerDashboard() {
                           {t.status === 'offered' ? (
                             <div className="flex items-center gap-2">
                               <button onClick={() => declineOffer(t)} disabled={busyId === t.id}
-                                className="inline-flex items-center gap-1.5 rounded-full border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-700 transition-colors hover:bg-ink-900/5 disabled:opacity-60">
+                                className="inline-flex items-center gap-1.5 rounded-md border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-700 transition-colors hover:bg-ink-900/5 disabled:opacity-60">
                                 Decline
                               </button>
                               <button onClick={() => acceptOffer(t)} disabled={busyId === t.id}
-                                className="inline-flex items-center gap-1.5 rounded-full bg-forest-600 px-5 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
+                                className="inline-flex items-center gap-1.5 rounded-md bg-forest-600 px-5 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
                                 <Check size={15} aria-hidden="true" /> {busyId === t.id ? 'Accepting…' : 'Accept offer'}
                               </button>
                             </div>
                           ) : (
                             <button onClick={() => acceptOpen(t)} disabled={busyId === t.id}
-                              className="inline-flex items-center gap-1.5 rounded-full bg-forest-600 px-5 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
+                              className="inline-flex items-center gap-1.5 rounded-md bg-forest-600 px-5 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
                               <Check size={15} aria-hidden="true" /> {busyId === t.id ? 'Accepting…' : 'Accept'}
                             </button>
                           )}
@@ -994,20 +990,20 @@ export default function WorkerDashboard() {
                             <div key={t.id}>
                               <TaskCard task={t}>
                                 {t.status === 'payment_pending' ? (
-                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 border border-amber-200">
+                                  <span className="inline-flex items-center gap-1.5 rounded-md bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 border border-amber-200">
                                     <Loader2 size={11} className="animate-spin" aria-hidden="true" /> Verifying payment
                                   </span>
                                 ) : t.status === 'pending_confirmation' ? (
-                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-ink-900/8 px-3 py-1.5 text-xs font-semibold text-ink-700">
+                                  <span className="inline-flex items-center gap-1.5 rounded-md bg-ink-900/8 px-3 py-1.5 text-xs font-semibold text-ink-700">
                                     <CheckCircle2 size={12} aria-hidden="true" className="text-forest-600" /> Awaiting confirmation
                                   </span>
                                 ) : canMarkDone ? (
                                   <button onClick={() => markDone(t)} disabled={busyId === t.id} aria-label={`Mark ${t.taskType || 'task'} complete`}
-                                    className="shrink-0 rounded-full bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
+                                    className="shrink-0 rounded-md bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
                                     {busyId === t.id ? 'Saving…' : 'Mark complete'}
                                   </button>
                                 ) : (
-                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-ink-900/5 px-3 py-1.5 text-xs font-medium text-ink-700/60">
+                                  <span className="inline-flex items-center gap-1.5 rounded-md bg-ink-900/5 px-3 py-1.5 text-xs font-medium text-ink-700/60">
                                     <Clock size={11} aria-hidden="true" /> Available on {new Date(scheduledDate + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
                                   </span>
                                 )}
@@ -1028,7 +1024,7 @@ export default function WorkerDashboard() {
 
                       {tab === 'declined' && (declined.length ? declined.map((t) => (
                         <TaskCard key={t.id} task={t}>
-                          <span className="inline-flex items-center gap-1.5 rounded-full border border-ink-900/15 px-3 py-1.5 text-xs text-ink-700">
+                          <span className="inline-flex items-center gap-1.5 rounded-md border border-ink-900/15 px-3 py-1.5 text-xs text-ink-700">
                             <RotateCcw size={13} aria-hidden="true" /> Declined
                           </span>
                         </TaskCard>
@@ -1064,7 +1060,7 @@ export default function WorkerDashboard() {
                       <div key={t.id} className="rounded-xl bg-cream-50 p-4 shadow-sm border border-ink-900/8 sm:p-5">
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                           <div>
-                            <span className="mb-1 inline-block rounded-full bg-ink-900/5 px-2.5 py-0.5 text-xs font-medium text-ink-700">{t.taskType || 'Task'}</span>
+                            <span className="mb-1 inline-block rounded-md bg-ink-900/5 px-2.5 py-0.5 text-xs font-medium text-ink-700">{t.taskType || 'Task'}</span>
                             <h3 className="font-serif text-lg font-medium text-ink-900">{t.description || t.taskType}</h3>
                             <p className="mt-0.5 text-sm text-ink-700">{employerName(t)}{t.location ? ` · ${t.location}` : ''}</p>
                           </div>
@@ -1098,7 +1094,7 @@ export default function WorkerDashboard() {
                     </div>
                   </div>
                   <button onClick={() => setEditing(true)}
-                    className="shrink-0 rounded-full border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-800 hover:bg-ink-900/5">
+                    className="shrink-0 rounded-md border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-800 hover:bg-ink-900/5">
                     Edit profile
                   </button>
                 </div>
@@ -1167,14 +1163,14 @@ export default function WorkerDashboard() {
               <div className="mt-5 flex gap-2">
                 <button
                   onClick={() => setLocationTask(null)}
-                  className="flex-1 rounded-full border border-ink-900/15 px-4 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-900/5"
+                  className="flex-1 rounded-md border border-ink-900/15 px-4 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-900/5"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => doAccept(false)}
                   disabled={locationBusy}
-                  className="flex-1 rounded-full bg-forest-600 px-4 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60"
+                  className="flex-1 rounded-md bg-forest-600 px-4 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60"
                 >
                   {locationBusy ? 'Accepting…' : 'Allow & accept'}
                 </button>
@@ -1206,14 +1202,14 @@ export default function WorkerDashboard() {
             <div className="mt-5 flex gap-3">
               <button
                 onClick={() => setConfirmDeclineTask(null)}
-                className="flex-1 rounded-full border border-ink-900/15 px-4 py-2.5 text-sm font-medium text-ink-800 hover:bg-ink-900/5"
+                className="flex-1 rounded-md border border-ink-900/15 px-4 py-2.5 text-sm font-medium text-ink-800 hover:bg-ink-900/5"
               >
                 Keep offer
               </button>
               <button
                 onClick={() => doDecline(confirmDeclineTask)}
                 disabled={busyId === confirmDeclineTask.id}
-                className="flex-1 rounded-full bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-60"
+                className="flex-1 rounded-md bg-red-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-red-500 disabled:opacity-60"
               >
                 {busyId === confirmDeclineTask.id ? 'Declining…' : 'Yes, decline'}
               </button>

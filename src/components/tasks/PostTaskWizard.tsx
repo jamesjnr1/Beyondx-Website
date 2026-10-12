@@ -117,7 +117,7 @@ export default function PostTaskWizard({ onSubmitted, onContactSupport, onBack }
               return (
                 <li key={label} className="flex items-center gap-2.5" aria-current={active ? 'step' : undefined}>
                   <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-semibold ${
-                    active ? 'bg-ink-900 text-cream-50' : done ? 'bg-forest-600 text-cream-50' : 'bg-ink-900/10 text-ink-700/60'
+                    active ? 'border-2 border-forest-600 bg-white text-forest-700' : done ? 'bg-forest-600 text-cream-50' : 'border border-ink-900/15 bg-white text-ink-700/50'
                   }`}>
                     {done ? <Check size={15} strokeWidth={3} aria-hidden="true" /> : i + 1}
                   </span>

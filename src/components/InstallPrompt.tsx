@@ -120,7 +120,7 @@ export default function InstallPrompt() {
       {deferredPrompt && (
         <button
           onClick={handleInstall}
-          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full bg-forest-600 px-4 py-2.5 text-sm font-semibold text-cream-50 transition-colors hover:bg-forest-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/50"
+          className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-md bg-forest-600 px-4 py-2.5 text-sm font-semibold text-cream-50 transition-colors hover:bg-forest-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/50"
         >
           <Download size={16} aria-hidden="true" />
           Install app

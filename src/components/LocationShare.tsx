@@ -129,7 +129,7 @@ export default function LocationShare({ taskId, workerId, workerName, disabled, 
           </p>
           <button
             onClick={() => stop()}
-            className="inline-flex shrink-0 items-center gap-1.5 rounded-full border border-ink-900/15 px-3.5 py-1.5 text-xs font-semibold text-ink-800 transition-all hover:bg-ink-900/5 active:scale-[0.98]"
+            className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-ink-900/15 px-3.5 py-1.5 text-xs font-semibold text-ink-800 transition-all hover:bg-ink-900/5 active:scale-[0.98]"
           >
             Stop sharing
           </button>
@@ -150,7 +150,7 @@ export default function LocationShare({ taskId, workerId, workerName, disabled, 
           onClick={start}
           disabled={busy}
           aria-pressed={false}
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-forest-600 px-3.5 py-1.5 text-xs font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-md bg-forest-600 px-3.5 py-1.5 text-xs font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60"
         >
           {busy && <LoaderCircle size={13} aria-hidden="true" className="animate-spin" />}
           {busy ? 'Starting…' : 'Share location'}

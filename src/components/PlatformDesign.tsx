@@ -39,7 +39,7 @@ export default function PlatformDesign() {
             <div className="mt-6 flex items-center gap-2">
               {ranks.map((r, i) => (
                 <span key={r} className="flex items-center gap-2">
-                  <span className="rounded-full bg-forest-600/10 px-3 py-1 text-xs font-semibold text-forest-700">{r}</span>
+                  <span className="rounded-md bg-forest-600/10 px-3 py-1 text-xs font-semibold text-forest-700">{r}</span>
                   {i < ranks.length - 1 && <span aria-hidden="true" className="h-px w-4 bg-ink-900/15" />}
                 </span>
               ))}

@@ -73,7 +73,7 @@ export default function NotificationsBanner({ role }: { role: 'worker' | 'employ
           <button
             onClick={handleEnable}
             disabled={busy}
-            className="rounded-full bg-forest-600 px-4 py-2 text-xs font-semibold text-cream-50 transition-colors hover:bg-forest-500 disabled:opacity-60"
+            className="rounded-md bg-forest-600 px-4 py-2 text-xs font-semibold text-cream-50 transition-colors hover:bg-forest-500 disabled:opacity-60"
           >
             {busy ? 'Enabling…' : 'Enable notifications'}
           </button>

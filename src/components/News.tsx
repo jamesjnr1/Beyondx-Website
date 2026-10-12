@@ -94,7 +94,7 @@ function LaunchCard({ item, visible }: { item: NewsItem; visible: boolean }) {
 
       {/* Badge */}
       <motion.div
-        className="relative z-10 inline-flex items-center gap-2 rounded-full bg-forest-600/10 px-4 py-1.5"
+        className="relative z-10 inline-flex items-center gap-2 rounded-md bg-forest-600/10 px-4 py-1.5"
         initial={{ opacity: 0, scale: 0.8 }}
         animate={visible ? { opacity: 1, scale: 1 } : {}}
         transition={{ delay: 0.3, duration: 0.5, type: 'spring', stiffness: 200 }}

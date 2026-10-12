@@ -17,7 +17,6 @@ export default function TaskTracking({ task, workerName, statusLabel, onBack, on
   const status = String(task.status || 'open')
   const current = currentStepIndex(status)
   const stopped = current === -1
-  const complete = current >= PROGRESS_STEPS.length
   const slots = Number(task.slotsNeeded ?? task.workersNeeded) || 1
   const filled = Number(task.filledSlots) || 0
   const postedAt = task.createdAt
@@ -30,11 +29,7 @@ export default function TaskTracking({ task, workerName, statusLabel, onBack, on
     ? new Date(`${task.scheduledDate as string}T${task.scheduledTime as string}:00`).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
     : undefined
 
-  const pill = stopped
-    ? 'bg-red-50 text-red-700'
-    : complete ? 'bg-forest-600/15 text-forest-700'
-    : status === 'pending_confirmation' ? 'bg-amber-100 text-amber-800'
-    : 'bg-forest-600/15 text-forest-700'
+  const statusColor = stopped ? 'text-red-700' : status === 'pending_confirmation' ? 'text-amber-700' : 'text-forest-700'
 
   const subline = [task.taskType, task.location, date, `${slots} Worker${slots > 1 ? 's' : ''}`, task.duration].filter(Boolean)
 
@@ -58,7 +53,7 @@ export default function TaskTracking({ task, workerName, statusLabel, onBack, on
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
         <h1 className="text-3xl font-bold text-ink-900">Task #{taskReference(task)}</h1>
-        <span className={`rounded-full px-3 py-1 text-sm font-semibold ${pill}`}>
+        <span className={`text-base font-semibold ${statusColor}`}>
           {stopped ? (STOPPED_LABEL[status] || statusLabel) : statusLabel}
         </span>
       </div>
@@ -91,7 +86,7 @@ export default function TaskTracking({ task, workerName, statusLabel, onBack, on
                     )}
                     <span className={`relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
                       done ? 'bg-ink-900 text-cream-50'
-                        : active ? 'bg-ink-900 text-cream-50 ring-4 ring-forest-600/30'
+                        : active ? 'bg-ink-900 text-cream-50 ring-4 ring-forest-600/20'
                         : 'bg-ink-900/10 text-ink-700/50'
                     }`}>
                       {done ? <Check size={16} strokeWidth={3} aria-hidden="true" /> : <Icon size={16} aria-hidden="true" />}

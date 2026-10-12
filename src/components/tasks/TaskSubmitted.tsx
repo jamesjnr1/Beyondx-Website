@@ -43,7 +43,7 @@ export default function TaskSubmitted({ submitted, onTrack, onDashboard }: {
           <div>
             <dt className="text-xs text-ink-700/60">Status</dt>
             <dd className="mt-1">
-              <span className="inline-flex rounded-full bg-forest-600/15 px-3 py-1 text-xs font-semibold text-forest-700">Finding a worker</span>
+              <span className="text-sm font-semibold text-forest-700">Finding a worker</span>
             </dd>
           </div>
         </dl>

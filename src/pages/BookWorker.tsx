@@ -316,7 +316,7 @@ function BookingForm({ state, onDone, onError }: {
                     {wName(worker).split(' ')[0]}'s home: <span className="text-forest-700">{workerHomeArea}</span>
                   </p>
                   {transport?.available && (
-                    <span className={`shrink-0 rounded-full px-2 py-0.5 text-[0.75rem] font-semibold ${
+                    <span className={`shrink-0 rounded-md px-2 py-0.5 text-[0.75rem] font-semibold ${
                       isIntercity ? 'bg-red-100 text-red-700'
                       : transport.transportAllowance > 0 ? 'bg-amber-100 text-amber-800'
                       : 'bg-forest-600/10 text-forest-700'

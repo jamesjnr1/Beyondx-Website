@@ -45,13 +45,13 @@ export default class ErrorBoundary extends Component<Props, State> {
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <button
             onClick={this.handleReload}
-            className="rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-colors hover:bg-forest-500"
+            className="rounded-md bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-colors hover:bg-forest-500"
           >
             Reload page
           </button>
           <button
             onClick={this.handleLogout}
-            className="rounded-full border border-ink-900/15 px-6 py-3 text-sm font-medium text-ink-900 transition-colors hover:bg-ink-900/5"
+            className="rounded-md border border-ink-900/15 px-6 py-3 text-sm font-medium text-ink-900 transition-colors hover:bg-ink-900/5"
           >
             Log out & reload
           </button>

@@ -77,7 +77,7 @@ export default function ProfileEditor({
       </div>
 
       <div className="mt-6 flex items-center gap-3">
-        <button onClick={save} className="rounded-full bg-forest-600 px-6 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98]">
+        <button onClick={save} className="rounded-md bg-forest-600 px-6 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98]">
           Save changes
         </button>
         {saved && <span className="inline-flex items-center gap-1.5 text-sm font-medium text-forest-700"><Check size={16} /> Profile saved</span>}
