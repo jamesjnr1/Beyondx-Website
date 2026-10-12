@@ -35,7 +35,7 @@ export default function CTA() {
               <button
                 type="button"
                 onClick={() => open('employer-login')}
-                className="group inline-flex items-center justify-center gap-2 rounded-md bg-cream-50 px-8 py-4 text-base font-semibold text-forest-700 shadow-lg transition-all hover:bg-cream-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-cream-50/70"
+                className="group inline-flex items-center justify-center gap-2 rounded-full bg-cream-50 px-8 py-4 text-base font-semibold text-forest-700 shadow-lg transition-all hover:bg-cream-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-cream-50/70"
               >
                 Hire a worker
                 <ArrowRight size={18} aria-hidden="true" className="transition-transform group-hover:translate-x-1" />
@@ -43,7 +43,7 @@ export default function CTA() {
               <button
                 type="button"
                 onClick={() => open('worker-login')}
-                className="inline-flex items-center justify-center gap-2 rounded-md border border-cream-50/30 px-8 py-4 text-base font-medium text-cream-50 transition-colors hover:bg-cream-50/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-cream-50/70"
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-cream-50/30 px-8 py-4 text-base font-medium text-cream-50 transition-colors hover:bg-cream-50/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-cream-50/70"
               >
                 I'm looking for work
               </button>
