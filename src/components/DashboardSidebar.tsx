@@ -19,8 +19,11 @@ export default function DashboardSidebar({
 }) {
   return (
     <>
-      <aside className="hidden shrink-0 lg:block lg:w-64">
-        <nav className="sticky top-24 flex flex-col gap-1 rounded-2xl bg-ink-900 p-3" aria-label="Dashboard sections">
+      {/* The dark panel stretches to the full height of the content column
+          (and at least most of the viewport), with the links kept sticky. */}
+      <aside className="hidden shrink-0 lg:flex lg:w-64">
+        <nav className="flex w-full flex-col rounded-2xl bg-ink-900 p-3 lg:min-h-[calc(100vh-8rem)]" aria-label="Dashboard sections">
+          <div className="sticky top-24 flex flex-col gap-1">
           {items.map((item) => {
             const Icon = item.icon
             const isActive = active === item.id
@@ -43,6 +46,7 @@ export default function DashboardSidebar({
               </button>
             )
           })}
+          </div>
         </nav>
       </aside>
 
