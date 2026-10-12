@@ -249,10 +249,15 @@ export default function Notifications({ role, tasks }: { role: 'worker' | 'emplo
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} aria-hidden="true" />
+          {/* fixed (viewport-relative), not absolute (document-relative) — an
+              absolute dropdown here inherited horizontal scroll position from
+              a horizontally-scrollable tab row elsewhere on the page, which
+              could shift the whole panel partly off-screen on mobile. Bottom
+              sheet on mobile, small dropdown near the bell on larger screens. */}
           <div
             role="dialog"
             aria-label="Notifications"
-            className="absolute right-0 z-50 mt-2 flex max-h-[70vh] w-[min(22rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl bg-cream-50 shadow-xl border border-ink-900/10"
+            className="fixed inset-x-0 bottom-0 z-50 flex max-h-[75vh] flex-col overflow-hidden rounded-t-2xl border-t border-ink-900/10 bg-cream-50 shadow-2xl sm:inset-x-auto sm:bottom-auto sm:right-4 sm:top-[4.5rem] sm:w-[22rem] sm:rounded-2xl sm:border sm:shadow-xl"
           >
             <div className="flex shrink-0 items-center justify-between border-b border-ink-900/10 px-4 py-3">
               <h2 className="font-serif text-base font-medium text-ink-900">Notifications</h2>

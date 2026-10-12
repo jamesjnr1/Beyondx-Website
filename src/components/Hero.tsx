@@ -1,5 +1,13 @@
 import { motion } from 'framer-motion'
+import { ShieldCheck, Target, MapPin, Banknote } from 'lucide-react'
 import { useAuth } from './auth/AuthContext'
+
+const trustBadges = [
+  { icon: ShieldCheck, label: 'Verified workers' },
+  { icon: Target, label: 'Skill-matched' },
+  { icon: MapPin, label: 'GPS-tracked shifts' },
+  { icon: Banknote, label: 'Mobile money payouts' },
+]
 
 export default function Hero() {
   const { open } = useAuth()
@@ -65,6 +73,25 @@ export default function Hero() {
             >
               I'm looking for work
             </button>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, delay: 0.8 }}
+            className="mt-9 hidden flex-wrap gap-x-6 gap-y-3 sm:flex sm:gap-x-8"
+          >
+            {trustBadges.map((badge) => {
+              const Icon = badge.icon
+              return (
+                <div key={badge.label} className="flex items-center gap-2">
+                  <Icon size={16} className="text-cream-200/70" aria-hidden="true" />
+                  <span className="text-xs font-medium text-cream-200/80 sm:text-sm">
+                    {badge.label}
+                  </span>
+                </div>
+              )
+            })}
           </motion.div>
         </div>
       </div>

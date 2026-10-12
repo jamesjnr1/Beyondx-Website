@@ -19,6 +19,8 @@ import DashboardHeader from './DashboardHeader'
 import Toast, { type ToastMsg } from '../components/Toast'
 import SupportPanel from '../components/SupportPanel'
 import ProfileModal, { type Profile } from '../components/ProfileModal'
+import { useRefreshOnResume } from '../hooks/useRefreshOnResume'
+import NotificationsBanner from '../components/NotificationsBanner'
 import {
   tasks as tasksApi, workers as workersApi, contact, session, ApiError, type Task, type Worker,
   coordinatorRequests, type CoordinatorJobRequest, type CoordinatorRequestStatus,
@@ -785,6 +787,7 @@ export default function CoordinatorDashboard() {
   }, [])
 
   useEffect(() => { load() }, [load])
+  useRefreshOnResume(load)
 
   const onSaved = (patch: Record<string, unknown>) => {
     session.patchWorker(patch)
@@ -815,6 +818,8 @@ export default function CoordinatorDashboard() {
       />
 
       <main className="mx-auto max-w-5xl px-4 py-6 sm:px-8">
+        <NotificationsBanner role="worker" />
+
         {application?.businessName && (
           <p className="mb-4 text-sm text-ink-700/70">{application.businessName} · Coordinator account</p>
         )}

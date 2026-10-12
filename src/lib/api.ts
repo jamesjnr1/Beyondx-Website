@@ -73,6 +73,12 @@ export type Worker = {
   coordinatorQuotes?: unknown
   /** JSON-stringified Record<taskId, PayoutSplitRecord>. */
   coordinatorPayoutSplits?: unknown
+  /** Manual BeyondX-staff placement boost — sorts first in listings, set via admin. */
+  priority?: boolean
+  /** Optional staff-curated client testimonial, shown separately from the
+   *  computed star rating — never a substitute for it. */
+  featuredTestimonial?: string
+  featuredTestimonialSource?: string
   [k: string]: unknown
 }
 
