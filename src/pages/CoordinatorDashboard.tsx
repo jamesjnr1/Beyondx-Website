@@ -152,7 +152,7 @@ function TeamTab({ worker, onSaved }: { worker: Worker | null; onSaved: (patch: 
                 {m.rating ? <span className="inline-flex items-center gap-0.5"><Star size={11} className="fill-forest-600 text-forest-600" /> {m.rating.toFixed(1)}</span> : null}
                 <span>{m.jobsCompleted ?? 0} job{(m.jobsCompleted ?? 0) === 1 ? '' : 's'} on record</span>
               </p>
-              {m.categories.length > 0 && <p className="mt-0.5 truncate text-[11px] text-ink-700/50">{m.categories.join(', ')}</p>}
+              {m.categories.length > 0 && <p className="mt-0.5 truncate text-[0.8125rem] text-ink-700/50">{m.categories.join(', ')}</p>}
             </div>
             <button onClick={() => remove(m.id)} disabled={saving} aria-label={`Remove ${m.name}`}
               className="shrink-0 rounded-lg p-2 text-ink-700/50 hover:bg-red-50 hover:text-red-700">
@@ -207,7 +207,7 @@ function JobQuoteCard({
           {task.description && <p className="mt-1 text-xs text-ink-700/60 line-clamp-2">{String(task.description)}</p>}
         </div>
         {quote && (
-          <span className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${
+          <span className={`shrink-0 rounded-full px-2.5 py-1 text-[0.8125rem] font-semibold ${
             quote.status === 'approved' ? 'bg-forest-600/10 text-forest-700'
             : quote.status === 'denied' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'
           }`}>
@@ -217,14 +217,14 @@ function JobQuoteCard({
       </div>
 
       <div>
-        <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-ink-700/50">Scope inspection notes</label>
+        <label className="mb-1 block text-[0.8125rem] font-semibold uppercase tracking-wide text-ink-700/50">Scope inspection notes</label>
         <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2}
           placeholder="What you found on inspection, materials needed, access notes…" className={inp} />
       </div>
 
       {team.length > 0 && (
         <div>
-          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-ink-700/50">Assign team members</label>
+          <label className="mb-1 block text-[0.8125rem] font-semibold uppercase tracking-wide text-ink-700/50">Assign team members</label>
           <div className="flex flex-wrap gap-1.5">
             {team.map((m) => (
               <button key={m.id} type="button" onClick={() => toggle(m.id)}
@@ -240,7 +240,7 @@ function JobQuoteCard({
 
       <div className="flex items-end gap-2">
         <div className="flex-1">
-          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-ink-700/50">Price quote (GH₵)</label>
+          <label className="mb-1 block text-[0.8125rem] font-semibold uppercase tracking-wide text-ink-700/50">Price quote (GH₵)</label>
           <input type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} placeholder="e.g. 1200" className={inp} />
         </div>
         <button onClick={submit} disabled={!price || busy}
@@ -248,7 +248,7 @@ function JobQuoteCard({
           {busy ? 'Sending…' : quote ? 'Update quote' : 'Submit for approval'}
         </button>
       </div>
-      <p className="text-[11px] text-ink-700/50">Final pricing is set by BeyondX — this sends your quote for approval, it isn't charged yet.</p>
+      <p className="text-[0.8125rem] text-ink-700/50">Final pricing is set by BeyondX — this sends your quote for approval, it isn't charged yet.</p>
     </div>
   )
 }
@@ -581,7 +581,7 @@ function RequestQuoteForm({ request, onQuoted, onDeclined }: {
     <div className="mt-3 space-y-2 border-t border-ink-900/6 pt-3">
       <div className="flex items-end gap-2">
         <div className="flex-1">
-          <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-ink-700/50">Your price (GH₵)</label>
+          <label className="mb-1 block text-[0.8125rem] font-semibold uppercase tracking-wide text-ink-700/50">Your price (GH₵)</label>
           <input type="number" min={0} value={price} onChange={(e) => setPrice(e.target.value)} placeholder="e.g. 1200" className={inp} />
         </div>
       </div>
@@ -598,7 +598,7 @@ function RequestQuoteForm({ request, onQuoted, onDeclined }: {
           {busy === 'quote' ? 'Sending…' : 'Accept & send quote'}
         </button>
       </div>
-      <p className="text-[11px] text-ink-700/50">Your quote goes to BeyondX for review before it reaches the employer.</p>
+      <p className="text-[0.8125rem] text-ink-700/50">Your quote goes to BeyondX for review before it reaches the employer.</p>
     </div>
   )
 }
@@ -615,7 +615,7 @@ function RequestCard({ request, onUpdate }: { request: CoordinatorJobRequest; on
             {request.workersNeeded > 1 ? ` · ${request.workersNeeded} workers` : ''}
           </p>
           {request.description && <p className="mt-1 text-xs text-ink-700/60 line-clamp-2">{request.description}</p>}
-          <p className="mt-1 text-[11px] text-ink-700/50">{request.materialsProvided ? 'Employer provides materials' : 'Materials not provided by employer'}</p>
+          <p className="mt-1 text-[0.8125rem] text-ink-700/50">{request.materialsProvided ? 'Employer provides materials' : 'Materials not provided by employer'}</p>
         </div>
         <span className={`shrink-0 text-xs font-semibold ${s.color}`}>{s.label}</span>
       </div>
@@ -865,7 +865,7 @@ export default function CoordinatorDashboard() {
 
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-ink-900 sm:text-[28px]">Welcome back, {displayName.split(' ')[0]}!</h1>
+            <h1 className="text-2xl font-bold text-ink-900 sm:text-[1.75rem]">Welcome back, {displayName.split(' ')[0]}!</h1>
             <p className="mt-0.5 text-sm text-ink-700/70">
               {application?.businessName ? `${application.businessName} · Coordinator account` : 'Coordinator account'}
             </p>

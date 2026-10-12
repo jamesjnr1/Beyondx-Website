@@ -6,7 +6,7 @@ import type { Task } from '../lib/api'
 import type { DashboardNavItem } from '../components/DashboardSidebar'
 
 export default function DashboardHeader({
-  role, title, name, avatar, onEditProfile, tasks = [], navItems, active, onSelect,
+  role, title, name, avatar, onEditProfile, tasks = [], navItems, active, onSelect, cta,
 }: {
   role: 'WORKER' | 'EMPLOYER'
   title: string
@@ -20,6 +20,8 @@ export default function DashboardHeader({
   navItems?: DashboardNavItem[]
   active?: string
   onSelect?: (id: string) => void
+  /** Primary action button in the right cluster (e.g. Post a Task). */
+  cta?: { label: string; onClick: () => void }
 }) {
   const { go, logout } = useAuth()
   const hasNav = !!navItems && navItems.length > 0
@@ -60,6 +62,12 @@ export default function DashboardHeader({
 
         {/* Right cluster */}
         <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
+          {cta && (
+            <button onClick={cta.onClick}
+              className="mr-1 hidden rounded-lg bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 transition-colors hover:bg-forest-500 sm:block">
+              {cta.label}
+            </button>
+          )}
           <Notifications role={role === 'WORKER' ? 'worker' : 'employer'} tasks={tasks} />
           <button onClick={logout} aria-label="Log out and return home"
             className="flex h-9 w-9 items-center justify-center rounded-full border border-ink-900/15 text-ink-700 transition-colors hover:bg-ink-900/5 active:scale-[0.98] sm:w-auto sm:gap-1.5 sm:px-3">

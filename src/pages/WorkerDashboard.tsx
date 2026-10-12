@@ -107,7 +107,7 @@ function FileUploadButton({
         <Camera size={13} aria-hidden="true" /> {uploading ? 'Uploading…' : label}
       </button>
       <input ref={ref} type="file" accept="image/png,image/jpeg,image/webp" onChange={pick} className="sr-only" />
-      {err && <p className="mt-1 text-[11px] text-red-700">{err}</p>}
+      {err && <p className="mt-1 text-[0.8125rem] text-red-700">{err}</p>}
     </div>
   )
 }
@@ -246,18 +246,18 @@ function WorkExperienceCard({
               <div key={e.id} className="rounded-xl border border-ink-900/10 bg-cream-100/60 p-4 space-y-3">
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-ink-700/50">Role / Job title</label>
+                    <label className="mb-1 block text-[0.8125rem] font-semibold uppercase tracking-wide text-ink-700/50">Role / Job title</label>
                     <input value={e.role} onChange={(ev) => updateExp(e.id, 'role', ev.target.value)}
                       placeholder="e.g. Farm labourer" className={inp} />
                   </div>
                   <div>
-                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-ink-700/50">Employer / Location</label>
+                    <label className="mb-1 block text-[0.8125rem] font-semibold uppercase tracking-wide text-ink-700/50">Employer / Location</label>
                     <input value={e.employer} onChange={(ev) => updateExp(e.id, 'employer', ev.target.value)}
                       placeholder="e.g. Kofi Farms, Tema" className={inp} />
                   </div>
                 </div>
                 <div>
-                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-ink-700/50">How long</label>
+                  <label className="mb-1 block text-[0.8125rem] font-semibold uppercase tracking-wide text-ink-700/50">How long</label>
                   <input value={e.duration} onChange={(ev) => updateExp(e.id, 'duration', ev.target.value)}
                     placeholder="e.g. 6 months (2023)" className={inp} />
                 </div>
@@ -270,7 +270,7 @@ function WorkExperienceCard({
                       onUploaded={(url) => updateExp(e.id, 'photoUrl', url)}
                     />
                     {e.photoUrl && (
-                      <p className="mt-1 flex items-center gap-1 text-[11px] font-medium text-forest-700"><Check size={11} aria-hidden="true" /> Photo saved — visible only to BeyondX</p>
+                      <p className="mt-1 flex items-center gap-1 text-[0.8125rem] font-medium text-forest-700"><Check size={11} aria-hidden="true" /> Photo saved — visible only to BeyondX</p>
                     )}
                   </div>
                   <button onClick={() => removeExp(e.id)} aria-label="Remove entry"
@@ -299,18 +299,18 @@ function WorkExperienceCard({
               <div key={c.id} className="rounded-xl border border-ink-900/10 bg-cream-100/60 p-4 space-y-3">
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-ink-700/50">Certification name</label>
+                    <label className="mb-1 block text-[0.8125rem] font-semibold uppercase tracking-wide text-ink-700/50">Certification name</label>
                     <input value={c.name} onChange={(ev) => updateCert(c.id, 'name', ev.target.value)}
                       placeholder="e.g. Pesticide Safety Certificate" className={inp} />
                   </div>
                   <div>
-                    <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-ink-700/50">Issued by</label>
+                    <label className="mb-1 block text-[0.8125rem] font-semibold uppercase tracking-wide text-ink-700/50">Issued by</label>
                     <input value={c.issuedBy} onChange={(ev) => updateCert(c.id, 'issuedBy', ev.target.value)}
                       placeholder="e.g. Ghana EPA" className={inp} />
                   </div>
                 </div>
                 <div>
-                  <label className="mb-1 block text-[11px] font-semibold uppercase tracking-wide text-ink-700/50">Year obtained</label>
+                  <label className="mb-1 block text-[0.8125rem] font-semibold uppercase tracking-wide text-ink-700/50">Year obtained</label>
                   <input value={c.year} onChange={(ev) => updateCert(c.id, 'year', ev.target.value)}
                     placeholder="e.g. 2022" className={inp} style={{ maxWidth: 120 }} />
                 </div>
@@ -323,12 +323,12 @@ function WorkExperienceCard({
                       onUploaded={(url) => updateCert(c.id, 'imageUrl', url)}
                     />
                     {c.imageUrl && (
-                      <p className="mt-1 text-[11px] text-forest-700">
+                      <p className="mt-1 text-[0.8125rem] text-forest-700">
                         <span className="flex items-center gap-1"><Check size={11} aria-hidden="true" /> Image attached — shown to employers after BeyondX review</span>
                       </p>
                     )}
                     <div className="mt-2 flex items-center gap-1.5">
-                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold ${c.verified ? 'bg-forest-600/10 text-forest-700' : 'bg-ink-900/8 text-ink-700/70'}`}>
+                      <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[0.75rem] font-semibold ${c.verified ? 'bg-forest-600/10 text-forest-700' : 'bg-ink-900/8 text-ink-700/70'}`}>
                         {c.verified ? 'BeyondX Verified' : 'Declared — pending review'}
                       </span>
                     </div>
@@ -470,7 +470,7 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
           <div className="shrink-0 text-right">
             <p className="font-semibold text-forest-700">{cedis(task.pay)}</p>
             {transportAmt > 0 && (
-              <p className="mt-0.5 text-[11px] text-ink-700/50">+ GH₵{transportAmt} transport</p>
+              <p className="mt-0.5 text-[0.8125rem] text-ink-700/50">+ GH₵{transportAmt} transport</p>
             )}
           </div>
         </div>
@@ -865,7 +865,7 @@ export default function WorkerDashboard() {
         )}
 
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-ink-900 sm:text-[28px]">Welcome back, {displayName.split(' ')[0]}!</h1>
+          <h1 className="text-2xl font-bold text-ink-900 sm:text-[1.75rem]">Welcome back, {displayName.split(' ')[0]}!</h1>
           <p className="mt-0.5 text-sm text-ink-700/70">Here's what's happening with your profile and assignments.</p>
         </div>
 

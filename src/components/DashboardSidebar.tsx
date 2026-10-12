@@ -34,7 +34,7 @@ export default function DashboardSidebar({ items, active, onSelect }: NavProps) 
               <Icon size={18} aria-hidden="true" className={isActive ? 'text-cream-50' : 'text-cream-200/60'} />
               <span className="flex-1">{item.label}</span>
               {typeof item.badge === 'number' && item.badge > 0 ? (
-                <span className={`rounded-full px-1.5 py-0.5 text-[11px] font-semibold ${isActive ? 'bg-cream-50/20 text-cream-50' : 'bg-cream-50/10 text-cream-200/80'}`}>
+                <span className={`rounded-full px-1.5 py-0.5 text-[0.8125rem] font-semibold ${isActive ? 'bg-cream-50/20 text-cream-50' : 'bg-cream-50/10 text-cream-200/80'}`}>
                   {item.badge}
                 </span>
               ) : null}

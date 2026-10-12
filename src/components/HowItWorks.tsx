@@ -57,7 +57,7 @@ export default function HowItWorks() {
                   </div>
 
                   {/* Text */}
-                  <p className="mb-1 text-[11px] font-bold uppercase tracking-widest text-clay-500">
+                  <p className="mb-1 text-[0.8125rem] font-bold uppercase tracking-widest text-clay-500">
                     Step {step.number}
                   </p>
                   <h3 className="mb-2 font-serif text-lg font-semibold leading-snug text-ink-900">

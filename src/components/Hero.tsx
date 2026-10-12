@@ -34,7 +34,7 @@ export default function Hero() {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="max-w-2xl"
           >
-            <p className="mb-4 text-[13px] font-medium uppercase tracking-[0.18em] text-cream-200/80">
+            <p className="mb-4 text-[0.875rem] font-medium uppercase tracking-[0.18em] text-cream-200/80">
               Skills-Verified Hiring
             </p>
             <h1 className="font-serif text-5xl font-medium leading-[1.05] text-cream-50 text-balance sm:text-6xl lg:text-7xl">
