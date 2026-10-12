@@ -323,7 +323,8 @@ export default function EmployerDashboard() {
   const [trackingId, setTrackingId] = useState<string | number | null>(null)
   const goTab = (id: string) => { setTab(id as typeof tab); setTrackingId(null); setSubmitted(null) }
   const trackTask = (id: string | number) => { setTab('history'); setTrackingId(id); setSubmitted(null) }
-  const fullPage = tab === 'post' || (tab === 'history' && trackingId != null)
+  // The task screens carry their own heading, so the welcome header is hidden on them.
+  const taskScreen = tab === 'post' || (tab === 'history' && trackingId != null)
 
   const [workerList, setWorkerList] = useState<Worker[]>([])
   const [taskList, setTaskList] = useState<Task[]>([])
@@ -443,11 +444,11 @@ export default function EmployerDashboard() {
         navItems={headerNavItems} active={tab} onSelect={goTab}
         cta={{ label: 'Post a Task', onClick: () => goTab('post') }} />
       <div className="lg:flex">
-        {!fullPage && <DashboardSidebar items={navItems} active={tab} onSelect={goTab} />}
-        <main id="main" className={fullPage ? 'mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 sm:py-10' : 'min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-8 lg:px-10'}>
+        <DashboardSidebar items={navItems} active={tab} onSelect={goTab} />
+        <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-8 lg:px-10">
         <p aria-live="polite" className="sr-only">{announce}</p>
 
-        {!fullPage && <NotificationsBanner role="employer" />}
+        {!taskScreen && <NotificationsBanner role="employer" />}
 
         {error && (
           <div className="mb-4 flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -456,7 +457,7 @@ export default function EmployerDashboard() {
           </div>
         )}
 
-        {!fullPage && (
+        {!taskScreen && (
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-ink-900 sm:text-[1.75rem]">Welcome back, {orgName}!</h1>
@@ -476,7 +477,7 @@ export default function EmployerDashboard() {
         )}
 
         <div>
-          {!fullPage && <DashboardMobileNav items={navItems} active={tab} onSelect={goTab} />}
+          <DashboardMobileNav items={navItems} active={tab} onSelect={goTab} />
 
           <div className="min-w-0 flex-1">
             {tab === 'overview' && (
