@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
-import { MapPin, Calendar, Check, Star, RotateCcw, RefreshCw, AlertCircle, Camera, Plus, Trash2, Phone, AlertTriangle, ChevronRight, Map, ClipboardList, Wallet, Bus, Clock, Users, CheckCircle2, Loader2 } from 'lucide-react'
+import { MapPin, Calendar, Check, Star, RotateCcw, RefreshCw, AlertCircle, Camera, Plus, Trash2, Phone, AlertTriangle, ChevronRight, Map, ClipboardList, Wallet, Bus, Clock, Users, CheckCircle2, Loader2, LayoutDashboard, ShieldCheck, UserRound, HelpCircle } from 'lucide-react'
 import JobLocationMap from '../components/JobLocationMap'
 import DashboardHeader from './DashboardHeader'
+import DashboardSidebar, { type DashboardNavItem } from '../components/DashboardSidebar'
+import ActivityFeed, { type ActivityItem } from '../components/ActivityFeed'
 import ReferralCard from '../components/ReferralCard'
 import ProfileModal, { type Profile } from '../components/ProfileModal'
 import Toast, { type ToastMsg } from '../components/Toast'
@@ -371,13 +373,6 @@ function WorkExperienceCard({
 
 const cedis = (n?: number | string) => `GH\u20b5 ${Number(n || 0).toLocaleString()}`
 
-const greeting = () => {
-  const h = new Date().getHours()
-  if (h < 12) return 'Good morning'
-  if (h < 17) return 'Good afternoon'
-  return 'Good evening'
-}
-
 const employerName = (t: Task) =>
   typeof t.employer === 'string' ? t.employer : t.employer?.orgName || t.employer?.name || 'BeyondX employer'
 
@@ -565,7 +560,8 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
 }
 
 export default function WorkerDashboard() {
-  const [tab, setTab] = useState<'available' | 'mine' | 'declined' | 'history' | 'support'>('available')
+  const [section, setSection] = useState<'overview' | 'assignments' | 'verification' | 'earnings' | 'profile' | 'support'>('overview')
+  const [tab, setTab] = useState<'available' | 'mine' | 'declined'>('available')
   const [offers, setOffers] = useState<Task[]>([])
   const [open, setOpen] = useState<Task[]>([])
   const [mine, setMine] = useState<Task[]>([])
@@ -786,13 +782,42 @@ export default function WorkerDashboard() {
     hasTools: 'hasTools' in (me || {}) ? Boolean((me as Record<string,unknown>)?.hasTools) : undefined,
   }
 
-  const tabs = [
+  const assignmentTabs = [
     { id: 'available', label: `Available (${available.length})` },
     { id: 'mine', label: `My Tasks (${mine.length})` },
     { id: 'declined', label: `Declined (${declined.length})` },
-    { id: 'history', label: `History (${history.length})` },
-    { id: 'support', label: 'Support' },
   ] as const
+
+  const navItems: DashboardNavItem[] = [
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'assignments', label: 'My Assignments', icon: ClipboardList, badge: available.length },
+    { id: 'verification', label: 'Verification', icon: ShieldCheck },
+    { id: 'earnings', label: 'Earnings', icon: Wallet },
+    { id: 'profile', label: 'Profile', icon: UserRound },
+    { id: 'support', label: 'Support', icon: HelpCircle },
+  ]
+
+  const recentActivity: ActivityItem[] = [
+    ...mine.map((t) => ({
+      id: `mine-${t.id}`,
+      icon: <Clock size={15} aria-hidden="true" />,
+      title: `${t.taskType || 'Task'} — in progress`,
+      detail: employerName(t),
+    })),
+    ...declined.slice(0, 3).map((t) => ({
+      id: `declined-${t.id}`,
+      icon: <RotateCcw size={15} aria-hidden="true" />,
+      title: `${t.taskType || 'Task'} — declined`,
+      detail: employerName(t),
+    })),
+    ...history.slice(0, 5).map((t) => ({
+      id: `history-${t.id}`,
+      icon: <CheckCircle2 size={15} aria-hidden="true" />,
+      title: `${t.taskType || 'Task'} — completed`,
+      detail: employerName(t),
+      date: t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : undefined,
+    })),
+  ].slice(0, 8)
 
   // Approved Coordinators get a different dashboard entirely (team
   // management, bulk-job quoting, payout splits) — see CoordinatorDashboard.
@@ -817,8 +842,8 @@ export default function WorkerDashboard() {
           </div>
         )}
 
-        <div className="mb-5">
-          <h1 className="font-serif text-2xl font-medium text-ink-900 sm:text-[26px]">{greeting()}, {displayName.split(' ')[0]}</h1>
+        <div className="mb-6">
+          <h1 className="font-serif text-2xl font-medium text-ink-900 sm:text-[26px]">Welcome back, {displayName.split(' ')[0]}!</h1>
           <p className="mt-0.5 text-sm text-ink-700/70">
             {available.length > 0
               ? `${available.length} job${available.length === 1 ? '' : 's'} available right now.`
@@ -826,177 +851,228 @@ export default function WorkerDashboard() {
           </p>
         </div>
 
-        <div className="space-y-5">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-            <Stat icon={<Star size={20} className="text-forest-600" />} label="Your rating" value={me?.rating && Number(me.rating) > 0 ? `${Number(me.rating).toFixed(1)} / 5` : '—'} />
-            <Stat icon={<ClipboardList size={20} className="text-forest-600" />} label="Tasks completed" value={`${completed}`} />
-            <Stat icon={<Wallet size={20} />} label="Total earned" value={cedis(earned)} highlight />
-          </div>
+        <div className="flex flex-col gap-6 lg:flex-row lg:gap-10">
+          <DashboardSidebar items={navItems} active={section} onSelect={(id) => setSection(id as typeof section)} />
 
-          <ReferralCard code={(me?.workerId as string) || 'BX-—'} referrals={0} />
+          <div className="min-w-0 flex-1">
+            {section === 'overview' && (
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <Stat icon={<Star size={20} className="text-forest-600" />} label="Your rating" value={me?.rating && Number(me.rating) > 0 ? `${Number(me.rating).toFixed(1)} / 5` : '—'} />
+                  <Stat icon={<ClipboardList size={20} className="text-forest-600" />} label="Tasks completed" value={`${completed}`} />
+                  <Stat icon={<Wallet size={20} />} label="Total earned" value={cedis(earned)} highlight />
+                </div>
 
-          <CoordinatorApply worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
+                <ReferralCard code={(me?.workerId as string) || 'BX-—'} referrals={0} />
 
-          {/* Profile completion card — single unified section, no stacked boxes */}
-          <div>
-            <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-ink-700/50">Your profile</h2>
-            <div className="rounded-2xl bg-cream-50 border border-ink-900/8 overflow-hidden">
-              {/* Home area row */}
-              <button
-                onClick={() => {
-                  const card = document.getElementById('home-area-inline')
-                  if (card) card.classList.toggle('hidden')
-                }}
-                className="flex w-full items-center justify-between px-4 py-3.5 text-left hover:bg-ink-900/[0.02] transition-colors focus:outline-none"
-              >
-                <div className="flex items-center gap-2.5">
-                  <MapPin size={15} className="shrink-0 text-forest-600" aria-hidden="true" />
-                  <div>
-                    <span className="text-sm font-semibold text-ink-900">Home area</span>
-                    <span className="ml-2 text-sm text-ink-700/60">
-                      {(me?.homeArea as string) || <span className="text-amber-700">Not set</span>}
-                    </span>
+                <div>
+                  <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-ink-700/50">Recent activity</h2>
+                  {loading ? <Skeleton /> : (
+                    <ActivityFeed items={recentActivity} empty="No activity yet — accepted and completed jobs will show up here." />
+                  )}
+                </div>
+              </div>
+            )}
+
+            {section === 'assignments' && (
+              <div>
+                <div className="mb-5 flex items-center gap-3">
+                  <div className="flex min-w-0 items-center gap-1 overflow-x-auto rounded-full bg-ink-900/5 p-1" role="tablist" aria-label="Assignment status">
+                    {assignmentTabs.map((t) => (
+                      <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
+                        className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition-colors focus:outline-none ${tab === t.id ? 'bg-cream-50 text-forest-700 shadow-sm' : 'text-ink-700 hover:text-ink-900'}`}>
+                        {t.label}
+                      </button>
+                    ))}
+                  </div>
+                  <button onClick={() => { setLoading(true); load() }} aria-label="Refresh tasks"
+                    className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-ink-700/60 transition-colors hover:bg-ink-900/5 hover:text-ink-900">
+                    <RefreshCw size={13} aria-hidden="true" /> Refresh
+                  </button>
+                </div>
+
+                <div className="space-y-3">
+                  {loading ? <Skeleton /> : (
+                    <>
+                      {tab === 'available' && (available.length ? available.map((t) => (
+                        <TaskCard key={t.id} task={t}>
+                          {t.status === 'offered' ? (
+                            <div className="flex items-center gap-2">
+                              <button onClick={() => declineOffer(t)} disabled={busyId === t.id}
+                                className="inline-flex items-center gap-1.5 rounded-full border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-700 transition-colors hover:bg-ink-900/5 disabled:opacity-60">
+                                Decline
+                              </button>
+                              <button onClick={() => acceptOffer(t)} disabled={busyId === t.id}
+                                className="inline-flex items-center gap-1.5 rounded-full bg-forest-600 px-5 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
+                                <Check size={15} aria-hidden="true" /> {busyId === t.id ? 'Accepting…' : 'Accept offer'}
+                              </button>
+                            </div>
+                          ) : (
+                            <button onClick={() => acceptOpen(t)} disabled={busyId === t.id}
+                              className="inline-flex items-center gap-1.5 rounded-full bg-forest-600 px-5 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
+                              <Check size={15} aria-hidden="true" /> {busyId === t.id ? 'Accepting…' : 'Accept'}
+                            </button>
+                          )}
+                        </TaskCard>
+                      )) : <Empty text="No jobs available right now. Check back soon." icon={<ClipboardList size={20} aria-hidden="true" />} />)}
+
+                      {tab === 'mine' && (
+                        <>
+                          {mine.length ? mine.map((t) => {
+                            // Mark Complete is only available on the scheduled day (or any day if no date set)
+                            const scheduledDate = t.scheduledDate as string | undefined
+                            const today = new Date().toISOString().split('T')[0]
+                            const canMarkDone = !scheduledDate || scheduledDate <= today
+
+                            return (
+                            <div key={t.id}>
+                              <TaskCard task={t}>
+                                {t.status === 'payment_pending' ? (
+                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 border border-amber-200">
+                                    <Loader2 size={11} className="animate-spin" aria-hidden="true" /> Verifying payment
+                                  </span>
+                                ) : t.status === 'pending_confirmation' ? (
+                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-ink-900/8 px-3 py-1.5 text-xs font-semibold text-ink-700">
+                                    <CheckCircle2 size={12} aria-hidden="true" className="text-forest-600" /> Awaiting confirmation
+                                  </span>
+                                ) : canMarkDone ? (
+                                  <button onClick={() => markDone(t)} disabled={busyId === t.id} aria-label={`Mark ${t.taskType || 'task'} complete`}
+                                    className="shrink-0 rounded-full bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
+                                    {busyId === t.id ? 'Saving…' : 'Mark complete'}
+                                  </button>
+                                ) : (
+                                  <span className="inline-flex items-center gap-1.5 rounded-full bg-ink-900/5 px-3 py-1.5 text-xs font-medium text-ink-700/60">
+                                    <Clock size={11} aria-hidden="true" /> Available on {new Date(scheduledDate + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
+                                  </span>
+                                )}
+                              </TaskCard>
+                              <div className="-mt-1 rounded-b-xl bg-cream-50 px-4 pb-4 shadow-sm border border-ink-900/8 sm:px-5">
+                                <LocationShare
+                                  taskId={t.id}
+                                  workerId={(me?.workerId as string) || undefined}
+                                  workerName={displayName}
+                                  autoStart={autoShareTaskId === t.id}
+                                  disabled={t.status === 'pending_confirmation' || isRemote(t.taskType || '')}
+                                />
+                              </div>
+                            </div>
+                          )}) : <Empty text="You haven't accepted any tasks yet." icon={<Check size={20} aria-hidden="true" />} />}
+                        </>
+                      )}
+
+                      {tab === 'declined' && (declined.length ? declined.map((t) => (
+                        <TaskCard key={t.id} task={t}>
+                          <span className="inline-flex items-center gap-1.5 rounded-full border border-ink-900/15 px-3 py-1.5 text-xs text-ink-700">
+                            <RotateCcw size={13} aria-hidden="true" /> Declined
+                          </span>
+                        </TaskCard>
+                      )) : <Empty text="You haven't declined any offers in this session." icon={<RotateCcw size={20} aria-hidden="true" />} />)}
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {section === 'verification' && (
+              <div>
+                <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-ink-700/50">Work experience & certifications</h2>
+                <p className="mb-4 px-1 text-sm text-ink-700/70">
+                  This is how BeyondX verifies your skills. Certifications you add here can be reviewed and marked verified by our team.
+                </p>
+                <div className="rounded-2xl bg-cream-50 border border-ink-900/8 overflow-hidden">
+                  <WorkExperienceCard worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
+                </div>
+              </div>
+            )}
+
+            {section === 'earnings' && (
+              <div className="space-y-5">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                  <Stat icon={<Wallet size={20} />} label="Total earned" value={cedis(earned)} highlight />
+                  <Stat icon={<ClipboardList size={20} className="text-forest-600" />} label="Tasks completed" value={`${completed}`} />
+                </div>
+                <div className="space-y-3">
+                  {loading ? <Skeleton /> : (history.length ? history.map((t) => {
+                    const rating = t.reviews?.[0]?.rating
+                    return (
+                      <div key={t.id} className="rounded-xl bg-cream-50 p-4 shadow-sm border border-ink-900/8 sm:p-5">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                          <div>
+                            <span className="mb-1 inline-block rounded-full bg-ink-900/5 px-2.5 py-0.5 text-xs font-medium text-ink-700">{t.taskType || 'Task'}</span>
+                            <h3 className="font-serif text-lg font-medium text-ink-900">{t.description || t.taskType}</h3>
+                            <p className="mt-0.5 text-sm text-ink-700">{employerName(t)}{t.location ? ` · ${t.location}` : ''}</p>
+                          </div>
+                          <div className="flex items-center gap-4">
+                            {rating ? (
+                              <span className="text-right">
+                                <span className="block text-xs text-ink-700">Employer rated you</span>
+                                <Stars n={Number(rating)} />
+                              </span>
+                            ) : null}
+                            <span className="font-semibold text-ink-900">{cedis(t.pay)}</span>
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  }) : <Empty text="No completed tasks yet." icon={<Star size={20} aria-hidden="true" />} />)}
+                </div>
+              </div>
+            )}
+
+            {section === 'profile' && (
+              <div className="space-y-5">
+                <div className="flex items-center justify-between rounded-2xl border border-ink-900/8 bg-cream-50 p-4">
+                  <div className="flex items-center gap-3">
+                    {photo
+                      ? <img src={photo} alt="" className="h-12 w-12 rounded-full object-cover" />
+                      : <span className="flex h-12 w-12 items-center justify-center rounded-full bg-forest-600 text-cream-50"><UserRound size={20} /></span>}
+                    <div>
+                      <p className="font-semibold text-ink-900">{displayName}</p>
+                      <p className="text-sm text-ink-700/60">{(me?.phone as string) || ''}</p>
+                    </div>
+                  </div>
+                  <button onClick={() => setEditing(true)}
+                    className="shrink-0 rounded-full border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-800 hover:bg-ink-900/5">
+                    Edit profile
+                  </button>
+                </div>
+
+                <div className="rounded-2xl bg-cream-50 border border-ink-900/8 overflow-hidden">
+                  <button
+                    onClick={() => {
+                      const card = document.getElementById('home-area-inline')
+                      if (card) card.classList.toggle('hidden')
+                    }}
+                    className="flex w-full items-center justify-between px-4 py-3.5 text-left hover:bg-ink-900/[0.02] transition-colors focus:outline-none"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <MapPin size={15} className="shrink-0 text-forest-600" aria-hidden="true" />
+                      <div>
+                        <span className="text-sm font-semibold text-ink-900">Home area</span>
+                        <span className="ml-2 text-sm text-ink-700/60">
+                          {(me?.homeArea as string) || <span className="text-amber-700">Not set</span>}
+                        </span>
+                      </div>
+                    </div>
+                    <ChevronRight size={15} className="shrink-0 text-ink-700/40" />
+                  </button>
+                  <div id="home-area-inline" className="hidden border-t border-ink-900/6 px-4 pb-4 pt-3">
+                    <HomeAreaInline worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
                   </div>
                 </div>
-                <ChevronRight size={15} className="shrink-0 text-ink-700/40" />
-              </button>
-              <div id="home-area-inline" className="hidden border-t border-ink-900/6 px-4 pb-4 pt-3">
-                <HomeAreaInline worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
+
+                <CoordinatorApply worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
               </div>
+            )}
 
-              {/* Experience row */}
-              <div className="border-t border-ink-900/6 outline-none">
-                <WorkExperienceCard worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
-              </div>
-            </div>
+            {section === 'support' && (
+              <SupportPanel
+                role="worker"
+                onSent={() => setToast({ id: Date.now(), kind: 'success', title: 'Message sent', detail: 'Our team will follow up with you shortly.' })}
+                onError={(m) => setToast({ id: Date.now(), kind: 'info', title: 'Could not send', detail: m })}
+              />
+            )}
           </div>
-        </div>
-
-        <div className="mt-8 flex items-center gap-3">
-          <div className="flex min-w-0 items-center gap-1 overflow-x-auto rounded-full bg-ink-900/5 p-1" role="tablist" aria-label="Worker sections">
-            {tabs.map((t) => (
-              <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
-                className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition-colors focus:outline-none ${tab === t.id ? 'bg-cream-50 text-forest-700 shadow-sm' : 'text-ink-700 hover:text-ink-900'}`}>
-                {t.label}
-              </button>
-            ))}
-          </div>
-          <button onClick={() => { setLoading(true); load() }} aria-label="Refresh tasks"
-            className="ml-auto flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-ink-700/60 transition-colors hover:bg-ink-900/5 hover:text-ink-900">
-            <RefreshCw size={13} aria-hidden="true" /> Refresh
-          </button>
-        </div>
-
-        {tab === 'support' && (
-          <SupportPanel
-            role="worker"
-            onSent={() => setToast({ id: Date.now(), kind: 'success', title: 'Message sent', detail: 'Our team will follow up with you shortly.' })}
-            onError={(m) => setToast({ id: Date.now(), kind: 'info', title: 'Could not send', detail: m })}
-          />
-        )}
-
-        <div className="mt-6 space-y-3">
-          {tab === 'support' ? null : loading ? <Skeleton /> : (
-            <>
-              {tab === 'available' && (available.length ? available.map((t) => (
-                <TaskCard key={t.id} task={t}>
-                  {t.status === 'offered' ? (
-                    <div className="flex items-center gap-2">
-                      <button onClick={() => declineOffer(t)} disabled={busyId === t.id}
-                        className="inline-flex items-center gap-1.5 rounded-full border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-700 transition-colors hover:bg-ink-900/5 disabled:opacity-60">
-                        Decline
-                      </button>
-                      <button onClick={() => acceptOffer(t)} disabled={busyId === t.id}
-                        className="inline-flex items-center gap-1.5 rounded-full bg-forest-600 px-5 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
-                        <Check size={15} aria-hidden="true" /> {busyId === t.id ? 'Accepting…' : 'Accept offer'}
-                      </button>
-                    </div>
-                  ) : (
-                    <button onClick={() => acceptOpen(t)} disabled={busyId === t.id}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-forest-600 px-5 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
-                      <Check size={15} aria-hidden="true" /> {busyId === t.id ? 'Accepting…' : 'Accept'}
-                    </button>
-                  )}
-                </TaskCard>
-              )) : <Empty text="No jobs available right now. Check back soon." icon={<ClipboardList size={20} aria-hidden="true" />} />)}
-
-              {tab === 'mine' && (
-                <>
-                  {mine.length ? mine.map((t) => {
-                    // Mark Complete is only available on the scheduled day (or any day if no date set)
-                    const scheduledDate = t.scheduledDate as string | undefined
-                    const today = new Date().toISOString().split('T')[0]
-                    const canMarkDone = !scheduledDate || scheduledDate <= today
-
-                    return (
-                    <div key={t.id}>
-                      <TaskCard task={t}>
-                        {t.status === 'payment_pending' ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-800 border border-amber-200">
-                            <Loader2 size={11} className="animate-spin" aria-hidden="true" /> Verifying payment
-                          </span>
-                        ) : t.status === 'pending_confirmation' ? (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-ink-900/8 px-3 py-1.5 text-xs font-semibold text-ink-700">
-                            <CheckCircle2 size={12} aria-hidden="true" className="text-forest-600" /> Awaiting confirmation
-                          </span>
-                        ) : canMarkDone ? (
-                          <button onClick={() => markDone(t)} disabled={busyId === t.id} aria-label={`Mark ${t.taskType || 'task'} complete`}
-                            className="shrink-0 rounded-full bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
-                            {busyId === t.id ? 'Saving…' : 'Mark complete'}
-                          </button>
-                        ) : (
-                          <span className="inline-flex items-center gap-1.5 rounded-full bg-ink-900/5 px-3 py-1.5 text-xs font-medium text-ink-700/60">
-                            <Clock size={11} aria-hidden="true" /> Available on {new Date(scheduledDate + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}
-                          </span>
-                        )}
-                      </TaskCard>
-                      <div className="-mt-1 rounded-b-xl bg-cream-50 px-4 pb-4 shadow-sm border border-ink-900/8 sm:px-5">
-                        <LocationShare
-                          taskId={t.id}
-                          workerId={(me?.workerId as string) || undefined}
-                          workerName={displayName}
-                          autoStart={autoShareTaskId === t.id}
-                          disabled={t.status === 'pending_confirmation' || isRemote(t.taskType || '')}
-                        />
-                      </div>
-                    </div>
-                  )}) : <Empty text="You haven't accepted any tasks yet." icon={<Check size={20} aria-hidden="true" />} />}
-                </>
-              )}
-
-              {tab === 'declined' && (declined.length ? declined.map((t) => (
-                <TaskCard key={t.id} task={t}>
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-ink-900/15 px-3 py-1.5 text-xs text-ink-700">
-                    <RotateCcw size={13} aria-hidden="true" /> Declined
-                  </span>
-                </TaskCard>
-              )) : <Empty text="You haven't declined any offers in this session." icon={<RotateCcw size={20} aria-hidden="true" />} />)}
-
-              {tab === 'history' && (history.length ? history.map((t) => {
-                const rating = t.reviews?.[0]?.rating
-                return (
-                  <div key={t.id} className="rounded-xl bg-cream-50 p-4 shadow-sm border border-ink-900/8 sm:p-5">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <div>
-                        <span className="mb-1 inline-block rounded-full bg-ink-900/5 px-2.5 py-0.5 text-xs font-medium text-ink-700">{t.taskType || 'Task'}</span>
-                        <h3 className="font-serif text-lg font-medium text-ink-900">{t.description || t.taskType}</h3>
-                        <p className="mt-0.5 text-sm text-ink-700">{employerName(t)}{t.location ? ` · ${t.location}` : ''}</p>
-                      </div>
-                      <div className="flex items-center gap-4">
-                        {rating ? (
-                          <span className="text-right">
-                            <span className="block text-xs text-ink-700">Employer rated you</span>
-                            <Stars n={Number(rating)} />
-                          </span>
-                        ) : null}
-                        <span className="font-semibold text-ink-900">{cedis(t.pay)}</span>
-                      </div>
-                    </div>
-                  </div>
-                )
-              }) : <Empty text="No completed tasks yet." icon={<Star size={20} aria-hidden="true" />} />)}
-            </>
-          )}
         </div>
       </main>
 
