@@ -386,16 +386,15 @@ function Stars({ n }: { n: number }) {
   )
 }
 
-function Stat({ icon, label, value, highlight }: { icon: ReactNode; label: string; value: string; highlight?: boolean }) {
+function Stat({ icon, label, value, extra }: { icon: ReactNode; label: string; value: string; extra?: ReactNode }) {
   return (
-    <div className={`flex items-center gap-3.5 rounded-2xl border px-4 py-4 transition-shadow hover:shadow-sm sm:py-5 ${
-      highlight ? 'border-forest-600/15 bg-gradient-to-br from-forest-600 to-forest-700 text-cream-50' : 'border-ink-900/8 bg-cream-50'
-    }`}>
-      <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${highlight ? 'bg-cream-50/15 text-cream-50' : 'bg-forest-600/10 text-forest-600'}`}>{icon}</span>
-      <span className="min-w-0">
-        <span className={`block truncate font-serif text-xl font-semibold ${highlight ? 'text-cream-50' : 'text-ink-900'}`}>{value}</span>
-        <span className={`block truncate text-xs ${highlight ? 'text-cream-50/75' : 'text-ink-700/60'}`}>{label}</span>
-      </span>
+    <div className="rounded-2xl border border-ink-900/8 bg-cream-50 px-5 py-4 transition-shadow hover:shadow-sm">
+      <p className="truncate text-xs text-ink-700/60">{label}</p>
+      <div className="mt-2 flex items-center gap-2.5">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-forest-600/10 text-forest-600">{icon}</span>
+        <span className="font-serif text-2xl font-semibold text-ink-900">{value}</span>
+        {extra}
+      </div>
     </div>
   )
 }
@@ -797,27 +796,43 @@ export default function WorkerDashboard() {
     { id: 'support', label: 'Support', icon: HelpCircle },
   ]
 
+  const activityDate = (t: Task) => t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : undefined
+
   const recentActivity: ActivityItem[] = [
     ...mine.map((t) => ({
       id: `mine-${t.id}`,
       icon: <Clock size={15} aria-hidden="true" />,
       title: `${t.taskType || 'Task'} — in progress`,
-      detail: employerName(t),
+      detail: [employerName(t), activityDate(t)].filter(Boolean).join(' · '),
+      status: { label: 'In progress', tone: 'info' as const },
     })),
     ...declined.slice(0, 3).map((t) => ({
       id: `declined-${t.id}`,
       icon: <RotateCcw size={15} aria-hidden="true" />,
-      title: `${t.taskType || 'Task'} — declined`,
-      detail: employerName(t),
+      title: `${t.taskType || 'Task'} declined`,
+      detail: [employerName(t), activityDate(t)].filter(Boolean).join(' · '),
+      status: { label: 'Declined', tone: 'info' as const },
     })),
     ...history.slice(0, 5).map((t) => ({
       id: `history-${t.id}`,
       icon: <CheckCircle2 size={15} aria-hidden="true" />,
-      title: `${t.taskType || 'Task'} — completed`,
-      detail: employerName(t),
-      date: t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : undefined,
+      title: `${t.taskType || 'Task'} completed`,
+      detail: [employerName(t), activityDate(t)].filter(Boolean).join(' · '),
+      status: { label: 'Completed', tone: 'success' as const },
     })),
   ].slice(0, 8)
+
+  // The soonest scheduled task in My Tasks — falls back to the first accepted
+  // task when none carry a schedule, since any accepted job is still "next".
+  const nextAssignment = [...mine].sort((a, b) => {
+    const da = a.scheduledDate ? new Date(`${a.scheduledDate}T${a.scheduledTime || '08:00'}`).getTime() : Infinity
+    const db = b.scheduledDate ? new Date(`${b.scheduledDate}T${b.scheduledTime || '08:00'}`).getTime() : Infinity
+    return da - db
+  })[0]
+  const nextAssignmentWhen = nextAssignment?.scheduledDate
+    ? new Date(`${nextAssignment.scheduledDate}T${nextAssignment.scheduledTime || '08:00'}:00`)
+        .toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+    : undefined
 
   // Approved Coordinators get a different dashboard entirely (team
   // management, bulk-job quoting, payout splits) — see CoordinatorDashboard.
@@ -844,11 +859,7 @@ export default function WorkerDashboard() {
 
         <div className="mb-6">
           <h1 className="font-serif text-2xl font-medium text-ink-900 sm:text-[26px]">Welcome back, {displayName.split(' ')[0]}!</h1>
-          <p className="mt-0.5 text-sm text-ink-700/70">
-            {available.length > 0
-              ? `${available.length} job${available.length === 1 ? '' : 's'} available right now.`
-              : "You're all caught up — check back soon for new jobs."}
-          </p>
+          <p className="mt-0.5 text-sm text-ink-700/70">Here's what's happening with your profile and assignments.</p>
         </div>
 
         <div className="flex flex-col gap-6 lg:flex-row lg:gap-10">
@@ -857,20 +868,68 @@ export default function WorkerDashboard() {
           <div className="min-w-0 flex-1">
             {section === 'overview' && (
               <div className="space-y-5">
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <Stat icon={<Star size={20} className="text-forest-600" />} label="Your rating" value={me?.rating && Number(me.rating) > 0 ? `${Number(me.rating).toFixed(1)} / 5` : '—'} />
-                  <Stat icon={<ClipboardList size={20} className="text-forest-600" />} label="Tasks completed" value={`${completed}`} />
-                  <Stat icon={<Wallet size={20} />} label="Total earned" value={cedis(earned)} highlight />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-ink-900/8 bg-cream-50 p-5">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-ink-700/50">Your Current Status</p>
+                    <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-forest-600/10 px-3 py-1.5 text-sm font-semibold text-forest-700">
+                      <CheckCircle2 size={15} aria-hidden="true" /> Active
+                    </span>
+                    <p className="mt-3 text-sm text-ink-700/75">
+                      {offers.length > 0
+                        ? `You have ${offers.length} offer${offers.length === 1 ? '' : 's'} awaiting your response.`
+                        : "You're all set — eligible for new assignments."}
+                    </p>
+                    <button onClick={() => setSection('verification')} className="mt-2 text-sm font-medium text-forest-700 hover:text-forest-500">
+                      View status details →
+                    </button>
+                  </div>
+
+                  <div className="rounded-2xl border border-ink-900/8 bg-cream-50 p-5">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-ink-700/50">Next Assignment</p>
+                    {nextAssignment ? (
+                      <>
+                        <p className="mt-2 font-serif text-lg font-semibold text-ink-900">{nextAssignment.taskType || 'Task'}</p>
+                        <div className="mt-1.5 space-y-1 text-sm text-ink-700/75">
+                          {nextAssignmentWhen && (
+                            <p className="flex items-center gap-1.5"><Calendar size={13} aria-hidden="true" /> {nextAssignmentWhen}</p>
+                          )}
+                          {nextAssignment.location && (
+                            <p className="flex items-center gap-1.5"><MapPin size={13} aria-hidden="true" /> {nextAssignment.location}</p>
+                          )}
+                        </div>
+                        <button onClick={() => { setSection('assignments'); setTab('mine') }}
+                          className="mt-3 rounded-full bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98]">
+                          View Details
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <p className="mt-2 text-sm text-ink-700/70">No upcoming assignment yet.</p>
+                        <button onClick={() => { setSection('assignments'); setTab('available') }}
+                          className="mt-3 rounded-full border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-800 hover:bg-ink-900/5">
+                          Browse available jobs
+                        </button>
+                      </>
+                    )}
+                  </div>
                 </div>
 
-                <ReferralCard code={(me?.workerId as string) || 'BX-—'} referrals={0} />
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <Stat icon={<ClipboardList size={18} />} label="Completed Jobs" value={`${completed}`} />
+                  <Stat icon={<Wallet size={18} />} label="Total Earnings" value={cedis(earned)} />
+                  <Stat icon={<Star size={18} />} label="Average Rating"
+                    value={me?.rating && Number(me.rating) > 0 ? Number(me.rating).toFixed(1) : '—'}
+                    extra={me?.rating && Number(me.rating) > 0 ? <Stars n={Math.round(Number(me.rating))} /> : undefined} />
+                </div>
 
                 <div>
-                  <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-ink-700/50">Recent activity</h2>
+                  <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-ink-700/50">Recent Activity</h2>
                   {loading ? <Skeleton /> : (
                     <ActivityFeed items={recentActivity} empty="No activity yet — accepted and completed jobs will show up here." />
                   )}
                 </div>
+
+                <ReferralCard code={(me?.workerId as string) || 'BX-—'} referrals={0} />
               </div>
             )}
 
@@ -988,8 +1047,8 @@ export default function WorkerDashboard() {
             {section === 'earnings' && (
               <div className="space-y-5">
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <Stat icon={<Wallet size={20} />} label="Total earned" value={cedis(earned)} highlight />
-                  <Stat icon={<ClipboardList size={20} className="text-forest-600" />} label="Tasks completed" value={`${completed}`} />
+                  <Stat icon={<Wallet size={18} />} label="Total Earnings" value={cedis(earned)} />
+                  <Stat icon={<ClipboardList size={18} />} label="Completed Jobs" value={`${completed}`} />
                 </div>
                 <div className="space-y-3">
                   {loading ? <Skeleton /> : (history.length ? history.map((t) => {

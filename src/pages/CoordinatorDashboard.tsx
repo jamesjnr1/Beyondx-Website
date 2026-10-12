@@ -14,8 +14,11 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import {
   Plus, Trash2, ClipboardList, Wallet, AlertTriangle, Star,
   RefreshCw, AlertCircle, CheckCircle2, XCircle, Clock, Inbox,
+  LayoutDashboard, Users, Package, HelpCircle,
 } from 'lucide-react'
 import DashboardHeader from './DashboardHeader'
+import DashboardSidebar, { type DashboardNavItem } from '../components/DashboardSidebar'
+import ActivityFeed, { type ActivityItem } from '../components/ActivityFeed'
 import Toast, { type ToastMsg } from '../components/Toast'
 import SupportPanel from '../components/SupportPanel'
 import ProfileModal, { type Profile } from '../components/ProfileModal'
@@ -35,11 +38,11 @@ const inp = 'w-full rounded-lg border border-ink-900/12 bg-white px-3 py-2 text-
 
 function Stat({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
-    <div className="flex items-center gap-3 rounded-2xl bg-cream-50 border border-ink-900/8 px-4 py-3.5">
-      <div className="shrink-0">{icon}</div>
-      <div className="min-w-0">
-        <p className="truncate text-xs text-ink-700/60">{label}</p>
-        <p className="truncate font-serif text-lg font-semibold text-ink-900">{value}</p>
+    <div className="rounded-2xl border border-ink-900/8 bg-cream-50 px-5 py-4 transition-shadow hover:shadow-sm">
+      <p className="truncate text-xs text-ink-700/60">{label}</p>
+      <div className="mt-2 flex items-center gap-2.5">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-forest-600/10 text-forest-600">{icon}</span>
+        <span className="font-serif text-2xl font-semibold text-ink-900">{value}</span>
       </div>
     </div>
   )
@@ -758,7 +761,7 @@ function ActiveJobsTab({ tasks, onReload }: { tasks: Task[]; onReload: () => voi
 /* ------------------------------ Main export ------------------------------ */
 
 export default function CoordinatorDashboard() {
-  const [tab, setTab] = useState<'team' | 'requests' | 'active' | 'jobs' | 'payouts' | 'disputes' | 'support'>('requests')
+  const [tab, setTab] = useState<'overview' | 'team' | 'requests' | 'active' | 'jobs' | 'payouts' | 'disputes' | 'support'>('overview')
   const [me, setMe] = useState<Worker | null>(session.worker())
   const [openTasks, setOpenTasks] = useState<Task[]>([])
   const [history, setHistory] = useState<Task[]>([])
@@ -797,15 +800,38 @@ export default function CoordinatorDashboard() {
   const application = getApplication(me)
   const pendingRequests = coordRequests.filter((r) => r.status === 'pending_coordinator').length
   const activeCount = myTasks.length
-  const tabs: { id: typeof tab; label: string; badge?: number }[] = [
-    { id: 'requests', label: 'Requests', badge: pendingRequests || undefined },
-    { id: 'active', label: 'Active jobs', badge: activeCount || undefined },
-    { id: 'team', label: 'Team' },
-    { id: 'jobs', label: 'Bulk jobs' },
-    { id: 'payouts', label: 'Payouts' },
-    { id: 'disputes', label: 'Disputes' },
-    { id: 'support', label: 'Support' },
+  const displayName = (me?.fullName as string) || (me?.name as string) || 'Coordinator'
+
+  const navItems: DashboardNavItem[] = [
+    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+    { id: 'requests', label: 'Requests', icon: Inbox, badge: pendingRequests },
+    { id: 'active', label: 'Active Jobs', icon: ClipboardList, badge: activeCount },
+    { id: 'team', label: 'Team', icon: Users },
+    { id: 'jobs', label: 'Bulk Jobs', icon: Package },
+    { id: 'payouts', label: 'Payouts', icon: Wallet },
+    { id: 'disputes', label: 'Disputes', icon: AlertTriangle },
+    { id: 'support', label: 'Support', icon: HelpCircle },
   ]
+
+  const recentActivity: ActivityItem[] = [
+    ...coordRequests.filter((r) => r.status !== 'pending_coordinator').slice(0, 4).map((r) => {
+      const isNegative = r.status === 'admin_rejected' || r.status === 'declined'
+      return {
+        id: `req-${r.id}`,
+        icon: isNegative ? <XCircle size={15} aria-hidden="true" /> : <CheckCircle2 size={15} aria-hidden="true" />,
+        title: r.taskType || 'Job request',
+        detail: [r.employer?.orgName || 'Employer', new Date(r.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })].join(' · '),
+        status: { label: REQUEST_STATUS[r.status].label, tone: isNegative ? ('info' as const) : ('success' as const) },
+      }
+    }),
+    ...myTasks.slice(0, 4).map((t) => ({
+      id: `task-${t.id}`,
+      icon: <ClipboardList size={15} aria-hidden="true" />,
+      title: t.taskType || 'Job',
+      detail: t.location as string | undefined,
+      status: { label: (t.status || '').replace(/_/g, ' '), tone: 'info' as const },
+    })),
+  ].slice(0, 8)
 
   return (
     <div className="min-h-screen bg-cream-100">
@@ -817,12 +843,8 @@ export default function CoordinatorDashboard() {
         onEditProfile={() => setEditing(true)}
       />
 
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-8">
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-8">
         <NotificationsBanner role="worker" />
-
-        {application?.businessName && (
-          <p className="mb-4 text-sm text-ink-700/70">{application.businessName} · Coordinator account</p>
-        )}
 
         {error && (
           <div className="mb-4 flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -831,49 +853,100 @@ export default function CoordinatorDashboard() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-          <Stat icon={<Inbox size={20} className="text-forest-600" />} label="Pending requests" value={`${pendingRequests}`} />
-          <Stat icon={<ClipboardList size={20} className="text-forest-600" />} label="Active jobs" value={`${activeCount}`} />
-          <Stat icon={<Wallet size={20} className="text-forest-600" />} label="Total earned" value={cedis(Number(me?.totalEarned || 0))} />
-        </div>
-
-        <div className="mt-6 flex items-center gap-2 overflow-x-auto border-b border-ink-900/10 pb-px">
-          {tabs.map((t) => (
-            <button key={t.id} onClick={() => setTab(t.id)}
-              className={`shrink-0 inline-flex items-center gap-1.5 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors ${tab === t.id ? 'border-forest-600 text-forest-700' : 'border-transparent text-ink-700 hover:text-ink-900'}`}>
-              {t.label}
-              {!!t.badge && <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-forest-600 px-1 text-[9px] font-bold text-cream-50">{t.badge}</span>}
-            </button>
-          ))}
-          <button onClick={() => { setLoading(true); load() }} className="ml-auto flex shrink-0 items-center gap-1.5 px-2 py-1.5 text-xs font-medium text-ink-700/60 hover:text-ink-900">
-            <RefreshCw size={13} /> Refresh
+        <div className="mb-6 flex items-start justify-between gap-3">
+          <div>
+            <h1 className="font-serif text-2xl font-medium text-ink-900 sm:text-[26px]">Welcome back, {displayName.split(' ')[0]}!</h1>
+            <p className="mt-0.5 text-sm text-ink-700/70">
+              {application?.businessName ? `${application.businessName} · Coordinator account` : 'Coordinator account'}
+            </p>
+          </div>
+          <button onClick={() => { setLoading(true); load() }} aria-label="Refresh dashboard"
+            className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-ink-700/60 transition-colors hover:bg-ink-900/5 hover:text-ink-900">
+            <RefreshCw size={13} aria-hidden="true" /> Refresh
           </button>
         </div>
 
-        <div className="mt-5">
-          {loading ? (
-            <p className="py-10 text-center text-sm text-ink-700/60">Loading…</p>
-          ) : (
-            <>
-              {tab === 'requests' && (
-                <RequestsTab
-                  requests={coordRequests}
-                  onUpdate={(r) => setCoordRequests((prev) => prev.map((x) => x.id === r.id ? r : x))}
-                />
-              )}
-              {tab === 'active' && <ActiveJobsTab tasks={myTasks} onReload={load} />}
-              {tab === 'team' && <TeamTab worker={me} onSaved={onSaved} />}
-              {tab === 'jobs' && <JobsTab worker={me} tasks={openTasks} onSaved={onSaved} onToast={setToast} />}
-              {tab === 'payouts' && <PayoutsTab worker={me} history={history} onSaved={onSaved} onToast={setToast} />}
-              {tab === 'disputes' && <DisputesTab worker={me} onSaved={onSaved} onToast={setToast} />}
-              {tab === 'support' && (
-                <SupportPanel role="worker"
-                  onSent={() => setToast({ id: Date.now(), kind: 'success', title: 'Message sent', detail: 'Our team will follow up with you shortly.' })}
-                  onError={(m) => setToast({ id: Date.now(), kind: 'info', title: 'Could not send', detail: m })}
-                />
-              )}
-            </>
-          )}
+        <div className="flex flex-col gap-6 lg:flex-row lg:gap-10">
+          <DashboardSidebar items={navItems} active={tab} onSelect={(id) => setTab(id as typeof tab)} />
+
+          <div className="min-w-0 flex-1">
+            {loading ? (
+              <p className="py-10 text-center text-sm text-ink-700/60">Loading…</p>
+            ) : (
+              <>
+                {tab === 'overview' && (
+                  <div className="space-y-5">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                      <div className="rounded-2xl border border-ink-900/8 bg-cream-50 p-5">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-ink-700/50">Your Current Status</p>
+                        <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-forest-600/10 px-3 py-1.5 text-sm font-semibold text-forest-700">
+                          <CheckCircle2 size={15} aria-hidden="true" /> Active
+                        </span>
+                        <p className="mt-3 text-sm text-ink-700/75">
+                          {pendingRequests > 0
+                            ? `You have ${pendingRequests} request${pendingRequests === 1 ? '' : 's'} awaiting your quote.`
+                            : "You're all caught up on job requests."}
+                        </p>
+                        <button onClick={() => setTab('requests')} className="mt-2 text-sm font-medium text-forest-700 hover:text-forest-500">
+                          View requests →
+                        </button>
+                      </div>
+
+                      <div className="rounded-2xl border border-ink-900/8 bg-cream-50 p-5">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-ink-700/50">Next Active Job</p>
+                        {myTasks[0] ? (
+                          <>
+                            <p className="mt-2 font-serif text-lg font-semibold text-ink-900">{myTasks[0].taskType || 'Job'}</p>
+                            {myTasks[0].location && <p className="mt-1 text-sm text-ink-700/75">{myTasks[0].location}</p>}
+                            <button onClick={() => setTab('active')}
+                              className="mt-3 rounded-full bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98]">
+                              View Details
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <p className="mt-2 text-sm text-ink-700/70">No active jobs yet.</p>
+                            <button onClick={() => setTab('requests')}
+                              className="mt-3 rounded-full border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-800 hover:bg-ink-900/5">
+                              Review requests
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      <Stat icon={<Inbox size={18} />} label="Pending Requests" value={`${pendingRequests}`} />
+                      <Stat icon={<ClipboardList size={18} />} label="Active Jobs" value={`${activeCount}`} />
+                      <Stat icon={<Wallet size={18} />} label="Total Earnings" value={cedis(Number(me?.totalEarned || 0))} />
+                    </div>
+
+                    <div>
+                      <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-ink-700/50">Recent Activity</h2>
+                      <ActivityFeed items={recentActivity} empty="No activity yet — job requests and assignments will show up here." />
+                    </div>
+                  </div>
+                )}
+                {tab === 'requests' && (
+                  <RequestsTab
+                    requests={coordRequests}
+                    onUpdate={(r) => setCoordRequests((prev) => prev.map((x) => x.id === r.id ? r : x))}
+                  />
+                )}
+                {tab === 'active' && <ActiveJobsTab tasks={myTasks} onReload={load} />}
+                {tab === 'team' && <TeamTab worker={me} onSaved={onSaved} />}
+                {tab === 'jobs' && <JobsTab worker={me} tasks={openTasks} onSaved={onSaved} onToast={setToast} />}
+                {tab === 'payouts' && <PayoutsTab worker={me} history={history} onSaved={onSaved} onToast={setToast} />}
+                {tab === 'disputes' && <DisputesTab worker={me} onSaved={onSaved} onToast={setToast} />}
+                {tab === 'support' && (
+                  <SupportPanel role="worker"
+                    onSent={() => setToast({ id: Date.now(), kind: 'success', title: 'Message sent', detail: 'Our team will follow up with you shortly.' })}
+                    onError={(m) => setToast({ id: Date.now(), kind: 'info', title: 'Could not send', detail: m })}
+                  />
+                )}
+              </>
+            )}
+          </div>
         </div>
       </main>
 
