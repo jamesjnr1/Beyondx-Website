@@ -23,7 +23,7 @@ function Shell() {
 
   return (
     <div className="relative min-h-screen bg-cream-50 text-ink-900">
-      <a href="#main" className="sr-only rounded-full bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100]">
+      <a href="#main" className="sr-only rounded-md bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100]">
         Skip to content
       </a>
       <Navbar />

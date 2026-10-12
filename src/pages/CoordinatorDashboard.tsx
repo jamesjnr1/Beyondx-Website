@@ -125,7 +125,7 @@ function TeamTab({ worker, onSaved }: { worker: Worker | null; onSaved: (patch: 
       <div className="flex items-center justify-between">
         <h2 className="font-serif text-lg font-medium text-ink-900">Your team ({active.length})</h2>
         {!adding && (
-          <button onClick={() => setAdding(true)} className="inline-flex items-center gap-1.5 rounded-full bg-forest-600 px-3.5 py-1.5 text-xs font-semibold text-cream-50 hover:bg-forest-500">
+          <button onClick={() => setAdding(true)} className="inline-flex items-center gap-1.5 rounded-md bg-forest-600 px-3.5 py-1.5 text-xs font-semibold text-cream-50 hover:bg-forest-500">
             <Plus size={13} /> Add worker
           </button>
         )}
@@ -207,7 +207,7 @@ function JobQuoteCard({
           {task.description && <p className="mt-1 text-xs text-ink-700/60 line-clamp-2">{String(task.description)}</p>}
         </div>
         {quote && (
-          <span className={`shrink-0 rounded-full px-2.5 py-1 text-[0.8125rem] font-semibold ${
+          <span className={`shrink-0 rounded-md px-2.5 py-1 text-[0.8125rem] font-semibold ${
             quote.status === 'approved' ? 'bg-forest-600/10 text-forest-700'
             : quote.status === 'denied' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'
           }`}>
@@ -228,7 +228,7 @@ function JobQuoteCard({
           <div className="flex flex-wrap gap-1.5">
             {team.map((m) => (
               <button key={m.id} type="button" onClick={() => toggle(m.id)}
-                className={`rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                className={`rounded-md border px-3 py-1 text-xs font-medium transition-colors ${
                   assigned.has(m.id) ? 'border-forest-600 bg-forest-600/10 text-forest-700' : 'border-ink-900/15 text-ink-700 hover:bg-ink-900/5'
                 }`}>
                 {m.name}
@@ -482,7 +482,7 @@ function DisputesTab({
           <p className="mt-0.5 text-xs text-ink-700/60">You're the first point of contact — escalate to BeyondX if it can't be resolved within the team.</p>
         </div>
         {!adding && (
-          <button onClick={() => setAdding(true)} className="inline-flex items-center gap-1.5 rounded-full bg-forest-600 px-3.5 py-1.5 text-xs font-semibold text-cream-50 hover:bg-forest-500">
+          <button onClick={() => setAdding(true)} className="inline-flex items-center gap-1.5 rounded-md bg-forest-600 px-3.5 py-1.5 text-xs font-semibold text-cream-50 hover:bg-forest-500">
             <Plus size={13} /> Log dispute
           </button>
         )}
@@ -859,7 +859,7 @@ export default function CoordinatorDashboard() {
         {error && (
           <div className="mb-4 flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="flex items-start gap-2 text-sm text-red-700"><AlertCircle size={16} className="mt-0.5 shrink-0" /> {error}</p>
-            <button onClick={() => { setLoading(true); load() }} className="shrink-0 rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-cream-50 hover:bg-red-700">Try again</button>
+            <button onClick={() => { setLoading(true); load() }} className="shrink-0 rounded-md bg-red-600 px-4 py-2 text-xs font-semibold text-cream-50 hover:bg-red-700">Try again</button>
           </div>
         )}
 
@@ -871,7 +871,7 @@ export default function CoordinatorDashboard() {
             </p>
           </div>
           <button onClick={() => { setLoading(true); load() }} aria-label="Refresh dashboard"
-            className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-ink-700/60 transition-colors hover:bg-ink-900/5 hover:text-ink-900">
+            className="flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium text-ink-700/60 transition-colors hover:bg-ink-900/5 hover:text-ink-900">
             <RefreshCw size={13} aria-hidden="true" /> Refresh
           </button>
         </div>
@@ -889,10 +889,9 @@ export default function CoordinatorDashboard() {
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                       <div className="rounded-2xl border border-ink-900/8 bg-white p-6 shadow-sm">
                         <p className="text-sm font-medium text-ink-700">Your Current Status</p>
-                        <span className="mt-5 inline-flex items-center gap-3 rounded-full bg-forest-600/15 py-2 pl-2 pr-7">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-forest-600 text-cream-50"><Check size={18} strokeWidth={3} aria-hidden="true" /></span>
-                      <span className="text-base font-semibold text-ink-900">Active</span>
-                    </span>
+                        <p className="mt-4 flex items-center gap-2 text-lg font-semibold text-forest-700">
+                      <Check size={20} strokeWidth={3} aria-hidden="true" /> Active
+                    </p>
                         <p className="mt-3 text-sm text-ink-700/75">
                           {pendingRequests > 0
                             ? `You have ${pendingRequests} request${pendingRequests === 1 ? '' : 's'} awaiting your quote.`
@@ -907,7 +906,7 @@ export default function CoordinatorDashboard() {
                         <p className="border-b border-ink-900/8 pb-3 text-sm font-semibold text-ink-900">Next Active Job</p>
                         {myTasks[0] ? (
                           <>
-                            <p className="mt-2 font-serif text-lg font-semibold text-ink-900">{myTasks[0].taskType || 'Job'}</p>
+                            <p className="mt-3 text-lg font-semibold text-ink-900">{myTasks[0].taskType || 'Job'}</p>
                             {myTasks[0].location && <p className="mt-1 text-sm text-ink-700/75">{myTasks[0].location}</p>}
                             <button onClick={() => setTab('active')}
                               className="mt-4 rounded-lg bg-forest-600 px-7 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98]">
@@ -918,7 +917,7 @@ export default function CoordinatorDashboard() {
                           <>
                             <p className="mt-2 text-sm text-ink-700/70">No active jobs yet.</p>
                             <button onClick={() => setTab('requests')}
-                              className="mt-3 rounded-full border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-800 hover:bg-ink-900/5">
+                              className="mt-3 rounded-md border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-800 hover:bg-ink-900/5">
                               Review requests
                             </button>
                           </>

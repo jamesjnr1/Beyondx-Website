@@ -11,9 +11,9 @@ export interface ActivityItem {
 }
 
 const TONE_CLASSES: Record<ActivityTone, string> = {
-  success: 'bg-forest-600/10 text-forest-700',
-  info: 'bg-ink-900/8 text-ink-700',
-  warning: 'bg-amber-100 text-amber-800',
+  success: 'text-forest-700',
+  info: 'text-ink-700/70',
+  warning: 'text-amber-700',
 }
 
 /** "Recent Activity" list shared across dashboards. Dates/status are only
@@ -34,7 +34,7 @@ export default function ActivityFeed({ items, empty, title }: { items: ActivityI
             {item.detail && <span className="block truncate text-xs text-ink-700/60">{item.detail}</span>}
           </span>
           {item.status && (
-            <span className={`shrink-0 rounded-full px-2.5 py-1 text-[0.8125rem] font-semibold ${TONE_CLASSES[item.status.tone]}`}>
+            <span className={`shrink-0 text-sm font-medium ${TONE_CLASSES[item.status.tone]}`}>
               {item.status.label}
             </span>
           )}

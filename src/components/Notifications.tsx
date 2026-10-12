@@ -167,7 +167,7 @@ function PushOptIn({ role }: { role: 'worker' | 'employer' }) {
         <button
           onClick={handleEnable}
           disabled={busy}
-          className="flex w-full items-center justify-center gap-2 rounded-full bg-forest-600 px-4 py-2 text-xs font-semibold text-cream-50 transition-colors hover:bg-forest-500 disabled:opacity-60"
+          className="flex w-full items-center justify-center gap-2 rounded-md bg-forest-600 px-4 py-2 text-xs font-semibold text-cream-50 transition-colors hover:bg-forest-500 disabled:opacity-60"
         >
           <BellRing size={13} aria-hidden="true" />
           {busy ? 'Enabling…' : 'Enable notifications'}

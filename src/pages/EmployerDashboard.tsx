@@ -203,7 +203,7 @@ function CoordinatorRequestPayForm({ request, onPaid }: { request: CoordinatorJo
       <div className="flex flex-wrap gap-1.5">
         {PAY_METHODS.map((m) => (
           <button key={m.id} type="button" onClick={() => setMethod(m.id)}
-            className={`rounded-full border px-2.5 py-1 text-[0.8125rem] font-medium ${method === m.id ? 'border-forest-600 bg-forest-600/10 text-forest-700' : 'border-ink-900/15 text-ink-700 hover:bg-ink-900/5'}`}>
+            className={`rounded-md border px-2.5 py-1 text-[0.8125rem] font-medium ${method === m.id ? 'border-forest-600 bg-forest-600/10 text-forest-700' : 'border-ink-900/15 text-ink-700 hover:bg-ink-900/5'}`}>
             {m.name}
           </button>
         ))}
@@ -269,7 +269,7 @@ function CoordinatorRequestCard({ request, task, onPaid }: { request: Coordinato
           <div className="mt-2.5 flex items-center justify-between gap-3">
             <p className="text-xs text-ink-700/70">Approved at <span className="font-semibold text-ink-900">{cedis(request.quotedPrice)}</span> — pay to dispatch.</p>
             <button onClick={() => setPayOpen(true)}
-              className="shrink-0 rounded-full bg-forest-600 px-4 py-2 text-xs font-semibold text-cream-50 hover:bg-forest-500">
+              className="shrink-0 rounded-md bg-forest-600 px-4 py-2 text-xs font-semibold text-cream-50 hover:bg-forest-500">
               Pay now
             </button>
           </div>
@@ -452,7 +452,7 @@ export default function EmployerDashboard() {
         {error && (
           <div className="mb-4 flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="flex items-start gap-2 text-sm text-red-700"><AlertCircle size={16} aria-hidden="true" className="mt-0.5 shrink-0" /> {error}</p>
-            <button onClick={() => { setLoading(true); load() }} className="shrink-0 rounded-full bg-red-600 px-4 py-2 text-xs font-semibold text-cream-50 hover:bg-red-700">Try again</button>
+            <button onClick={() => { setLoading(true); load() }} className="shrink-0 rounded-md bg-red-600 px-4 py-2 text-xs font-semibold text-cream-50 hover:bg-red-700">Try again</button>
           </div>
         )}
 
@@ -469,7 +469,7 @@ export default function EmployerDashboard() {
             </p>
           </div>
           <button onClick={() => { setLoading(true); load() }} aria-label="Refresh dashboard"
-            className="flex shrink-0 items-center gap-1.5 rounded-full px-3 py-2 text-xs font-medium text-ink-700/60 transition-colors hover:bg-ink-900/5 hover:text-ink-900">
+            className="flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium text-ink-700/60 transition-colors hover:bg-ink-900/5 hover:text-ink-900">
             <RefreshCw size={13} aria-hidden="true" /> Refresh
           </button>
         </div>
@@ -484,10 +484,9 @@ export default function EmployerDashboard() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div className="rounded-2xl border border-ink-900/8 bg-white p-6 shadow-sm">
                     <p className="text-sm font-medium text-ink-700">Your Current Status</p>
-                    <span className="mt-5 inline-flex items-center gap-3 rounded-full bg-forest-600/15 py-2 pl-2 pr-7">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-full bg-forest-600 text-cream-50"><Check size={18} strokeWidth={3} aria-hidden="true" /></span>
-                      <span className="text-base font-semibold text-ink-900">Active</span>
-                    </span>
+                    <p className="mt-4 flex items-center gap-2 text-lg font-semibold text-forest-700">
+                      <Check size={20} strokeWidth={3} aria-hidden="true" /> Active
+                    </p>
                     <p className="mt-3 text-sm text-ink-700/75">
                       {pendingConfirmCount > 0
                         ? `${pendingConfirmCount} job${pendingConfirmCount === 1 ? '' : 's'} waiting on your confirmation.`
@@ -502,7 +501,7 @@ export default function EmployerDashboard() {
                     <p className="border-b border-ink-900/8 pb-3 text-sm font-semibold text-ink-900">Next Job</p>
                     {nextActiveTask ? (
                       <>
-                        <p className="mt-2 font-serif text-lg font-semibold text-ink-900">{nextActiveTask.taskType || 'Task'}</p>
+                        <p className="mt-3 text-lg font-semibold text-ink-900">{nextActiveTask.taskType || 'Task'}</p>
                         <div className="mt-1.5 space-y-1 text-sm text-ink-700/75">
                           <p className={st(nextActiveTask.status).color + ' font-medium'}>{st(nextActiveTask.status).label}</p>
                           {nextActiveTask.location && (
@@ -518,7 +517,7 @@ export default function EmployerDashboard() {
                       <>
                         <p className="mt-2 text-sm text-ink-700/70">No active jobs right now.</p>
                         <button onClick={() => setTab('hire')}
-                          className="mt-3 rounded-full border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-800 hover:bg-ink-900/5">
+                          className="mt-3 rounded-md border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-800 hover:bg-ink-900/5">
                           Hire a worker
                         </button>
                       </>
@@ -560,14 +559,14 @@ export default function EmployerDashboard() {
                 </p>
 
                 {REMOTE_JOBS_ENABLED && (
-                  <div className="mt-4 inline-flex rounded-full bg-ink-900/5 p-1" role="tablist" aria-label="Work location">
+                  <div className="mt-4 inline-flex rounded-md bg-ink-900/5 p-1" role="tablist" aria-label="Work location">
                     {([['field', 'On the field'], ['remote', 'Remote']] as const).map(([id, label]) => (
                       <button
                         key={id}
                         role="tab"
                         aria-selected={workMode === id}
                         onClick={() => setWorkMode(id)}
-                        className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${workMode === id ? 'bg-cream-50 text-ink-900 shadow-sm' : 'text-ink-700 hover:text-ink-900'}`}
+                        className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${workMode === id ? 'bg-cream-50 text-ink-900 shadow-sm' : 'text-ink-700 hover:text-ink-900'}`}
                       >
                         {label}
                       </button>
@@ -737,12 +736,12 @@ export default function EmployerDashboard() {
                                       <span className="flex items-center gap-2">
                                         <span className="block truncate font-serif text-base font-medium text-ink-900">{wName(w)}</span>
                                         {isCoordinator(w) && (
-                                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-forest-600/10 px-2 py-0.5 text-[0.75rem] font-semibold uppercase tracking-wide text-forest-700">
+                                          <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-forest-600/10 px-2 py-0.5 text-[0.75rem] font-semibold uppercase tracking-wide text-forest-700">
                                             Team
                                           </span>
                                         )}
                                         {Boolean(w.priority) && (
-                                          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-clay-400/15 px-2 py-0.5 text-[0.75rem] font-semibold uppercase tracking-wide text-clay-600">
+                                          <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-clay-400/15 px-2 py-0.5 text-[0.75rem] font-semibold uppercase tracking-wide text-clay-600">
                                             Featured
                                           </span>
                                         )}
@@ -1380,7 +1379,7 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch, onRequestQu
           </p>
           {worker.rating && Number(worker.rating) > 0 ? (
             <p className="mt-1.5">
-              <span className="inline-flex items-center gap-1 rounded-full bg-cream-50/15 px-2.5 py-0.5 text-xs font-semibold text-cream-50">
+              <span className="inline-flex items-center gap-1 rounded-md bg-cream-50/15 px-2.5 py-0.5 text-xs font-semibold text-cream-50">
                 <Star size={11} aria-hidden="true" className="fill-cream-50 text-cream-50" /> {Number(worker.rating).toFixed(1)}
               </span>
             </p>
@@ -1496,7 +1495,7 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch, onRequestQu
                             </span>
                           )}
                         </span>
-                        <span className="shrink-0 rounded-full bg-forest-600/10 px-2 py-0.5 text-[0.75rem] font-semibold uppercase tracking-wide text-forest-700">Certified</span>
+                        <span className="shrink-0 rounded-md bg-forest-600/10 px-2 py-0.5 text-[0.75rem] font-semibold uppercase tracking-wide text-forest-700">Certified</span>
                       </li>
                     )
                   })}
@@ -1532,7 +1531,7 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch, onRequestQu
                             </a>
                           )}
                         </span>
-                        <span className={`shrink-0 rounded-full px-2 py-0.5 text-[0.75rem] font-semibold ${c.verified ? 'bg-forest-600/10 text-forest-700' : 'bg-ink-900/6 text-ink-700/60'}`}>
+                        <span className={`shrink-0 rounded-md px-2 py-0.5 text-[0.75rem] font-semibold ${c.verified ? 'bg-forest-600/10 text-forest-700' : 'bg-ink-900/6 text-ink-700/60'}`}>
                           {c.verified ? 'Verified' : 'Declared'}
                         </span>
                       </li>
@@ -1550,7 +1549,7 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch, onRequestQu
             <button
               onClick={onRequestQuote}
               aria-label={`Request a quote from ${wName(worker)}`}
-              className="flex w-full items-center justify-center gap-1.5 rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] focus:outline-none"
+              className="flex w-full items-center justify-center gap-1.5 rounded-md bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] focus:outline-none"
             >
               <Send size={15} aria-hidden="true" /> Request a quote
             </button>
@@ -1559,7 +1558,7 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch, onRequestQu
               onClick={onDispatch}
               disabled={!!worker.isBusy}
               aria-label={`Dispatch ${wName(worker)}`}
-              className="flex w-full items-center justify-center gap-1.5 rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60 focus:outline-none"
+              className="flex w-full items-center justify-center gap-1.5 rounded-md bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60 focus:outline-none"
             >
               <Send size={15} aria-hidden="true" /> {worker.isBusy ? 'Currently on a job' : `Dispatch ${wName(worker).split(' ')[0]}`}
             </button>
@@ -1642,11 +1641,11 @@ function RateModal({ task, onClose, onDone, onError }: { task: Task; onClose: ()
             className="mt-4 w-full rounded-xl border border-ink-900/12 bg-cream-100 p-3 text-sm text-ink-900 placeholder:text-ink-700/50 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/25" />
 
           <div className="mt-4 flex gap-2">
-            <button onClick={onClose} className="flex-1 rounded-full border border-ink-900/15 px-4 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-900/5">
+            <button onClick={onClose} className="flex-1 rounded-md border border-ink-900/15 px-4 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-900/5">
               Not yet
             </button>
             <button onClick={submit} disabled={busy}
-              className="flex-1 rounded-full bg-forest-600 px-4 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
+              className="flex-1 rounded-md bg-forest-600 px-4 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
               {busy ? 'Confirming…' : 'Yes, release payment'}
             </button>
           </div>

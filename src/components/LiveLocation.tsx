@@ -98,7 +98,7 @@ export default function LiveLocation({ taskId }: { taskId: string | number }) {
             href={maps}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 rounded-full bg-forest-600 px-3.5 py-1.5 text-xs font-semibold text-cream-50 transition-colors hover:bg-forest-500"
+            className="inline-flex items-center gap-1.5 rounded-md bg-forest-600 px-3.5 py-1.5 text-xs font-semibold text-cream-50 transition-colors hover:bg-forest-500"
           >
             Open larger <ExternalLink size={12} aria-hidden="true" />
           </a>

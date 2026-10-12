@@ -115,7 +115,7 @@ function Select({ label, options, value, onChange, error, placeholder }: { label
 }
 
 function Submit({ children, disabled }: { children: ReactNode; disabled?: boolean }) {
-  return <button type="submit" disabled={disabled} className="w-full rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-70">{children}</button>
+  return <button type="submit" disabled={disabled} className="w-full rounded-md bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-70">{children}</button>
 }
 
 function SwitchLink({ prompt, action, to }: { prompt: string; action: string; to: AuthView }) {
@@ -464,7 +464,7 @@ function EmployerRegister() {
             className="w-full rounded-lg border border-ink-900/15 bg-white px-4 py-3 text-center text-lg tracking-widest text-ink-900 outline-none focus:border-forest-500 focus:ring-2 focus:ring-forest-500/20" />
           <FormError message={codeErr} />
           <button type="button" disabled={busy || !code.trim()} onClick={verifyCode}
-            className="w-full rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
+            className="w-full rounded-md bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
             {busy ? 'Verifying…' : 'Verify & Create Account'}
           </button>
           <p className="text-xs text-ink-700/70">Didn&rsquo;t get it? Check spam, or</p>
@@ -553,12 +553,12 @@ function EmployerRegister() {
         <div className="mt-5 flex items-center gap-3">
           {step > 1 && (
             <button type="button" onClick={() => setStep(step - 1)}
-              className="flex items-center gap-1 rounded-full border border-ink-900/15 px-4 py-3 text-sm font-medium text-ink-800 transition-colors hover:bg-ink-900/5">
+              className="flex items-center gap-1 rounded-md border border-ink-900/15 px-4 py-3 text-sm font-medium text-ink-800 transition-colors hover:bg-ink-900/5">
               <ChevronLeft size={16} /> Back
             </button>
           )}
           <button type="submit" disabled={busy}
-            className="flex-1 rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-70">
+            className="flex-1 rounded-md bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-70">
             {busy ? 'Creating…' : step < totalSteps ? 'Continue' : 'Create Account'}
           </button>
         </div>
@@ -747,11 +747,11 @@ function WorkerRegister() {
         <FormError message={err} />
         <div className="mt-5 flex items-center gap-3">
           {step > 1 && (
-            <button type="button" onClick={() => setStep(step - 1)} className="flex items-center gap-1 rounded-full border border-ink-900/15 px-4 py-3 text-sm font-medium text-ink-800 transition-colors hover:bg-ink-900/5">
+            <button type="button" onClick={() => setStep(step - 1)} className="flex items-center gap-1 rounded-md border border-ink-900/15 px-4 py-3 text-sm font-medium text-ink-800 transition-colors hover:bg-ink-900/5">
               <ChevronLeft size={16} /> Back
             </button>
           )}
-          <button type="submit" disabled={busy} className="flex-1 rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-70">
+          <button type="submit" disabled={busy} className="flex-1 rounded-md bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-70">
             {busy ? 'Creating…' : step < 3 ? 'Continue' : 'Create My Account'}
           </button>
         </div>
@@ -788,7 +788,7 @@ function EmployerOnboarding() {
           <span className="text-xs text-ink-800">I have read and understood this notice, and I agree to engage all workers with fairness and human dignity.</span>
         </label>
       </div>
-      <button disabled={!agreed} onClick={() => setStage('questions')} className="mt-5 w-full rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40">
+      <button disabled={!agreed} onClick={() => setStage('questions')} className="mt-5 w-full rounded-md bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40">
         Continue
       </button>
     </Modal>

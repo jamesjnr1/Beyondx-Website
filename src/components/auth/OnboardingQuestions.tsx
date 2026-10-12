@@ -126,7 +126,7 @@ export default function OnboardingQuestions({ role, onDone }: Props) {
           type="button"
           disabled={role === 'worker' && !agreed}
           onClick={() => setStep(0)}
-          className="mt-5 w-full rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
+          className="mt-5 w-full rounded-md bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40"
         >
           Let&rsquo;s Go →
         </button>
@@ -172,7 +172,7 @@ export default function OnboardingQuestions({ role, onDone }: Props) {
         <button
           type="button"
           onClick={() => { setError(null); setStep((s) => s - 1) }}
-          className="flex items-center gap-1 rounded-full border border-ink-900/15 px-4 py-3 text-sm font-medium text-ink-800 transition-colors hover:bg-ink-900/5"
+          className="flex items-center gap-1 rounded-md border border-ink-900/15 px-4 py-3 text-sm font-medium text-ink-800 transition-colors hover:bg-ink-900/5"
         >
           <ChevronLeft size={16} aria-hidden="true" /> Back
         </button>
@@ -180,7 +180,7 @@ export default function OnboardingQuestions({ role, onDone }: Props) {
           type="button"
           onClick={isLast ? finish : next}
           disabled={sending}
-          className="flex-1 rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-70"
+          className="flex-1 rounded-md bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-70"
         >
           {sending ? 'Sending…' : isLast ? 'Send My Answers' : 'Next →'}
         </button>

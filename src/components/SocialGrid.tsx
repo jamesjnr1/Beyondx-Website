@@ -19,7 +19,7 @@ export default function SocialGrid() {
             href="https://instagram.com/beyondx26"
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-6 inline-flex items-center gap-2 rounded-full bg-forest-600 px-6 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98]"
+            className="mt-6 inline-flex items-center gap-2 rounded-md bg-forest-600 px-6 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98]"
           >
             <Instagram size={16} />
             @beyondx26

@@ -27,14 +27,14 @@ export default function DashboardSidebar({ items, active, onSelect }: NavProps) 
               key={item.id}
               onClick={() => onSelect(item.id)}
               aria-current={isActive ? 'page' : undefined}
-              className={`flex items-center gap-3 rounded-xl px-3.5 py-3 text-left text-sm font-medium transition-colors focus:outline-none ${
+              className={`flex items-center gap-3 rounded-md px-3.5 py-3 text-left text-sm font-medium transition-colors focus:outline-none ${
                 isActive ? 'bg-forest-700 text-cream-50 shadow-sm' : 'text-cream-200/70 hover:bg-cream-50/5 hover:text-cream-50'
               }`}
             >
               <Icon size={18} aria-hidden="true" className={isActive ? 'text-cream-50' : 'text-cream-200/60'} />
               <span className="flex-1">{item.label}</span>
               {typeof item.badge === 'number' && item.badge > 0 ? (
-                <span className={`rounded-full px-1.5 py-0.5 text-[0.8125rem] font-semibold ${isActive ? 'bg-cream-50/20 text-cream-50' : 'bg-cream-50/10 text-cream-200/80'}`}>
+                <span className={`rounded-md px-1.5 py-0.5 text-[0.8125rem] font-semibold ${isActive ? 'bg-cream-50/20 text-cream-50' : 'bg-cream-50/10 text-cream-200/80'}`}>
                   {item.badge}
                 </span>
               ) : null}
@@ -46,11 +46,11 @@ export default function DashboardSidebar({ items, active, onSelect }: NavProps) 
   )
 }
 
-/** Horizontal scrollable pill bar standing in for the sidebar below `lg:`. */
+/** Underlined, horizontally scrollable tabs standing in for the sidebar below `lg:`. */
 export function DashboardMobileNav({ items, active, onSelect }: NavProps) {
   return (
     <nav
-      className="mb-5 flex min-w-0 items-center gap-1 overflow-x-auto rounded-full bg-ink-900 p-1 lg:hidden"
+      className="mb-6 flex min-w-0 items-center gap-5 overflow-x-auto border-b border-ink-900/10 lg:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       aria-label="Dashboard sections"
       role="tablist"
     >
@@ -62,8 +62,8 @@ export function DashboardMobileNav({ items, active, onSelect }: NavProps) {
             role="tab"
             aria-selected={isActive}
             onClick={() => onSelect(item.id)}
-            className={`shrink-0 rounded-full px-3.5 py-2 text-sm font-medium transition-colors focus:outline-none ${
-              isActive ? 'bg-forest-700 text-cream-50' : 'text-cream-200/65 hover:text-cream-100'
+            className={`-mb-px shrink-0 border-b-2 py-2.5 text-sm font-medium transition-colors focus:outline-none ${
+              isActive ? 'border-forest-600 text-ink-900' : 'border-transparent text-ink-700/60 hover:text-ink-900'
             }`}
           >
             {item.label}{typeof item.badge === 'number' && item.badge > 0 ? ` (${item.badge})` : ''}

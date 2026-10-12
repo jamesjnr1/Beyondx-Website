@@ -148,7 +148,7 @@ export default function AccessibilityMenu() {
 
             <button
               onClick={reset}
-              className="mt-4 w-full rounded-full border border-ink-900/15 px-4 py-2.5 text-sm font-medium text-ink-800 transition-colors hover:bg-ink-900/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/50"
+              className="mt-4 w-full rounded-md border border-ink-900/15 px-4 py-2.5 text-sm font-medium text-ink-800 transition-colors hover:bg-ink-900/5 focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/50"
             >
               Reset to default
             </button>

@@ -117,7 +117,7 @@ export default function SupportPanel({
       <button
         onClick={submit}
         disabled={busy}
-        className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40"
+        className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-md bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-70 focus:outline-none focus-visible:ring-2 focus-visible:ring-forest-600/40"
       >
         <Send size={15} aria-hidden="true" /> {busy ? 'Sending…' : 'Send message'}
       </button>

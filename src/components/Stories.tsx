@@ -44,7 +44,7 @@ export default function Stories() {
                   className="aspect-[16/10] w-full object-cover"
                   loading="lazy"
                 />
-                <span className="absolute left-4 top-4 rounded-full bg-cream-50/90 px-3 py-1 text-xs font-semibold text-ink-900 backdrop-blur-sm">
+                <span className="absolute left-4 top-4 rounded-md bg-cream-50/90 px-3 py-1 text-xs font-semibold text-ink-900 backdrop-blur-sm">
                   {story.tag}
                 </span>
               </div>
