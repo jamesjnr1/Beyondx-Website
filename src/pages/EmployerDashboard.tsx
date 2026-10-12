@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
-import { ChevronLeft, ChevronRight, Star, Send, Phone, Plus, X, ShieldCheck, CircleCheck, Info, RefreshCw, AlertCircle, Copy, Check, Award, Map, Clock, MapPin, Briefcase, Users, Wallet, Quote, LayoutDashboard, FilePlus, ClipboardList, Inbox, HelpCircle } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Star, Send, Phone, X, ShieldCheck, CircleCheck, Info, RefreshCw, AlertCircle, Copy, Check, Award, Map, Clock, MapPin, Briefcase, Users, Wallet, Quote, LayoutDashboard, FilePlus, ClipboardList, Inbox, HelpCircle } from 'lucide-react'
 import JobLocationMap from '../components/JobLocationMap'
 import DashboardHeader from './DashboardHeader'
 import DashboardSidebar, { DashboardMobileNav, type DashboardNavItem } from '../components/DashboardSidebar'
@@ -14,13 +14,16 @@ import {
 } from '../lib/api'
 import { DISPATCH_ENABLED, DISPATCH_PAUSED_MESSAGE, REMOTE_JOBS_ENABLED } from '../lib/config'
 import { categories, remoteCategories, allCategories } from '../data'
-import { PLATFORM_FEE_FLAT, MOMO_NUMBER, MOMO_NAME, PAY_METHODS } from '../lib/payments'
+import { MOMO_NUMBER, MOMO_NAME, PAY_METHODS } from '../lib/payments'
 import { openBookingWindow } from './BookWorker'
 import type { BookingState } from './BookWorker'
 import CoordinatorQuoteModal from '../components/CoordinatorQuoteModal'
 import { isCoordinator, getApplication } from '../lib/coordinator'
 import { useRefreshOnResume } from '../hooks/useRefreshOnResume'
 import NotificationsBanner from '../components/NotificationsBanner'
+import PostTaskWizard, { type SubmittedTask } from '../components/tasks/PostTaskWizard'
+import TaskSubmitted from '../components/tasks/TaskSubmitted'
+import TaskTracking from '../components/tasks/TaskTracking'
 
 const cedis = (n?: number | string) => `GH\u20b5 ${Number(n || 0).toLocaleString()}`
 const wName = (w: Worker) => (w.fullName as string) || (w.name as string) || 'Worker'
@@ -316,6 +319,11 @@ export default function EmployerDashboard() {
   }
   const [rating, setRating] = useState<Task | null>(null)
   const [editing, setEditing] = useState(false)
+  const [submitted, setSubmitted] = useState<SubmittedTask | null>(null)
+  const [trackingId, setTrackingId] = useState<string | number | null>(null)
+  const goTab = (id: string) => { setTab(id as typeof tab); setTrackingId(null); setSubmitted(null) }
+  const trackTask = (id: string | number) => { setTab('history'); setTrackingId(id); setSubmitted(null) }
+  const fullPage = tab === 'post' || (tab === 'history' && trackingId != null)
 
   const [workerList, setWorkerList] = useState<Worker[]>([])
   const [taskList, setTaskList] = useState<Task[]>([])
@@ -432,13 +440,14 @@ export default function EmployerDashboard() {
   return (
     <div className="min-h-screen bg-cream-100">
       <DashboardHeader role="EMPLOYER" title="Employer Dashboard" name={orgName} avatar={logo} onEditProfile={() => setEditing(true)} tasks={taskList}
-        navItems={headerNavItems} active={tab} onSelect={(id) => setTab(id as typeof tab)} />
+        navItems={headerNavItems} active={tab} onSelect={goTab}
+        cta={{ label: 'Post a Task', onClick: () => goTab('post') }} />
       <div className="lg:flex">
-        <DashboardSidebar items={navItems} active={tab} onSelect={(id) => setTab(id as typeof tab)} />
-        <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-8 lg:px-10">
+        {!fullPage && <DashboardSidebar items={navItems} active={tab} onSelect={goTab} />}
+        <main id="main" className={fullPage ? 'mx-auto w-full max-w-6xl px-4 py-6 sm:px-8 sm:py-10' : 'min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-8 lg:px-10'}>
         <p aria-live="polite" className="sr-only">{announce}</p>
 
-        <NotificationsBanner role="employer" />
+        {!fullPage && <NotificationsBanner role="employer" />}
 
         {error && (
           <div className="mb-4 flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -447,6 +456,7 @@ export default function EmployerDashboard() {
           </div>
         )}
 
+        {!fullPage && (
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-ink-900 sm:text-[1.75rem]">Welcome back, {orgName}!</h1>
@@ -463,9 +473,10 @@ export default function EmployerDashboard() {
             <RefreshCw size={13} aria-hidden="true" /> Refresh
           </button>
         </div>
+        )}
 
         <div>
-          <DashboardMobileNav items={navItems} active={tab} onSelect={(id) => setTab(id as typeof tab)} />
+          {!fullPage && <DashboardMobileNav items={navItems} active={tab} onSelect={goTab} />}
 
           <div className="min-w-0 flex-1">
             {tab === 'overview' && (
@@ -498,7 +509,7 @@ export default function EmployerDashboard() {
                             <p className="flex items-center gap-1.5"><MapPin size={13} aria-hidden="true" /> {nextActiveTask.location}</p>
                           )}
                         </div>
-                        <button onClick={() => setTab('history')}
+                        <button onClick={() => trackTask(nextActiveTask.id)}
                           className="mt-4 rounded-lg bg-forest-600 px-7 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98]">
                           View Details
                         </button>
@@ -807,9 +818,39 @@ export default function EmployerDashboard() {
           />
         )}
 
-        {tab === 'post' && <PostTask onDone={(msg) => { setToast({ id: Date.now(), kind: 'success', title: 'Task posted', detail: msg }); load() }} />}
+        {tab === 'post' && (submitted ? (
+          <TaskSubmitted
+            submitted={submitted}
+            onTrack={() => trackTask(submitted.task.id)}
+            onDashboard={() => goTab('overview')}
+          />
+        ) : (
+          <PostTaskWizard
+            onSubmitted={(s) => { setSubmitted(s); load() }}
+            onContactSupport={() => goTab('support')}
+            onBack={() => goTab('overview')}
+          />
+        ))}
 
-        {tab === 'history' && (
+        {tab === 'history' && trackingId != null && (() => {
+          const t = taskList.find((x) => String(x.id) === String(trackingId))
+          if (!t) return loading ? <Skeleton /> : (
+            <Empty icon={<Briefcase size={20} aria-hidden="true" />} text="This task isn't in your list yet — refresh in a moment." />
+          )
+          return (
+            <TaskTracking
+              task={t}
+              workerName={dispatchDetails(t).workerName || undefined}
+              statusLabel={st(t.status).label}
+              onBack={() => setTrackingId(null)}
+              onContactSupport={() => goTab('support')}
+              onCancel={t.status === 'open' || t.status === 'payment_pending' ? () => cancelTask(t) : undefined}
+              onConfirm={t.status === 'pending_confirmation' ? () => setRating(t) : undefined}
+            />
+          )
+        })()}
+
+        {tab === 'history' && trackingId == null && (
           <div className="mt-6">
             {loading ? <Skeleton /> : taskList.length ? (() => {
               const urgent = taskList.filter((t) => t.status === 'pending_confirmation')
@@ -911,6 +952,13 @@ export default function EmployerDashboard() {
                       {s.note && !isUrgent && (
                         <p className="mt-2.5 text-xs leading-relaxed text-ink-700/70">{s.note}</p>
                       )}
+
+                      <button
+                        onClick={() => trackTask(t.id)}
+                        className="mt-3 mr-4 inline-flex items-center gap-1 text-sm font-semibold text-forest-700 hover:underline"
+                      >
+                        Track task <ChevronRight size={14} aria-hidden="true" />
+                      </button>
 
                       {/* Cancel — only while still searching, before anyone has committed */}
                       {(t.status === 'open' || t.status === 'payment_pending') && (
@@ -1609,133 +1657,3 @@ function RateModal({ task, onClose, onDone, onError }: { task: Task; onClose: ()
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-function PostTask({ onDone }: { onDone: (msg: string) => void }) {
-  const [taskType, setTaskType] = useState(categories[0].title)
-  const [description, setDescription] = useState('')
-  const [location, setLocation] = useState('')
-  const [duration, setDuration] = useState('1 Day')
-  const [workersNeeded, setWorkersNeeded] = useState(1)
-  const [scheduledDate, setScheduledDate] = useState('')
-  const [scheduledTime, setScheduledTime] = useState('08:00')
-  const cat = allCategories.find((c) => c.title === taskType)
-  const rate = cat ? cat.rate : 0
-  const days = duration === 'Half Day' ? 0.5 : parseFloat(duration) || 1
-  const workerGets = rate * days
-  const fee = PLATFORM_FEE_FLAT
-  const pay = String(workerGets)
-  const [busy, setBusy] = useState(false)
-  const [err, setErr] = useState<string | null>(null)
-
-  // Minimum date = today
-  const today = new Date().toISOString().split('T')[0]
-
-  const submit = async () => {
-    if (!taskType || busy) return
-    if (cat?.mode !== 'remote' && !location) return
-    setErr(null); setBusy(true)
-    try {
-      await tasksApi.create({
-        taskType, description,
-        location: cat?.mode === 'remote' ? 'Remote' : location,
-        duration, pay: parseFloat(pay) || 0, workersNeeded,
-        ...(scheduledDate ? { scheduledDate, scheduledTime } : {}),
-      })
-      setDescription(''); setLocation(''); setWorkersNeeded(1); setScheduledDate(''); setScheduledTime('08:00')
-      onDone(`"${taskType}" is now open for workers to accept.`)
-    } catch (e) {
-      setErr(e instanceof ApiError ? e.message : 'Please try again.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  const inp = 'w-full rounded-xl border border-ink-900/15 bg-white px-3 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/30'
-  return (
-    <div className="mt-6 max-w-xl">
-      <div className="rounded-2xl bg-cream-50 p-6 shadow-sm border border-ink-900/8">
-        <h2 className="mb-4 font-serif text-xl font-medium text-ink-900">Post a new task</h2>
-        <div className="space-y-3">
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-ink-700">Task type</span>
-            <select value={taskType} onChange={(e) => setTaskType(e.target.value)} className={inp}>
-              {REMOTE_JOBS_ENABLED ? (<>
-                <optgroup label="On the field">
-                  {categories.map((c) => <option key={c.title}>{c.title}</option>)}
-                </optgroup>
-                <optgroup label="Remote">
-                  {remoteCategories.map((c) => <option key={c.title}>{c.title}</option>)}
-                </optgroup>
-              </>) : (
-                categories.map((c) => <option key={c.title}>{c.title}</option>)
-              )}
-            </select>
-          </label>
-          <label className="block">
-            <span className="mb-1 block text-xs font-medium text-ink-700">Description</span>
-            <textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              rows={5}
-              placeholder="Describe exactly what needs doing — the worker will see this in their SMS and dashboard."
-              className={`${inp} resize-y`}
-            />
-          </label>
-          {cat?.mode === 'remote' ? null : (
-            <label className="block"><span className="mb-1 block text-xs font-medium text-ink-700">Location</span><input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. Tema" className={inp} /></label>
-          )}
-          <div className="grid grid-cols-2 gap-3">
-            <label className="block"><span className="mb-1 block text-xs font-medium text-ink-700">Duration</span>
-              <select value={duration} onChange={(e) => setDuration(e.target.value)} className={inp}><option>Half Day</option><option>1 Day</option><option>2 Days</option><option>3 Days</option><option>5 Days</option></select>
-            </label>
-            <label className="block"><span className="mb-1 block text-xs font-medium text-ink-700">Workers needed</span>
-              <input type="number" min={1} max={50} value={workersNeeded} onChange={(e) => setWorkersNeeded(Math.max(1, parseInt(e.target.value, 10) || 1))} className={inp} />
-            </label>
-          </div>
-          {/* When does the job start? */}
-          <div className="rounded-xl border border-ink-900/10 bg-white px-4 py-3">
-            <p className="mb-2 text-xs font-semibold text-ink-700">When does the job start? <span className="font-normal text-ink-700/60">(optional — workers get a reminder 1 hour before)</span></p>
-            <div className="grid grid-cols-2 gap-3">
-              <label className="block">
-                <span className="mb-1 block text-xs text-ink-700">Date</span>
-                <input type="date" min={today} value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} className={inp} />
-              </label>
-              <label className="block">
-                <span className="mb-1 block text-xs text-ink-700">Time</span>
-                <input type="time" value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} className={inp} />
-              </label>
-            </div>
-          </div>
-          <div className="block">
-            <span className="mb-1 block text-xs font-medium text-ink-700">Cost breakdown</span>
-            <div className="rounded-xl bg-forest-600/5 px-4 py-3 border border-forest-600/15 space-y-1">
-              <div className="flex justify-between text-sm text-ink-700">
-                <span>Per worker ({duration})</span>
-                <span className="font-semibold text-ink-900">{cedis(workerGets + fee)}</span>
-              </div>
-              <div className="flex justify-between text-xs text-ink-700/70">
-                <span>Worker pay {cedis(workerGets)} + GH₵{fee} service fee</span>
-              </div>
-              <div className="flex justify-between text-xs text-amber-700 border-t border-ink-900/10 pt-1">
-                <span>+ Transport allowance (added per worker based on distance)</span>
-                <span>GH₵0–40</span>
-              </div>
-              {workersNeeded > 1 && (
-                <>
-                  <div className="my-1 border-t border-ink-900/10" />
-                  <div className="flex justify-between text-sm font-bold text-ink-900">
-                    <span>Base total for {workersNeeded} workers</span>
-                    <span className="text-forest-700">{cedis((workerGets + fee) * workersNeeded)}</span>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-          {err && <p role="alert" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2.5 text-sm text-red-700">{err}</p>}
-          <button onClick={submit} disabled={busy} className="flex w-full items-center justify-center gap-1.5 rounded-full bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60 focus:outline-none">
-            <Plus size={16} aria-hidden="true" /> {busy ? 'Posting…' : 'Post task'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
