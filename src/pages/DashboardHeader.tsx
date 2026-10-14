@@ -27,7 +27,7 @@ export default function DashboardHeader({
   const hasNav = !!navItems && navItems.length > 0
   const initials = (name || '').split(' ').filter(Boolean).map((p) => p[0]).slice(0, 2).join('').toUpperCase()
   return (
-    <header className="sticky top-0 z-40 border-b border-ink-900/10 bg-cream-50">
+    <header className="sticky top-0 z-40 border-b border-ink-900/10 bg-white">
       <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:pl-0 lg:pr-8">
         {/* Logo sits directly above the sidebar rail on desktop */}
         <div className="flex shrink-0 items-center lg:w-60 lg:pl-7">

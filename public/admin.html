@@ -278,6 +278,7 @@ tr:hover td{background:var(--bg);}
       </div>
       <div class="sb-group">
         <div class="sb-grp">Tasks</div>
+        <div class="sb-a" onclick="nav('invoices',this)">Review &amp; Invoice <span class="sb-bdg" id="invoicesBadge" style="display:none">0</span></div>
         <div class="sb-a" onclick="nav('verify',this)">Verify Payments <span class="sb-bdg" id="verifyBadge" style="display:none">0</span></div>
         <div class="sb-a" onclick="nav('active',this)">In Progress</div>
         <div class="sb-a" onclick="nav('open',this)">Open Tasks</div>
@@ -286,6 +287,7 @@ tr:hover td{background:var(--bg);}
       </div>
       <div class="sb-group">
         <div class="sb-grp">People</div>
+        <div class="sb-a" onclick="nav('applications',this)">Xpert Applications <span class="sb-bdg" id="applicationsBadge" style="display:none">0</span></div>
         <div class="sb-a" onclick="nav('workers',this)">Workers</div>
         <div class="sb-a" onclick="nav('employers',this)">Employers</div>
       </div>
@@ -300,6 +302,7 @@ tr:hover td{background:var(--bg);}
       </div>
       <div class="sb-group">
         <div class="sb-grp">Operations</div>
+        <div class="sb-a" onclick="nav('sitereports',this)">Site Reports <span class="sb-bdg" id="siteReportsBadge" style="display:none;">0</span></div>
         <div class="sb-a" onclick="nav('disputes',this)">Scope Disputes <span class="sb-bdg" id="disputesBadge" style="display:none;">0</span></div>
         <div class="sb-a" onclick="nav('coordapps',this)">Coordinator Applications <span class="sb-bdg" id="coordAppsBadge" style="display:none;">0</span></div>
         <div class="sb-a" onclick="nav('coordreqs',this)">Coordinator Job Requests <span class="sb-bdg" id="coordReqsBadge" style="display:none;">0</span></div>
@@ -382,6 +385,9 @@ tr:hover td{background:var(--bg);}
       <div class="sec" id="sec-transactions"><div id="txContent"></div></div>
       <div class="sec" id="sec-messages"><div id="smsFormBox"></div><div id="smsDataBox"></div></div>
       <div class="sec" id="sec-disputes"><div id="disputesContent"></div></div>
+      <div class="sec" id="sec-invoices"><div id="invoicesContent"></div></div>
+      <div class="sec" id="sec-applications"><div id="applicationsContent"></div></div>
+      <div class="sec" id="sec-sitereports"><div id="siteReportsContent"></div></div>
       <div class="sec" id="sec-coordapps"><div id="coordAppsContent"></div></div>
       <div class="sec" id="sec-coordreqs"><div id="coordReqsContent"></div></div>
       <div class="sec" id="sec-coordteams"><div id="coordTeamsContent"></div></div>
@@ -542,6 +548,150 @@ function showMoreHtml(remaining,onclick){
 function _loginOriginal(){
   /* replaced by enhanced login() below */
 }
+
+/* ── Closed-loop additions: invoices, Xpert applications, site reports ── */
+function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function ghs(n){return 'GH&#8373; '+Number(n||0).toFixed(2);}
+function setBadge(id,n){const b=document.getElementById(id);if(!b)return;b.style.display=n?'inline':'none';b.textContent=n;}
+const cardStyle='padding:16px 18px;border-bottom:1.5px solid var(--b2);';
+const inputStyle='width:100%;padding:9px 11px;border:1.5px solid var(--b);border-radius:8px;font-size:13px;font-family:inherit;';
+
+async function loadInvoices(){
+  const box=document.getElementById('invoicesContent');
+  box.innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const d=await fetch(API+'/admin/invoices?status=all',{headers:{'x-admin-password':pass}}).then(r=>r.json());
+    const ts=d.tasks||[];
+    const waiting=ts.filter(t=>t.status==='awaiting_invoice'), sent=ts.filter(t=>t.status==='invoice_sent');
+    setBadge('invoicesBadge',waiting.length);
+    const row=(t,editable)=>{
+      const sched=t.scheduledDate?esc(t.scheduledDate)+' '+esc(t.scheduledTime||''):'—';
+      return `<div style="${cardStyle}">
+        <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+          <div><div style="font-weight:700;font-size:14px;">${esc(t.taskType)} ${t.premium?'<span class="badge" style="background:#fef3c7;color:#92400e;">PREMIUM &lt;48h</span>':''}</div>
+          <div style="font-size:12px;color:var(--ink3);margin-top:2px;">${esc(t.employer?.orgName||'')} · ${esc(t.employer?.phone||'')} · posted ${new Date(t.createdAt).toLocaleString()}</div></div>
+          ${t.status==='invoice_sent'?`<div style="text-align:right;font-size:12px;">Invoice sent<br><b style="font-size:15px;">${ghs(t.invoiceAmount)}</b><br>Xpert pay ${ghs(t.pay)}</div>`:''}
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:10px 0;font-size:12px;">
+          <div><span style="color:var(--ink3)">Location</span><br>${esc(t.location)}</div>
+          <div><span style="color:var(--ink3)">Start</span><br>${sched}</div>
+          <div><span style="color:var(--ink3)">Duration</span><br>${esc(t.duration)}</div>
+          <div><span style="color:var(--ink3)">Xperts</span><br>${esc(t.slotsNeeded||1)}</div>
+        </div>
+        <div style="white-space:pre-line;font-size:13px;background:var(--bg,#f6f7f5);padding:10px 12px;border-radius:8px;">${esc(t.description||'No description')}</div>
+        ${editable?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
+          <div><label style="font-size:11px;font-weight:600;">Invoice total (employer pays, GHS)</label><input id="inv-amt-${t.id}" type="number" step="0.01" min="0" value="${t.invoiceAmount||''}" style="${inputStyle}"></div>
+          <div><label style="font-size:11px;font-weight:600;">Xpert pay (GHS, total for the job)</label><input id="inv-pay-${t.id}" type="number" step="0.01" min="0" value="${t.status==='invoice_sent'?t.pay:''}" style="${inputStyle}"></div>
+        </div>
+        <label style="font-size:11px;font-weight:600;display:block;margin-top:8px;">Note to employer (optional, shown on the invoice)</label>
+        <textarea id="inv-note-${t.id}" rows="2" style="${inputStyle}">${esc(t.invoiceNote||'')}</textarea>
+        <button class="btn-r on" style="margin-top:10px;" onclick="sendInvoice('${t.id}')">${t.status==='invoice_sent'?'Update invoice':'Send invoice'}</button>`:''}
+      </div>`;
+    };
+    box.innerHTML=`<div class="an-note">Every task an employer posts lands here. Review the description, then send one invoice. The employer pays or declines it; once you verify the payment in Verify Payments, the task opens to matching Xperts. Premium = starts within 48 hours of posting.</div>
+      <div class="tc"><div class="tc-h"><span class="tc-ht">Awaiting invoice</span><span class="tc-hm">${waiting.length}</span></div>${waiting.map(t=>row(t,true)).join('')||'<div class="empty">Nothing waiting</div>'}</div>
+      <div class="tc"><div class="tc-h"><span class="tc-ht">Invoice sent — waiting on employer</span><span class="tc-hm">${sent.length}</span></div>${sent.map(t=>row(t,true)).join('')||'<div class="empty">None</div>'}</div>`;
+  }catch(e){box.innerHTML='<div class="empty">Could not load invoices.</div>';}
+}
+async function sendInvoice(id){
+  const amount=parseFloat(document.getElementById('inv-amt-'+id).value);
+  const workerPay=parseFloat(document.getElementById('inv-pay-'+id).value);
+  const note=document.getElementById('inv-note-'+id).value;
+  if(!(amount>0)||!(workerPay>0)){showToast('Enter both the invoice total and the Xpert pay.');return;}
+  if(workerPay>amount){showToast('Xpert pay cannot be more than the invoice total.');return;}
+  if(!confirm('Send an invoice of GHS '+amount.toFixed(2)+' (Xpert pay GHS '+workerPay.toFixed(2)+')? The employer will be notified.'))return;
+  const r=await fetch(API+'/admin/tasks/'+id+'/invoice',{method:'PATCH',headers:{'Content-Type':'application/json','x-admin-password':pass},body:JSON.stringify({amount,workerPay,note})});
+  const d=await r.json().catch(()=>({}));
+  if(r.ok){showToast('Invoice sent.');loadInvoices();}else showToast(d.error||'Could not send invoice.');
+}
+
+let appStatus='under_review';
+async function loadApplications(status){
+  if(status)appStatus=status;
+  const box=document.getElementById('applicationsContent');
+  box.innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const d=await fetch(API+'/admin/applications?status='+appStatus,{headers:{'x-admin-password':pass}}).then(r=>r.json());
+    const ws=d.workers||[];
+    if(appStatus==='under_review')setBadge('applicationsBadge',ws.length);
+    const tabs=[['under_review','Under review'],['active','Active'],['suspended','Suspended'],['rejected','Rejected']].map(([k,l])=>`<button class="btn-r ${appStatus===k?'on':''}" onclick="loadApplications('${k}')">${l}</button>`).join(' ');
+    const img=u=>`<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" style="width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--b);"></a>`;
+    const card=w=>`<div style="${cardStyle}">
+      <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div><div style="font-weight:700;font-size:14px;">${esc(w.fullName)} <span style="font-weight:400;color:var(--ink3);font-size:12px;">${esc(w.workerId)}</span></div>
+        <div style="font-size:12px;color:var(--ink3);">${esc(w.phone)} · ${esc(w.homeArea||'')} · applied ${new Date(w.createdAt).toLocaleDateString()}</div></div>
+        <span class="badge" style="background:var(--b2);">${esc(w.accountStatus)}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin-top:10px;font-size:12px;">
+        <div><b>Skills</b><br>${esc((w.skills||[]).join(', ')||'—')}</div>
+        <div><b>ID</b><br>${esc(w.idType||'—')} ${esc(w.idCardNumber||'')}</div>
+        <div><b>Guarantor</b><br>${esc(w.guarantorName||'—')} · ${esc(w.guarantorPhone||'')}<br>${esc(w.guarantorRelationship||'')}</div>
+        <div><b>Reference</b><br>${esc(w.referenceName||'—')} · ${esc(w.referencePhone||'')}<br>${esc(w.referenceRelationship||'')}</div>
+      </div>
+      ${w.experienceSummary?`<div style="margin-top:8px;font-size:12px;"><b>Experience</b><br><span style="white-space:pre-line">${esc(w.experienceSummary)}</span></div>`:''}
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+        ${w.idDocumentUrl?`<div style="font-size:11px;">ID photo<br>${img(w.idDocumentUrl)}</div>`:''}
+        ${(w.skillEvidenceUrls||[]).length?`<div style="font-size:11px;">Work photos<br><div style="display:flex;gap:6px;">${w.skillEvidenceUrls.map(img).join('')}</div></div>`:''}
+      </div>
+      ${w.applicationNote?`<div style="margin-top:8px;font-size:12px;color:var(--ink3);">Note: ${esc(w.applicationNote)}</div>`:''}
+      ${w.activatedAt?`<div style="margin-top:4px;font-size:11px;color:var(--ink3);">Approved ${new Date(w.activatedAt).toLocaleString()} by ${esc(w.activatedBy||'')}</div>`:''}
+      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+        ${w.accountStatus!=='active'?`<button class="btn-r on" onclick="reviewApplication('${w.id}','${w.accountStatus==='under_review'?'approve':'reactivate'}')">${w.accountStatus==='under_review'?'Approve':'Reactivate'}</button>`:''}
+        ${w.accountStatus==='under_review'?`<button class="btn-r" onclick="reviewApplication('${w.id}','reject')">Reject</button>`:''}
+        ${w.accountStatus==='active'?`<button class="btn-r" onclick="reviewApplication('${w.id}','suspend')">Suspend</button>`:''}
+      </div>
+    </div>`;
+    box.innerHTML=`<div class="an-note">Applicants can't see or take jobs until you approve them here. Check the ID photo, call the guarantor and the reference, and look at the work photos before approving. Rejecting or suspending needs a reason — the applicant sees it.</div>
+      <div style="margin-bottom:12px;display:flex;gap:6px;flex-wrap:wrap;">${tabs}</div>
+      <div class="tc">${ws.map(card).join('')||'<div class="empty">No Xperts in this list</div>'}</div>`;
+  }catch(e){box.innerHTML='<div class="empty">Could not load applications.</div>';}
+}
+async function reviewApplication(id,action){
+  let note='';
+  if(action==='reject'||action==='suspend'){note=prompt('Reason (shown to the Xpert):');if(!note)return;}
+  else if(!confirm((action==='approve'?'Approve this applicant? They become an active Xpert and are texted.':'Reactivate this Xpert?')))return;
+  const by=action==='approve'||action==='reactivate'?(prompt('Your name (recorded as the approver):')||'BeyondX admin'):undefined;
+  const r=await fetch(API+'/admin/applications/'+id,{method:'PATCH',headers:{'Content-Type':'application/json','x-admin-password':pass},body:JSON.stringify({action,note,by})});
+  const d=await r.json().catch(()=>({}));
+  if(r.ok){showToast('Saved.');loadApplications();}else showToast(d.error||'Could not update.');
+}
+
+let srStatus='open';
+async function loadSiteReports(status){
+  if(status)srStatus=status;
+  const box=document.getElementById('siteReportsContent');
+  box.innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const d=await fetch(API+'/admin/site-reports?status='+srStatus,{headers:{'x-admin-password':pass}}).then(r=>r.json());
+    const rs_=d.reports||[];
+    if(srStatus==='open')setBadge('siteReportsBadge',rs_.length);
+    const label={scope_change:'Different from agreed',safety:'Safety concern',other:'Other'};
+    box.innerHTML=`<div class="an-note">Reports Xperts file from the job when something on site differs from what was agreed, or is unsafe. Contact the Xpert and employer, then mark it resolved.</div>
+      <div style="margin-bottom:12px;display:flex;gap:6px;"><button class="btn-r ${srStatus==='open'?'on':''}" onclick="loadSiteReports('open')">Open</button><button class="btn-r ${srStatus==='resolved'?'on':''}" onclick="loadSiteReports('resolved')">Resolved</button></div>
+      <div class="tc">${rs_.map(x=>`<div style="${cardStyle}">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+          <div><span class="badge" style="background:${x.category==='safety'?'#fee2e2;color:#991b1b':'#fef3c7;color:#92400e'};">${esc(label[x.category]||x.category)}</span>
+          <b style="margin-left:6px;">${esc(x.task?.taskType||'')}</b> <span style="color:var(--ink3);font-size:12px;">${esc(x.task?.location||'')}</span></div>
+          <span style="font-size:11px;color:var(--ink3);">${new Date(x.createdAt).toLocaleString()}</span>
+        </div>
+        <div style="margin-top:8px;font-size:13px;white-space:pre-line;">${esc(x.description)}</div>
+        <div style="margin-top:8px;font-size:12px;color:var(--ink3);">Xpert: ${esc(x.worker?.fullName||'')} (${esc(x.worker?.workerId||'')}) · ${esc(x.worker?.phone||'')} &nbsp;|&nbsp; Employer: ${esc(x.task?.employer?.orgName||'')} · ${esc(x.task?.employer?.phone||'')}</div>
+        ${x.adminNote?`<div style="margin-top:6px;font-size:12px;">Note: ${esc(x.adminNote)}</div>`:''}
+        ${x.status==='open'?`<button class="btn-r on" style="margin-top:10px;" onclick="resolveSiteReport('${x.id}')">Mark resolved</button>`:''}
+      </div>`).join('')||'<div class="empty">No reports</div>'}</div>`;
+  }catch(e){box.innerHTML='<div class="empty">Could not load reports.</div>';}
+}
+async function resolveSiteReport(id){
+  const adminNote=prompt('What was done? (optional)')||'';
+  const r=await fetch(API+'/admin/site-reports/'+id,{method:'PATCH',headers:{'Content-Type':'application/json','x-admin-password':pass},body:JSON.stringify({status:'resolved',adminNote})});
+  if(r.ok){showToast('Marked resolved.');loadSiteReports();}else showToast('Could not update.');
+}
+function loadClosedLoopBadges(){
+  fetch(API+'/admin/invoices?status=awaiting_invoice',{headers:{'x-admin-password':pass}}).then(r=>r.json()).then(d=>setBadge('invoicesBadge',(d.tasks||[]).length)).catch(()=>{});
+  fetch(API+'/admin/applications?status=under_review',{headers:{'x-admin-password':pass}}).then(r=>r.json()).then(d=>setBadge('applicationsBadge',(d.workers||[]).length)).catch(()=>{});
+  fetch(API+'/admin/site-reports?status=open',{headers:{'x-admin-password':pass}}).then(r=>r.json()).then(d=>setBadge('siteReportsBadge',(d.reports||[]).length)).catch(()=>{});
+}
+
 async function load(){
   try{
     const[td,wd,sd]=await Promise.all([fetch(API+'/admin/all',{headers:{'x-admin-password':pass}}).then(r=>r.json()),fetch(API+'/admin/workers',{headers:{'x-admin-password':pass}}).then(r=>r.json()),fetch(API+'/admin/sms-logs',{headers:{'x-admin-password':pass}}).then(r=>r.json()).catch(()=>({logs:[]}))]);
@@ -568,6 +718,7 @@ function checkSmsBadge(){
 // tab. Called on every load() tick (every 15s, see setInterval below) so
 // the badge counts stay current regardless of which tab is open.
 function refreshSidebarBadges(){
+  loadClosedLoopBadges();
   fetch(API+'/admin/disputes',{headers:{'x-admin-password':pass}}).then(r=>r.json()).then(d=>{
     const pending=(d.disputes||[]).filter(x=>x.status==='pending').length;
     const b=document.getElementById('disputesBadge');
@@ -640,6 +791,7 @@ function nav(id,el){
   document.getElementById('sec-'+id).classList.add('on');
   el.classList.add('on');
   const T={overview:'Overview',verify:'Verify Payments',payouts:'Pay Now',active:'In Progress',open:'Open Tasks',completed:'Completed Tasks',all:'All Tasks',workers:'Workers',employers:'Employers',history:'Work History',transactions:'Transactions',messages:'SMS Log',analytics:'Site Analytics',payconfirm:'Payment Confirmations',notify:'Send Notification',inbox:'Support & Reports',disputes:'Scope Disputes',coordapps:'Coordinator Applications',coordreqs:'Coordinator Job Requests',coordteams:'Coordinator Teams',coordinators:'Coordinator Channel',pricing:'Price Tiers'};
+  Object.assign(T,{invoices:'Review & Invoice',applications:'Xpert Applications',sitereports:'Site Reports'});
   document.getElementById('pageTitle').textContent=T[id]||id;
   if(id==='inbox'){ inLoad(); return; }
   if(id==='notify'){ ntChars(); ntLoad(); return; }
@@ -647,6 +799,9 @@ function nav(id,el){
   if(id==='payconfirm'){ pcEmployerList().then(pcPreview); pcRenderLog(); return; }
   if(id==='analytics'){ if(!anData)loadAnalytics(); anStartAuto(); return; }
   if(id==='disputes'){ loadDisputes(); return; }
+  if(id==='invoices'){ loadInvoices(); return; }
+  if(id==='applications'){ loadApplications(); return; }
+  if(id==='sitereports'){ loadSiteReports(); return; }
   if(id==='coordapps'){ loadCoordinatorApplications(); return; }
   if(id==='coordreqs'){ loadCoordinatorRequests(); return; }
   if(id==='coordteams'){ loadCoordinatorTeams(); return; }
@@ -1013,7 +1168,7 @@ async function verifyPaymentById(btn){
   await verifyPayment(taskId, workerName, task);
 }
 async function verifyPayment(taskId, workerName, taskData){
-  if(!confirm('Confirm you have received payment for this task.\n\nThis will advance the task to \'offered\' and the worker will be notified via SMS.')) return;
+  if(!confirm('Confirm you have received payment for this task.\n\nIf an Xpert is already assigned they are offered the job; otherwise the task opens and matching Xperts are notified.')) return;
   try{
     // Update task status to 'offered' directly on Railway.
     // Railway's own PATCH /admin/tasks/:id/status route sends the worker's
@@ -1027,7 +1182,7 @@ async function verifyPayment(taskId, workerName, taskData){
     const d=await r.json().catch(()=>({}));
     if(!r.ok) throw new Error(d.error||'Railway returned '+r.status);
 
-    showToast('Payment verified — '+workerName+' is now offered the job.');
+    showToast(workerName ? 'Payment verified — '+workerName+' is now offered the job.' : 'Payment verified — the task is now open to Xperts.');
     const td=await fetch(API+'/admin/all',{headers:{'x-admin-password':pass}}).then(r=>r.json()).catch(()=>({tasks:[]}));
     tasks=td.tasks||[];
     checkVerifyBadge();

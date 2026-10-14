@@ -24,11 +24,12 @@ export default function Testimonial() {
           <Quote size={28} aria-hidden="true" className="mx-auto mb-4 text-clay-400/50 sm:mb-6 sm:size-10" />
 
           <blockquote className="font-serif text-lg font-medium leading-relaxed text-ink-900 text-pretty sm:text-3xl lg:text-4xl">
-            "BeyondX exists because a record should mark where someone has been,
-            not where they're stuck. Every job completed on our platform
-            builds proof of skill and reliability — the kind that gets someone
-            past the one mark that's followed them for years.{' '}
-            <span className="italic gradient-text">Where work meets skill.</span>"
+            &ldquo;BeyondX exists because hiring should not be a gamble. Every job
+            completed on our platform builds a verified record of skill and
+            reliability, so employers know who they can trust before the work
+            begins, and skilled workers are recognised for what they can actually
+            do.{' '}
+            <span className="italic gradient-text">Where skill meets tasks.</span>&rdquo;
           </blockquote>
 
           <div className="mt-5 flex flex-col items-center gap-2 sm:mt-8 sm:gap-3">

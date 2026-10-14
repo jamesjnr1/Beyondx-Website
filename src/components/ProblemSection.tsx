@@ -47,7 +47,7 @@ export default function ProblemSection() {
           </span>
           <h2 className="font-serif text-2xl font-medium leading-tight text-ink-900 text-balance sm:text-4xl lg:text-5xl">
             Finding someone is not always the hard part.{' '}
-            <span className="italic gradient-text">Knowing they'll show up is.</span>
+            <span className="italic gradient-text">Knowing they will be the ideal person for you is.</span>
           </h2>
         </div>
 

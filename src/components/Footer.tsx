@@ -61,7 +61,7 @@ export default function Footer() {
           <div className="hidden md:block">
             <h4 className="mb-4 text-sm font-semibold text-ink-900">Access</h4>
             <ul className="space-y-2.5 text-sm text-ink-700/70">
-              <li><button onClick={() => open('employer-login')} className={linkCls}>Hire a worker</button></li>
+              <li><button onClick={() => open('employer-login')} className={linkCls}>Hire an Xpert</button></li>
               <li><button onClick={() => open('worker-login')} className={linkCls}>Find work</button></li>
               <li><button onClick={() => open('worker-login')} className={linkCls}>Worker Login</button></li>
               <li><button onClick={() => open('employer-login')} className={linkCls}>Employer Login</button></li>

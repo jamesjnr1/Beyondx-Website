@@ -1,17 +1,49 @@
 import { useState, type ReactNode } from 'react'
-import { Check, ChevronRight, MessageCircle, Phone } from 'lucide-react'
+import { AlertTriangle, Check, ChevronRight, MessageCircle, Phone, Zap } from 'lucide-react'
 import { tasks as tasksApi, ApiError, type Task } from '../../lib/api'
 import { categories, remoteCategories, allCategories } from '../../data'
 import { REMOTE_JOBS_ENABLED } from '../../lib/config'
-import { PLATFORM_FEE_FLAT, BEYONDX_PHONE } from '../../lib/payments'
+import { BEYONDX_PHONE } from '../../lib/payments'
 
-const cedis = (n: number) => `GH₵ ${Number(n || 0).toLocaleString()}`
 const STEPS = ['Task Details', 'Location & Time', 'Additional Info', 'Review & Submit'] as const
-const DURATIONS = ['Half Day', '1 Day', '2 Days', '3 Days', '5 Days']
+const PREMIUM_WINDOW_HOURS = 48
 
 export interface SubmittedTask {
   task: Task
-  summary: { taskType: string; location: string; duration: string; workersNeeded: number; scheduledDate?: string; scheduledTime?: string; total: number }
+  summary: { taskType: string; location: string; duration: string; workersNeeded: number; scheduledDate?: string; scheduledTime?: string; premium: boolean }
+}
+
+/** Jobs starting within 48 hours of posting are premium (charged extra);
+ *  anything later is standard pricing. */
+export function isPremiumStart(date: string, time: string, now = new Date()) {
+  if (!date) return false
+  const start = new Date(`${date}T${time || '08:00'}:00`)
+  return start.getTime() - now.getTime() <= PREMIUM_WINDOW_HOURS * 3600 * 1000
+}
+
+function SurchargeNotice() {
+  return (
+    <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+      <AlertTriangle size={17} className="mt-0.5 shrink-0" aria-hidden="true" />
+      <p>
+        Describe the task fully and accurately. If more work is expected on site than you described,
+        a surcharge of <strong>at least 25%</strong> applies, and it can increase depending on how much additional work is needed.
+      </p>
+    </div>
+  )
+}
+
+function PricingNotice({ premium }: { premium: boolean }) {
+  return premium ? (
+    <div className="flex items-start gap-3 rounded-lg border border-ink-900/15 bg-white px-4 py-3 text-sm text-ink-800">
+      <Zap size={17} className="mt-0.5 shrink-0 text-amber-600" aria-hidden="true" />
+      <p><strong>Premium job.</strong> This job starts within 48 hours, so premium pricing applies and your invoice will include an extra charge.</p>
+    </div>
+  ) : (
+    <div className="rounded-lg border border-ink-900/10 bg-gray-50 px-4 py-3 text-sm text-ink-700">
+      <strong className="text-ink-900">Standard pricing.</strong> Jobs starting more than 48 hours from now are charged at the standard rate. Need it sooner? Jobs within 48 hours are premium and cost extra.
+    </div>
+  )
 }
 
 function Field({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: ReactNode }) {
@@ -42,28 +74,28 @@ export default function PostTaskWizard({ onSubmitted, onContactSupport, onBack }
   const [taskType, setTaskType] = useState('')
   const [description, setDescription] = useState('')
   const [workersNeeded, setWorkersNeeded] = useState('')
-  const [duration, setDuration] = useState('')
+  const [hours, setHours] = useState('')
   const [location, setLocation] = useState('')
   const [scheduledDate, setScheduledDate] = useState('')
   const [scheduledTime, setScheduledTime] = useState('08:00')
   const [notes, setNotes] = useState('')
+  const [agreed, setAgreed] = useState(false)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
 
   const cat = allCategories.find((c) => c.title === taskType)
   const isRemote = cat?.mode === 'remote'
-  const workers = parseInt(workersNeeded, 10) || 1
-  const days = duration === 'Half Day' ? 0.5 : parseFloat(duration) || 1
-  const workerGets = (cat ? cat.rate : 0) * days
-  const perWorker = workerGets + PLATFORM_FEE_FLAT
-  const total = perWorker * workers
+  const workers = parseInt(workersNeeded, 10)
+  const durationHours = parseFloat(hours)
+  const duration = durationHours > 0 ? `${durationHours} hour${durationHours === 1 ? '' : 's'}` : ''
+  const premium = isPremiumStart(scheduledDate, scheduledTime)
   const today = new Date().toISOString().split('T')[0]
 
   const stepValid = [
-    !!taskType && description.trim().length > 0 && !!workersNeeded && !!duration,
-    isRemote || location.trim().length > 0,
+    !!taskType && description.trim().length > 0 && workers >= 1 && workers <= 100 && durationHours > 0 && durationHours <= 1000,
+    (isRemote || location.trim().length > 0) && !!scheduledDate && !!scheduledTime,
     true,
-    true,
+    agreed,
   ]
 
   const next = () => { if (stepValid[step]) setStep((s) => Math.min(s + 1, STEPS.length - 1)) }
@@ -77,12 +109,12 @@ export default function PostTaskWizard({ onSubmitted, onContactSupport, onBack }
     try {
       const res = await tasksApi.create({
         taskType, description: fullDescription, location: loc,
-        duration, pay: workerGets, workersNeeded: workers,
-        ...(scheduledDate ? { scheduledDate, scheduledTime } : {}),
+        duration, durationHours, pay: 0, workersNeeded: workers,
+        scheduledDate, scheduledTime, premium,
       })
       onSubmitted({
-        task: res?.task || { id: '—', taskType, status: 'open' },
-        summary: { taskType, location: loc, duration, workersNeeded: workers, scheduledDate: scheduledDate || undefined, scheduledTime: scheduledDate ? scheduledTime : undefined, total },
+        task: res?.task || { id: '—', taskType, status: 'awaiting_invoice' },
+        summary: { taskType, location: loc, duration, workersNeeded: workers, scheduledDate, scheduledTime, premium },
       })
     } catch (e) {
       setErr(e instanceof ApiError ? e.message : 'Could not post your task. Please try again.')
@@ -94,7 +126,7 @@ export default function PostTaskWizard({ onSubmitted, onContactSupport, onBack }
   const inp = 'w-full rounded-lg border border-ink-900/15 bg-white px-3.5 py-2.5 text-sm text-ink-900 outline-none placeholder:text-ink-700/45 focus:border-forest-600 focus:ring-2 focus:ring-forest-600/25'
   const scheduleLabel = scheduledDate
     ? new Date(`${scheduledDate}T${scheduledTime}:00`).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
-    : 'Flexible — as soon as a worker is available'
+    : '—'
 
   return (
     <div>
@@ -105,7 +137,7 @@ export default function PostTaskWizard({ onSubmitted, onContactSupport, onBack }
       </nav>
 
       <h1 className="mt-4 text-3xl font-bold text-ink-900">Post a Task</h1>
-      <p className="mt-1.5 text-sm text-ink-700/75">Tell us what you need. We'll match you with the right verified workers.</p>
+      <p className="mt-1.5 text-sm text-ink-700/75">Tell us what you need. BeyondX reviews your task, sends you an invoice, and matches the right verified Xperts once it's paid.</p>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div>
@@ -143,22 +175,20 @@ export default function PostTaskWizard({ onSubmitted, onContactSupport, onBack }
                       </>) : categories.map((c) => <option key={c.title}>{c.title}</option>)}
                     </select>
                   </Field>
-                  <Field label="Task description" required>
-                    <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={4}
-                      placeholder="Describe the work that needs to be done…" className={`${inp} resize-y`} />
+                  <Field label="Task description" required hint="Be as detailed as you can — BeyondX prices your invoice and matches Xperts from what you write.">
+                    <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={5}
+                      placeholder="e.g. Deep clean of a 3-bedroom office (about 120 m²): sweep and mop all floors, clean 12 windows inside and out, scrub 2 washrooms. Cleaning supplies provided."
+                      className={`${inp} resize-y`} />
                   </Field>
+                  <SurchargeNotice />
                   <div className="grid gap-5 sm:grid-cols-2">
-                    <Field label="Number of workers required" required>
-                      <select value={workersNeeded} onChange={(e) => setWorkersNeeded(e.target.value)} className={inp}>
-                        <option value="" disabled>Select number</option>
-                        {[1, 2, 3, 4, 5, 6, 8, 10, 15, 20].map((n) => <option key={n} value={n}>{n} worker{n > 1 ? 's' : ''}</option>)}
-                      </select>
+                    <Field label="Number of Xperts needed" required>
+                      <input type="number" inputMode="numeric" min={1} max={100} step={1} value={workersNeeded}
+                        onChange={(e) => setWorkersNeeded(e.target.value)} placeholder="e.g. 2" className={inp} />
                     </Field>
-                    <Field label="Expected duration" required>
-                      <select value={duration} onChange={(e) => setDuration(e.target.value)} className={inp}>
-                        <option value="" disabled>Select duration</option>
-                        {DURATIONS.map((d) => <option key={d}>{d}</option>)}
-                      </select>
+                    <Field label="Expected duration (hours)" required hint="Total working hours, e.g. 4 for half a day, 8 for a full day.">
+                      <input type="number" inputMode="decimal" min={0.5} max={1000} step={0.5} value={hours}
+                        onChange={(e) => setHours(e.target.value)} placeholder="e.g. 6" className={inp} />
                     </Field>
                   </div>
                 </>
@@ -167,37 +197,32 @@ export default function PostTaskWizard({ onSubmitted, onContactSupport, onBack }
               {step === 1 && (
                 <>
                   {isRemote ? (
-                    <p className="rounded-lg bg-forest-600/5 px-4 py-3 text-sm text-ink-800">This is remote work — no site location needed.</p>
+                    <p className="rounded-lg bg-gray-100 px-4 py-3 text-sm text-ink-800">This is remote work — no site location needed.</p>
                   ) : (
                     <Field label="Location" required hint="Area, landmark or full address in Greater Accra.">
                       <input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="e.g. East Legon, near A&C Mall" className={inp} />
                     </Field>
                   )}
                   <div className="grid gap-5 sm:grid-cols-2">
-                    <Field label="Date" hint="Leave empty if the start date is flexible.">
+                    <Field label="Start date" required>
                       <input type="date" min={today} value={scheduledDate} onChange={(e) => setScheduledDate(e.target.value)} className={inp} />
                     </Field>
-                    <Field label="Start time" hint="Workers get a reminder one hour before.">
-                      <input type="time" value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} className={inp} disabled={!scheduledDate} />
+                    <Field label="Start time" required hint="Xperts get a reminder one hour before.">
+                      <input type="time" value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} className={inp} />
                     </Field>
                   </div>
+                  {scheduledDate && <PricingNotice premium={premium} />}
                 </>
               )}
 
               {step === 2 && (
                 <>
-                  <Field label="Anything else the workers should know?" hint="Access instructions, tools on site, who to ask for — optional.">
-                    <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={3} placeholder="e.g. Ask for Ama at the front desk. Cleaning supplies are provided." className={`${inp} resize-y`} />
+                  <Field label="Anything else the Xperts should know?" hint="Required skills, equipment or materials, access instructions, who to ask for — optional.">
+                    <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} placeholder="e.g. Ask for Ama at the front desk. Ladder needed for the high windows." className={`${inp} resize-y`} />
                   </Field>
-                  <div>
-                    <p className="mb-1.5 text-sm font-medium text-ink-800">Estimated cost</p>
-                    <div className="rounded-lg border border-ink-900/10 px-4 py-3.5 text-sm text-ink-700">
-                      <div className="flex justify-between py-0.5"><span>Worker pay ({duration})</span><span>{cedis(workerGets)}</span></div>
-                      <div className="flex justify-between py-0.5"><span>BeyondX service fee</span><span>{cedis(PLATFORM_FEE_FLAT)}</span></div>
-                      <div className="mt-1 flex justify-between border-t border-ink-900/10 pt-2 font-semibold text-ink-900"><span>Per worker</span><span>{cedis(perWorker)}</span></div>
-                      {workers > 1 && <div className="flex justify-between py-0.5 font-semibold text-forest-700"><span>Total for {workers} workers</span><span>{cedis(total)}</span></div>}
-                      <p className="mt-2 text-xs text-ink-700/60">A transport allowance of GH₵0–40 per worker may be added based on distance.</p>
-                    </div>
+                  <div className="rounded-lg border border-ink-900/10 bg-gray-50 px-4 py-3.5 text-sm text-ink-700">
+                    <p className="font-semibold text-ink-900">How pricing works</p>
+                    <p className="mt-1">There's no price at this stage. BeyondX reviews your task and sends you an invoice. You review it, then pay to have Xperts matched — or decline it at no cost.</p>
                   </div>
                 </>
               )}
@@ -209,9 +234,19 @@ export default function PostTaskWizard({ onSubmitted, onContactSupport, onBack }
                   <ReviewRow label="Location" value={isRemote ? 'Remote' : location} />
                   <ReviewRow label="Date & start time" value={scheduleLabel} />
                   <ReviewRow label="Expected duration" value={duration} />
-                  <ReviewRow label="Number of workers" value={workers} />
-                  <ReviewRow label="Estimated total" value={<span className="text-forest-700">{cedis(total)}</span>} />
+                  <ReviewRow label="Number of Xperts" value={workers} />
+                  <ReviewRow label="Pricing" value={premium ? 'Premium (starts within 48 hours) — invoice to follow' : 'Standard — invoice to follow'} />
                 </dl>
+              )}
+              {step === 3 && (
+                <>
+                  <SurchargeNotice />
+                  <label className="flex items-start gap-3 text-sm text-ink-800">
+                    <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)}
+                      className="mt-0.5 h-4 w-4 shrink-0 rounded border-ink-900/30 text-forest-600" />
+                    <span>I've described the task accurately, and I understand extra work on site will be charged at least 25% more.</span>
+                  </label>
+                </>
               )}
             </div>
 
@@ -227,7 +262,7 @@ export default function PostTaskWizard({ onSubmitted, onContactSupport, onBack }
                   Next
                 </button>
               ) : (
-                <button onClick={submit} disabled={busy}
+                <button onClick={submit} disabled={busy || !agreed}
                   className="rounded-lg bg-ink-900 px-8 py-2.5 text-sm font-semibold text-cream-50 transition-colors hover:bg-ink-800 disabled:opacity-60">
                   {busy ? 'Submitting…' : 'Submit Task'}
                 </button>
@@ -237,7 +272,7 @@ export default function PostTaskWizard({ onSubmitted, onContactSupport, onBack }
         </div>
 
         {/* Need help? */}
-        <aside className="h-fit rounded-2xl border border-forest-600/15 bg-forest-600/5 p-6 lg:mt-14">
+        <aside className="h-fit rounded-2xl border border-ink-900/10 bg-gray-100 p-6 lg:mt-14">
           <h2 className="text-base font-semibold text-ink-900">Need help?</h2>
           <p className="mt-1.5 text-sm text-ink-700/80">Our team is here to assist you in creating the right task.</p>
           <div className="mt-5 space-y-4">

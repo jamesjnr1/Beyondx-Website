@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
-import { ChevronLeft, ChevronRight, Star, Send, Phone, X, ShieldCheck, CircleCheck, Info, RefreshCw, AlertCircle, Copy, Check, Award, Map, Clock, MapPin, Briefcase, Users, Wallet, Quote, LayoutDashboard, FilePlus, ClipboardList, Inbox, HelpCircle } from 'lucide-react'
+import { ChevronRight, Star, ShieldCheck, RefreshCw, AlertCircle, Check, Map, Clock, MapPin, Briefcase, Users, Wallet, LayoutDashboard, FilePlus, ClipboardList, Inbox, HelpCircle } from 'lucide-react'
 import JobLocationMap from '../components/JobLocationMap'
 import DashboardHeader from './DashboardHeader'
 import DashboardSidebar, { DashboardMobileNav, type DashboardNavItem } from '../components/DashboardSidebar'
@@ -9,97 +9,48 @@ import Toast, { type ToastMsg } from '../components/Toast'
 import SupportPanel from '../components/SupportPanel'
 import LiveLocation from '../components/LiveLocation'
 import {
-  tasks as tasksApi, workers as workersApi, employers as employersApi, coordinatorRequests as coordinatorRequestsApi,
-  contact, session, ApiError, type Task, type Worker, type Employer, type CoordinatorJobRequest,
+  tasks as tasksApi, employers as employersApi,
+  contact, session, ApiError, type Task, type Employer,
 } from '../lib/api'
-import { DISPATCH_ENABLED, DISPATCH_PAUSED_MESSAGE, REMOTE_JOBS_ENABLED } from '../lib/config'
-import { categories, remoteCategories, allCategories } from '../data'
 import { MOMO_NUMBER, MOMO_NAME, PAY_METHODS } from '../lib/payments'
-import { openBookingWindow } from './BookWorker'
-import type { BookingState } from './BookWorker'
-import CoordinatorQuoteModal from '../components/CoordinatorQuoteModal'
-import { isCoordinator, getApplication } from '../lib/coordinator'
 import { useRefreshOnResume } from '../hooks/useRefreshOnResume'
 import NotificationsBanner from '../components/NotificationsBanner'
 import PostTaskWizard, { type SubmittedTask } from '../components/tasks/PostTaskWizard'
 import TaskSubmitted from '../components/tasks/TaskSubmitted'
 import TaskTracking from '../components/tasks/TaskTracking'
+import { PROGRESS_STEPS, currentStepIndex } from '../components/tasks/taskProgress'
 
 const cedis = (n?: number | string) => `GH\u20b5 ${Number(n || 0).toLocaleString()}`
-const wName = (w: Worker) => (w.fullName as string) || (w.name as string) || 'Worker'
-const wInitials = (w: Worker) => wName(w).split(' ').map((p) => p[0]).slice(0, 2).join('').toUpperCase()
-// A coordinator's own `skills` array is what they registered with as a
-// regular worker, before their team was approved — it doesn't reflect what
-// their team actually covers (Worker.coordinatorApplication.categories).
-// Browsing by category needs both, or a coordinator never appears under any
-// category their team covers but they didn't personally register under.
-const wSkills = (w: Worker): string[] => {
-  const base = Array.isArray(w.skills) ? (w.skills as string[]) : (w.cats as string[]) || []
-  if (!isCoordinator(w)) return base
-  const covered = getApplication(w)?.categories || []
-  return Array.from(new Set([...base, ...covered]))
-}
-
-/** A worker is "background-flagged" only if they explicitly named a real
- *  prison facility at registration. Any opt-out phrasing, empty value, or
- *  the placeholder "Not applicable" means they are a civilian.
- *
- *  Emmanuel Wilson is currently the only confirmed background-flagged account.
- *  If the prisonFacility field ever contains just noise (e.g. a typo or a test
- *  value), it must be added to NON_FACILITY_VALUES rather than silently
- *  flagging a civilian. */
-const REAL_FACILITIES = new Set([
-  'nsawam medium security prison',
-  'kumasi central prison',
-  'james fort prison',
-  'ankaful maximum security prison',
-  'sunyani central prison',
-  'ho central prison',
-  'tamale central prison',
-])
-const isBackgroundFlagged = (w: Worker) => {
-  const f = String(w.prisonFacility ?? '').trim().toLowerCase()
-  // Only flag if the value matches a known real facility name.
-  // Anything else — empty, null, "not applicable", "prefer not to say",
-  // "n/a", "none", or any other opt-out — is treated as civilian.
-  return REAL_FACILITIES.has(f)
-}
-
-/** Task-attribute risk flags. When all three are "no", background-flagged
- *  workers are eligible for the task and should be surfaced first by default. */
-export interface TaskFlags {
-  cashUnsupervised: boolean        // Will the worker handle cash unsupervised?
-  vulnerableContact: boolean       // Will the worker be alone with vulnerable people / in a private residence?
-  propertyAccess: boolean          // Will the worker have unsupervised access to property/valuables?
-}
-const DEFAULT_FLAGS: TaskFlags = { cashUnsupervised: false, vulnerableContact: false, propertyAccess: false }
-const isHighRisk = (f: TaskFlags) => f.cashUnsupervised || f.vulnerableContact || f.propertyAccess
-
-/** Sort workers so background-flagged profiles float to the top when the task
- *  is low-risk (all flags "no"). This gives them priority matching rather than
- *  being hidden, while keeping them off high-risk tasks. */
-function sortWorkersForTask(workers: Worker[], flags: TaskFlags): Worker[] {
-  if (isHighRisk(flags)) {
-    // High-risk task → exclude background-flagged workers entirely
-    return workers.filter((w) => !isBackgroundFlagged(w))
-  }
-  // Low-risk task → background-flagged workers first, then the rest
-  const flagged = workers.filter(isBackgroundFlagged)
-  const other = workers.filter((w) => !isBackgroundFlagged(w))
-  return [...flagged, ...other]
-}
-
 const STATUS: Record<string, { label: string; color: string; bar: string; note?: string; urgent?: boolean }> = {
-  payment_pending:    { label: 'Verifying payment',   color: 'text-amber-700',   bar: 'bg-amber-400',  note: 'We received your payment details and are confirming the transaction. The worker will be notified once verified — usually within a few minutes.' },
-  offered:            { label: 'Worker notified',     color: 'text-ink-700',     bar: 'bg-ink-900/30', note: 'The worker has been sent a job offer via SMS and is reviewing the details.' },
-  open:               { label: 'Finding a worker',    color: 'text-ink-500',     bar: 'bg-ink-900/20', note: 'We are matching a worker to this job.' },
-  accepted:           { label: 'On the job',          color: 'text-forest-700',  bar: 'bg-forest-500', note: 'Work is underway. You will be notified when the worker marks it complete.' },
-  pending_confirmation: { label: 'Action required',  color: 'text-amber-700',   bar: 'bg-amber-500',  note: 'The worker has marked the job as done. Confirm below to release their payment.', urgent: true },
+  awaiting_invoice:   { label: 'Under review',        color: 'text-ink-700',     bar: 'bg-ink-900/20', note: 'BeyondX is reviewing your task and will send you an invoice shortly.' },
+  invoice_sent:       { label: 'Invoice ready',       color: 'text-amber-700',   bar: 'bg-amber-400',  note: 'Your invoice is ready. Pay it in Invoices to have Xperts matched.', urgent: true },
+  payment_pending:    { label: 'Verifying payment',   color: 'text-amber-700',   bar: 'bg-amber-400',  note: 'We received your payment details and are confirming the transaction — usually within a few minutes.' },
+  offered:            { label: 'Xpert notified',      color: 'text-ink-700',     bar: 'bg-ink-900/30', note: 'An Xpert has been offered this job and is reviewing the details.' },
+  open:               { label: 'Finding an Xpert',    color: 'text-ink-500',     bar: 'bg-ink-900/20', note: 'Payment confirmed. We are matching an Xpert to this job.' },
+  accepted:           { label: 'On the job',          color: 'text-forest-700',  bar: 'bg-forest-500', note: 'Work is underway. You will be notified when the Xpert marks it complete.' },
+  pending_confirmation: { label: 'Action required',  color: 'text-amber-700',   bar: 'bg-amber-500',  note: 'The Xpert has marked the job as done. Confirm below to release their payment.', urgent: true },
   employer_confirmed: { label: 'Payment processing', color: 'text-ink-600',     bar: 'bg-ink-900/30', note: 'BeyondX is releasing the payment. This usually completes within a few hours.' },
-  completed:          { label: 'Complete',            color: 'text-forest-700',  bar: 'bg-forest-600', note: 'Payment has been released to the worker.' },
+  completed:          { label: 'Complete',            color: 'text-forest-700',  bar: 'bg-forest-600', note: 'Payment has been released to the Xpert.' },
+  cancelled:          { label: 'Cancelled',           color: 'text-ink-500',     bar: 'bg-ink-900/20', note: 'This request was closed.' },
   payment_rejected:   { label: 'Payment not verified', color: 'text-red-600',   bar: 'bg-red-400',    note: 'We could not verify this payment. Please contact BeyondX to resolve.' },
 }
 const st = (s?: string) => STATUS[s || 'open'] || STATUS.open
+
+/** Assigned Xpert's name and rating — from the accepted record, or from the
+ *  description older direct dispatches carried. */
+type XpertSlot = { id: string; status: string; acceptedBy?: { fullName?: string; phone?: string; rating?: number | string } }
+
+/** True when the job (or, on a multi-Xpert job, any one Xpert's part of it) is waiting on the employer to confirm. */
+const needsConfirmation = (t: Task) =>
+  t.status === 'pending_confirmation' ||
+  !!(t as unknown as { acceptedWorkers?: XpertSlot[] }).acceptedWorkers?.some((w) => w.status === 'pending_confirmation')
+
+function assignedXpert(t: Task) {
+  const a = t.acceptedBy as { fullName?: string; rating?: number | string } | undefined
+  const name = (typeof a === 'object' && a?.fullName) || dispatchDetails(t).workerName || ''
+  const rating = typeof a === 'object' ? Number(a?.rating || 0) : 0
+  return { name, rating }
+}
 
 // Dispatch writes "Worker: <name> (<id>) | Payment Ref: <ref>" into the description.
 function dispatchDetails(t: Task) {
@@ -137,7 +88,7 @@ function useEsc(onClose: () => void) {
 }
 function Empty({ text, icon }: { text: string; icon?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-ink-900/15 bg-cream-50/50 p-10 text-center">
+    <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-ink-900/15 bg-gray-50 p-10 text-center">
       {icon && <span className="flex h-11 w-11 items-center justify-center rounded-full bg-ink-900/5 text-ink-700/50">{icon}</span>}
       <p className="text-sm text-ink-700">{text}</p>
     </div>
@@ -148,7 +99,7 @@ function Stat({ icon, label, value, extra }: { icon: ReactNode; label: string; v
   return (
     <div className="rounded-2xl border border-ink-900/8 bg-white px-5 py-5 shadow-sm">
       <div className="flex items-center gap-2.5 text-sm font-medium text-ink-700">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-forest-600/30 text-forest-600">{icon}</span>
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-ink-900/10 text-forest-600">{icon}</span>
         <span className="truncate">{label}</span>
       </div>
       <div className="mt-3 flex items-center gap-2.5">
@@ -160,163 +111,14 @@ function Stat({ icon, label, value, extra }: { icon: ReactNode; label: string; v
 }
 function Skeleton() {
   return <div className="space-y-3" aria-hidden="true">{[0, 1, 2].map((i) => (
-    <div key={i} className="rounded-xl bg-cream-50 p-5 shadow-sm border border-ink-900/8">
+    <div key={i} className="rounded-xl bg-white p-5 shadow-sm border border-ink-900/8">
       <div className="h-4 w-1/3 animate-pulse rounded bg-ink-900/10" />
       <div className="mt-2 h-3 w-1/2 animate-pulse rounded bg-ink-900/5" />
     </div>))}</div>
 }
 
-const CR_STATUS: Record<string, { label: string; color: string }> = {
-  pending_coordinator: { label: 'Awaiting coordinator', color: 'text-ink-600' },
-  quoted:               { label: 'Quoted — awaiting BeyondX', color: 'text-amber-700' },
-  admin_approved:       { label: 'Approved', color: 'text-forest-700' },
-  admin_rejected:       { label: 'Not approved', color: 'text-red-700' },
-  declined:             { label: 'Declined by coordinator', color: 'text-red-700' },
-}
-
-function CoordinatorRequestPayForm({ request, onPaid }: { request: CoordinatorJobRequest; onPaid: () => void }) {
-  const [method, setMethod] = useState(PAY_METHODS[0].id)
-  const [ref, setRef] = useState('')
-  const [busy, setBusy] = useState(false)
-  const [err, setErr] = useState<string | null>(null)
-
-  const submit = async () => {
-    if (!ref.trim() || busy || !request.taskId) return
-    setBusy(true)
-    setErr(null)
-    try {
-      await tasksApi.submitPaymentRef(request.taskId, ref.trim())
-      onPaid()
-    } catch (e) {
-      setErr(e instanceof ApiError ? e.message : 'Could not submit payment. Please try again.')
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return (
-    <div className="mt-3 space-y-2.5 rounded-xl border border-forest-600/20 bg-forest-600/5 p-3.5">
-      <p className="text-xs leading-relaxed text-ink-800">
-        Send <span className="font-semibold">{cedis(Number(request.quotedPrice || 0))}</span> to{' '}
-        <span className="font-semibold">{MOMO_NUMBER}</span> ({MOMO_NAME}), then enter the reference below.
-      </p>
-      <div className="flex flex-wrap gap-1.5">
-        {PAY_METHODS.map((m) => (
-          <button key={m.id} type="button" onClick={() => setMethod(m.id)}
-            className={`rounded-md border px-2.5 py-1 text-[0.8125rem] font-medium ${method === m.id ? 'border-forest-600 bg-forest-600/10 text-forest-700' : 'border-ink-900/15 text-ink-700 hover:bg-ink-900/5'}`}>
-            {m.name}
-          </button>
-        ))}
-      </div>
-      <div className="flex gap-2">
-        <input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="Transaction reference"
-          className="flex-1 rounded-lg border border-ink-900/15 bg-white px-3 py-2 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/20" />
-        <button onClick={submit} disabled={!ref.trim() || busy}
-          className="shrink-0 rounded-lg bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 hover:bg-forest-500 disabled:opacity-50">
-          {busy ? 'Submitting…' : 'Submit payment'}
-        </button>
-      </div>
-      {err && <p className="text-xs text-red-700">{err}</p>}
-    </div>
-  )
-}
-
-function CoordinatorRequestCard({ request, task, onPaid }: { request: CoordinatorJobRequest; task: Task | undefined; onPaid: () => void }) {
-  const [payOpen, setPayOpen] = useState(false)
-  const status = CR_STATUS[request.status] || { label: request.status, color: 'text-ink-600' }
-  const taskStatus = task?.status as string | undefined
-  const paymentRef = task?.paymentRef as string | undefined
-  const isPaidAwaitingVerification = request.status === 'admin_approved' && taskStatus === 'payment_pending' && !!paymentRef
-  const isDispatched = request.status === 'admin_approved' && !!taskStatus && taskStatus !== 'payment_pending'
-
-  return (
-    <div className="rounded-2xl border border-ink-900/8 bg-cream-50 p-4 sm:p-5">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-ink-900">{request.taskType}</p>
-          <p className="mt-0.5 text-xs text-ink-700/70">
-            {request.coordinator?.fullName || 'Coordinator'} · {request.location}
-            {request.workersNeeded > 1 ? ` · ${request.workersNeeded} workers` : ''}
-          </p>
-          {request.description && <p className="mt-1.5 text-xs text-ink-700/60 line-clamp-2">{request.description}</p>}
-        </div>
-        <span className={`shrink-0 text-xs font-semibold ${status.color}`}>
-          {isDispatched ? 'Dispatched' : isPaidAwaitingVerification ? 'Payment submitted' : status.label}
-        </span>
-      </div>
-
-      {request.status === 'quoted' && request.quotedPrice != null && (
-        <p className="mt-2.5 text-xs text-ink-700/70">
-          {request.coordinator?.fullName || 'The coordinator'} quoted <span className="font-semibold text-ink-900">{cedis(request.quotedPrice)}</span> — BeyondX is reviewing.
-        </p>
-      )}
-      {request.status === 'admin_rejected' && (
-        <p className="mt-2.5 text-xs text-red-700">{request.adminNote || 'BeyondX did not approve this quote.'}</p>
-      )}
-      {request.status === 'declined' && (
-        <p className="mt-2.5 text-xs text-red-700">The coordinator declined this job.</p>
-      )}
-      {request.status === 'admin_approved' && request.quotedPrice != null && isDispatched && (
-        <p className="mt-2.5 text-xs text-forest-700">Paid and dispatched — track progress in My Jobs.</p>
-      )}
-      {request.status === 'admin_approved' && request.quotedPrice != null && !isDispatched && isPaidAwaitingVerification && (
-        <p className="mt-2.5 text-xs text-amber-700">Payment reference submitted — BeyondX is verifying it before dispatch.</p>
-      )}
-      {request.status === 'admin_approved' && request.quotedPrice != null && !isDispatched && !isPaidAwaitingVerification && (
-        payOpen ? (
-          <CoordinatorRequestPayForm request={request} onPaid={() => { setPayOpen(false); onPaid() }} />
-        ) : (
-          <div className="mt-2.5 flex items-center justify-between gap-3">
-            <p className="text-xs text-ink-700/70">Approved at <span className="font-semibold text-ink-900">{cedis(request.quotedPrice)}</span> — pay to dispatch.</p>
-            <button onClick={() => setPayOpen(true)}
-              className="shrink-0 rounded-md bg-forest-600 px-4 py-2 text-xs font-semibold text-cream-50 hover:bg-forest-500">
-              Pay now
-            </button>
-          </div>
-        )
-      )}
-    </div>
-  )
-}
-
-function CoordinatorRequestsTab({ requests, tasks, onReload }: { requests: CoordinatorJobRequest[]; tasks: Task[]; onReload: () => void }) {
-  const findTask = (taskId: string | null | undefined) => tasks.find((t) => String(t.id) === String(taskId))
-  return (
-    <div className="space-y-3">
-      {requests.length === 0 ? (
-        <Empty icon={<Users size={20} aria-hidden="true" />} text="No coordinator requests yet. Request a team quote from a Coordinator's profile in Hire Workers." />
-      ) : (
-        requests.map((r) => (
-          <CoordinatorRequestCard key={r.id} request={r} task={findTask(r.taskId)} onPaid={onReload} />
-        ))
-      )}
-    </div>
-  )
-}
-
 export default function EmployerDashboard() {
-  const [tab, setTab] = useState<'overview' | 'hire' | 'post' | 'history' | 'coordinator-requests' | 'support'>('overview')
-  const [workMode, setWorkMode] = useState<'field' | 'remote'>('field')
-  const [pickedCategory, setPickedCategory] = useState<string | null>(null)
-  const [taskFlags, setTaskFlags] = useState<TaskFlags>(DEFAULT_FLAGS)
-  const [screeningDone, setScreeningDone] = useState(false)
-  const [screeningAnswers, setScreeningAnswers] = useState<ScreeningAnswers>(DEFAULT_SCREENING)
-  const [selectedWorkers, setSelectedWorkers] = useState<Set<string | number>>(new Set())
-  const [viewing, setViewing] = useState<Worker | null>(null)
-  const [quoteRequestWorker, setQuoteRequestWorker] = useState<Worker | null>(null)
-  const openDispatch = (worker: Worker) => {
-    const state: BookingState = { worker, category: pickedCategory, screening: screeningAnswers }
-    openBookingWindow(state)
-    // Listen for when the booking window signals completion via localStorage
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === 'bx_booking_done') {
-        window.removeEventListener('storage', onStorage)
-        load()
-        setToast({ id: Date.now(), kind: 'success', title: 'Booking submitted', detail: 'Payment is being verified by BeyondX. Track it under My Jobs.' })
-      }
-    }
-    window.addEventListener('storage', onStorage)
-  }
+  const [tab, setTab] = useState<'overview' | 'post' | 'invoices' | 'history' | 'support'>('overview')
   const [rating, setRating] = useState<Task | null>(null)
   const [editing, setEditing] = useState(false)
   const [submitted, setSubmitted] = useState<SubmittedTask | null>(null)
@@ -326,28 +128,21 @@ export default function EmployerDashboard() {
   // The task screens carry their own heading, so the welcome header is hidden on them.
   const taskScreen = tab === 'post' || (tab === 'history' && trackingId != null)
 
-  const [workerList, setWorkerList] = useState<Worker[]>([])
   const [taskList, setTaskList] = useState<Task[]>([])
-  const [coordRequests, setCoordRequests] = useState<CoordinatorJobRequest[]>([])
   const [profile, setProfile] = useState<Employer | null>(session.employer())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [jobLocationFilter, setJobLocationFilter] = useState('')
   const [announce, setAnnounce] = useState('')
   const [toast, setToast] = useState<ToastMsg>(null)
 
   const load = useCallback(async () => {
     setError(null)
     try {
-      const [wRes, tRes, pRes, crRes] = await Promise.all([
-        workersApi.list(jobLocationFilter.trim() || undefined),
+      const [tRes, pRes] = await Promise.all([
         tasksApi.all(),
         employersApi.profile().catch(() => null),
-        coordinatorRequestsApi.mine().catch(() => null),
       ])
-      setWorkerList(wRes?.workers || [])
       setTaskList(tRes?.tasks || [])
-      setCoordRequests(crRes?.requests || [])
       const emp = (pRes as { employer?: Employer } | null)?.employer
       if (emp) { setProfile(emp); session.patchEmployer(emp) }
     } catch (e) {
@@ -355,12 +150,12 @@ export default function EmployerDashboard() {
     } finally {
       setLoading(false)
     }
-  }, [jobLocationFilter])
+  }, [])
   useEffect(() => { load() }, [load])
   useRefreshOnResume(load)
 
   const cancelTask = async (t: Task) => {
-    if (!window.confirm(`Cancel this "${t.taskType}" job? This stops the search for a worker — you won't be charged.`)) return
+    if (!window.confirm(`Cancel this "${t.taskType}" job? You won't be charged.`)) return
     try {
       await tasksApi.cancel(t.id)
       setToast({ id: Date.now(), kind: 'success', title: 'Job cancelled', detail: 'The search has been stopped.' })
@@ -373,26 +168,12 @@ export default function EmployerDashboard() {
   const orgName = (profile?.orgName as string) || 'Your organisation'
   const logo = (profile?.logoUrl as string) || undefined
 
-  const pickCategory = (title: string) => {
-    setPickedCategory(title)
-    setTaskFlags(DEFAULT_FLAGS)
-    setScreeningDone(false)
-    setScreeningAnswers(DEFAULT_SCREENING)
-    setSelectedWorkers(new Set())
-  }
-  const clearCategory = () => {
-    setPickedCategory(null)
-    setTaskFlags(DEFAULT_FLAGS)
-    setScreeningDone(false)
-    setScreeningAnswers(DEFAULT_SCREENING)
-    setSelectedWorkers(new Set())
-  }
-
   // "Active" = still in flight; a job only counts toward spend once BeyondX has
   // actually paid a worker for it (employer_confirmed/completed), so a
   // cancelled or never-verified booking doesn't inflate the figure.
   const activeJobsCount = taskList.filter((t) => !['completed', 'cancelled', 'expired', 'payment_rejected'].includes(t.status || '')).length
   const workersHiredCount = new Set(taskList.map((t) => t.acceptedBy).filter(Boolean)).size
+  const invoicesDue = taskList.filter((t) => t.status === 'invoice_sent')
   const pendingConfirmCount = taskList.filter((t) => t.status === 'pending_confirmation').length
   const now = new Date()
   const spendThisMonth = taskList
@@ -406,21 +187,18 @@ export default function EmployerDashboard() {
     load()
   }
 
-  const pendingApprovedRequests = coordRequests.filter((r) => r.status === 'admin_approved').length
-
   const navItems: DashboardNavItem[] = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'hire', label: 'Hire Workers', icon: Users },
     { id: 'post', label: 'Post a Task', icon: FilePlus },
+    { id: 'invoices', label: 'Invoices', icon: Inbox, badge: invoicesDue.length },
     { id: 'history', label: 'My Jobs', icon: ClipboardList, badge: pendingConfirmCount },
-    { id: 'coordinator-requests', label: 'Coordinator Requests', icon: Inbox, badge: pendingApprovedRequests },
     { id: 'support', label: 'Support', icon: HelpCircle },
   ]
   // Short set for the top bar — the sidebar carries the full list.
-  const headerNavItems = navItems.filter((i) => ['overview', 'hire', 'history', 'support'].includes(i.id))
+  const headerNavItems = navItems.filter((i) => ['overview', 'invoices', 'history', 'support'].includes(i.id))
 
   const urgentTask = taskList.find((t) => t.status === 'pending_confirmation')
-  const nextActiveTask = urgentTask || taskList.find((t) => ['open', 'payment_pending', 'offered', 'accepted'].includes(String(t.status)))
+  const nextActiveTask = urgentTask || invoicesDue[0] || taskList.find((t) => ['awaiting_invoice', 'open', 'payment_pending', 'offered', 'accepted'].includes(String(t.status)))
 
   const recentActivity: ActivityItem[] = [...taskList]
     .sort((a, b) => (b.createdAt ? new Date(b.createdAt).getTime() : 0) - (a.createdAt ? new Date(a.createdAt).getTime() : 0))
@@ -439,7 +217,7 @@ export default function EmployerDashboard() {
     })
 
   return (
-    <div className="min-h-screen bg-cream-100">
+    <div className="min-h-screen bg-gray-50">
       <DashboardHeader role="EMPLOYER" title="Employer Dashboard" name={orgName} avatar={logo} onEditProfile={() => setEditing(true)} tasks={taskList}
         navItems={headerNavItems} active={tab} onSelect={goTab}
         cta={{ label: 'Post a Task', onClick: () => goTab('post') }} />
@@ -466,7 +244,7 @@ export default function EmployerDashboard() {
                 ? `${pendingConfirmCount} job${pendingConfirmCount === 1 ? '' : 's'} waiting on your confirmation.`
                 : activeJobsCount > 0
                   ? `${activeJobsCount} active job${activeJobsCount === 1 ? '' : 's'} right now.`
-                  : 'No active jobs — post one or hire a worker to get started.'}
+                  : 'No active jobs — post a task to get started.'}
             </p>
           </div>
           <button onClick={() => { setLoading(true); load() }} aria-label="Refresh dashboard"
@@ -489,13 +267,20 @@ export default function EmployerDashboard() {
                       <Check size={20} strokeWidth={3} aria-hidden="true" /> Active
                     </p>
                     <p className="mt-3 text-sm text-ink-700/75">
-                      {pendingConfirmCount > 0
-                        ? `${pendingConfirmCount} job${pendingConfirmCount === 1 ? '' : 's'} waiting on your confirmation.`
-                        : "You're all caught up on your jobs."}
+                      {invoicesDue.length > 0
+                        ? `${invoicesDue.length} invoice${invoicesDue.length === 1 ? '' : 's'} ready for you to review.`
+                        : pendingConfirmCount > 0
+                          ? `${pendingConfirmCount} job${pendingConfirmCount === 1 ? '' : 's'} waiting on your confirmation.`
+                          : "You're all caught up on your jobs."}
                     </p>
-                    <button onClick={() => setTab('history')} className="mt-4 text-sm font-medium text-forest-700 underline underline-offset-4 hover:text-forest-500">
-                      View My Jobs →
+                    <button onClick={() => setTab(invoicesDue.length ? 'invoices' : 'history')} className="mt-4 text-sm font-medium text-forest-700 underline underline-offset-4 hover:text-forest-500">
+                      {invoicesDue.length ? 'View invoices →' : 'View My Jobs →'}
                     </button>
+                    {Number(profile?.rating || 0) > 0 && (
+                      <p className="mt-4 flex items-center gap-2 border-t border-ink-900/8 pt-3 text-sm text-ink-700">
+                        Your rating from Xperts: <span className="font-semibold text-ink-900">{Number(profile?.rating).toFixed(1)}</span> <Stars n={Math.round(Number(profile?.rating))} />
+                      </p>
+                    )}
                   </div>
 
                   <div className="rounded-2xl border border-ink-900/8 bg-white p-6 shadow-sm">
@@ -517,9 +302,9 @@ export default function EmployerDashboard() {
                     ) : (
                       <>
                         <p className="mt-2 text-sm text-ink-700/70">No active jobs right now.</p>
-                        <button onClick={() => setTab('hire')}
+                        <button onClick={() => goTab('post')}
                           className="mt-3 rounded-md border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-800 hover:bg-ink-900/5">
-                          Hire a worker
+                          Post a task
                         </button>
                       </>
                     )}
@@ -528,287 +313,17 @@ export default function EmployerDashboard() {
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <Stat icon={<Briefcase size={18} />} label="Active Jobs" value={`${activeJobsCount}`} />
-                  <Stat icon={<Users size={18} />} label="Workers Hired" value={`${workersHiredCount}`} />
+                  <Stat icon={<Users size={18} />} label="Xperts Hired" value={`${workersHiredCount}`} />
                   <Stat icon={<Wallet size={18} />} label="Spend This Month" value={cedis(spendThisMonth)} />
                 </div>
 
                 <div>
                   {loading ? <Skeleton /> : (
-                    <ActivityFeed title="Recent Activity" items={recentActivity} empty="No activity yet — posted and hired jobs will show up here." />
+                    <ActivityFeed title="Recent Activity" items={recentActivity} empty="No activity yet — your posted tasks will show up here." />
                   )}
                 </div>
               </div>
             )}
-
-            {tab === 'hire' && (
-          <div className="mt-6">
-            {!DISPATCH_ENABLED && (
-              <div className="mb-4 rounded-xl bg-clay-400/10 p-4 border border-clay-400/25">
-                <p className="flex items-start gap-2 text-sm leading-relaxed text-ink-800">
-                  <Info size={16} aria-hidden="true" className="mt-0.5 shrink-0 text-clay-500" />
-                  <span><span className="font-semibold">Dispatch is paused for now.</span> {DISPATCH_PAUSED_MESSAGE}</span>
-                </p>
-              </div>
-            )}
-
-            {/* Step 1 — what needs doing. Workers are then filtered to that work. */}
-            {!pickedCategory ? (
-              <>
-                <h2 className="font-serif text-2xl font-medium text-ink-900">Hire a worker</h2>
-                <p className="mt-1 text-sm text-ink-700/70">
-                  Choose the type of work — we'll show you verified workers ready for the job.
-                </p>
-
-                {REMOTE_JOBS_ENABLED && (
-                  <div className="mt-4 inline-flex rounded-md bg-ink-900/5 p-1" role="tablist" aria-label="Work location">
-                    {([['field', 'On the field'], ['remote', 'Remote']] as const).map(([id, label]) => (
-                      <button
-                        key={id}
-                        role="tab"
-                        aria-selected={workMode === id}
-                        onClick={() => setWorkMode(id)}
-                        className={`rounded-md px-4 py-1.5 text-sm font-medium transition-colors ${workMode === id ? 'bg-cream-50 text-ink-900 shadow-sm' : 'text-ink-700 hover:text-ink-900'}`}
-                      >
-                        {label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-
-                <ul className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {(REMOTE_JOBS_ENABLED && workMode === 'remote' ? remoteCategories : categories).map((c) => {
-                    const Icon = c.icon
-                    const count = workerList.filter((w) => wSkills(w).includes(c.title)).length
-                    return (
-                      <li key={c.title}>
-                        <button
-                          onClick={() => pickCategory(c.title)}
-                          aria-label={`${c.title} — ${count} worker${count === 1 ? '' : 's'} available`}
-                          className="group flex h-full w-full flex-col rounded-2xl border border-ink-900/8 bg-cream-50 p-5 text-left transition-all hover:border-ink-900/20 hover:shadow-md active:scale-[0.99] focus:outline-none"
-                        >
-                          <Icon size={20} aria-hidden="true" className="text-forest-600" />
-                          <span className="mt-3 block font-serif text-base font-semibold text-ink-900">{c.title}</span>
-                          <span className="mt-1 block text-xs leading-relaxed text-ink-700/70">{c.description}</span>
-                          <span className="mt-auto flex items-end justify-between pt-4">
-                            <span className="text-sm text-ink-900">
-                              {c.distancePricing ? (
-                                <><span className="font-semibold">{cedis(40)}</span><span className="ml-1 text-xs text-ink-700/60">base + distance</span></>
-                              ) : c.skilledRate ? (
-                                <><span className="font-semibold">{cedis(c.rate)}</span><span className="mx-1 text-ink-700/30">–</span><span className="font-semibold">{cedis(c.skilledRate)}</span><span className="ml-1 text-xs text-ink-700/60">{c.rateUnit || 'per day'}</span></>
-                              ) : (
-                                <><span className="font-semibold">{cedis(c.rate)}</span><span className="ml-1 text-xs text-ink-700/60">{c.rateUnit || 'per day'}</span></>
-                              )}
-                            </span>
-                            <span className={`text-xs font-medium ${count > 0 ? 'text-forest-700' : 'text-ink-700/40'}`}>
-                              {count} {count === 1 ? 'worker' : 'workers'}
-                            </span>
-                          </span>
-                        </button>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </>
-            ) : (
-              <>
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <button
-                      onClick={() => clearCategory()}
-                      className="mb-1.5 flex items-center gap-1 text-sm font-medium text-forest-700 hover:underline"
-                    >
-                      <ChevronLeft size={15} aria-hidden="true" /> All work types
-                    </button>
-                    <h2 className="font-serif text-xl font-medium text-ink-900">{pickedCategory}</h2>
-                  </div>
-                  {(() => {
-                    const cat = categories.find((c) => c.title === pickedCategory)
-                    return cat ? (
-                      <span className="shrink-0 rounded-xl bg-forest-600/10 px-4 py-2 text-sm font-semibold text-forest-800">
-                        {cedis(cat.rate)}{' '}
-                        <span className="font-normal text-forest-700">{cat.rateUnit || 'per day'}</span>
-                      </span>
-                    ) : null
-                  })()}
-                </div>
-
-                {loading ? <div className="mt-5"><Skeleton /></div> : (() => {
-                  const matches = sortWorkersForTask(
-                    workerList.filter((w) => wSkills(w).includes(pickedCategory)),
-                    taskFlags
-                  )
-                  const highRisk = isHighRisk(taskFlags)
-
-                  return (
-                    <>
-                      {/* Screening questions — always shown above worker list */}
-                      <TaskScreening
-                        category={pickedCategory!}
-                        screening={screeningAnswers}
-                        onUpdate={(s) => {
-                          setScreeningAnswers(s)
-                          setTaskFlags(s.flags)
-                          setScreeningDone(false)
-                        }}
-                        onDone={() => setScreeningDone(true)}
-                        done={screeningDone}
-                      />
-
-                      {/* Worker list — shown once screening complete */}
-                      {screeningDone && (
-                        <>
-
-                      {/* Job location filter — workers re-sort by proximity as employer types */}
-                      <div className="mt-4 mb-1 rounded-xl border border-ink-900/10 bg-white px-4 py-3">
-                        <label className="mb-1 block text-xs font-semibold text-ink-700">
-                          <span className="inline-flex items-center gap-1"><MapPin size={12} className="text-forest-600" aria-hidden="true" /> Where is the job?</span> <span className="font-normal text-ink-700/60">(optional — sorts by proximity)</span>
-                        </label>
-                        <input
-                          type="text"
-                          value={jobLocationFilter}
-                          onChange={(e) => setJobLocationFilter(e.target.value)}
-                          placeholder="e.g. Tema, Madina, Osu…"
-                          className="w-full rounded-lg border border-ink-900/12 bg-cream-50 px-3 py-2 text-sm text-ink-900 outline-none focus:border-forest-500 focus:ring-2 focus:ring-forest-500/20 placeholder:text-ink-700/40"
-                        />
-                        {jobLocationFilter.trim() && (
-                          <p className="mt-1.5 text-xs text-ink-700/60">
-                            Workers are sorted nearest to <strong>{jobLocationFilter}</strong> first. A transport allowance is added when workers travel far.
-                          </p>
-                        )}
-                      </div>
-                      {selectedWorkers.size > 0 && (
-                        <div className="mt-4 mb-3 flex items-center justify-between rounded-xl bg-forest-600 px-4 py-3">
-                          <span className="text-sm font-semibold text-cream-50">
-                            {selectedWorkers.size} worker{selectedWorkers.size > 1 ? 's' : ''} selected
-                          </span>
-                          <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => setSelectedWorkers(new Set())}
-                              className="rounded-lg bg-cream-50/15 px-3 py-1.5 text-xs font-medium text-cream-50 hover:bg-cream-50/25"
-                            >
-                              Clear
-                            </button>
-                            <button
-                              onClick={() => {
-                                const queue = matches.filter((w) => selectedWorkers.has(String(w.id)))
-                                queue.forEach((w, i) => {
-                                  // Stagger slightly so browser doesn't block multiple popups
-                                  setTimeout(() => openDispatch(w), i * 300)
-                                })
-                                setSelectedWorkers(new Set())
-                              }}
-                              className="rounded-lg bg-cream-50 px-4 py-1.5 text-xs font-semibold text-forest-700 hover:bg-cream-100"
-                            >
-                              <Send size={12} className="mr-1.5 inline" aria-hidden="true" />
-                              Dispatch all
-                            </button>
-                          </div>
-                        </div>
-                      )}
-
-                      {matches.length ? (
-                        <ul className="mt-3 divide-y divide-ink-900/10 overflow-hidden rounded-2xl bg-cream-50 shadow-sm border border-ink-900/8">
-                          {matches.map((w) => {
-                            const wid = String(w.id)
-                            const isSelected = selectedWorkers.has(wid)
-                            return (
-                              <li key={wid} className={isSelected ? 'bg-forest-600/5' : ''}>
-                                <div className="flex w-full items-center gap-3 px-4 py-4 sm:px-5">
-                                  {/* Checkbox for multi-dispatch */}
-                                  <input
-                                    type="checkbox"
-                                    checked={isSelected}
-                                    onChange={() => {
-                                      setSelectedWorkers((prev) => {
-                                        const next = new Set(prev)
-                                        if (next.has(wid)) next.delete(wid)
-                                        else next.add(wid)
-                                        return next
-                                      })
-                                    }}
-                                    aria-label={`Select ${wName(w)} for dispatch`}
-                                    className="h-4 w-4 shrink-0 rounded border-ink-900/30 text-forest-600 focus:ring-forest-600/30"
-                                  />
-                                  <button onClick={() => setViewing(w)} aria-label={`View ${wName(w)}'s profile`}
-                                    className="flex flex-1 items-center gap-3 text-left focus:outline-none">
-                                    {w.photoUrl ? <img src={w.photoUrl as string} alt="" className="h-11 w-11 shrink-0 rounded-[9999px] object-cover" />
-                                      : <span aria-hidden="true" className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[9999px] bg-forest-600 text-sm font-bold text-cream-50">{wInitials(w)}</span>}
-                                    <span className="min-w-0 flex-1">
-                                      <span className="flex items-center gap-2">
-                                        <span className="block truncate font-serif text-base font-medium text-ink-900">{wName(w)}</span>
-                                        {isCoordinator(w) && (
-                                          <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-forest-600/10 px-2 py-0.5 text-[0.75rem] font-semibold uppercase tracking-wide text-forest-700">
-                                            Team
-                                          </span>
-                                        )}
-                                        {Boolean(w.priority) && (
-                                          <span className="inline-flex shrink-0 items-center gap-1 rounded-md bg-clay-400/15 px-2 py-0.5 text-[0.75rem] font-semibold uppercase tracking-wide text-clay-600">
-                                            Featured
-                                          </span>
-                                        )}
-                                        {isBackgroundFlagged(w) && !highRisk && (
-                                          <span className="shrink-0 text-[0.8125rem] font-semibold text-forest-700">Priority</span>
-                                        )}
-                                        {Boolean(w.hasTools) && (
-                                          <span className="shrink-0 text-[0.8125rem] font-medium text-amber-700">Has tools</span>
-                                        )}
-                                      </span>
-                                      {isCoordinator(w) && (
-                                        <span className="mt-0.5 block text-xs text-ink-700/70">
-                                          Team of {getApplication(w)?.teamSize ?? '—'} · {(getApplication(w)?.categories || []).join(', ') || 'Multiple categories'}
-                                        </span>
-                                      )}
-                                      <span className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-700">
-                                        {w.rating && Number(w.rating) > 0
-                                          ? <span className="inline-flex items-center gap-0.5"><Star size={12} aria-hidden="true" className="fill-forest-600 text-forest-600" /> {Number(w.rating).toFixed(1)}</span>
-                                          : <span>New worker</span>}
-                                        <span>{Number(w.tasksCompleted ?? 0)} task{Number(w.tasksCompleted ?? 0) === 1 ? '' : 's'} completed</span>
-                                        {Boolean(w.isBusy) && <span className="font-medium text-amber-700">On a job</span>}
-                                        {/* Proximity badge — only shown when employer has entered a job location */}
-                                        {w.proximity?.available && (
-                                          <span className={`inline-flex items-center gap-1 font-medium ${
-                                            w.proximity.tier === 'nearby' ? 'text-forest-700' :
-                                            w.proximity.tier === 'short'  ? 'text-forest-600' :
-                                            w.proximity.tier === 'medium' ? 'text-amber-700'  : 'text-red-700'
-                                          }`}>
-                                            {w.proximity.roadKm}km away
-                                            {w.proximity.transportAllowance > 0 && (
-                                              <span className="text-ink-700/60">
-                                                {' '}· +GH₵{w.proximity.transportAllowance} transport
-                                              </span>
-                                            )}
-                                          </span>
-                                        )}
-                                        {w.proximity?.available === false && jobLocationFilter.trim() && w.homeArea && (
-                                          <span className="inline-flex items-center gap-0.5 text-ink-700/50"><MapPin size={11} aria-hidden="true" />{w.homeArea}</span>
-                                        )}
-                                      </span>
-                                    </span>
-                                    <span className="hidden shrink-0 text-sm font-medium text-forest-700 sm:inline">View profile</span>
-                                    <ChevronRight size={18} aria-hidden="true" className="shrink-0 text-ink-700/40" />
-                                  </button>
-                                </div>
-                              </li>
-                            )
-                          })}
-                        </ul>
-                      ) : (
-                        <div className="mt-4">
-                          <Empty icon={<Users size={20} aria-hidden="true" />} text={highRisk
-                            ? `No workers cleared for this task type yet. Post a task and we'll match someone.`
-                            : `No workers are certified for ${pickedCategory} yet. Post a task instead and we'll match someone as soon as they join.`
-                          } />
-                        </div>
-                      )}
-                        </>
-                      )}
-                    </>
-                  )
-                })()}
-              </>
-            )}
-          </div>
-        )}
 
         {tab === 'support' && (
           <SupportPanel
@@ -816,6 +331,25 @@ export default function EmployerDashboard() {
             onSent={() => setToast({ id: Date.now(), kind: 'success', title: 'Message sent', detail: 'Our team will follow up with you shortly.' })}
             onError={(m) => setToast({ id: Date.now(), kind: 'info', title: 'Could not send', detail: m })}
           />
+        )}
+
+        {tab === 'invoices' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-xl font-bold text-ink-900">Invoices</h2>
+              <p className="mt-1 text-sm text-ink-700/70">BeyondX reviews every task you post and sends an invoice. Pay it to have Xperts matched, or decline it to close the request.</p>
+            </div>
+            {loading ? <Skeleton /> : invoicesDue.length ? invoicesDue.map((t) => (
+              <InvoiceCard key={String(t.id)} task={t} onChanged={(msg) => { setToast({ id: Date.now(), kind: 'success', title: msg, detail: '' }); load() }} />
+            )) : (
+              <Empty icon={<Inbox size={20} aria-hidden="true" />} text="No invoices waiting. When BeyondX finishes reviewing a task you posted, its invoice appears here." />
+            )}
+            {taskList.some((t) => t.status === 'awaiting_invoice') && (
+              <p className="text-sm text-ink-700/70">
+                {taskList.filter((t) => t.status === 'awaiting_invoice').length} task(s) under review — invoices are on the way.
+              </p>
+            )}
+          </div>
         )}
 
         {tab === 'post' && (submitted ? (
@@ -840,12 +374,13 @@ export default function EmployerDashboard() {
           return (
             <TaskTracking
               task={t}
-              workerName={dispatchDetails(t).workerName || undefined}
+              workerName={assignedXpert(t).name ? `${assignedXpert(t).name}${assignedXpert(t).rating > 0 ? ` (rated ${assignedXpert(t).rating.toFixed(1)}/5)` : ''}` : undefined}
               statusLabel={st(t.status).label}
               onBack={() => setTrackingId(null)}
               onContactSupport={() => goTab('support')}
-              onCancel={t.status === 'open' || t.status === 'payment_pending' ? () => cancelTask(t) : undefined}
+              onCancel={['awaiting_invoice', 'invoice_sent', 'open', 'payment_pending'].includes(String(t.status)) ? () => cancelTask(t) : undefined}
               onConfirm={t.status === 'pending_confirmation' ? () => setRating(t) : undefined}
+              onPayInvoice={() => goTab('invoices')}
             />
           )
         })()}
@@ -853,34 +388,24 @@ export default function EmployerDashboard() {
         {tab === 'history' && trackingId == null && (
           <div className="mt-6">
             {loading ? <Skeleton /> : taskList.length ? (() => {
-              const urgent = taskList.filter((t) => t.status === 'pending_confirmation')
-              const active = taskList.filter((t) => ['open', 'payment_pending', 'offered', 'accepted'].includes(String(t.status)))
+              const urgent = taskList.filter(needsConfirmation)
+              const active = taskList.filter((t) => !needsConfirmation(t) && ['awaiting_invoice', 'invoice_sent', 'open', 'payment_pending', 'offered', 'accepted'].includes(String(t.status)))
               const done = taskList.filter((t) => ['employer_confirmed', 'completed', 'payment_rejected'].includes(String(t.status)))
-
-              // Progress steps for the employer pipeline
-              const STEPS = ['open', 'offered', 'accepted', 'pending_confirmation', 'completed']
-              const stepIdx = (status?: string) => {
-                if (status === 'payment_pending') return 0
-                if (status === 'payment_rejected') return -1
-                if (status === 'cancelled') return -1
-                if (status === 'employer_confirmed') return 4
-                return Math.max(0, STEPS.indexOf(status || 'open'))
-              }
 
               const TaskItem = ({ t }: { t: Task }) => {
                 const s = st(t.status)
-                const { workerName } = dispatchDetails(t)
+                const { name: workerName, rating: xpertRating } = assignedXpert(t)
                 const rev = t.reviews?.[0]?.rating
-                const isUrgent = t.status === 'pending_confirmation'
                 const slots = Number(t.slotsNeeded) || 1
+                const isUrgent = t.status === 'pending_confirmation' && slots <= 1
                 const filled = Number(t.filledSlots) || 0
-                const acceptedWorkers = (t as unknown as { acceptedWorkers?: {id: string; status: string; acceptedBy?: {fullName?: string; phone?: string}}[] }).acceptedWorkers
+                const acceptedWorkers = (t as unknown as { acceptedWorkers?: XpertSlot[] }).acceptedWorkers
                 const [showMap, setShowMap] = useState(false)
-                const currentStep = stepIdx(t.status as string)
+                const currentStep = currentStepIndex(t.status as string)
                 const isTerminal = ['completed', 'employer_confirmed', 'payment_rejected', 'cancelled'].includes(t.status as string)
 
                 return (
-                  <div className={`rounded-2xl bg-cream-50 shadow-sm border border-ink-900/8 transition-shadow hover:shadow-md`}>
+                  <div className={`rounded-2xl bg-white shadow-sm border border-ink-900/8 transition-shadow hover:shadow-md`}>
                     <div className="p-5">
                       {/* Header */}
                       <div className="flex items-start justify-between gap-3">
@@ -888,8 +413,8 @@ export default function EmployerDashboard() {
                           <p className="font-serif text-base font-semibold text-ink-900">{t.taskType || 'Task'}</p>
                           <p className="mt-0.5 text-sm text-ink-700">
                             {slots > 1
-                              ? <span className="font-medium text-ink-800">{filled}/{slots} workers confirmed</span>
-                              : workerName && <span className="font-medium text-ink-800">{workerName}</span>}
+                              ? <span className="font-medium text-ink-800">{filled}/{slots} Xperts confirmed</span>
+                              : workerName && <span className="font-medium text-ink-800">{workerName}{xpertRating > 0 ? ` ★ ${xpertRating.toFixed(1)}` : ''}</span>}
                             {(workerName || slots > 1) && t.location ? ' · ' : ''}{t.location || ''}
                             {t.duration ? ` · ${t.duration}` : ''}
                           </p>
@@ -912,9 +437,16 @@ export default function EmployerDashboard() {
                           {acceptedWorkers.map((w, i) => (
                             <div key={w.id} className="flex items-center gap-2 text-xs text-ink-700">
                               <span className="h-1.5 w-1.5 rounded-[9999px] bg-forest-600" />
-                              <span className="font-medium">{w.acceptedBy?.fullName || `Worker ${i + 1}`}</span>
+                              <span className="font-medium">{w.acceptedBy?.fullName || `Xpert ${i + 1}`}</span>
                               {w.acceptedBy?.phone && <span className="text-ink-700/50">· {w.acceptedBy.phone}</span>}
-                              <span className={`ml-auto font-medium ${w.status === 'completed' ? 'text-forest-600' : 'text-ink-700/60'}`}>{w.status}</span>
+                              {w.status === 'pending_confirmation' ? (
+                                <button onClick={() => setRating({ ...t, id: w.id, status: w.status, acceptedBy: w.acceptedBy } as Task)}
+                                  className="ml-auto rounded-lg bg-forest-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-forest-500">
+                                  Confirm work & rate
+                                </button>
+                              ) : (
+                                <span className="ml-auto font-medium text-ink-700/60">{st(w.status).label}</span>
+                              )}
                             </div>
                           ))}
                         </div>
@@ -923,23 +455,22 @@ export default function EmployerDashboard() {
                       {/* Progress stepper — only for active (non-terminal) jobs */}
                       {!isTerminal && currentStep >= 0 && (
                         <div className="mt-4 flex items-center gap-0">
-                          {['Finding', 'Notified', 'On job', 'Done'].map((label, i) => {
-                            const active = i === Math.min(currentStep, 3)
-                            const done = i < Math.min(currentStep, 3)
+                          {PROGRESS_STEPS.map(({ label }, i) => {
+                            const active = i === currentStep
+                            const done = i < currentStep
+                            const last = i === PROGRESS_STEPS.length - 1
                             return (
                               <div key={label} className="flex flex-1 flex-col items-center">
                                 <div className="flex w-full items-center">
-                                  {i > 0 && <div className={`h-0.5 flex-1 ${done ? 'bg-forest-600' : 'bg-ink-900/10'}`} />}
+                                  <div className={`h-0.5 flex-1 ${i === 0 ? 'invisible' : done || active ? 'bg-forest-600' : 'bg-ink-900/10'}`} />
                                   <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[0.6875rem] font-bold transition-colors ${
-                                    done ? 'bg-forest-600 text-cream-50' :
-                                    active ? 'bg-forest-600 text-cream-50 shadow-md' :
-                                    'bg-ink-900/8 text-ink-700/40'
+                                    done || active ? 'bg-forest-600 text-cream-50' : 'bg-gray-100 text-ink-700/50'
                                   }`}>
                                     {done ? '✓' : i + 1}
                                   </div>
-                                  {i < 3 && <div className={`h-0.5 flex-1 ${(i < currentStep && currentStep <= 3) ? 'bg-forest-600' : 'bg-ink-900/10'}`} />}
+                                  <div className={`h-0.5 flex-1 ${last ? 'invisible' : done ? 'bg-forest-600' : 'bg-ink-900/10'}`} />
                                 </div>
-                                <span className={`mt-1 text-[0.75rem] font-medium ${active ? 'text-forest-700' : done ? 'text-ink-700/60' : 'text-ink-700/30'}`}>
+                                <span className={`mt-1 px-1 text-center text-[0.6875rem] font-medium leading-tight ${active ? 'text-forest-700' : done ? 'text-ink-700/60' : 'text-ink-700/40'}`}>
                                   {label}
                                 </span>
                               </div>
@@ -953,6 +484,12 @@ export default function EmployerDashboard() {
                         <p className="mt-2.5 text-xs leading-relaxed text-ink-700/70">{s.note}</p>
                       )}
 
+                      {t.status === 'invoice_sent' && (
+                        <button onClick={() => goTab('invoices')}
+                          className="mt-3 mr-4 rounded-lg bg-forest-600 px-4 py-2 text-sm font-semibold text-white hover:bg-forest-500">
+                          Review & pay invoice ({cedis(t.invoiceAmount ?? undefined)})
+                        </button>
+                      )}
                       <button
                         onClick={() => trackTask(t.id)}
                         className="mt-3 mr-4 inline-flex items-center gap-1 text-sm font-semibold text-forest-700 hover:underline"
@@ -961,7 +498,7 @@ export default function EmployerDashboard() {
                       </button>
 
                       {/* Cancel — only while still searching, before anyone has committed */}
-                      {(t.status === 'open' || t.status === 'payment_pending') && (
+                      {['awaiting_invoice', 'invoice_sent', 'open', 'payment_pending'].includes(String(t.status)) && (
                         <button
                           onClick={() => cancelTask(t)}
                           className="mt-3 text-xs font-medium text-red-600/80 underline decoration-red-600/30 underline-offset-2 transition-colors hover:text-red-700"
@@ -973,7 +510,7 @@ export default function EmployerDashboard() {
                       {/* Urgent confirm action */}
                       {isUrgent && (
                         <div className="mt-4 border-t border-amber-100 pt-4">
-                          <p className="text-sm text-ink-700">The worker has marked this job as complete.</p>
+                          <p className="text-sm text-ink-700">The Xpert has marked this job as complete.</p>
                           <button
                             onClick={() => setRating(t)}
                             className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-forest-600 px-5 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] focus:outline-none"
@@ -1034,14 +571,11 @@ export default function EmployerDashboard() {
                 </div>
               )
             })() : (
-              <Empty icon={<Briefcase size={20} aria-hidden="true" />} text="No jobs yet. Go to Hire Workers to dispatch your first worker." />
+              <Empty icon={<Briefcase size={20} aria-hidden="true" />} text="No jobs yet. Post a task and BeyondX will send you an invoice." />
             )}
           </div>
         )}
 
-            {tab === 'coordinator-requests' && (
-              <CoordinatorRequestsTab requests={coordRequests} tasks={taskList} onReload={load} />
-            )}
           </div>
         </div>
       </main>
@@ -1049,27 +583,6 @@ export default function EmployerDashboard() {
 
       <Toast toast={toast} onClose={() => setToast(null)} />
 
-      {viewing && (
-        <WorkerProfileModal
-          worker={viewing}
-          category={pickedCategory}
-          onClose={() => setViewing(null)}
-          onDispatch={() => { const w = viewing; setViewing(null); if (w) openDispatch(w) }}
-          onRequestQuote={() => { const w = viewing; setViewing(null); if (w) setQuoteRequestWorker(w) }}
-        />
-      )}
-      {quoteRequestWorker && (
-        <CoordinatorQuoteModal
-          worker={quoteRequestWorker}
-          category={pickedCategory}
-          onClose={() => setQuoteRequestWorker(null)}
-          onSent={(request) => {
-            setCoordRequests((prev) => [request, ...prev])
-            setToast({ id: Date.now(), kind: 'success', title: 'Request sent', detail: `Track it in Coordinator Requests.` })
-          }}
-        />
-      )}
-      {/* DispatchModal replaced by BookWorker window — dispatching state kept for multi-dispatch queue */}
       {rating && <RateModal task={rating} onClose={() => setRating(null)} onDone={afterConfirm} onError={(m) => setToast({ id: Date.now(), kind: 'info', title: 'Could not confirm', detail: m })} />}
       {editing && profile !== undefined && (
         <ProfileModal
@@ -1096,482 +609,70 @@ export default function EmployerDashboard() {
   )
 }
 
-/** Plain text plus a copy button, instead of a tel: link. On desktop, clicking
- *  a bare tel: link throws up the OS's "which app should open this?" dialog —
- *  jarring and useless on a hiring dashboard nobody's using from a phone. */
-function PhoneCopy({ phone }: { phone: string }) {
-  const [copied, setCopied] = useState(false)
-  const copy = async () => {
-    try {
-      if (navigator.clipboard && window.isSecureContext) {
-        await navigator.clipboard.writeText(phone)
-      } else {
-        const el = document.createElement('textarea')
-        el.value = phone
-        el.style.position = 'fixed'
-        el.style.opacity = '0'
-        document.body.appendChild(el)
-        el.select()
-        document.execCommand('copy')
-        document.body.removeChild(el)
-      }
-      setCopied(true)
-      setTimeout(() => setCopied(false), 1800)
-    } catch { /* clipboard unavailable — the number is still visible to copy by hand */ }
+/** An invoice BeyondX sent for a posted task: pay it (MoMo + reference) or
+ *  decline it. Paying moves the task to "Verifying payment". */
+function InvoiceCard({ task, onChanged }: { task: Task; onChanged: (msg: string) => void }) {
+  const [method, setMethod] = useState(PAY_METHODS[0].id)
+  const [ref, setRef] = useState('')
+  const [busy, setBusy] = useState<'pay' | 'decline' | null>(null)
+  const [err, setErr] = useState<string | null>(null)
+  const amount = Number(task.invoiceAmount || 0)
+  const xperts = Number(task.slotsNeeded) || 1
+
+  const pay = async () => {
+    if (!ref.trim() || busy) return
+    setBusy('pay'); setErr(null)
+    try { await tasksApi.payInvoice(task.id, ref.trim()); onChanged('Payment submitted — BeyondX is verifying it.') }
+    catch (e) { setErr(e instanceof ApiError ? e.message : 'Could not submit payment. Please try again.'); setBusy(null) }
   }
-  return (
-    <button
-      type="button"
-      onClick={copy}
-      aria-label={`Copy phone number ${phone}`}
-      className="inline-flex items-center gap-2 rounded-lg px-1 py-0.5 text-sm font-medium text-ink-900 transition-colors hover:bg-ink-900/5 hover:text-forest-700"
-    >
-      <Phone size={15} aria-hidden="true" className="text-forest-600" />
-      {phone}
-      {copied ? <Check size={13} aria-hidden="true" className="text-forest-600" /> : <Copy size={13} aria-hidden="true" className="text-ink-700/50" />}
-    </button>
-  )
-}
-
-// ---------------------------------------------------------------------------
-// Task Screening — one question at a time, before the worker list is shown.
-// Three groups:
-//   A. Risk flags (cash / vulnerable / property) — determine worker eligibility
-//   B. Tools — needed? who provides them? — feeds the dispatch pricing
-//   C. Complexity — basic or technical? — feeds the tier selector in dispatch
-// ---------------------------------------------------------------------------
-
-type TierAnswer = 'basic' | 'skilled'
-
-export interface ScreeningAnswers {
-  flags: TaskFlags
-  tier: TierAnswer
-}
-
-export const DEFAULT_SCREENING: ScreeningAnswers = {
-  flags: { cashUnsupervised: false, vulnerableContact: false, propertyAccess: false },
-  tier: 'basic',
-}
-
-// Category-specific examples shown alongside the basic/technical question
-const TIER_EXAMPLES: Record<string, { basic: string; skilled: string }> = {
-  'Facility & Cleaning':            { basic: 'General sweeping, mopping, surface wiping', skilled: 'Drain clearing, chemical cleaning agents, pressure washing' },
-  'Painting & Finishing':           { basic: 'Painting & touch-up work', skilled: 'Tiling, plastering, surface finishing' },
-  'Event & Hospitality':            { basic: 'Chair & table setup, serving food and drinks', skilled: 'AV equipment setup, electrical rigging, event lighting' },
-  'Agriculture & Environment':      { basic: 'Weeding by hand, harvesting, clearing land', skilled: 'Applying weedicide or pesticides, operating sprayers, pest identification' },
-  'Retail & Trade Support':         { basic: 'General shelf stocking, packing, bagging', skilled: 'Cold store operation, stock management systems, inventory counting' },
-  'Logistics & Delivery':           { basic: 'Carrying goods, loading and offloading', skilled: 'Inventory documentation, route management, goods verification' },
-  'Community Services':             { basic: 'Waste collection, public space sweeping', skilled: 'Drainage maintenance, hazardous waste handling' },
-}
-
-// All screening questions in sequence
-type ScreeningStep =
-  | { type: 'risk'; key: keyof TaskFlags; question: string; hint: string }
-  | { type: 'tier'; question: string; basicLabel: string; skilledLabel: string; basicExample: string; skilledExample: string }
-
-function buildSteps(category: string): ScreeningStep[] {
-  const steps: ScreeningStep[] = [
-    { type: 'risk', key: 'cashUnsupervised', question: 'Will the worker handle cash unsupervised?', hint: 'e.g. collecting payments, operating a till, handling a float' },
-    { type: 'risk', key: 'vulnerableContact', question: 'Will the worker be alone in a private home or with vulnerable people?', hint: 'e.g. working inside a private residence, caring for children or elderly' },
-    { type: 'risk', key: 'propertyAccess', question: 'Will the worker have unsupervised access to valuables or property?', hint: 'e.g. access to a storeroom, safe, vehicle, or high-value goods without supervision' },
-  ]
-
-  const examples = TIER_EXAMPLES[category]
-  if (examples) {
-    steps.push({
-      type: 'tier',
-      question: 'Is this basic work or does it require technical skill?',
-      basicLabel: 'Basic',
-      skilledLabel: 'Technical / Skilled',
-      basicExample: examples.basic,
-      skilledExample: examples.skilled,
-    })
-  }
-
-  return steps
-}
-
-function TaskScreening({
-  category,
-  screening,
-  onUpdate,
-  onDone,
-  done = false,
-}: {
-  category: string
-  screening: ScreeningAnswers
-  onUpdate: (s: ScreeningAnswers) => void
-  onDone: () => void
-  done?: boolean
-}) {
-  const steps = buildSteps(category)
-  const [answered, setAnswered] = useState<Set<number>>(new Set())
-
-  // Reset when category changes
-  useEffect(() => { setAnswered(new Set()) }, [category])
-
-  const allAnswered = steps.every((_, i) => answered.has(i))
-  const highRisk = isHighRisk(screening.flags)
-
-  // When all answered, auto-call onDone once
-  useEffect(() => {
-    if (allAnswered && !done) onDone()
-  }, [allAnswered]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  const answerRisk = (idx: number, key: keyof TaskFlags, yes: boolean) => {
-    onUpdate({ ...screening, flags: { ...screening.flags, [key]: yes } })
-    setAnswered((prev) => new Set(prev).add(idx))
-  }
-
-  const answerTier = (idx: number, t: TierAnswer) => {
-    onUpdate({ ...screening, tier: t })
-    setAnswered((prev) => new Set(prev).add(idx))
-  }
-
-  // Collapsed summary once done
-  if (done) {
-    return (
-      <div className="mt-5 flex items-center justify-between rounded-xl border border-ink-900/10 bg-cream-50 px-4 py-3">
-        <p className="text-sm text-ink-700">
-          {highRisk
-            ? <span className="font-medium text-red-700">Restricted — some workers excluded</span>
-            : <span className="font-medium text-forest-700">Open to all vetted workers</span>}
-          <span className="ml-2 text-ink-700/50">· {screening.tier === 'skilled' ? 'Technical rate' : 'Standard rate'}</span>
-        </p>
-        <button
-          onClick={() => { onUpdate({ ...screening }); setAnswered(new Set()) }}
-          className="ml-4 shrink-0 text-xs font-medium text-ink-700/60 underline underline-offset-2 hover:text-ink-900"
-        >
-          Edit
-        </button>
-      </div>
-    )
+  const decline = async () => {
+    if (busy || !window.confirm('Decline this invoice? The request will be closed. You can post a new task at any time.')) return
+    setBusy('decline'); setErr(null)
+    try { await tasksApi.declineInvoice(task.id); onChanged('Invoice declined') }
+    catch (e) { setErr(e instanceof ApiError ? e.message : 'Could not decline. Please try again.'); setBusy(null) }
   }
 
   return (
-    <div className="mt-5">
-      <div className="divide-y divide-ink-900/8 overflow-hidden rounded-2xl border border-ink-900/10 bg-cream-50">
-
-        {/* Header */}
-        <div className="px-5 py-4">
-          <p className="text-sm font-semibold text-ink-900">A few quick questions about this job</p>
-          <p className="mt-0.5 text-xs text-ink-700/60">Helps us match the right workers and set the correct rate</p>
-        </div>
-
-        {/* Questions */}
-        {steps.map((step, idx) => {
-          const isAnswered = answered.has(idx)
-
-          if (step.type === 'risk') {
-            const flagVal = screening.flags[step.key]
-            return (
-              <div key={idx} className="px-5 py-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium text-ink-900">{step.question}</p>
-                    {step.hint && <p className="mt-0.5 text-xs text-ink-700/60">{step.hint}</p>}
-                  </div>
-                  <div className="flex shrink-0 gap-1.5">
-                    <button
-                      onClick={() => answerRisk(idx, step.key, true)}
-                      className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-all ${
-                        isAnswered && flagVal
-                          ? 'bg-red-600 text-white'
-                          : 'border border-ink-900/15 text-ink-700 hover:border-ink-900/30 hover:bg-ink-900/4'
-                      }`}
-                    >
-                      Yes
-                    </button>
-                    <button
-                      onClick={() => answerRisk(idx, step.key, false)}
-                      className={`rounded-lg px-4 py-1.5 text-sm font-medium transition-all ${
-                        isAnswered && !flagVal
-                          ? 'bg-forest-600 text-white'
-                          : 'border border-ink-900/15 text-ink-700 hover:border-ink-900/30 hover:bg-ink-900/4'
-                      }`}
-                    >
-                      No
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )
-          }
-
-          if (step.type === 'tier') {
-            return (
-              <div key={idx} className="px-5 py-4">
-                <p className="mb-3 text-sm font-medium text-ink-900">{step.question}</p>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    onClick={() => answerTier(idx, 'basic')}
-                    className={`rounded-xl border p-3.5 text-left transition-all ${
-                      isAnswered && screening.tier === 'basic'
-                        ? 'border-ink-900 bg-ink-900 text-cream-50'
-                        : 'border-ink-900/15 text-ink-700 hover:border-ink-900/30'
-                    }`}
-                  >
-                    <span className="block text-sm font-semibold">{step.basicLabel}</span>
-                    <span className="mt-0.5 block text-[0.8125rem] leading-snug opacity-70">{step.basicExample}</span>
-                  </button>
-                  <button
-                    onClick={() => answerTier(idx, 'skilled')}
-                    className={`rounded-xl border p-3.5 text-left transition-all ${
-                      isAnswered && screening.tier === 'skilled'
-                        ? 'border-ink-900 bg-ink-900 text-cream-50'
-                        : 'border-ink-900/15 text-ink-700 hover:border-ink-900/30'
-                    }`}
-                  >
-                    <span className="block text-sm font-semibold">{step.skilledLabel}</span>
-                    <span className="mt-0.5 block text-[0.8125rem] leading-snug opacity-70">{step.skilledExample}</span>
-                  </button>
-                </div>
-              </div>
-            )
-          }
-
-          return null
-        })}
-
-        {/* Footer — shown once all answered but before auto-advancing */}
-        {allAnswered && (
-          <div className="px-5 py-3 text-xs text-ink-700/50">
-            All questions answered — showing available workers below
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-function WorkerProfileModal({ worker, category, onClose, onDispatch, onRequestQuote }: { worker: Worker; category?: string | null; onClose: () => void; onDispatch: () => void; onRequestQuote: () => void }) {
-  useEsc(onClose)
-  const skills = wSkills(worker)
-  const rateFor = (title: string) => allCategories.find((c) => c.title === title)
-  const picked = category ? rateFor(category) : undefined
-  const coordinator = isCoordinator(worker)
-  const application = coordinator ? getApplication(worker) : null
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/50 p-4" onClick={onClose}>
-      {/* Fixed height with an internal scroll area: the header and the action
-          button stay put, so the button is never scrolled out of reach. */}
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="wp-title"
-        className="flex max-h-[88vh] w-full max-w-md flex-col overflow-hidden rounded-2xl bg-cream-50 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Header — compact so more of the profile is visible at a glance */}
-        <div className="relative shrink-0 bg-forest-700 px-6 pb-5 pt-5 text-center">
-          <button onClick={onClose} aria-label="Close profile" className="absolute right-3 top-3 rounded-lg p-1.5 text-cream-50/80 transition-colors hover:bg-cream-50/10 hover:text-cream-50">
-            <X size={18} aria-hidden="true" />
-          </button>
-          {worker.photoUrl ? (
-            <img src={worker.photoUrl as string} alt="" className="mx-auto h-16 w-16 rounded-[9999px] object-cover border-2 border-cream-50/30" />
-          ) : (
-            <span aria-hidden="true" className="mx-auto flex h-16 w-16 items-center justify-center rounded-[9999px] bg-cream-50 font-serif text-xl font-bold text-forest-700 shadow-md">
-              {wInitials(worker)}
-            </span>
-          )}
-          <h2 id="wp-title" className="mt-2.5 font-serif text-xl font-medium leading-snug text-cream-50">{wName(worker)}</h2>
-          <p className="mt-1 inline-flex items-center gap-1.5 text-xs font-medium text-cream-200/90">
-            <ShieldCheck size={13} aria-hidden="true" /> BeyondX Verified · {coordinator ? 'Coordinator Team' : 'Certified Worker'}
+    <div className="rounded-2xl border border-ink-900/8 bg-white p-6 shadow-sm">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-lg font-semibold text-ink-900">{task.taskType || 'Task'}</p>
+          <p className="mt-0.5 text-sm text-ink-700/70">
+            {[task.location, task.duration, `${xperts} Xpert${xperts > 1 ? 's' : ''}`].filter(Boolean).join(' · ')}
+            {task.premium ? ' · Premium (within 48 hours)' : ''}
           </p>
-          {worker.rating && Number(worker.rating) > 0 ? (
-            <p className="mt-1.5">
-              <span className="inline-flex items-center gap-1 rounded-md bg-cream-50/15 px-2.5 py-0.5 text-xs font-semibold text-cream-50">
-                <Star size={11} aria-hidden="true" className="fill-cream-50 text-cream-50" /> {Number(worker.rating).toFixed(1)}
-              </span>
-            </p>
-          ) : null}
         </div>
-
-        {/* Scrollable middle */}
-        <div className="nice-scroll min-h-0 flex-1 overflow-y-auto">
-          <div className="grid grid-cols-2 gap-3 px-6 pt-5">
-            <div className="rounded-xl bg-cream-100 p-3.5 text-center">
-              <span className="block font-serif text-xl font-semibold text-ink-900">{Number(worker.tasksCompleted ?? worker.tasks ?? 0)}</span>
-              <span className="text-xs text-ink-700">Tasks completed</span>
-            </div>
-            <div className="rounded-xl bg-forest-600/10 p-3.5 text-center">
-              {coordinator ? (
-                <>
-                  <span className="block font-serif text-xl font-semibold text-ink-900">Custom quote</span>
-                  <span className="text-xs text-ink-700">Set by BeyondX for team jobs</span>
-                </>
-              ) : (
-                <>
-                  <span className="block font-serif text-xl font-semibold text-ink-900">
-                    {picked ? cedis(picked.rate) : '—'}
-                  </span>
-                  <span className="text-xs text-ink-700">
-                    {picked ? `${picked.rateUnit || 'per day'} · ${picked.title.split(' ')[0]}` : 'Standard rate'}
-                  </span>
-                </>
-              )}
-            </div>
-          </div>
-
-          {coordinator && (
-            <div className="mx-5 mt-3 rounded-xl border border-forest-600/20 bg-forest-600/5 px-4 py-3">
-              <p className="text-xs font-semibold text-forest-800">
-                Team of {application?.teamSize ?? '—'}{application?.yearsOperating ? ` · ${application.yearsOperating} yr${application.yearsOperating === 1 ? '' : 's'} operating` : ''}
-              </p>
-              {application?.categories?.length ? (
-                <p className="mt-1 text-xs text-ink-700/80">Covers: {application.categories.join(', ')}</p>
-              ) : null}
-              <p className="mt-1.5 text-[0.8125rem] leading-relaxed text-ink-700/60">
-                Custom quote for team jobs — pricing is confirmed by BeyondX once the scope is reviewed.
-              </p>
-            </div>
-          )}
-
-          {/* Staff-curated client testimonial — separate from the computed
-              star rating above, never a substitute for it. */}
-          {worker.featuredTestimonial ? (
-            <div className="mx-5 mt-3 rounded-xl bg-cream-100 px-4 py-3.5">
-              <Quote size={16} aria-hidden="true" className="text-forest-600" />
-              <p className="mt-1.5 text-sm italic leading-relaxed text-ink-800">
-                {worker.featuredTestimonial as string}
-              </p>
-              {worker.featuredTestimonialSource ? (
-                <p className="mt-2 text-xs font-medium text-ink-700/60">
-                  — {worker.featuredTestimonialSource as string}
-                </p>
-              ) : null}
-            </div>
-          ) : null}
-
-          {/* Proximity & transport allowance — shown when available */}
-          {worker.proximity?.available && (
-            <div className={`mx-5 mt-3 rounded-xl px-4 py-3 ${
-              worker.proximity.transportAllowance === 0
-                ? 'bg-forest-600/10'
-                : worker.proximity.transportAllowance <= 10
-                ? 'bg-amber-50 border border-amber-200'
-                : 'bg-red-50 border border-red-200'
-            }`}>
-              <p className={`text-xs font-semibold ${
-                worker.proximity.transportAllowance === 0 ? 'text-forest-700'
-                : worker.proximity.transportAllowance <= 10 ? 'text-amber-800'
-                : 'text-red-800'
-              }`}>
-                {worker.proximity.roadKm}km from job
-                {worker.proximity.transportAllowance > 0
-                  ? ` · GH₵${worker.proximity.transportAllowance} transport added`
-                  : ' · Nearby — no transport needed'}
-              </p>
-              {worker.proximity.transportAllowance > 0 && (
-                <p className="mt-1 text-xs text-ink-700/70 leading-relaxed">
-                  This worker lives {worker.proximity.roadKm}km from the job. A <strong>GH₵{worker.proximity.transportAllowance} transport allowance</strong> will be added to the total you pay — the worker receives it on top of their full rate.
-                </p>
-              )}
-            </div>
-          )}
-
-          <div className="space-y-4 px-6 pb-5 pt-5">
-            {worker.phone ? (
-              <div>
-                <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-widest text-clay-500">Contact</h3>
-                <PhoneCopy phone={worker.phone as string} />
-              </div>
-            ) : null}
-
-            {skills.length ? (
-              <div>
-                <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-widest text-clay-500">Certified Skills</h3>
-                <ul className="overflow-hidden rounded-xl border border-ink-900/10">
-                  {skills.map((sk, i) => {
-                    const c = rateFor(sk)
-                    const isPicked = category === sk
-                    return (
-                      <li key={sk} className={`flex items-center gap-2.5 px-3.5 py-2.5 ${isPicked ? 'bg-forest-600/10' : i % 2 ? 'bg-cream-100/60' : 'bg-cream-50'}`}>
-                        <CircleCheck size={15} aria-hidden="true" className="shrink-0 text-forest-600" />
-                        <span className="min-w-0 flex-1">
-                          <span className="block truncate text-sm font-medium text-ink-900">{sk}</span>
-                          {c && (
-                            <span className="block text-[0.8125rem] text-ink-700">
-                              {cedis(c.rate)} {c.rateUnit || 'per day'}
-                            </span>
-                          )}
-                        </span>
-                        <span className="shrink-0 rounded-md bg-forest-600/10 px-2 py-0.5 text-[0.75rem] font-semibold uppercase tracking-wide text-forest-700">Certified</span>
-                      </li>
-                    )
-                  })}
-                </ul>
-              </div>
-            ) : null}
-
-            {/* Certifications — visible to employers, images link through */}
-            {(() => {
-              type Cert = { id: string; name: string; issuedBy: string; year: string; imageUrl?: string; verified?: boolean }
-              let certs: Cert[] = []
-              try {
-                const raw = worker.certifications
-                certs = Array.isArray(raw) ? raw as Cert[] : JSON.parse(String(raw || '[]'))
-              } catch { certs = [] }
-              if (!certs.length) return null
-              return (
-                <div>
-                  <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-widest text-clay-500">Qualifications & Certifications</h3>
-                  <ul className="space-y-2">
-                    {certs.map((c) => (
-                      <li key={c.id} className="flex items-start gap-2.5 rounded-xl border border-ink-900/10 bg-cream-50 px-3.5 py-3">
-                        <Award size={15} aria-hidden="true" className={`mt-0.5 shrink-0 ${c.verified ? 'text-forest-600' : 'text-ink-700/40'}`} />
-                        <span className="min-w-0 flex-1">
-                          <span className="block text-sm font-medium text-ink-900">{c.name || '—'}</span>
-                          <span className="block text-[0.8125rem] text-ink-700/70">
-                            {[c.issuedBy, c.year].filter(Boolean).join(' · ')}
-                          </span>
-                          {c.imageUrl && (
-                            <a href={c.imageUrl} target="_blank" rel="noopener noreferrer"
-                              className="mt-1 inline-flex items-center gap-1 text-[0.8125rem] font-medium text-forest-700 underline-offset-2 hover:underline">
-                              View certificate →
-                            </a>
-                          )}
-                        </span>
-                        <span className={`shrink-0 rounded-md px-2 py-0.5 text-[0.75rem] font-semibold ${c.verified ? 'bg-forest-600/10 text-forest-700' : 'bg-ink-900/6 text-ink-700/60'}`}>
-                          {c.verified ? 'Verified' : 'Declared'}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )
-            })()}
-          </div>
+        <div className="text-right">
+          <p className="text-xs text-ink-700/60">Invoice total</p>
+          <p className="text-2xl font-bold text-ink-900">{cedis(amount)}</p>
         </div>
+      </div>
+      {task.invoiceNote && <p className="mt-3 whitespace-pre-line rounded-lg bg-gray-50 px-4 py-3 text-sm text-ink-800">{task.invoiceNote}</p>}
 
-        {/* Action stays pinned */}
-        <div className="shrink-0 border-t border-ink-900/10 bg-cream-50 p-4">
-          {coordinator ? (
-            <button
-              onClick={onRequestQuote}
-              aria-label={`Request a quote from ${wName(worker)}`}
-              className="flex w-full items-center justify-center gap-1.5 rounded-md bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] focus:outline-none"
-            >
-              <Send size={15} aria-hidden="true" /> Request a quote
+      <div className="mt-5 border-t border-ink-900/8 pt-5">
+        <p className="text-sm text-ink-800">
+          Send <span className="font-semibold">{cedis(amount)}</span> to <span className="font-semibold">{MOMO_NUMBER}</span> ({MOMO_NAME}), then enter the transaction reference below.
+        </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {PAY_METHODS.map((m) => (
+            <button key={m.id} type="button" onClick={() => setMethod(m.id)}
+              className={`rounded-md border px-3 py-1.5 text-sm font-medium ${method === m.id ? 'border-ink-900 bg-ink-900 text-white' : 'border-ink-900/15 text-ink-700 hover:bg-ink-900/5'}`}>
+              {m.name}
             </button>
-          ) : DISPATCH_ENABLED ? (
-            <button
-              onClick={onDispatch}
-              disabled={!!worker.isBusy}
-              aria-label={`Dispatch ${wName(worker)}`}
-              className="flex w-full items-center justify-center gap-1.5 rounded-md bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60 focus:outline-none"
-            >
-              <Send size={15} aria-hidden="true" /> {worker.isBusy ? 'Currently on a job' : `Dispatch ${wName(worker).split(' ')[0]}`}
-            </button>
-          ) : (
-            <div className="rounded-xl bg-clay-400/10 p-3.5 border border-clay-400/25">
-              <p className="flex items-start gap-2 text-xs leading-relaxed text-ink-800">
-                <Info size={14} aria-hidden="true" className="mt-0.5 shrink-0 text-clay-500" />
-                <span><span className="font-semibold">Dispatch is paused for now.</span> {DISPATCH_PAUSED_MESSAGE}</span>
-              </p>
-            </div>
-          )}
+          ))}
         </div>
+        <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+          <input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="Transaction reference"
+            className="flex-1 rounded-lg border border-ink-900/15 bg-white px-3.5 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/25" />
+          <button onClick={pay} disabled={!ref.trim() || !!busy}
+            className="rounded-lg bg-forest-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-forest-500 disabled:opacity-50">
+            {busy === 'pay' ? 'Submitting…' : 'Pay invoice'}
+          </button>
+        </div>
+        {err && <p className="mt-2 text-sm text-red-700">{err}</p>}
+        <button onClick={decline} disabled={!!busy} className="mt-4 text-sm font-medium text-red-600 hover:underline disabled:opacity-50">
+          {busy === 'decline' ? 'Declining…' : 'Decline invoice'}
+        </button>
       </div>
     </div>
   )
@@ -1579,18 +680,22 @@ function WorkerProfileModal({ worker, category, onClose, onDispatch, onRequestQu
 
 function RateModal({ task, onClose, onDone, onError }: { task: Task; onClose: () => void; onDone: (worker: string) => void; onError: (m: string) => void }) {
   useEsc(onClose)
-  const [stars, setStars] = useState(5)
+  const [skills, setSkills] = useState(0)
+  const [professionalism, setProfessionalism] = useState(0)
+  const [stars, setStars] = useState(0)
   const [comment, setComment] = useState('')
+  const rated = skills > 0 && professionalism > 0 && stars > 0
   const [busy, setBusy] = useState(false)
-  const { workerName, workerId } = dispatchDetails(task)
-  const worker = workerName || (typeof task.employer === 'string' ? task.employer : task.taskType || 'the worker')
+  const { workerId } = dispatchDetails(task)
+  const workerName = assignedXpert(task).name
+  const worker = workerName || (typeof task.employer === 'string' ? task.employer : task.taskType || 'the Xpert')
 
   const submit = async () => {
-    if (busy) return
+    if (busy || !rated) return
     setBusy(true)
     try {
       await tasksApi.complete(task.id)
-      await tasksApi.review(task.id, stars, comment).catch(() => null)
+      await tasksApi.review(task.id, { rating: stars, skillsRating: skills, professionalismRating: professionalism }, comment).catch(() => null)
       const emp = session.employer()
       const orgName = (emp?.orgName as string) || 'An employer'
       contact.send({
@@ -1602,7 +707,7 @@ function RateModal({ task, onClose, onDone, onError }: { task: Task; onClose: ()
           `Worker: ${workerName || worker}${workerId ? ` (${workerId})` : ''}\n` +
           `Task: ${task.taskType || '—'}\nLocation: ${task.location || '—'}\nDuration: ${task.duration || '—'}\n` +
           `Worker is owed: GHS ${Number(task.pay || 0).toFixed(2)}\n` +
-          `Employer rating: ${stars}/5\n` +
+          `Employer rating: skills ${skills}/5, professionalism ${professionalism}/5, overall ${stars}/5\n` +
           (comment.trim() ? `Feedback: ${comment.trim()}\n` : '') +
           `\nPlease release the worker's payment to complete this job.`,
         category: 'payment_due',
@@ -1616,7 +721,7 @@ function RateModal({ task, onClose, onDone, onError }: { task: Task; onClose: ()
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/60 p-4" onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby="rt-title" className="w-full max-w-sm rounded-2xl bg-cream-50 shadow-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+      <div role="dialog" aria-modal="true" aria-labelledby="rt-title" className="w-full max-w-sm rounded-2xl bg-white shadow-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <div className="bg-forest-700 px-6 py-5 text-center">
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-cream-50/15">
@@ -1628,24 +733,36 @@ function RateModal({ task, onClose, onDone, onError }: { task: Task; onClose: ()
 
         <div className="p-6">
           <p className="mb-4 text-sm leading-relaxed text-ink-700">
-            Once you confirm, BeyondX will release{' '}
-            <span className="font-semibold text-ink-900">{cedis(task.pay)}</span> to {worker}. This cannot be undone.
+            Once you confirm, BeyondX will release payment to {worker}. This cannot be undone.
           </p>
 
-          {/* Star rating */}
-          <div className="mb-1 text-xs font-semibold text-ink-700">How was the work?</div>
-          <StarPicker value={stars} onChange={setStars} />
+          {/* Ratings: skills and professionalism first, then overall */}
+          <p className="mb-3 text-sm font-semibold text-ink-900">Rate {worker}</p>
+          <div className="space-y-3">
+            <div>
+              <div className="mb-1 text-xs font-semibold text-ink-700">Skills</div>
+              <StarPicker value={skills} onChange={setSkills} />
+            </div>
+            <div>
+              <div className="mb-1 text-xs font-semibold text-ink-700">Professionalism</div>
+              <StarPicker value={professionalism} onChange={setProfessionalism} />
+            </div>
+            <div>
+              <div className="mb-1 text-xs font-semibold text-ink-700">Overall rating</div>
+              <StarPicker value={stars} onChange={setStars} />
+            </div>
+          </div>
 
           <label htmlFor="rt-comment" className="sr-only">Optional feedback</label>
           <textarea id="rt-comment" value={comment} onChange={(e) => setComment(e.target.value)} rows={2}
             placeholder="Optional feedback for BeyondX (not shown publicly)"
-            className="mt-4 w-full rounded-xl border border-ink-900/12 bg-cream-100 p-3 text-sm text-ink-900 placeholder:text-ink-700/50 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/25" />
+            className="mt-4 w-full rounded-xl border border-ink-900/12 bg-gray-50 p-3 text-sm text-ink-900 placeholder:text-ink-700/50 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/25" />
 
           <div className="mt-4 flex gap-2">
             <button onClick={onClose} className="flex-1 rounded-md border border-ink-900/15 px-4 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-900/5">
               Not yet
             </button>
-            <button onClick={submit} disabled={busy}
+            <button onClick={submit} disabled={busy || !rated}
               className="flex-1 rounded-md bg-forest-600 px-4 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
               {busy ? 'Confirming…' : 'Yes, release payment'}
             </button>
@@ -1655,5 +772,3 @@ function RateModal({ task, onClose, onDone, onError }: { task: Task; onClose: ()
     </div>
   )
 }
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars

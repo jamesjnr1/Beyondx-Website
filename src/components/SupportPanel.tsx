@@ -72,9 +72,9 @@ export default function SupportPanel({
   const reporting = role === 'worker' ? 'an employer' : 'a worker'
 
   return (
-    <div className="mx-auto mt-6 max-w-xl rounded-2xl bg-cream-50 p-6 shadow-sm border border-ink-900/8">
+    <div className="mx-auto mt-6 max-w-xl rounded-2xl bg-white p-6 shadow-sm border border-ink-900/8">
       <div className="flex items-start gap-4">
-        <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-forest-600/10 sm:flex">
+        <div className="hidden h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gray-100 sm:flex">
           <MessageCircleQuestion size={24} className="text-forest-600" aria-hidden="true" />
         </div>
         <div className="min-w-0">
