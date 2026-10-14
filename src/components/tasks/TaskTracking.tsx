@@ -4,7 +4,7 @@ import { PROGRESS_STEPS, STOPPED_LABEL, currentStepIndex, taskReference } from '
 
 const cedis = (n?: number | string) => `GH₵ ${Number(n || 0).toLocaleString()}`
 
-export default function TaskTracking({ task, workerName, statusLabel, onBack, onContactSupport, onCancel, onConfirm }: {
+export default function TaskTracking({ task, workerName, statusLabel, onBack, onContactSupport, onCancel, onConfirm, onPayInvoice }: {
   task: Task
   /** Name of the assigned worker, when the dashboard can tell. */
   workerName?: string
@@ -13,6 +13,7 @@ export default function TaskTracking({ task, workerName, statusLabel, onBack, on
   onContactSupport: () => void
   onCancel?: () => void
   onConfirm?: () => void
+  onPayInvoice?: () => void
 }) {
   const status = String(task.status || 'open')
   const current = currentStepIndex(status)
@@ -31,7 +32,7 @@ export default function TaskTracking({ task, workerName, statusLabel, onBack, on
 
   const statusColor = stopped ? 'text-red-700' : status === 'pending_confirmation' ? 'text-amber-700' : 'text-forest-700'
 
-  const subline = [task.taskType, task.location, date, `${slots} Worker${slots > 1 ? 's' : ''}`, task.duration].filter(Boolean)
+  const subline = [task.taskType, task.location, date, `${slots} Xpert${slots > 1 ? 's' : ''}`, task.duration].filter(Boolean)
 
   const details: [string, string | number][] = [
     ['Task category', task.taskType || 'Task'],
@@ -39,8 +40,9 @@ export default function TaskTracking({ task, workerName, statusLabel, onBack, on
     ['Date', date || 'Flexible'],
     ...(startTime ? [['Start time', startTime] as [string, string]] : []),
     ...(task.duration ? [['Expected duration', task.duration] as [string, string]] : []),
-    ['Number of workers', slots],
-    ['Worker pay', cedis(task.pay)],
+    ['Number of Xperts', slots],
+    ...(task.invoiceAmount ? [['Invoice total', cedis(task.invoiceAmount ?? undefined)] as [string, string]] : []),
+    ...(task.premium ? [['Pricing', 'Premium (within 48 hours)'] as [string, string]] : []),
   ]
 
   return (
@@ -86,7 +88,7 @@ export default function TaskTracking({ task, workerName, statusLabel, onBack, on
                     )}
                     <span className={`relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full ${
                       done ? 'bg-ink-900 text-cream-50'
-                        : active ? 'bg-ink-900 text-cream-50 ring-4 ring-forest-600/20'
+                        : active ? 'bg-ink-900 text-cream-50 ring-4 ring-gray-200'
                         : 'bg-ink-900/10 text-ink-700/50'
                     }`}>
                       {done ? <Check size={16} strokeWidth={3} aria-hidden="true" /> : <Icon size={16} aria-hidden="true" />}
@@ -95,13 +97,19 @@ export default function TaskTracking({ task, workerName, statusLabel, onBack, on
                       <p className={`text-sm font-semibold ${done || active ? 'text-ink-900' : 'text-ink-700/55'}`}>{s.label}</p>
                       <p className={`mt-0.5 text-xs ${active ? 'font-medium text-forest-700' : 'text-ink-700/50'}`}>{when}</p>
                       {(done || active) && <p className="mt-1.5 text-sm text-ink-700/80">{s.description}</p>}
-                      {i === 2 && (done || active) && workerName && (
-                        <p className="mt-1 text-sm font-medium text-ink-800">Worker: {workerName}</p>
+                      {i === 3 && (done || active) && workerName && (
+                        <p className="mt-1 text-sm font-medium text-ink-800">Xpert: {workerName}</p>
                       )}
-                      {i === 2 && (done || active) && slots > 1 && (
-                        <p className="mt-1 text-sm font-medium text-ink-800">{filled}/{slots} workers confirmed</p>
+                      {i === 3 && (done || active) && slots > 1 && (
+                        <p className="mt-1 text-sm font-medium text-ink-800">{filled}/{slots} Xperts confirmed</p>
                       )}
-                      {i === 3 && active && onConfirm && (
+                      {i === 1 && status === 'invoice_sent' && onPayInvoice && (
+                        <button onClick={onPayInvoice}
+                          className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 hover:bg-forest-500">
+                          View invoice ({cedis(task.invoiceAmount ?? undefined)})
+                        </button>
+                      )}
+                      {i === 4 && active && onConfirm && (
                         <button onClick={onConfirm}
                           className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 hover:bg-forest-500">
                           <ShieldCheck size={15} aria-hidden="true" /> Confirm work & release payment

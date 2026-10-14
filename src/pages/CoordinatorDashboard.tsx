@@ -34,13 +34,13 @@ import {
 } from '../lib/coordinator'
 
 const cedis = (n: number) => `GH₵ ${Number(n || 0).toLocaleString()}`
-const inp = 'w-full rounded-lg border border-ink-900/12 bg-white px-3 py-2 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/20'
+const inp = 'w-full rounded-lg border border-ink-900/12 bg-white px-3 py-2 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-gray-200'
 
 function Stat({ icon, label, value, extra }: { icon: ReactNode; label: string; value: string; extra?: ReactNode }) {
   return (
     <div className="rounded-2xl border border-ink-900/8 bg-white px-5 py-5 shadow-sm">
       <div className="flex items-center gap-2.5 text-sm font-medium text-ink-700">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-forest-600/30 text-forest-600">{icon}</span>
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-ink-900/10 text-forest-600">{icon}</span>
         <span className="truncate">{label}</span>
       </div>
       <div className="mt-3 flex items-center gap-2.5">
@@ -67,7 +67,7 @@ function AddMemberForm({ onAdd, onClose }: { onAdd: (m: TeamMember) => void; onC
   const valid = name.trim().length > 1
 
   return (
-    <div className="rounded-xl border border-ink-900/10 bg-cream-100/60 p-4 space-y-3">
+    <div className="rounded-xl border border-ink-900/10 bg-gray-50 p-4 space-y-3">
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Team member name" className={inp} />
         <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone (optional)" className={inp} />
@@ -139,10 +139,10 @@ function TeamTab({ worker, onSaved }: { worker: Worker | null; onSaved: (patch: 
         </p>
       )}
 
-      <ul className="divide-y divide-ink-900/8 overflow-hidden rounded-2xl border border-ink-900/8 bg-cream-50">
+      <ul className="divide-y divide-ink-900/8 overflow-hidden rounded-2xl border border-ink-900/8 bg-white">
         {active.map((m) => (
           <li key={m.id} className="flex items-center gap-3 px-4 py-3.5">
-            <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-forest-600/10 text-sm font-bold text-forest-700">
+            <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gray-100 text-sm font-bold text-forest-700">
               {m.name.split(' ').map((s) => s[0]).slice(0, 2).join('').toUpperCase()}
             </span>
             <div className="min-w-0 flex-1">
@@ -199,7 +199,7 @@ function JobQuoteCard({
   }
 
   return (
-    <div className="rounded-2xl border border-ink-900/8 bg-cream-50 p-4 space-y-3">
+    <div className="rounded-2xl border border-ink-900/8 bg-white p-4 space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-ink-900">{task.taskType || 'Job'}</p>
@@ -208,7 +208,7 @@ function JobQuoteCard({
         </div>
         {quote && (
           <span className={`shrink-0 rounded-md px-2.5 py-1 text-[0.8125rem] font-semibold ${
-            quote.status === 'approved' ? 'bg-forest-600/10 text-forest-700'
+            quote.status === 'approved' ? 'bg-gray-100 text-forest-700'
             : quote.status === 'denied' ? 'bg-red-50 text-red-700' : 'bg-amber-50 text-amber-700'
           }`}>
             {quote.status === 'pending' ? 'Quote pending' : quote.status === 'approved' ? 'Quote approved' : 'Quote denied'}
@@ -229,7 +229,7 @@ function JobQuoteCard({
             {team.map((m) => (
               <button key={m.id} type="button" onClick={() => toggle(m.id)}
                 className={`rounded-md border px-3 py-1 text-xs font-medium transition-colors ${
-                  assigned.has(m.id) ? 'border-forest-600 bg-forest-600/10 text-forest-700' : 'border-ink-900/15 text-ink-700 hover:bg-ink-900/5'
+                  assigned.has(m.id) ? 'border-forest-600 bg-gray-100 text-forest-700' : 'border-ink-900/15 text-ink-700 hover:bg-ink-900/5'
                 }`}>
                 {m.name}
               </button>
@@ -326,7 +326,7 @@ function PayoutsTab({
         const existing = splits[tid]
         const isOpen = openTaskId === tid
         return (
-          <div key={tid} className="rounded-2xl border border-ink-900/8 bg-cream-50 p-4">
+          <div key={tid} className="rounded-2xl border border-ink-900/8 bg-white p-4">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-ink-900">{t.taskType || 'Job'}</p>
@@ -489,7 +489,7 @@ function DisputesTab({
       </div>
 
       {adding && (
-        <div className="rounded-xl border border-ink-900/10 bg-cream-100/60 p-4 space-y-3">
+        <div className="rounded-xl border border-ink-900/10 bg-gray-50 p-4 space-y-3">
           {team.length > 0 && (
             <select value={memberId} onChange={(e) => setMemberId(e.target.value)} className={inp}>
               <option value="">Not tied to a specific member</option>
@@ -507,7 +507,7 @@ function DisputesTab({
       {disputes.length === 0 && !adding ? (
         <p className="rounded-xl border border-dashed border-ink-900/15 py-8 text-center text-sm text-ink-700/60">No disputes logged.</p>
       ) : (
-        <ul className="divide-y divide-ink-900/8 overflow-hidden rounded-2xl border border-ink-900/8 bg-cream-50">
+        <ul className="divide-y divide-ink-900/8 overflow-hidden rounded-2xl border border-ink-900/8 bg-white">
           {disputes.slice().reverse().map((d) => (
             <li key={d.id} className="flex items-start gap-3 px-4 py-3.5">
               <AlertTriangle size={16} className={`mt-0.5 shrink-0 ${d.status === 'open' ? 'text-amber-700' : d.status === 'escalated' ? 'text-red-700' : 'text-forest-700'}`} />
@@ -606,7 +606,7 @@ function RequestQuoteForm({ request, onQuoted, onDeclined }: {
 function RequestCard({ request, onUpdate }: { request: CoordinatorJobRequest; onUpdate: (r: CoordinatorJobRequest) => void }) {
   const s = REQUEST_STATUS[request.status]
   return (
-    <div className="rounded-2xl border border-ink-900/8 bg-cream-50 p-4">
+    <div className="rounded-2xl border border-ink-900/8 bg-white p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-ink-900">{request.taskType}</p>
@@ -685,7 +685,7 @@ function ActiveJobCard({ task, onChanged }: { task: Task; onChanged: () => void 
   }
 
   return (
-    <div className="rounded-2xl border border-ink-900/8 bg-cream-50 p-4">
+    <div className="rounded-2xl border border-ink-900/8 bg-white p-4">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-ink-900">{task.taskType || 'Job'}</p>
@@ -839,7 +839,7 @@ export default function CoordinatorDashboard() {
   ].slice(0, 8)
 
   return (
-    <div className="min-h-screen bg-cream-100">
+    <div className="min-h-screen bg-gray-50">
       <DashboardHeader
         role="WORKER"
         title="Coordinator Dashboard"

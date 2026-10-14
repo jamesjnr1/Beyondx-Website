@@ -1,8 +1,8 @@
 import { useEffect, useState, type ReactNode, type FormEvent, type InputHTMLAttributes } from 'react'
-import { X, ShieldCheck, ChevronLeft, ChevronRight, Mail, UserRound, Building2 } from 'lucide-react'
+import { X, ShieldCheck, ChevronLeft, ChevronRight, Mail, UserRound, Building2, Camera, Check } from 'lucide-react'
 import Logo from '../Logo'
 import { useAuth, type AuthView } from './AuthContext'
-import { auth, session, referral, contact, ApiError } from '../../lib/api'
+import { auth, session, referral, contact, media, ApiError } from '../../lib/api'
 import OnboardingQuestions from './OnboardingQuestions'
 import * as v from '../../lib/validate'
 import { categories, remoteCategories } from '../../data'
@@ -33,6 +33,60 @@ const RELATIONSHIPS = [
   'Family Member', 'Friend', 'Former Employer',
   'Community/Religious Leader', 'Case Worker / Social Worker', 'Other',
 ]
+// A reference must be someone who can speak to the applicant's work — never a
+// family member (the server enforces this too).
+const REFERENCE_RELATIONSHIPS = [
+  'Former employer', 'Supervisor or trainer', 'Colleague in the same trade', 'Past client', 'Other (not family)',
+]
+const ID_TYPES = ['Ghana Card', 'Voter ID', 'Passport', "Driver's licence", 'NHIS card']
+
+/** Picks an image, uploads it, and reports the stored URL. */
+function ImageUpload({ label, hint, urls, onChange, max = 1, folder }: {
+  label: string; hint?: string; urls: string[]; onChange: (urls: string[]) => void; max?: number; folder: string
+}) {
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const pick = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ''
+    if (!file) return
+    if (!['image/png', 'image/jpeg', 'image/jpg', 'image/webp'].includes(file.type)) { setErr('Choose a PNG, JPG or WebP photo.'); return }
+    if (file.size > 8 * 1024 * 1024) { setErr('That photo is over 8MB.'); return }
+    setErr(null); setBusy(true)
+    try {
+      const base64: string = await new Promise((res, rej) => {
+        const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = () => rej(new Error('read')); r.readAsDataURL(file)
+      })
+      const { url } = await media.upload(base64, file.name, folder)
+      onChange(max === 1 ? [url] : [...urls, url].slice(0, max))
+    } catch { setErr('Upload failed — please try again.') }
+    finally { setBusy(false) }
+  }
+  return (
+    <div>
+      <p className="mb-1.5 text-sm font-medium text-ink-800">{label}</p>
+      {hint && <p className="mb-2 text-xs text-ink-700/70">{hint}</p>}
+      {urls.length > 0 && (
+        <div className="mb-2 flex flex-wrap gap-2">
+          {urls.map((u) => (
+            <span key={u} className="relative">
+              <img src={u} alt="" className="h-16 w-16 rounded-md border border-ink-900/10 object-cover" />
+              <button type="button" aria-label="Remove photo" onClick={() => onChange(urls.filter((x) => x !== u))}
+                className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-ink-900 text-white"><X size={11} /></button>
+            </span>
+          ))}
+        </div>
+      )}
+      {urls.length < max && (
+        <label className={`inline-flex cursor-pointer items-center gap-2 rounded-md border border-ink-900/15 px-3 py-2 text-sm font-medium text-ink-800 hover:bg-ink-900/5 ${busy ? 'opacity-60' : ''}`}>
+          <Camera size={15} aria-hidden="true" /> {busy ? 'Uploading…' : urls.length ? 'Add another photo' : 'Upload photo'}
+          <input type="file" accept="image/png,image/jpeg,image/webp" onChange={pick} disabled={busy} className="sr-only" />
+        </label>
+      )}
+      {err && <p className="mt-1 text-xs text-red-700">{err}</p>}
+    </div>
+  )
+}
 
 function FormError({ message }: { message: string | null }) {
   if (!message) return null
@@ -230,7 +284,7 @@ function WorkerLogin() {
         <Submit disabled={busy}>{busy ? 'Signing in…' : 'Sign In to My Dashboard'}</Submit>
       </form>
       <Divider />
-      <SwitchLink prompt="New to BeyondX?" action="Register as a Worker" to="worker-register" />
+      <SwitchLink prompt="New to BeyondX?" action="Apply to be an Xpert" to="worker-register" />
     </Modal>
   )
 }
@@ -568,103 +622,90 @@ function EmployerRegister() {
   )
 }
 
+const XPERT_STEPS = 5
+
 function WorkerRegister() {
   const { open } = useAuth()
   const [step, setStep] = useState(1)
-  const [f, setF] = useState({ name: '', phone: '', homeArea: '', gName: '', gPhone: '', relationship: '', pin: '' })
-  // Google sign-up is optional for workers — most authenticate by phone+PIN
-  // alone. If used, it just verifies an email to attach to the account.
+  const [f, setF] = useState({
+    name: '', phone: '', homeArea: '', experience: '',
+    idType: '', idNumber: '',
+    gName: '', gPhone: '', relationship: '',
+    rName: '', rPhone: '', rRelationship: '',
+    pin: '',
+  })
   const [googleEmail, setGoogleEmail] = useState<string | null>(null)
-  // Phone verification is NOT optional — it's the one contact detail every
-  // OTP state — temporarily disabled while Arkesel carrier delivery is resolved.
-  // const [phoneVerified] = useState(false)
   const [fieldErr, setFieldErr] = useState<Record<string, string>>({})
   const [skills, setSkills] = useState<string[]>([])
-  const set = (k: keyof typeof f) => (v: string) => {
-    setF({ ...f, [k]: v })
-  }
-  const toggleSkill = (s: string) => setSkills((c) => (c.includes(s) ? c.filter((x) => x !== s) : [...c, s]))
+  const [evidence, setEvidence] = useState<string[]>([])
+  const [idPhoto, setIdPhoto] = useState<string[]>([])
+  const set = (k: keyof typeof f) => (val: string) => setF({ ...f, [k]: val })
+  const toggleSkill = (sk: string) => setSkills((c) => (c.includes(sk) ? c.filter((x) => x !== sk) : [...c, sk]))
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
-
-  // sendPhoneCode and verifyPhoneCode disabled with OTP — restore when SMS works
+  const norm = (p: string) => p.replace(/[\s-]/g, '')
 
   const validateStep = (n: number) => {
+    setErr(null)
+    let errs: Record<string, string> = {}
     if (n === 1) {
-      const errs = v.check({ name: v.fullName(f.name), phone: v.phone(f.phone) })
-      setFieldErr(errs)
-      if (Object.keys(errs).length) return false
-      // Phone OTP temporarily optional — SMS carrier delivery issue with Arkesel.
-      // Workers can register without verifying; admin verifies manually via console.
-      return true
-    }
-    if (n === 2) {
-      setFieldErr({})
-      if (!skills.length) { setErr('Select at least one skill so employers know what you can do.'); return false }
-      setErr(null)
-      return true
-    }
-    const errs = v.check({
-      gName: v.fullName(f.gName),
-      gPhone: v.phone(f.gPhone),
-      relationship: v.required('Relationship to guarantor')(f.relationship),
-      pin: v.pin(f.pin),
-    })
-    if (!errs.gPhone && f.gPhone.replace(/[\s-]/g, '') === f.phone.replace(/[\s-]/g, '')) {
-      errs.gPhone = 'Your guarantor must have a different number from yours.'
+      errs = v.check({ name: v.fullName(f.name), phone: v.phone(f.phone), homeArea: v.required('Area / Neighbourhood')(f.homeArea) })
+    } else if (n === 2) {
+      if (!skills.length) { setErr('Select at least one skill.'); return false }
+      if (f.experience.trim().length < 10) errs.experience = 'Tell us about your experience (at least a sentence).'
+      if (!evidence.length) { setFieldErr(errs); setErr('Upload at least one photo of work you have done.'); return false }
+    } else if (n === 3) {
+      errs = v.check({ idType: v.required('ID type')(f.idType), idNumber: v.required('ID number')(f.idNumber) })
+      if (!idPhoto.length) { setFieldErr(errs); setErr('Upload a clear photo of your ID.'); return false }
+    } else if (n === 4) {
+      errs = v.check({
+        gName: v.fullName(f.gName), gPhone: v.phone(f.gPhone),
+        relationship: v.required('Relationship to guarantor')(f.relationship),
+        rName: v.fullName(f.rName), rPhone: v.phone(f.rPhone),
+        rRelationship: v.required('Relationship to reference')(f.rRelationship),
+      })
+      if (!errs.gPhone && norm(f.gPhone) === norm(f.phone)) errs.gPhone = 'Your guarantor must have a different number from yours.'
+      if (!errs.rPhone && norm(f.rPhone) === norm(f.phone)) errs.rPhone = 'Your reference must have a different number from yours.'
+      if (!errs.rPhone && norm(f.rPhone) === norm(f.gPhone)) errs.rPhone = 'Your reference must be a different person from your guarantor.'
+    } else {
+      errs = v.check({ pin: v.pin(f.pin) })
     }
     setFieldErr(errs)
     return Object.keys(errs).length === 0
   }
 
   const next = async (e: FormEvent) => {
-
     e.preventDefault()
     if (!validateStep(step)) return
-    if (step < 3) { setStep(step + 1); return }
+    if (step < XPERT_STEPS) { setStep(step + 1); return }
     if (busy) return
     setErr(null); setBusy(true)
     try {
       const base = {
-        fullName: f.name.trim(), phone: f.phone.trim(), prisonFacility: '',  // set by admin after background verification
-        skills, pin: f.pin.trim(), guarantorName: f.gName.trim(),
-        guarantorPhone: f.gPhone.trim(), guarantorRelationship: f.relationship,
-        homeArea: f.homeArea.trim() || undefined,
+        fullName: f.name.trim(), phone: norm(f.phone), prisonFacility: '',
+        skills, pin: f.pin.trim(),
+        guarantorName: f.gName.trim(), guarantorPhone: norm(f.gPhone), guarantorRelationship: f.relationship,
+        homeArea: f.homeArea.trim(),
+        idType: f.idType, idCardNumber: f.idNumber.trim(), idDocumentUrl: idPhoto[0],
+        experienceSummary: f.experience.trim(),
+        referenceName: f.rName.trim(), referencePhone: norm(f.rPhone), referenceRelationship: f.rRelationship,
+        skillEvidenceUrls: evidence,
         visitorId: getVisitorId(),
       }
       const ref = referral.get()
-      const extra: Record<string, string> = {}
-      if (ref) extra.referredBy = ref
-      if (googleEmail) extra.email = googleEmail
-      let data
-      if (Object.keys(extra).length) {
-        // Send the extras, but never let them block a signup: if the backend
-        // rejects a field it doesn't recognise, register again without it.
-        try {
-          data = await auth.workerRegister({ ...base, ...extra })
-        } catch (err) {
-          if (err instanceof ApiError && err.status >= 400 && err.status < 500) {
-            data = await auth.workerRegister(base)
-          } else {
-            throw err
-          }
-        }
-      } else {
-        data = await auth.workerRegister(base)
-      }
+      const data = await auth.workerRegister({ ...base, ...(ref ? { referredBy: ref } : {}) })
       session.saveWorker(data.token, data.worker)
       referral.clear()
       contact.send({
         name: f.name.trim(),
         phone: f.phone.trim(),
         message:
-          `A new worker account was created.\n\n` +
-          `Name: ${f.name.trim()}\n` +
-          `Phone: ${f.phone.trim()}\n` +
+          `A new Xpert application was submitted and is waiting for review in the admin dashboard.\n\n` +
+          `Name: ${f.name.trim()}\nPhone: ${f.phone.trim()}\n` +
           (googleEmail ? `Email: ${googleEmail} (verified via Google)\n` : '') +
-          `Skills: ${skills.join(', ') || '—'}\n` +
-          `Guarantor: ${f.gName.trim()} (${f.gPhone.trim()}, ${f.relationship})\n\n` +
-          `Onboarding answers will follow in a separate email if they complete them.`,
+          `Skills: ${skills.join(', ')}\nArea: ${f.homeArea.trim()}\n` +
+          `Guarantor: ${f.gName.trim()} (${f.gPhone.trim()}, ${f.relationship})\n` +
+          `Reference: ${f.rName.trim()} (${f.rPhone.trim()}, ${f.rRelationship})`,
         category: 'worker_registered',
       }).catch(() => null)
       open('worker-onboarding')
@@ -674,26 +715,35 @@ function WorkerRegister() {
       setBusy(false)
     }
   }
+
+  const skillButton = (sk: string) => {
+    const active = skills.includes(sk)
+    return (
+      <button type="button" key={sk} onClick={() => toggleSkill(sk)}
+        className={`rounded-lg border px-3 py-2 text-left text-xs font-medium transition-colors ${active ? 'border-ink-900 bg-ink-900 text-white' : 'border-ink-900/15 text-ink-700 hover:border-ink-900/40'}`}>
+        {sk}
+      </button>
+    )
+  }
+
+  const titles = ['About you', 'Skills & experience', 'Identity', 'Guarantor & reference', 'Create your PIN']
+
   return (
-    <Modal title="Register as a Worker" subtitle="Join BeyondX and start earning through verified work">
-      <Stepper step={step} total={3} />
+    <Modal title="Apply to be an Xpert" subtitle="Everything is reviewed by BeyondX before your account is activated">
+      <Stepper step={step} total={XPERT_STEPS} />
+      <p className="-mt-2 mb-4 text-sm font-semibold text-ink-900">{titles[step - 1]}</p>
       <form onSubmit={next} className="space-y-4">
         {step === 1 && (<>
-          <Field label="Full Name" value={f.name} onChange={set('name')} error={fieldErr.name} />
+          <Field label="Full Name (as on your ID)" value={f.name} onChange={set('name')} error={fieldErr.name} />
           <Field label="Phone Number" type="tel" placeholder="0241234567" value={f.phone} onChange={set('phone')} error={fieldErr.phone} />
-          <Field label="Area / Neighbourhood" placeholder="e.g. Madina, Tema, Dansoman" value={f.homeArea} onChange={set('homeArea')} hint="Helps match you to nearby jobs — employers see how close you are." />
-
-          {/* Phone OTP temporarily disabled — SMS not delivering due to Arkesel carrier issue.
-              Re-enable by restoring the phoneVerified check in validateStep and this UI block. */}
-
-
+          <Field label="Area / Neighbourhood" placeholder="e.g. Madina, Tema, Dansoman" value={f.homeArea} onChange={set('homeArea')} error={fieldErr.homeArea} hint="Helps us match you to nearby jobs." />
           <div className="flex items-center gap-3 pt-1 text-xs text-ink-700/50">
             <span className="h-px flex-1 bg-ink-900/10" />
-            or sign up with Google (optional)
+            or add your Google email (optional)
             <span className="h-px flex-1 bg-ink-900/10" />
           </div>
           {googleEmail ? (
-            <p className="flex items-center gap-1.5 rounded-lg bg-forest-600/10 px-3 py-2 text-xs font-medium text-forest-700">
+            <p className="flex items-center gap-1.5 rounded-lg bg-gray-100 px-3 py-2 text-xs font-medium text-ink-800">
               <ShieldCheck size={13} aria-hidden="true" /> Verified: {googleEmail}
             </p>
           ) : (
@@ -706,44 +756,56 @@ function WorkerRegister() {
             />
           )}
         </>)}
-        {step === 2 && (
+
+        {step === 2 && (<>
           <div>
-            <p className="mb-1 text-sm font-medium text-ink-800">Your Skills</p>
+            <p className="mb-1 text-sm font-medium text-ink-800">Your skills</p>
             <p className="mb-3 text-xs text-ink-700">Select all that apply</p>
-
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-clay-500">On the field</p>
-            <div className="grid grid-cols-2 gap-2">
-              {FIELD_SKILLS.map((sk) => {
-                const active = skills.includes(sk)
-                return (
-                  <button type="button" key={sk} onClick={() => toggleSkill(sk)} className={`rounded-lg border px-3 py-2 text-left text-xs font-medium transition-colors ${active ? 'border-forest-600 bg-forest-600/10 text-forest-700' : 'border-ink-900/15 text-ink-700 hover:border-forest-500/50'}`}>
-                    {sk}
-                  </button>
-                )
-              })}
-            </div>
-
+            <div className="grid grid-cols-2 gap-2">{FIELD_SKILLS.map(skillButton)}</div>
             {REMOTE_JOBS_ENABLED && (<>
-              <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-clay-500">Remote</p>
-              <div className="grid grid-cols-2 gap-2">
-                {REMOTE_SKILLS.map((sk) => {
-                  const active = skills.includes(sk)
-                  return (
-                    <button type="button" key={sk} onClick={() => toggleSkill(sk)} className={`rounded-lg border px-3 py-2 text-left text-xs font-medium transition-colors ${active ? 'border-forest-600 bg-forest-600/10 text-forest-700' : 'border-ink-900/15 text-ink-700 hover:border-forest-500/50'}`}>
-                      {sk}
-                    </button>
-                  )
-                })}
-              </div>
+              <p className="mb-2 mt-4 text-xs font-semibold uppercase tracking-wide text-ink-700/60">Remote</p>
+              <div className="grid grid-cols-2 gap-2">{REMOTE_SKILLS.map(skillButton)}</div>
             </>)}
           </div>
-        )}
-        {step === 3 && (<>
-          <Field label="Guarantor Full Name" value={f.gName} onChange={set('gName')} error={fieldErr.gName} />
-          <Field label="Guarantor Phone Number" type="tel" placeholder="0241234567" value={f.gPhone} onChange={set('gPhone')} error={fieldErr.gPhone} />
-          <Select label="Relationship to Guarantor" options={RELATIONSHIPS} placeholder="Select a relationship" value={f.relationship} onChange={set('relationship')} error={fieldErr.relationship} />
-          <Field label="PIN (4 digits)" type="password" inputMode="numeric" maxLength={4} placeholder="••••" value={f.pin} onChange={set('pin')} error={fieldErr.pin} />
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-medium text-ink-800">Your work experience</span>
+            <textarea value={f.experience} onChange={(e) => set('experience')(e.target.value)} rows={4}
+              placeholder="e.g. 5 years cleaning offices in Osu; 2 years as a site helper on building projects in Tema."
+              className="w-full rounded-lg border border-ink-900/15 bg-white px-3.5 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/25" />
+            {fieldErr.experience && <span className="mt-1 block text-xs text-red-700">{fieldErr.experience}</span>}
+          </label>
+          <ImageUpload label="Photos of your work" hint="Show jobs you've done before — up to 5 photos. Certificates are welcome too."
+            urls={evidence} onChange={setEvidence} max={5} folder="xpert-evidence" />
         </>)}
+
+        {step === 3 && (<>
+          <Select label="ID type" options={ID_TYPES} placeholder="Select your ID" value={f.idType} onChange={set('idType')} error={fieldErr.idType} />
+          <Field label="ID number" value={f.idNumber} onChange={set('idNumber')} error={fieldErr.idNumber} />
+          <ImageUpload label="Photo of your ID" hint="A clear photo of the front of your ID. Only BeyondX staff see it."
+            urls={idPhoto} onChange={setIdPhoto} folder="xpert-id" />
+        </>)}
+
+        {step === 4 && (<>
+          <p className="text-sm font-semibold text-ink-900">Guarantor</p>
+          <p className="-mt-3 text-xs text-ink-700/70">Someone who can vouch for you. BeyondX will call them to confirm.</p>
+          <Field label="Guarantor full name" value={f.gName} onChange={set('gName')} error={fieldErr.gName} />
+          <Field label="Guarantor phone number" type="tel" placeholder="0241234567" value={f.gPhone} onChange={set('gPhone')} error={fieldErr.gPhone} />
+          <Select label="Relationship to guarantor" options={RELATIONSHIPS} placeholder="Select a relationship" value={f.relationship} onChange={set('relationship')} error={fieldErr.relationship} />
+          <p className="pt-2 text-sm font-semibold text-ink-900">Work reference</p>
+          <p className="-mt-3 text-xs text-ink-700/70">A past employer, client or someone in your trade — not a family member and not your guarantor.</p>
+          <Field label="Reference full name" value={f.rName} onChange={set('rName')} error={fieldErr.rName} />
+          <Field label="Reference phone number" type="tel" placeholder="0241234567" value={f.rPhone} onChange={set('rPhone')} error={fieldErr.rPhone} />
+          <Select label="How they know your work" options={REFERENCE_RELATIONSHIPS} placeholder="Select one" value={f.rRelationship} onChange={set('rRelationship')} error={fieldErr.rRelationship} />
+        </>)}
+
+        {step === 5 && (<>
+          <Field label="PIN (4 digits)" type="password" inputMode="numeric" maxLength={4} placeholder="••••" value={f.pin} onChange={set('pin')} error={fieldErr.pin} hint="You'll use your phone number and this PIN to log in." />
+          <div className="rounded-lg border border-ink-900/10 bg-gray-50 px-4 py-3 text-sm text-ink-700">
+            <p className="flex items-center gap-1.5 font-semibold text-ink-900"><Check size={15} aria-hidden="true" /> What happens next</p>
+            <p className="mt-1">BeyondX reviews your application: we check your ID, call your guarantor and reference, and look at your work. You'll get an SMS once you're approved — then you can start taking jobs.</p>
+          </div>
+        </>)}
+
         <FormError message={err} />
         <div className="mt-5 flex items-center gap-3">
           {step > 1 && (
@@ -752,11 +814,11 @@ function WorkerRegister() {
             </button>
           )}
           <button type="submit" disabled={busy} className="flex-1 rounded-md bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-70">
-            {busy ? 'Creating…' : step < 3 ? 'Continue' : 'Create My Account'}
+            {busy ? 'Submitting…' : step < XPERT_STEPS ? 'Continue' : 'Submit application'}
           </button>
         </div>
       </form>
-      <SwitchLink prompt="Already have an account?" action="Sign In" to="worker-login" />
+      <SwitchLink prompt="Already applied?" action="Sign In" to="worker-login" />
     </Modal>
   )
 }

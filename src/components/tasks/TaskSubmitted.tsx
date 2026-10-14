@@ -21,8 +21,8 @@ export default function TaskSubmitted({ submitted, onTrack, onDashboard }: {
         </span>
         <h1 className="mt-5 text-3xl font-bold text-ink-900">Your task has been submitted!</h1>
         <p className="mx-auto mt-3 max-w-lg text-sm leading-relaxed text-ink-700/75">
-          We've received your request and it's now open to verified workers.
-          You'll be notified as soon as a worker accepts.
+          BeyondX is reviewing your task and will send you an invoice shortly.
+          {summary.premium ? ' This job starts within 48 hours, so premium pricing applies.' : ''}
         </p>
       </div>
 
@@ -43,7 +43,7 @@ export default function TaskSubmitted({ submitted, onTrack, onDashboard }: {
           <div>
             <dt className="text-xs text-ink-700/60">Status</dt>
             <dd className="mt-1">
-              <span className="text-sm font-semibold text-forest-700">Finding a worker</span>
+              <span className="text-sm font-semibold text-ink-800">Under review</span>
             </dd>
           </div>
         </dl>
@@ -61,19 +61,19 @@ export default function TaskSubmitted({ submitted, onTrack, onDashboard }: {
       {/* What happens next? */}
       <div className="mt-6 rounded-2xl border border-ink-900/8 bg-white p-6 shadow-sm sm:p-8">
         <h2 className="text-base font-semibold text-ink-900">What happens next?</h2>
-        <ol className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-5 sm:gap-4">
+        <ol className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-6 sm:gap-3">
           {PROGRESS_STEPS.map((s, i) => {
             const Icon = s.icon
-            const reached = i <= 1
+            const reached = i === 0
             return (
               <li key={s.label} className="relative flex items-start gap-3 sm:block">
                 {i < PROGRESS_STEPS.length - 1 && (
                   <span aria-hidden="true" className="absolute left-10 right-0 top-4 hidden h-px bg-ink-900/10 sm:block" />
                 )}
                 <span className={`relative z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${
-                  i === 0 ? 'bg-forest-600 text-cream-50' : reached ? 'bg-ink-900 text-cream-50' : 'bg-ink-900/10 text-ink-700/60'
+                  reached ? 'bg-ink-900 text-cream-50' : 'bg-ink-900/10 text-ink-700/60'
                 }`}>
-                  {i === 0 ? <Check size={15} strokeWidth={3} aria-hidden="true" /> : <Icon size={15} aria-hidden="true" />}
+                  <Icon size={15} aria-hidden="true" />
                 </span>
                 <span className="block sm:mt-3">
                   <span className="block text-sm font-semibold text-ink-900">{s.label}</span>

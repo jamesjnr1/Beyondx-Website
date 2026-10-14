@@ -15,6 +15,8 @@ import { isRemote } from '../data'
 import { isCoordinator } from '../lib/coordinator'
 import { useRefreshOnResume } from '../hooks/useRefreshOnResume'
 import NotificationsBanner from '../components/NotificationsBanner'
+import { useAuth } from '../components/auth/AuthContext'
+import { BEYONDX_PHONE } from '../lib/payments'
 
 // ---------------------------------------------------------------------------
 // Work Experience & Certifications Card
@@ -202,7 +204,7 @@ function WorkExperienceCard({
     certCount > 0 ? `${certCount} cert${certCount > 1 ? 's' : ''}` : null,
   ].filter(Boolean).join(' · ') || 'None added yet'
 
-  const inp = 'w-full rounded-lg border border-ink-900/12 bg-white px-3 py-2 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/20'
+  const inp = 'w-full rounded-lg border border-ink-900/12 bg-white px-3 py-2 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-gray-200'
 
   return (
     <div className="rounded-none bg-transparent">
@@ -242,7 +244,7 @@ function WorkExperienceCard({
               </p>
             )}
             {expEntries.map((e) => (
-              <div key={e.id} className="rounded-xl border border-ink-900/10 bg-cream-100/60 p-4 space-y-3">
+              <div key={e.id} className="rounded-xl border border-ink-900/10 bg-gray-50 p-4 space-y-3">
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <div>
                     <label className="mb-1 block text-[0.8125rem] font-semibold uppercase tracking-wide text-ink-700/50">Role / Job title</label>
@@ -295,7 +297,7 @@ function WorkExperienceCard({
               </p>
             )}
             {certs.map((c) => (
-              <div key={c.id} className="rounded-xl border border-ink-900/10 bg-cream-100/60 p-4 space-y-3">
+              <div key={c.id} className="rounded-xl border border-ink-900/10 bg-gray-50 p-4 space-y-3">
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                   <div>
                     <label className="mb-1 block text-[0.8125rem] font-semibold uppercase tracking-wide text-ink-700/50">Certification name</label>
@@ -327,7 +329,7 @@ function WorkExperienceCard({
                       </p>
                     )}
                     <div className="mt-2 flex items-center gap-1.5">
-                      <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[0.75rem] font-semibold ${c.verified ? 'bg-forest-600/10 text-forest-700' : 'bg-ink-900/8 text-ink-700/70'}`}>
+                      <span className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[0.75rem] font-semibold ${c.verified ? 'bg-gray-100 text-forest-700' : 'bg-ink-900/8 text-ink-700/70'}`}>
                         {c.verified ? 'BeyondX Verified' : 'Declared — pending review'}
                       </span>
                     </div>
@@ -385,11 +387,123 @@ function Stars({ n }: { n: number }) {
   )
 }
 
+const STAR_BTN = (value: number, onChange: (n: number) => void, label: string) => (
+  <div className="flex gap-1" role="radiogroup" aria-label={label}>
+    {[1, 2, 3, 4, 5].map((i) => (
+      <button key={i} type="button" role="radio" aria-checked={value === i} aria-label={`${i} star${i > 1 ? 's' : ''}`}
+        onClick={() => onChange(i)} className="rounded active:scale-90">
+        <Star size={28} aria-hidden="true" className={i <= value ? 'fill-forest-600 text-forest-600' : 'text-ink-900/20 hover:text-forest-600/40'} />
+      </button>
+    ))}
+  </div>
+)
+
+/** Report something on site that differs from what was agreed, or a safety
+ *  issue. Goes to BeyondX staff. */
+function ReportModal({ task, onClose, onSent }: { task: Task; onClose: () => void; onSent: () => void }) {
+  const [category, setCategory] = useState<'scope_change' | 'safety' | 'other' | ''>('')
+  const [text, setText] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const submit = async () => {
+    if (!category || text.trim().length < 5 || busy) return
+    setBusy(true); setErr(null)
+    try { await tasksApi.report(task.id, category, text.trim()); onSent() }
+    catch (e) { setErr(e instanceof ApiError ? e.message : 'Could not send your report. Please try again.'); setBusy(false) }
+  }
+  const options: [typeof category, string, string][] = [
+    ['scope_change', 'Different from what was agreed', 'More work, different tasks, or conditions that weren\'t described'],
+    ['safety', 'Safety concern', 'Anything that puts you or others at risk'],
+    ['other', 'Something else', 'Anything else BeyondX should know'],
+  ]
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink-950/60 p-4 sm:items-center" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-labelledby="report-title" className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <h2 id="report-title" className="text-lg font-semibold text-ink-900">Report an issue</h2>
+        <p className="mt-1 text-sm text-ink-700/75">{task.taskType}{task.location ? ` · ${task.location}` : ''}. Your report goes straight to the BeyondX team — the employer doesn't see it.</p>
+        <div className="mt-4 space-y-2">
+          {options.map(([id, title, hint]) => (
+            <label key={id} className={`flex cursor-pointer items-start gap-3 rounded-lg border px-3.5 py-3 ${category === id ? 'border-ink-900' : 'border-ink-900/15'}`}>
+              <input type="radio" name="report-cat" checked={category === id} onChange={() => setCategory(id)} className="mt-1" />
+              <span><span className="block text-sm font-medium text-ink-900">{title}</span><span className="block text-xs text-ink-700/70">{hint}</span></span>
+            </label>
+          ))}
+        </div>
+        <textarea value={text} onChange={(e) => setText(e.target.value)} rows={4} placeholder="What did you see or experience? Include when it happened."
+          className="mt-4 w-full rounded-lg border border-ink-900/15 px-3.5 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/25" />
+        {err && <p className="mt-2 text-sm text-red-700">{err}</p>}
+        <div className="mt-4 flex gap-2">
+          <button onClick={onClose} className="flex-1 rounded-md border border-ink-900/15 px-4 py-2.5 text-sm font-medium text-ink-800 hover:bg-ink-900/5">Cancel</button>
+          <button onClick={submit} disabled={!category || text.trim().length < 5 || busy}
+            className="flex-1 rounded-md bg-ink-900 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busy ? 'Sending…' : 'Send report'}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/** Xpert rates the employer after a completed job. */
+function RateEmployerModal({ task, onClose, onDone }: { task: Task; onClose: () => void; onDone: () => void }) {
+  const [stars, setStars] = useState(0)
+  const [comment, setComment] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const submit = async () => {
+    if (!stars || busy) return
+    setBusy(true); setErr(null)
+    try { await tasksApi.workerReview(task.id, stars, comment.trim()); onDone() }
+    catch (e) { setErr(e instanceof ApiError ? e.message : 'Could not save your rating.'); setBusy(false) }
+  }
+  return (
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink-950/60 p-4 sm:items-center" onClick={onClose}>
+      <div role="dialog" aria-modal="true" aria-labelledby="rate-emp-title" className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <h2 id="rate-emp-title" className="text-lg font-semibold text-ink-900">Rate {employerName(task)}</h2>
+        <p className="mt-1 text-sm text-ink-700/75">How was working for this employer on "{task.taskType}"?</p>
+        <div className="mt-4">{STAR_BTN(stars, setStars, 'Rating out of 5')}</div>
+        <textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={3} placeholder="Optional: payment, respect, working conditions…"
+          className="mt-4 w-full rounded-lg border border-ink-900/15 px-3.5 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/25" />
+        {err && <p className="mt-2 text-sm text-red-700">{err}</p>}
+        <div className="mt-4 flex gap-2">
+          <button onClick={onClose} className="flex-1 rounded-md border border-ink-900/15 px-4 py-2.5 text-sm font-medium text-ink-800 hover:bg-ink-900/5">Later</button>
+          <button onClick={submit} disabled={!stars || busy} className="flex-1 rounded-md bg-forest-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busy ? 'Saving…' : 'Submit rating'}</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/** Shown instead of the dashboard until BeyondX approves the application. */
+function ApplicationStatus({ me }: { me: Worker | null }) {
+  const { logout } = useAuth()
+  const status = String(me?.accountStatus || 'under_review')
+  const name = ((me?.fullName as string) || 'there').split(' ')[0]
+  const copy: Record<string, { title: string; body: string }> = {
+    under_review: { title: 'Your application is under review', body: "Thanks for applying to be a BeyondX Xpert. We're checking your ID, calling your guarantor and reference, and looking at your work. You'll get an SMS as soon as you're approved — then you can start taking jobs here." },
+    rejected: { title: "We couldn't approve your application", body: 'Unfortunately we could not approve your application at this time.' },
+    suspended: { title: 'Your account is suspended', body: 'Your BeyondX account is suspended, so you can\'t take jobs right now.' },
+  }
+  const c = copy[status] || copy.under_review
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+      <div className="w-full max-w-lg rounded-2xl border border-ink-900/8 bg-white p-8 shadow-sm">
+        <p className="text-sm text-ink-700/70">Hi {name},</p>
+        <h1 className="mt-1 text-2xl font-bold text-ink-900">{c.title}</h1>
+        <p className="mt-3 text-sm leading-relaxed text-ink-700">{c.body}</p>
+        {!!me?.applicationNote && status !== 'under_review' && (
+          <p className="mt-4 rounded-lg bg-gray-50 px-4 py-3 text-sm text-ink-800"><span className="font-semibold">Note from BeyondX:</span> {String(me.applicationNote)}</p>
+        )}
+        <p className="mt-5 text-sm text-ink-700">Questions? Call BeyondX on <span className="font-medium text-ink-900">{BEYONDX_PHONE}</span>.</p>
+        <button onClick={logout} className="mt-6 rounded-md border border-ink-900/15 px-5 py-2.5 text-sm font-medium text-ink-800 hover:bg-ink-900/5">Log out</button>
+      </div>
+    </div>
+  )
+}
+
 function Stat({ icon, label, value, extra }: { icon: ReactNode; label: string; value: string; extra?: ReactNode }) {
   return (
     <div className="rounded-2xl border border-ink-900/8 bg-white px-5 py-5 shadow-sm">
       <div className="flex items-center gap-2.5 text-sm font-medium text-ink-700">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-forest-600/30 text-forest-600">{icon}</span>
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-ink-900/10 text-forest-600">{icon}</span>
         <span className="truncate">{label}</span>
       </div>
       <div className="mt-3 flex items-center gap-2.5">
@@ -404,7 +518,7 @@ function Skeleton() {
   return (
     <div className="space-y-3" aria-hidden="true">
       {[0, 1, 2].map((i) => (
-        <div key={i} className="rounded-xl bg-cream-50 p-5 shadow-sm border border-ink-900/8">
+        <div key={i} className="rounded-xl bg-white p-5 shadow-sm border border-ink-900/8">
           <div className="h-3 w-24 animate-pulse rounded bg-ink-900/10" />
           <div className="mt-3 h-4 w-2/3 animate-pulse rounded bg-ink-900/10" />
           <div className="mt-2 h-3 w-1/2 animate-pulse rounded bg-ink-900/5" />
@@ -416,7 +530,7 @@ function Skeleton() {
 
 function Empty({ text, icon }: { text: string; icon?: ReactNode }) {
   return (
-    <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-ink-900/15 bg-cream-50/50 p-10 text-center">
+    <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-ink-900/15 bg-gray-50 p-10 text-center">
       {icon && <span className="flex h-11 w-11 items-center justify-center rounded-full bg-ink-900/5 text-ink-700/50">{icon}</span>}
       <p className="text-sm text-ink-700">{text}</p>
     </div>
@@ -442,12 +556,12 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
   const isIntercityJob = transportAmt >= 80  // Tier 4
 
   return (
-    <div className={`overflow-hidden rounded-2xl bg-white border transition-shadow hover:shadow-md ${isOffer ? 'border-forest-600/25' : 'border-ink-900/8'} shadow-sm`}>
+    <div className={`overflow-hidden rounded-2xl bg-white border transition-shadow hover:shadow-md ${isOffer ? 'border-ink-900/10' : 'border-ink-900/8'} shadow-sm`}>
 
       {/* Offer / intercity banner */}
       {isOffer && (
         <div className="flex items-center gap-2 bg-forest-600 px-4 py-2">
-          <span className="flex h-1.5 w-1.5 rounded-[9999px] bg-cream-50 animate-pulse" aria-hidden="true" />
+          <span className="flex h-1.5 w-1.5 rounded-[9999px] bg-white animate-pulse" aria-hidden="true" />
           <span className="text-xs font-semibold text-cream-50">Direct offer — respond to secure this job</span>
         </div>
       )}
@@ -465,6 +579,12 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
           <div className="min-w-0">
             <p className="font-semibold leading-snug text-ink-900">{task.taskType || 'Task'}</p>
             {empOrg && <p className="mt-0.5 text-xs text-ink-700/50">{empOrg}</p>}
+            {Number((task.employer as Record<string, unknown> | undefined)?.rating || 0) > 0 && (
+              <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-ink-700/70">
+                <Star size={11} className="fill-forest-600 text-forest-600" aria-hidden="true" />
+                {Number((task.employer as Record<string, unknown>).rating).toFixed(1)} employer rating
+              </p>
+            )}
           </div>
           <div className="shrink-0 text-right">
             <p className="font-semibold text-forest-700">{cedis(task.pay)}</p>
@@ -518,7 +638,7 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
 
         {/* Transport notice */}
         {isOffer && transportAmt > 0 && (
-          <div className={`mt-3 flex items-start gap-2 rounded-xl px-3 py-2.5 text-xs ${isIntercityJob ? 'bg-red-50 text-red-800' : 'bg-forest-600/6 text-forest-800'}`}>
+          <div className={`mt-3 flex items-start gap-2 rounded-xl px-3 py-2.5 text-xs ${isIntercityJob ? 'bg-red-50 text-red-800' : 'bg-gray-100 text-forest-800'}`}>
             <Bus size={13} aria-hidden="true" className="mt-0.5 shrink-0" />
             <p><strong>GH₵{transportAmt} transport allowance</strong> added to your {cedis(task.pay)} rate.
             {isIntercityJob && <span className="ml-1 text-red-700">Factor in travel time both ways.</span>}
@@ -574,6 +694,8 @@ export default function WorkerDashboard() {
   const [editing, setEditing] = useState(false)
   const [announce, setAnnounce] = useState('')
   const [toast, setToast] = useState<ToastMsg>(null)
+  const [reportTask, setReportTask] = useState<Task | null>(null)
+  const [rateTask, setRateTask] = useState<Task | null>(null)
 
   const load = useCallback(async () => {
     setError(null)
@@ -839,10 +961,11 @@ export default function WorkerDashboard() {
 
   // Approved Coordinators get a different dashboard entirely (team
   // management, bulk-job quoting, payout splits) — see CoordinatorDashboard.
+  if ((me?.accountStatus || 'active') !== 'active') return <ApplicationStatus me={me} />
   if (isCoordinator(me)) return <CoordinatorDashboard />
 
   return (
-    <div className="min-h-screen bg-cream-100">
+    <div className="min-h-screen bg-gray-50">
       <DashboardHeader role="WORKER" title="Worker Dashboard" name={displayName} avatar={photo} onEditProfile={() => setEditing(true)} tasks={[...offers, ...mine, ...history]}
         navItems={headerNavItems} active={section} onSelect={(id) => setSection(id as typeof section)} />
       <div className="lg:flex">
@@ -942,7 +1065,7 @@ export default function WorkerDashboard() {
                   <div className="flex min-w-0 items-center gap-1 overflow-x-auto rounded-md bg-ink-900/5 p-1" role="tablist" aria-label="Assignment status">
                     {assignmentTabs.map((t) => (
                       <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
-                        className={`shrink-0 rounded-md px-3.5 py-2 text-sm font-medium transition-colors focus:outline-none ${tab === t.id ? 'bg-cream-50 text-forest-700 shadow-sm' : 'text-ink-700 hover:text-ink-900'}`}>
+                        className={`shrink-0 rounded-md px-3.5 py-2 text-sm font-medium transition-colors focus:outline-none ${tab === t.id ? 'bg-white text-forest-700 shadow-sm' : 'text-ink-700 hover:text-ink-900'}`}>
                         {t.label}
                       </button>
                     ))}
@@ -1008,7 +1131,7 @@ export default function WorkerDashboard() {
                                   </span>
                                 )}
                               </TaskCard>
-                              <div className="-mt-1 rounded-b-xl bg-cream-50 px-4 pb-4 shadow-sm border border-ink-900/8 sm:px-5">
+                              <div className="-mt-1 rounded-b-xl bg-white px-4 pb-4 shadow-sm border border-ink-900/8 sm:px-5">
                                 <LocationShare
                                   taskId={t.id}
                                   workerId={(me?.workerId as string) || undefined}
@@ -1016,6 +1139,13 @@ export default function WorkerDashboard() {
                                   autoStart={autoShareTaskId === t.id}
                                   disabled={t.status === 'pending_confirmation' || isRemote(t.taskType || '')}
                                 />
+                                <div className="mt-3 flex flex-wrap items-center justify-between gap-2 border-t border-ink-900/6 pt-3">
+                                  <p className="text-xs text-ink-700/70">Something on site not as agreed, or unsafe? Tell us right away.</p>
+                                  <button onClick={() => setReportTask(t)}
+                                    className="inline-flex items-center gap-1.5 rounded-md border border-ink-900/15 px-3 py-1.5 text-xs font-semibold text-ink-800 hover:bg-ink-900/5">
+                                    <AlertTriangle size={12} aria-hidden="true" /> Report an issue
+                                  </button>
+                                </div>
                               </div>
                             </div>
                           )}) : <Empty text="You haven't accepted any tasks yet." icon={<Check size={20} aria-hidden="true" />} />}
@@ -1041,7 +1171,7 @@ export default function WorkerDashboard() {
                 <p className="mb-4 px-1 text-sm text-ink-700/70">
                   This is how BeyondX verifies your skills. Certifications you add here can be reviewed and marked verified by our team.
                 </p>
-                <div className="rounded-2xl bg-cream-50 border border-ink-900/8 overflow-hidden">
+                <div className="rounded-2xl bg-white border border-ink-900/8 overflow-hidden">
                   <WorkExperienceCard worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
                 </div>
               </div>
@@ -1055,9 +1185,11 @@ export default function WorkerDashboard() {
                 </div>
                 <div className="space-y-3">
                   {loading ? <Skeleton /> : (history.length ? history.map((t) => {
-                    const rating = t.reviews?.[0]?.rating
+                    const empReview = t.reviews?.find((r) => r.fromRole === 'employer')
+                    const myReview = t.reviews?.find((r) => r.fromRole === 'worker')
+                    const rating = empReview?.rating
                     return (
-                      <div key={t.id} className="rounded-xl bg-cream-50 p-4 shadow-sm border border-ink-900/8 sm:p-5">
+                      <div key={t.id} className="rounded-xl bg-white p-4 shadow-sm border border-ink-900/8 sm:p-5">
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                           <div>
                             <span className="mb-1 inline-block rounded-md bg-ink-900/5 px-2.5 py-0.5 text-xs font-medium text-ink-700">{t.taskType || 'Task'}</span>
@@ -1069,8 +1201,18 @@ export default function WorkerDashboard() {
                               <span className="text-right">
                                 <span className="block text-xs text-ink-700">Employer rated you</span>
                                 <Stars n={Number(rating)} />
+                                {(empReview?.skillsRating || empReview?.professionalismRating) ? (
+                                  <span className="block text-xs text-ink-700/70">Skills {empReview?.skillsRating}/5 · Professionalism {empReview?.professionalismRating}/5</span>
+                                ) : null}
                               </span>
                             ) : null}
+                            {myReview ? (
+                              <span className="text-xs text-ink-700/70">You rated them {myReview.rating}/5</span>
+                            ) : (
+                              <button onClick={() => setRateTask(t)} className="rounded-md border border-ink-900/15 px-3 py-1.5 text-xs font-semibold text-ink-800 hover:bg-ink-900/5">
+                                Rate employer
+                              </button>
+                            )}
                             <span className="font-semibold text-ink-900">{cedis(t.pay)}</span>
                           </div>
                         </div>
@@ -1083,7 +1225,7 @@ export default function WorkerDashboard() {
 
             {section === 'profile' && (
               <div className="space-y-5">
-                <div className="flex items-center justify-between rounded-2xl border border-ink-900/8 bg-cream-50 p-4">
+                <div className="flex items-center justify-between rounded-2xl border border-ink-900/8 bg-white p-4">
                   <div className="flex items-center gap-3">
                     {photo
                       ? <img src={photo} alt="" className="h-12 w-12 rounded-full object-cover" />
@@ -1099,7 +1241,7 @@ export default function WorkerDashboard() {
                   </button>
                 </div>
 
-                <div className="rounded-2xl bg-cream-50 border border-ink-900/8 overflow-hidden">
+                <div className="rounded-2xl bg-white border border-ink-900/8 overflow-hidden">
                   <button
                     onClick={() => {
                       const card = document.getElementById('home-area-inline')
@@ -1143,7 +1285,7 @@ export default function WorkerDashboard() {
 
       {locationTask && (
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink-950/60 p-4 sm:items-center">
-          <div role="dialog" aria-modal="true" className="w-full max-w-sm rounded-2xl bg-cream-50 shadow-xl overflow-hidden">
+          <div role="dialog" aria-modal="true" className="w-full max-w-sm rounded-2xl bg-white shadow-xl overflow-hidden">
             <div className="bg-forest-700 px-6 py-5 text-center">
               <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-cream-50/15">
                 <MapPin size={22} aria-hidden="true" className="text-cream-50" />
@@ -1187,9 +1329,17 @@ export default function WorkerDashboard() {
         </div>
       )}
 
+      {reportTask && (
+        <ReportModal task={reportTask} onClose={() => setReportTask(null)}
+          onSent={() => { setReportTask(null); setToast({ id: Date.now(), kind: 'success', title: 'Report sent', detail: 'Thank you — the BeyondX team will follow up.' }) }} />
+      )}
+      {rateTask && (
+        <RateEmployerModal task={rateTask} onClose={() => setRateTask(null)}
+          onDone={() => { setRateTask(null); setToast({ id: Date.now(), kind: 'success', title: 'Rating saved', detail: 'Thanks for rating this employer.' }); load() }} />
+      )}
       {confirmDeclineTask && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/60 p-4">
-          <div role="dialog" aria-modal="true" className="w-full max-w-sm rounded-2xl bg-cream-50 p-6 shadow-xl">
+          <div role="dialog" aria-modal="true" className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
             <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
               <AlertTriangle size={22} aria-hidden="true" className="text-red-600" />
             </div>

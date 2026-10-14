@@ -79,11 +79,9 @@
 
 /* ---------- Accessibility preferences (set via the accessibility menu) ---------- */
 
-/* Text size: scales the whole rem-based layout. The site default is 106%,
-   and the two larger settings step up from there. */
-html { font-size: 106.25%; }
-html.a11y-text-large { font-size: 120%; }
-html.a11y-text-xlarge { font-size: 136%; }
+/* Text size: scales the whole rem-based layout. */
+html.a11y-text-large { font-size: 118%; }
+html.a11y-text-xlarge { font-size: 134%; }
 
 /* Easier-to-read font: DM Sans (BeyondX brand face) with looser spacing.
    The stylesheet is loaded on demand when this setting is switched on. */

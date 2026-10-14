@@ -12,7 +12,7 @@ import {
 } from '../lib/coordinator'
 
 const inp =
-  'w-full rounded-lg border border-ink-900/12 bg-white px-3 py-2 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/20'
+  'w-full rounded-lg border border-ink-900/12 bg-white px-3 py-2 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-gray-200'
 
 function ApplyModal({
   onClose, onSubmitted,
@@ -67,7 +67,7 @@ function ApplyModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/50 p-4" onClick={onClose}>
       <div
         role="dialog" aria-modal="true" aria-labelledby="coord-apply-title"
-        className="flex max-h-[88vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-cream-50 shadow-xl"
+        className="flex max-h-[88vh] w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex shrink-0 items-center justify-between border-b border-ink-900/8 px-5 py-4">
@@ -93,7 +93,7 @@ function ApplyModal({
               {ALL_CATEGORY_TITLES.map((title) => (
                 <label key={title} className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-xs text-ink-800 hover:bg-ink-900/5">
                   <input type="checkbox" checked={picked.has(title)} onChange={() => toggle(title)}
-                    className="h-3.5 w-3.5 rounded border-ink-900/30 text-forest-600 focus:ring-forest-600/30" />
+                    className="h-3.5 w-3.5 rounded border-ink-900/30 text-forest-600 focus:ring-gray-200" />
                   {title}
                 </label>
               ))}
@@ -159,7 +159,7 @@ export default function CoordinatorApply({
     return (
       <>
         <button onClick={() => setOpen(true)}
-          className="flex w-full items-center gap-3 rounded-2xl border border-ink-900/8 bg-cream-50 px-4 py-3.5 text-left hover:bg-ink-900/[0.02]">
+          className="flex w-full items-center gap-3 rounded-2xl border border-ink-900/8 bg-white px-4 py-3.5 text-left hover:bg-ink-900/[0.02]">
           <Users size={18} className="shrink-0 text-ink-700/60" aria-hidden="true" />
           <div className="min-w-0 flex-1">
             <p className="text-sm font-semibold text-ink-900">Coordinator application not approved</p>
@@ -174,7 +174,7 @@ export default function CoordinatorApply({
 
   if (application?.status === 'approved') {
     return (
-      <div className="flex items-center gap-3 rounded-2xl border border-forest-600/20 bg-forest-600/5 px-4 py-3.5">
+      <div className="flex items-center gap-3 rounded-2xl border border-ink-900/10 bg-gray-100 px-4 py-3.5">
         <CheckCircle2 size={18} className="shrink-0 text-forest-700" aria-hidden="true" />
         <p className="text-sm font-semibold text-ink-900">You're an approved Coordinator</p>
       </div>
@@ -184,7 +184,7 @@ export default function CoordinatorApply({
   return (
     <>
       <button onClick={() => setOpen(true)}
-        className="flex w-full items-center gap-3 rounded-2xl border border-ink-900/8 bg-cream-50 px-4 py-3.5 text-left hover:bg-ink-900/[0.02]">
+        className="flex w-full items-center gap-3 rounded-2xl border border-ink-900/8 bg-white px-4 py-3.5 text-left hover:bg-ink-900/[0.02]">
         <Users size={18} className="shrink-0 text-forest-600" aria-hidden="true" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-ink-900">Apply to become a Coordinator</p>

@@ -26,7 +26,7 @@ export default function ActivityFeed({ items, empty, title }: { items: ActivityI
     <ul className="divide-y divide-ink-900/8">
       {items.map((item) => (
         <li key={item.id} className="flex items-center gap-3 py-3.5">
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-forest-600/10 text-forest-600">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-forest-600">
             {item.icon}
           </span>
           <span className="min-w-0 flex-1">

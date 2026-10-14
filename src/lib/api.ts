@@ -85,6 +85,7 @@ export type Worker = {
 // Task lifecycle on the backend:
 //   open -> offered -> accepted -> pending_confirmation -> employer_confirmed / completed
 export type TaskStatus =
+  | 'awaiting_invoice' | 'invoice_sent'
   | 'open' | 'payment_pending' | 'offered' | 'accepted'
   | 'pending_confirmation' | 'employer_confirmed' | 'completed'
   | 'payment_rejected' | 'cancelled' | 'expired'
@@ -100,7 +101,10 @@ export type Task = {
   employer?: string | { orgName?: string; name?: string }
   acceptedBy?: string | number
   createdAt?: string
-  reviews?: { rating?: number; comment?: string }[]
+  reviews?: { rating?: number; skillsRating?: number; professionalismRating?: number; comment?: string; fromRole?: 'worker' | 'employer' }[]
+  invoiceAmount?: number | string | null
+  invoiceNote?: string | null
+  premium?: boolean
   [k: string]: unknown
 }
 
@@ -237,6 +241,15 @@ export const auth = {
     guarantorRelationship: string
     referredBy?: string
     visitorId?: string
+    homeArea?: string
+    idType?: string
+    idCardNumber?: string
+    idDocumentUrl?: string
+    experienceSummary?: string
+    referenceName?: string
+    referencePhone?: string
+    referenceRelationship?: string
+    skillEvidenceUrls?: string[]
   }) => request<WorkerAuthResponse>('/api/auth/worker-register', { method: 'POST', body: payload }),
 
   employerLogin: (email: string, password: string) =>
@@ -297,6 +310,14 @@ export const tasks = {
     request<unknown>(`/api/tasks/${id}/accept`, { method: 'PATCH', token }),
   workerDone: (id: string | number, token = session.workerToken()) =>
     request<unknown>(`/api/tasks/${id}/worker-done`, { method: 'PATCH', token }),
+  report: (id: string | number, category: 'scope_change' | 'safety' | 'other', description: string, token = session.workerToken()) =>
+    request<unknown>(`/api/tasks/${id}/report`, { method: 'POST', body: { category, description }, token }),
+  workerReview: (id: string | number, rating: number, comment: string, token = session.workerToken()) =>
+    request<unknown>(`/api/tasks/${id}/review`, { method: 'POST', body: { rating, comment }, token }),
+  payInvoice: (id: string | number, paymentRef: string, token = session.employerToken()) =>
+    request<unknown>(`/api/tasks/${id}/pay-invoice`, { method: 'PATCH', body: { paymentRef }, token }),
+  declineInvoice: (id: string | number, token = session.employerToken()) =>
+    request<unknown>(`/api/tasks/${id}/decline-invoice`, { method: 'PATCH', token }),
 
   create: (
     payload: {
@@ -309,6 +330,8 @@ export const tasks = {
       workersNeeded?: number
       scheduledDate?: string
       scheduledTime?: string
+      durationHours?: number
+      premium?: boolean
     },
     token = session.employerToken(),
   ) => request<{ task?: Task }>('/api/tasks', { method: 'POST', body: payload, token }),
@@ -340,8 +363,8 @@ export const tasks = {
   cancel: (id: string | number, token = session.employerToken()) =>
     request<unknown>(`/api/tasks/${id}/cancel`, { method: 'PATCH', token }),
 
-  review: (id: string | number, rating: number, comment: string, token = session.employerToken()) =>
-    request<unknown>(`/api/tasks/${id}/review`, { method: 'POST', body: { rating, comment }, token }),
+  review: (id: string | number, scores: { rating: number; skillsRating: number; professionalismRating: number }, comment: string, token = session.employerToken()) =>
+    request<unknown>(`/api/tasks/${id}/review`, { method: 'POST', body: { ...scores, comment }, token }),
 
   // Attach a MoMo reference to a task that already exists but has none yet —
   // used after a coordinator job request is admin-approved (see

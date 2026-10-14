@@ -52,9 +52,9 @@ export default function NotificationsBanner({ role }: { role: 'worker' | 'employ
   }
 
   return (
-    <div className="mb-4 flex flex-col gap-3 rounded-xl border border-forest-600/20 bg-forest-600/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mb-4 flex flex-col gap-3 rounded-xl border border-ink-900/10 bg-gray-100 p-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-start gap-3">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-forest-600/15 text-forest-700">
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gray-100 text-forest-700">
           <Bell size={16} aria-hidden="true" />
         </span>
         <div>

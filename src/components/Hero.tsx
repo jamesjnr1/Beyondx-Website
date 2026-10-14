@@ -57,13 +57,13 @@ export default function Hero() {
               onClick={() => open('employer-login')}
               className="rounded-full bg-cream-50 px-7 py-3.5 text-base font-semibold text-ink-900 transition-all hover:bg-cream-100 active:scale-[0.98]"
             >
-              Hire a worker
+              Hire an Xpert
             </button>
             <button
               onClick={() => open('worker-login')}
               className="rounded-full border border-cream-50/40 px-7 py-3.5 text-base font-semibold text-cream-50 backdrop-blur-sm transition-all hover:bg-cream-50/10 active:scale-[0.98]"
             >
-              I'm looking for work
+              Sign up to be an Xpert
             </button>
           </motion.div>
         </div>
