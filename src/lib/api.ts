@@ -348,7 +348,9 @@ export const workers = {
 /* --------------------------------- tasks ------------------------------- */
 
 export const tasks = {
-  open: () => request<{ tasks: Task[] }>('/api/tasks'),
+  // Sent with the Xpert's token so the server applies the active-account and
+  // skills checks (without it the request is treated as anonymous).
+  open: (token = session.workerToken()) => request<{ tasks: Task[] }>('/api/tasks', { token }),
   mine: (token = session.workerToken()) => request<{ tasks: Task[] }>('/api/tasks/mine', { token }),
   workerHistory: (token = session.workerToken()) => request<{ tasks: Task[] }>('/api/tasks/worker-history', { token }),
   all: (token = session.employerToken()) => request<{ tasks: Task[] }>('/api/tasks/all', { token }),
