@@ -18,6 +18,7 @@ import NotificationsBanner from '../components/NotificationsBanner'
 import { useAuth } from '../components/auth/AuthContext'
 import { BEYONDX_PHONE } from '../lib/payments'
 import { RatingRow, FlagModal } from '../components/tasks/JobParts'
+import ReverifyForm from '../components/ReverifyForm'
 
 // ---------------------------------------------------------------------------
 // Work Experience & Certifications Card
@@ -495,7 +496,7 @@ function VerificationSteps({ me }: { me: Worker | null }) {
 }
 
 /** Shown instead of the dashboard until BeyondX approves the application. */
-function ApplicationStatus({ me }: { me: Worker | null }) {
+function ApplicationStatus({ me, onReload }: { me: Worker | null; onReload: () => void }) {
   const { logout } = useAuth()
   const status = String(me?.accountStatus || 'under_review')
   const name = ((me?.fullName as string) || 'there').split(' ')[0]
@@ -507,14 +508,22 @@ function ApplicationStatus({ me }: { me: Worker | null }) {
   if (status === 'under_review' && me?.activatedAt) {
     copy.under_review = { title: 'Your account is under review', body: 'BeyondX is reviewing your account, so you can\'t take new jobs for now. We will contact you.' }
   }
+  const needsForm = status === 'under_review' && !!me?.reverificationRequired && !me?.verificationSubmittedAt
+  if (status === 'under_review' && me?.reverificationRequired) {
+    copy.under_review = needsForm
+      ? { title: 'Complete the new BeyondX verification', body: 'BeyondX now verifies every Xpert before they can take jobs. Your account is paused until you complete this. Check the details we have for you, add anything missing, and submit. We will then confirm your guarantor, review your work and call your reference.' }
+      : { title: 'Thanks — your verification is under review', body: "We're confirming your guarantor, reviewing your work and calling your reference. You'll get an SMS as soon as your account is active again." }
+  }
   const c = copy[status] || copy.under_review
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
-      <div className="w-full max-w-lg rounded-2xl border border-ink-900/8 bg-white p-8 shadow-sm">
+      <div className="w-full max-w-xl rounded-2xl border border-ink-900/8 bg-white p-6 shadow-sm sm:p-8">
         <p className="text-sm text-ink-700/70">Hi {name},</p>
         <h1 className="mt-1 text-2xl font-bold text-ink-900">{c.title}</h1>
         <p className="mt-3 text-sm leading-relaxed text-ink-700">{c.body}</p>
-        {status === 'under_review' && !me?.activatedAt && <VerificationSteps me={me} />}
+        {needsForm
+          ? <ReverifyForm me={me} onSubmitted={onReload} />
+          : status === 'under_review' && (!me?.activatedAt || !!me?.reverificationRequired) ? <VerificationSteps me={me} /> : null}
         {!!me?.applicationNote && status !== 'under_review' && (
           <p className="mt-4 rounded-lg bg-gray-50 px-4 py-3 text-sm text-ink-800"><span className="font-semibold">Note from BeyondX:</span> {String(me.applicationNote)}</p>
         )}
@@ -1015,7 +1024,7 @@ export default function WorkerDashboard() {
 
   // Approved Coordinators get a different dashboard entirely (team
   // management, bulk-job quoting, payout splits) — see CoordinatorDashboard.
-  if ((me?.accountStatus || 'active') !== 'active') return <ApplicationStatus me={me} />
+  if ((me?.accountStatus || 'active') !== 'active') return <ApplicationStatus me={me} onReload={load} />
   if (isCoordinator(me)) return <CoordinatorDashboard />
 
   return (
