@@ -278,8 +278,12 @@ tr:hover td{background:var(--bg);}
       </div>
       <div class="sb-group">
         <div class="sb-grp">Tasks</div>
-        <div class="sb-a" onclick="nav('invoices',this)">Review &amp; Invoice <span class="sb-bdg" id="invoicesBadge" style="display:none">0</span></div>
+        <div class="sb-a" onclick="nav('invoices',this)">Request Inbox &amp; Quotes <span class="sb-bdg" id="invoicesBadge" style="display:none">0</span></div>
+        <div class="sb-a" onclick="nav('signoff',this)">Pricing Sign-off <span class="sb-bdg" id="signoffBadge" style="display:none">0</span></div>
         <div class="sb-a" onclick="nav('verify',this)">Verify Payments <span class="sb-bdg" id="verifyBadge" style="display:none">0</span></div>
+        <div class="sb-a" onclick="nav('jobboard',this)">Job Board &amp; Dispatch</div>
+        <div class="sb-a" onclick="nav('recurring',this)">Recurring Services</div>
+        <div class="sb-a" onclick="nav('changeorders',this)">Change Orders</div>
         <div class="sb-a" onclick="nav('active',this)">In Progress</div>
         <div class="sb-a" onclick="nav('open',this)">Open Tasks</div>
         <div class="sb-a" onclick="nav('completed',this)">Completed</div>
@@ -288,7 +292,12 @@ tr:hover td{background:var(--bg);}
       <div class="sb-group">
         <div class="sb-grp">People</div>
         <div class="sb-a" onclick="nav('applications',this)">Xpert Applications <span class="sb-bdg" id="applicationsBadge" style="display:none">0</span></div>
-        <div class="sb-a" onclick="nav('workers',this)">Workers</div>
+        <div class="sb-a" onclick="nav('xstatus',this)">Xpert Status Queue</div>
+        <div class="sb-a" onclick="nav('qguarantor',this)">Guarantor Calls <span class="sb-bdg" id="qguarantorBadge" style="display:none">0</span></div>
+        <div class="sb-a" onclick="nav('qevidence',this)">Evidence Review <span class="sb-bdg" id="qevidenceBadge" style="display:none">0</span></div>
+        <div class="sb-a" onclick="nav('qreference',this)">Reference Calls <span class="sb-bdg" id="qreferenceBadge" style="display:none">0</span></div>
+        <div class="sb-a" onclick="nav('bands',this)">Price Bands</div>
+        <div class="sb-a" onclick="nav('workers',this)">Xperts</div>
         <div class="sb-a" onclick="nav('employers',this)">Employers</div>
       </div>
       <div class="sb-group">
@@ -303,12 +312,15 @@ tr:hover td{background:var(--bg);}
       <div class="sb-group">
         <div class="sb-grp">Operations</div>
         <div class="sb-a" onclick="nav('sitereports',this)">Site Reports <span class="sb-bdg" id="siteReportsBadge" style="display:none;">0</span></div>
+        <div class="sb-a" onclick="nav('flags',this)">Flags <span class="sb-bdg" id="flagsBadge" style="display:none;">0</span></div>
+        <div class="sb-a" onclick="nav('feedback',this)">Feedback</div>
         <div class="sb-a" onclick="nav('disputes',this)">Scope Disputes <span class="sb-bdg" id="disputesBadge" style="display:none;">0</span></div>
         <div class="sb-a" onclick="nav('coordapps',this)">Coordinator Applications <span class="sb-bdg" id="coordAppsBadge" style="display:none;">0</span></div>
         <div class="sb-a" onclick="nav('coordreqs',this)">Coordinator Job Requests <span class="sb-bdg" id="coordReqsBadge" style="display:none;">0</span></div>
         <div class="sb-a" onclick="nav('coordteams',this)">Coordinator Teams <span class="sb-bdg" id="coordTeamsBadge" style="display:none;">0</span></div>
+        <div class="sb-a" onclick="nav('coordmetrics',this)">Coordinator Metrics</div>
         <div class="sb-a" onclick="nav('coordinators',this)">Coordinator Channel</div>
-        <div class="sb-a" onclick="nav('pricing',this)">Price Tiers</div>
+        <div class="sb-a" onclick="nav('benchmarks',this)">Benchmark Rates</div>
       </div>
       <div class="sb-group">
         <div class="sb-grp">Messages</div>
@@ -388,6 +400,19 @@ tr:hover td{background:var(--bg);}
       <div class="sec" id="sec-invoices"><div id="invoicesContent"></div></div>
       <div class="sec" id="sec-applications"><div id="applicationsContent"></div></div>
       <div class="sec" id="sec-sitereports"><div id="siteReportsContent"></div></div>
+      <div class="sec" id="sec-signoff"><div id="signoffContent"></div></div>
+      <div class="sec" id="sec-jobboard"><div id="jobboardContent"></div></div>
+      <div class="sec" id="sec-recurring"><div id="recurringContent"></div></div>
+      <div class="sec" id="sec-changeorders"><div id="changeordersContent"></div></div>
+      <div class="sec" id="sec-xstatus"><div id="xstatusContent"></div></div>
+      <div class="sec" id="sec-qguarantor"><div id="qguarantorContent"></div></div>
+      <div class="sec" id="sec-qevidence"><div id="qevidenceContent"></div></div>
+      <div class="sec" id="sec-qreference"><div id="qreferenceContent"></div></div>
+      <div class="sec" id="sec-bands"><div id="bandsContent"></div></div>
+      <div class="sec" id="sec-flags"><div id="flagsContent"></div></div>
+      <div class="sec" id="sec-feedback"><div id="feedbackContent"></div></div>
+      <div class="sec" id="sec-coordmetrics"><div id="coordmetricsContent"></div></div>
+      <div class="sec" id="sec-benchmarks"><div id="benchmarksContent"></div></div>
       <div class="sec" id="sec-coordapps"><div id="coordAppsContent"></div></div>
       <div class="sec" id="sec-coordreqs"><div id="coordReqsContent"></div></div>
       <div class="sec" id="sec-coordteams"><div id="coordTeamsContent"></div></div>
@@ -556,53 +581,131 @@ function setBadge(id,n){const b=document.getElementById(id);if(!b)return;b.style
 const cardStyle='padding:16px 18px;border-bottom:1.5px solid var(--b2);';
 const inputStyle='width:100%;padding:9px 11px;border:1.5px solid var(--b);border-radius:8px;font-size:13px;font-family:inherit;';
 
-async function loadInvoices(){
+/* ── Closed loop v4: shared helpers ── */
+async function api(method,path,body){
+  const r=await fetch(API+path,{method,headers:{'Content-Type':'application/json','x-admin-password':pass},body:body?JSON.stringify(body):undefined});
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(d.error||'Request failed');
+  return d;
+}
+function adminName(){
+  let n='';try{n=localStorage.getItem('bx_admin_name')||'';}catch(e){}
+  if(!n){n=(prompt('Your name (recorded on every decision you make):')||'').trim();try{if(n)localStorage.setItem('bx_admin_name',n);}catch(e){}}
+  return n||'BeyondX admin';
+}
+function ownerNote(who,text){return `<div class="an-note"><b>Owner: ${esc(who)}.</b> ${text}</div>`;}
+function tabsHtml(cur,list,fn){return `<div style="margin-bottom:12px;display:flex;gap:6px;flex-wrap:wrap;">${list.map(([k,l])=>`<button class="btn-r ${cur===k?'on':''}" onclick="${fn}('${k}')">${l}</button>`).join('')}</div>`;}
+function chip(text,tone){const c={ok:'#dcfce7;color:#166534',warn:'#fef3c7;color:#92400e',bad:'#fee2e2;color:#991b1b',info:'#e0f2fe;color:#075985'}[tone]||'var(--b2)';return `<span class="badge" style="background:${c};">${esc(text)}</span>`;}
+function when(d){return d?new Date(d).toLocaleString():'—';}
+const thumb=u=>`<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" alt="" style="width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--b);"></a>`;
+const SCHED={every_monday:'Every Monday',every_weekday:'Every weekday',every_saturday:'Every Saturday'};
+const schedLabel=p=>!p?'':SCHED[p]||(p.startsWith('custom:')?p.slice(7):p);
+const CATEGORIES=['Facility & Cleaning','Logistics & Delivery','General Site Labour','Skilled Trades','Painting & Finishing','Repairs & Maintenance','Event & Hospitality','Agriculture & Environment','Retail & Trade Support','Community Services','Data Entry & Digitisation','Customer Support','Social Media & Content','Transcription & Translation','Online Research & Listings','Virtual Assistance'];
+
+/* ── Request inbox & quote composer ── */
+let inboxView='new';
+function requestDetails(t){
+  const sched=t.scheduledDate?esc(t.scheduledDate)+' '+esc(t.scheduledTime||''):'—';
+  const extra=[['Required skills',t.requiredSkills],['Special requirements',t.specialRequirements],['Equipment / materials',t.equipmentNotes],['Site information',t.siteNotes]].filter(x=>x[1]);
+  return `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:10px 0;font-size:12px;">
+      <div><span style="color:var(--ink3)">Location</span><br>${esc(t.location)}</div>
+      <div><span style="color:var(--ink3)">Start</span><br>${sched}</div>
+      <div><span style="color:var(--ink3)">Duration</span><br>${esc(t.duration)}</div>
+      <div><span style="color:var(--ink3)">Xperts</span><br>${esc(t.slotsNeeded||1)}</div>
+      <div><span style="color:var(--ink3)">Engagement</span><br>${t.recurrence==='recurring'?'Recurring — '+esc(schedLabel(t.schedulePattern)):'One time'}</div>
+      <div><span style="color:var(--ink3)">Pricing type</span><br>${esc(t.pricingType||'fixed')}</div>
+    </div>
+    <div style="white-space:pre-line;font-size:13px;background:var(--bg,#f6f7f5);padding:10px 12px;border-radius:8px;">${esc(t.description||'No description')}</div>
+    ${extra.length?`<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:8px;font-size:12px;">${extra.map(([k,v])=>`<div><b>${k}</b><br><span style="white-space:pre-line">${esc(v)}</span></div>`).join('')}</div>`:''}
+    ${(t.photoUrls||[]).length?`<div style="margin-top:8px;font-size:11px;">Photos<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;">${t.photoUrls.map(thumb).join('')}</div></div>`:''}`;
+}
+function suggestedStart(t){
+  const b=t.benchmark;if(!b)return null;
+  const hours=Number(t.durationHours)||null, x=Number(t.slotsNeeded)||1;
+  const units=b.unit==='hour'?(hours||1):b.unit==='day'?Math.max(1,Math.ceil((hours||8)/8)):1;
+  return Math.round(b.rate*units*x*100)/100;
+}
+async function loadInvoices(view){
+  if(view)inboxView=view;
   const box=document.getElementById('invoicesContent');
   box.innerHTML='<div class="empty">Loading…</div>';
   try{
-    const d=await fetch(API+'/admin/invoices?status=all',{headers:{'x-admin-password':pass}}).then(r=>r.json());
+    const d=await api('GET','/admin/requests?view='+inboxView);
     const ts=d.tasks||[];
-    const waiting=ts.filter(t=>t.status==='awaiting_invoice'), sent=ts.filter(t=>t.status==='invoice_sent');
-    setBadge('invoicesBadge',waiting.length);
-    const row=(t,editable)=>{
-      const sched=t.scheduledDate?esc(t.scheduledDate)+' '+esc(t.scheduledTime||''):'—';
+    if(inboxView==='new')setBadge('invoicesBadge',ts.length);
+    const card=t=>{
+      const sug=suggestedStart(t), band=t.band, editable=['new','sent'].includes(inboxView);
       return `<div style="${cardStyle}">
         <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;">
-          <div><div style="font-weight:700;font-size:14px;">${esc(t.taskType)} ${t.premium?'<span class="badge" style="background:#fef3c7;color:#92400e;">PREMIUM &lt;48h</span>':''}</div>
-          <div style="font-size:12px;color:var(--ink3);margin-top:2px;">${esc(t.employer?.orgName||'')} · ${esc(t.employer?.phone||'')} · posted ${new Date(t.createdAt).toLocaleString()}</div></div>
-          ${t.status==='invoice_sent'?`<div style="text-align:right;font-size:12px;">Invoice sent<br><b style="font-size:15px;">${ghs(t.invoiceAmount)}</b><br>Xpert pay ${ghs(t.pay)}</div>`:''}
+          <div><div style="font-weight:700;font-size:14px;">${esc(t.taskType)} ${t.premium?chip('PREMIUM <48h','warn'):''} ${t.recurrence==='recurring'?chip('Recurring','info'):''} ${t.signoffStatus==='rejected'?chip('Sign-off rejected — re-quote','bad'):''}</div>
+          <div style="font-size:12px;color:var(--ink3);margin-top:2px;">${esc(t.employer?.orgName||'')} · ${esc(t.employer?.phone||'')} · requested ${when(t.createdAt)}</div></div>
+          ${t.invoiceAmount?`<div style="text-align:right;font-size:12px;">Quote<br><b style="font-size:15px;">${ghs(t.invoiceAmount)}</b><br>Xpert pay ${ghs(t.pay)}${t.quoteResponse?`<br>${chip(t.quoteResponse,t.quoteResponse==='accepted'?'ok':t.quoteResponse==='declined'?'bad':'info')}`:''}</div>`:''}
         </div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin:10px 0;font-size:12px;">
-          <div><span style="color:var(--ink3)">Location</span><br>${esc(t.location)}</div>
-          <div><span style="color:var(--ink3)">Start</span><br>${sched}</div>
-          <div><span style="color:var(--ink3)">Duration</span><br>${esc(t.duration)}</div>
-          <div><span style="color:var(--ink3)">Xperts</span><br>${esc(t.slotsNeeded||1)}</div>
-        </div>
-        <div style="white-space:pre-line;font-size:13px;background:var(--bg,#f6f7f5);padding:10px 12px;border-radius:8px;">${esc(t.description||'No description')}</div>
-        ${editable?`<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px;">
-          <div><label style="font-size:11px;font-weight:600;">Invoice total (employer pays, GHS)</label><input id="inv-amt-${t.id}" type="number" step="0.01" min="0" value="${t.invoiceAmount||''}" style="${inputStyle}"></div>
-          <div><label style="font-size:11px;font-weight:600;">Xpert pay (GHS, total for the job)</label><input id="inv-pay-${t.id}" type="number" step="0.01" min="0" value="${t.status==='invoice_sent'?t.pay:''}" style="${inputStyle}"></div>
-        </div>
-        <label style="font-size:11px;font-weight:600;display:block;margin-top:8px;">Note to employer (optional, shown on the invoice)</label>
-        <textarea id="inv-note-${t.id}" rows="2" style="${inputStyle}">${esc(t.invoiceNote||'')}</textarea>
-        <button class="btn-r on" style="margin-top:10px;" onclick="sendInvoice('${t.id}')">${t.status==='invoice_sent'?'Update invoice':'Send invoice'}</button>`:''}
+        ${requestDetails(t)}
+        ${editable?`<div style="margin-top:12px;padding:12px;border:1.5px solid var(--b);border-radius:10px;">
+          <div style="font-size:12px;font-weight:700;margin-bottom:6px;">Quote composer</div>
+          <div style="font-size:12px;color:var(--ink3);margin-bottom:8px;">
+            Benchmark: ${t.benchmark?`${ghs(t.benchmark.rate)} per ${esc(t.benchmark.unit)} (what other providers charge)${sug!=null?` → suggested start <b>${ghs(sug)}</b>`:''}`:'none set for this task type — add one in Benchmark Rates'}<br>
+            Xpert price band for this category: ${band?`${ghs(band.floor)} – ${ghs(band.ceiling)} per Xpert (${band.xperts} Xperts). Harder or longer work sits toward the ceiling. Xpert pay above the ceiling goes to sign-off.`:'no bands set yet'}
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;">
+            <div><label style="font-size:11px;font-weight:600;">Benchmark amount (GHS)</label><input id="q-bm-${t.id}" type="number" step="0.01" value="${t.benchmarkRate??(sug??'')}" oninput="quoteCalc('${t.id}')" style="${inputStyle}"></div>
+            <div><label style="font-size:11px;font-weight:600;">Scope adjustment (+/− GHS)</label><input id="q-adj-${t.id}" type="number" step="0.01" value="${t.scopeAdjustment??0}" oninput="quoteCalc('${t.id}')" style="${inputStyle}"></div>
+            <div><label style="font-size:11px;font-weight:600;">Quote total (employer pays)</label><input id="inv-amt-${t.id}" type="number" step="0.01" value="${t.invoiceAmount??''}" style="${inputStyle}"></div>
+            <div><label style="font-size:11px;font-weight:600;">Xpert pay (total for the job)</label><input id="inv-pay-${t.id}" type="number" step="0.01" value="${t.invoiceAmount?t.pay:''}" style="${inputStyle}"></div>
+            <div><label style="font-size:11px;font-weight:600;">Pricing type</label><select id="q-pt-${t.id}" style="${inputStyle}"><option value="fixed" ${t.pricingType!=='hourly'?'selected':''}>Fixed</option><option value="hourly" ${t.pricingType==='hourly'?'selected':''}>Hourly</option></select></div>
+          </div>
+          <label style="font-size:11px;font-weight:600;display:block;margin-top:8px;">Note to employer (shown with the quote)</label>
+          <textarea id="inv-note-${t.id}" rows="2" style="${inputStyle}">${esc(t.invoiceNote||'')}</textarea>
+          <button class="btn-r on" style="margin-top:10px;" onclick="sendInvoice('${t.id}')">${inboxView==='sent'?'Update quote':'Send quote'}</button>
+        </div>`:''}
       </div>`;
     };
-    box.innerHTML=`<div class="an-note">Every task an employer posts lands here. Review the description, then send one invoice. The employer pays or declines it; once you verify the payment in Verify Payments, the task opens to matching Xperts. Premium = starts within 48 hours of posting.</div>
-      <div class="tc"><div class="tc-h"><span class="tc-ht">Awaiting invoice</span><span class="tc-hm">${waiting.length}</span></div>${waiting.map(t=>row(t,true)).join('')||'<div class="empty">Nothing waiting</div>'}</div>
-      <div class="tc"><div class="tc-h"><span class="tc-ht">Invoice sent — waiting on employer</span><span class="tc-hm">${sent.length}</span></div>${sent.map(t=>row(t,true)).join('')||'<div class="empty">None</div>'}</div>`;
-  }catch(e){box.innerHTML='<div class="empty">Could not load invoices.</div>';}
+    box.innerHTML=ownerNote('not yet decided','Every request lands here with its description and photos. Prepare one firm quote from the benchmark rate, adjusted for scope. The employer can only accept or decline — no counter offers. Quotes whose Xpert pay is above the band ceiling wait in Pricing Sign-off.')
+      +tabsHtml(inboxView,[['new','New requests'],['sent','Quote sent'],['accepted','Accepted'],['declined','Declined']],'loadInvoices')
+      +`<div class="tc">${ts.map(card).join('')||'<div class="empty">Nothing here</div>'}</div>`;
+  }catch(e){box.innerHTML='<div class="empty">Could not load requests: '+esc(e.message)+'</div>';}
+}
+function quoteCalc(id){
+  const bm=parseFloat(document.getElementById('q-bm-'+id).value)||0, adj=parseFloat(document.getElementById('q-adj-'+id).value)||0;
+  if(bm)document.getElementById('inv-amt-'+id).value=(bm+adj).toFixed(2);
 }
 async function sendInvoice(id){
   const amount=parseFloat(document.getElementById('inv-amt-'+id).value);
   const workerPay=parseFloat(document.getElementById('inv-pay-'+id).value);
-  const note=document.getElementById('inv-note-'+id).value;
-  if(!(amount>0)||!(workerPay>0)){showToast('Enter both the invoice total and the Xpert pay.');return;}
-  if(workerPay>amount){showToast('Xpert pay cannot be more than the invoice total.');return;}
-  if(!confirm('Send an invoice of GHS '+amount.toFixed(2)+' (Xpert pay GHS '+workerPay.toFixed(2)+')? The employer will be notified.'))return;
-  const r=await fetch(API+'/admin/tasks/'+id+'/invoice',{method:'PATCH',headers:{'Content-Type':'application/json','x-admin-password':pass},body:JSON.stringify({amount,workerPay,note})});
-  const d=await r.json().catch(()=>({}));
-  if(r.ok){showToast('Invoice sent.');loadInvoices();}else showToast(d.error||'Could not send invoice.');
+  if(!(amount>0)||!(workerPay>0)){showToast('Enter both the quote total and the Xpert pay.');return;}
+  if(workerPay>amount){showToast('Xpert pay cannot be more than the quote total.');return;}
+  if(!confirm('Send a quote of GHS '+amount.toFixed(2)+' (Xpert pay GHS '+workerPay.toFixed(2)+')? If it is within the Xpert price band, the employer is notified now.'))return;
+  try{
+    const d=await api('PATCH','/admin/tasks/'+id+'/invoice',{amount,workerPay,note:document.getElementById('inv-note-'+id).value,
+      benchmarkRate:document.getElementById('q-bm-'+id).value,scopeAdjustment:document.getElementById('q-adj-'+id).value,
+      pricingType:document.getElementById('q-pt-'+id).value,by:adminName()});
+    showToast(d.heldForSignoff?'Above the Xpert band ceiling — held in Pricing Sign-off.':'Quote sent to the employer.');
+    loadInvoices();loadClosedLoopBadges();
+  }catch(e){showToast(e.message);}
+}
+
+/* ── Pricing sign-off ── */
+async function loadSignoff(){
+  const box=document.getElementById('signoffContent');box.innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const ts=(await api('GET','/admin/requests?view=signoff')).tasks||[];
+    setBadge('signoffBadge',ts.length);
+    box.innerHTML=ownerNote('Elikem or Abigail','Quotes whose Xpert pay is above the relevant Xpert price band ceiling. They are not sent to the employer until approved here. Financial control, not operational.')
+      +`<div class="tc">${ts.map(t=>`<div style="${cardStyle}">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;"><div><b>${esc(t.taskType)}</b> · ${esc(t.employer?.orgName||'')} ${t.premium?chip('PREMIUM','warn'):''}</div>
+        <div style="text-align:right;font-size:12px;">Quote <b>${ghs(t.invoiceAmount)}</b><br>Xpert pay ${ghs(t.pay)} (${ghs(Number(t.pay)/(t.slotsNeeded||1))} each)<br>Band ceiling ${t.band?ghs(t.band.ceiling):'—'}</div></div>
+        <div style="font-size:12px;color:var(--ink3);margin-top:4px;">Benchmark ${t.benchmarkRate!=null?ghs(t.benchmarkRate):'—'} · scope adjustment ${t.scopeAdjustment!=null?ghs(t.scopeAdjustment):'—'}</div>
+        ${requestDetails(t)}
+        <div style="margin-top:10px;display:flex;gap:8px;"><button class="btn-r on" onclick="signoff('${t.id}','approve')">Approve &amp; send</button><button class="btn-r" onclick="signoff('${t.id}','reject')">Reject (back to inbox)</button></div>
+      </div>`).join('')||'<div class="empty">Nothing waiting for sign-off</div>'}</div>`;
+  }catch(e){box.innerHTML='<div class="empty">Could not load: '+esc(e.message)+'</div>';}
+}
+async function signoff(id,action){
+  const note=action==='reject'?prompt('Why? (kept on the request)'):'';
+  if(action==='reject'&&!note)return;
+  try{await api('PATCH','/admin/signoffs/'+id,{action,note,by:adminName()});showToast(action==='approve'?'Approved and sent to the employer.':'Rejected — back in the inbox for a new quote.');loadSignoff();}
+  catch(e){showToast(e.message);}
 }
 
 let appStatus='under_review';
@@ -614,7 +717,7 @@ async function loadApplications(status){
     const d=await fetch(API+'/admin/applications?status='+appStatus,{headers:{'x-admin-password':pass}}).then(r=>r.json());
     const ws=d.workers||[];
     if(appStatus==='under_review')setBadge('applicationsBadge',ws.length);
-    const tabs=[['under_review','Under review'],['active','Active'],['suspended','Suspended'],['rejected','Rejected']].map(([k,l])=>`<button class="btn-r ${appStatus===k?'on':''}" onclick="loadApplications('${k}')">${l}</button>`).join(' ');
+    const tabs=[['under_review','Applying'],['active','Active'],['suspended','Suspended'],['rejected','Closed / removed']].map(([k,l])=>`<button class="btn-r ${appStatus===k?'on':''}" onclick="loadApplications('${k}')">${l}</button>`).join(' ');
     const img=u=>`<a href="${esc(u)}" target="_blank" rel="noopener"><img src="${esc(u)}" style="width:72px;height:72px;object-fit:cover;border-radius:6px;border:1px solid var(--b);"></a>`;
     const card=w=>`<div style="${cardStyle}">
       <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;">
@@ -635,25 +738,32 @@ async function loadApplications(status){
       </div>
       ${w.applicationNote?`<div style="margin-top:8px;font-size:12px;color:var(--ink3);">Note: ${esc(w.applicationNote)}</div>`:''}
       ${w.activatedAt?`<div style="margin-top:4px;font-size:11px;color:var(--ink3);">Approved ${new Date(w.activatedAt).toLocaleString()} by ${esc(w.activatedBy||'')}</div>`:''}
+      <div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap;font-size:12px;align-items:center;">
+        Screening: ${chip('Guarantor: '+(w.guarantorOutcome||'pending'),w.guarantorOutcome==='yes'?'ok':w.guarantorOutcome==='no'?'bad':'warn')}
+        ${chip('Evidence: '+(w.evidenceOutcome||'pending'),w.evidenceOutcome==='pass'?'ok':w.evidenceOutcome==='fail'?'bad':'warn')}
+        ${chip('Reference: '+(w.referenceOutcome||'pending'),w.referenceOutcome==='confirmed'?'ok':w.referenceOutcome==='unreachable'?'bad':'warn')}
+        ${chip(XS_LABEL[w.xpertStatus]||w.xpertStatus||'','info')}
+      </div>
       <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
-        ${w.accountStatus!=='active'?`<button class="btn-r on" onclick="reviewApplication('${w.id}','${w.accountStatus==='under_review'?'approve':'reactivate'}')">${w.accountStatus==='under_review'?'Approve':'Reactivate'}</button>`:''}
+        ${w.accountStatus==='under_review'?(w.guarantorOutcome==='yes'&&w.evidenceOutcome==='pass'&&w.referenceOutcome==='confirmed'
+          ?`<button class="btn-r on" onclick="reviewApplication('${w.id}','approve')">Approve — activate account</button>`
+          :`<button class="btn-r" disabled title="Complete the guarantor call, evidence review and reference call first" style="opacity:.5;cursor:not-allowed;">Approve (screening not complete)</button>`):''}
         ${w.accountStatus==='under_review'?`<button class="btn-r" onclick="reviewApplication('${w.id}','reject')">Reject</button>`:''}
-        ${w.accountStatus==='active'?`<button class="btn-r" onclick="reviewApplication('${w.id}','suspend')">Suspend</button>`:''}
+        ${w.accountStatus==='suspended'||w.accountStatus==='rejected'?`<button class="btn-r on" onclick="reviewApplication('${w.id}','reactivate')">Reactivate</button>`:''}
+        ${w.accountStatus==='active'?`<button class="btn-r" onclick="reviewApplication('${w.id}','suspend')">Suspend (revoke access)</button>`:''}
       </div>
     </div>`;
-    box.innerHTML=`<div class="an-note">Applicants can't see or take jobs until you approve them here. Check the ID photo, call the guarantor and the reference, and look at the work photos before approving. Rejecting or suspending needs a reason — the applicant sees it.</div>
+    box.innerHTML=`<div class="an-note">Applicants have no jobs and no dashboard until you approve them here. Approve unlocks only once the guarantor is confirmed (Guarantor Calls), the work evidence passes (Evidence Review) and the reference is confirmed (Reference Calls). Approval makes them a Provisional Active Xpert. Rejecting, suspending or reactivating needs a reason.</div>
       <div style="margin-bottom:12px;display:flex;gap:6px;flex-wrap:wrap;">${tabs}</div>
       <div class="tc">${ws.map(card).join('')||'<div class="empty">No Xperts in this list</div>'}</div>`;
   }catch(e){box.innerHTML='<div class="empty">Could not load applications.</div>';}
 }
 async function reviewApplication(id,action){
   let note='';
-  if(action==='reject'||action==='suspend'){note=prompt('Reason (shown to the Xpert):');if(!note)return;}
-  else if(!confirm((action==='approve'?'Approve this applicant? They become an active Xpert and are texted.':'Reactivate this Xpert?')))return;
-  const by=action==='approve'||action==='reactivate'?(prompt('Your name (recorded as the approver):')||'BeyondX admin'):undefined;
-  const r=await fetch(API+'/admin/applications/'+id,{method:'PATCH',headers:{'Content-Type':'application/json','x-admin-password':pass},body:JSON.stringify({action,note,by})});
-  const d=await r.json().catch(()=>({}));
-  if(r.ok){showToast('Saved.');loadApplications();}else showToast(d.error||'Could not update.');
+  if(action!=='approve'){note=prompt(action==='reactivate'?'Reason for reactivating:':'Reason (shown to the Xpert):');if(!note)return;}
+  else if(!confirm('Approve this applicant? Their account and dashboard are activated and they are texted.'))return;
+  try{await api('PATCH','/admin/applications/'+id,{action,note,by:adminName()});showToast('Saved.');loadApplications();loadClosedLoopBadges();}
+  catch(e){showToast(e.message);}
 }
 
 let srStatus='open';
@@ -686,10 +796,374 @@ async function resolveSiteReport(id){
   const r=await fetch(API+'/admin/site-reports/'+id,{method:'PATCH',headers:{'Content-Type':'application/json','x-admin-password':pass},body:JSON.stringify({status:'resolved',adminNote})});
   if(r.ok){showToast('Marked resolved.');loadSiteReports();}else showToast('Could not update.');
 }
+/* ── Job board, matching, live monitoring, replacement ── */
+let jbFilter='dispatch', jbTasks=[], matchState={};
+const JB_GROUPS={
+  dispatch:{label:'Needs an Xpert',st:['open','expired']},
+  offered:{label:'Offered — awaiting Xpert',st:['offered']},
+  live:{label:'Live jobs',st:['accepted','pending_confirmation']},
+  quote:{label:'Quote / payment stage',st:['awaiting_invoice','invoice_sent','payment_pending']},
+  done:{label:'Confirmed — to pay',st:['employer_confirmed']},
+};
+async function loadJobBoard(f){
+  if(f)jbFilter=f;
+  const box=document.getElementById('jobboardContent');box.innerHTML='<div class="empty">Loading…</div>';
+  try{
+    jbTasks=(await api('GET','/admin/job-board')).tasks||[];
+    const g=JB_GROUPS[jbFilter], list=jbTasks.filter(t=>g.st.includes(t.status));
+    const counts=Object.fromEntries(Object.entries(JB_GROUPS).map(([k,v])=>[k,jbTasks.filter(t=>v.st.includes(t.status)).length]));
+    box.innerHTML=ownerNote('Windin or Elim','Select a primary and a backup Xpert, watch confirmation, arrival and completion, and trigger a replacement in one step if anything goes wrong. Escalate to Spencer or Jonathan. The employer never solves the labour problem.')
+      +tabsHtml(jbFilter,Object.entries(JB_GROUPS).map(([k,v])=>[k,`${v.label} (${counts[k]})`]),'loadJobBoard')
+      +`<div class="tc">${list.map(jobCard).join('')||'<div class="empty">Nothing here</div>'}</div>`;
+  }catch(e){box.innerHTML='<div class="empty">Could not load the job board: '+esc(e.message)+'</div>';}
+}
+function stepCell(label,at,done){return `<div style="font-size:11px;"><span style="color:${done?'#166534':'var(--ink3)'};font-weight:600;">${done?'✓':'○'} ${label}</span><br><span style="color:var(--ink3)">${at?new Date(at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}):''}</span></div>`;}
+function jobCard(t){
+  const primary=t.assignments.filter(a=>a.role==='primary'&&a.status==='active').slice(-1)[0];
+  const multi=(t.slotsNeeded||1)>1;
+  const canAssign=['open','expired','offered'].includes(t.status)&&!multi;
+  const canReplace=['offered','accepted','expired'].includes(t.status)&&t.workerId;
+  const live=['accepted','pending_confirmation','employer_confirmed'].includes(t.status);
+  return `<div style="${cardStyle}">
+    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+      <div><b>${esc(t.taskType)}</b> · ${esc(t.location)} ${t.premium?chip('PREMIUM','warn'):''} ${t.recurringService?chip('Recurring — '+schedLabel(t.recurringService.schedulePattern),'info'):''} ${t.replacementInProgress?chip('Replacement in progress','bad'):''} ${multi?chip(`${t.filledSlots||0}/${t.slotsNeeded} Xperts`,'info'):''}
+        <div style="font-size:12px;color:var(--ink3);margin-top:2px;">${esc(t.employer?.orgName||'')} · ${t.scheduledDate?esc(t.scheduledDate)+' '+esc(t.scheduledTime||''):'no date'} · ${esc(t.duration)} · ${chip(t.status,'')}</div></div>
+      <div style="text-align:right;font-size:12px;">Quote ${t.invoiceAmount?ghs(t.invoiceAmount):'—'}<br>Xpert pay ${ghs(t.pay)}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin-top:8px;font-size:12px;">
+      <div><b>Primary</b><br>${t.acceptedBy?esc(t.acceptedBy.fullName)+' ('+esc(t.acceptedBy.workerId)+') · '+esc(t.acceptedBy.phone||''):'—'}</div>
+      <div><b>Backup</b><br>${t.backup?esc(t.backup.fullName):'—'}</div>
+      ${t.recurringService&&t.recurringService.preferredXpertIds.length?`<div><b>Preferred team</b><br>${t.recurringService.preferredXpertIds.length} Xpert(s) — offer to them first</div>`:''}
+    </div>
+    ${live||t.status==='offered'?`<div style="display:flex;gap:18px;flex-wrap:wrap;margin-top:8px;padding:8px 10px;background:var(--bg,#f6f7f5);border-radius:8px;">
+      ${stepCell('Confirmed',primary?.confirmedAt,['accepted','pending_confirmation','employer_confirmed'].includes(t.status))}
+      ${stepCell('Arrived',t.arrivedAt,!!t.arrivedAt)}
+      ${stepCell('Work in progress',t.startedAt,!!t.startedAt)}
+      ${stepCell('Completion pending',primary?.completedAt,['pending_confirmation','employer_confirmed'].includes(t.status))}
+      ${stepCell('Employer confirmed',null,t.status==='employer_confirmed')}
+    </div>`:''}
+    ${t.assignments.length?`<details style="margin-top:6px;font-size:11px;"><summary style="cursor:pointer;color:var(--ink3);">Assignment log (${t.assignments.length})</summary>${t.assignments.map(a=>`<div>${esc(a.role)} · ${esc(a.fullName)} · ${esc(a.status)} · assigned ${when(a.createdAt)}${a.confirmedAt?' · confirmed '+when(a.confirmedAt):''}${a.arrivedAt?' · arrived '+when(a.arrivedAt):''}${a.replacedByAssignmentId?' · replaced':''}</div>`).join('')}</details>`:''}
+    ${t.adminNote?`<div style="font-size:12px;color:var(--ink3);margin-top:4px;">Note: ${esc(t.adminNote)}</div>`:''}
+    <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+      ${canAssign?`<button class="btn-r on" onclick="openMatches('${t.id}')">Find &amp; assign Xperts</button>`:''}
+      ${multi&&['open','expired'].includes(t.status)?`<span style="font-size:12px;color:var(--ink3);align-self:center;">Several Xperts needed — use Open Tasks → Dispatch to offer it to a group.</span>`:''}
+      ${canReplace?`<button class="btn-r" onclick="replaceXpert('${t.id}',${t.backup?'true':'false'})">Replace Xpert</button>`:''}
+      ${t.invoiceAmount&&['accepted','pending_confirmation','offered'].includes(t.status)?`<button class="btn-r" onclick="newChangeOrder('${t.id}')">Log change order</button>`:''}
+    </div>
+    <div id="match-${t.id}"></div>
+  </div>`;
+}
+async function openMatches(id,sortKey){
+  const el=document.getElementById('match-'+id);
+  if(!sortKey&&matchState[id]&&el.innerHTML){el.innerHTML='';delete matchState[id];return;}
+  el.innerHTML='<div class="empty">Loading eligible Xperts…</div>';
+  try{
+    if(!matchState[id]||!sortKey){matchState[id]={data:(await api('GET','/admin/tasks/'+id+'/matches')).xperts,sort:'taskExperience',onlyAvailable:true};}
+    const st=matchState[id]; if(sortKey)st.sort=sortKey==='toggle'?st.sort:sortKey; if(sortKey==='toggle')st.onlyAvailable=!st.onlyAvailable;
+    const dir={distanceKm:1,priceCeiling:1}; const val=(x,k)=>k==='attendance'?(x.attendance.rate??-1):k==='distanceKm'?(x.distanceKm??1e9):k==='priceCeiling'?(x.priceCeiling??1e9):(x[k]??0);
+    const rows=st.data.filter(x=>!st.onlyAvailable||x.available).sort((a,b)=>(dir[st.sort]?1:-1)*(val(a,st.sort)-val(b,st.sort)));
+    const th=(k,l)=>`<th style="cursor:pointer;" onclick="openMatches('${id}','${k}')">${l}${st.sort===k?' ▾':''}</th>`;
+    el.innerHTML=`<div style="margin-top:10px;border:1.5px solid var(--b);border-radius:10px;overflow:auto;">
+      <div style="padding:8px 10px;font-size:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;"><b>Eligible Xperts</b> (active, with this skill) <label><input type="checkbox" ${st.onlyAvailable?'checked':''} onchange="openMatches('${id}','toggle')"> Available only</label><span style="color:var(--ink3)">Click a column to sort.</span></div>
+      <table><thead><tr><th>Primary</th><th>Backup</th><th>Xpert</th>${th('xpertStatus','Status')}${th('priceCeiling','Price band')}${th('attendance','Attendance')}${th('taskExperience','Task experience')}${th('distanceKm','Proximity')}${th('rating','Rating')}<th>Flags</th></tr></thead>
+      <tbody>${rows.map(x=>`<tr><td><input type="radio" name="pri-${id}" value="${x.id}"></td><td><input type="radio" name="bak-${id}" value="${x.id}"></td>
+        <td>${esc(x.fullName)}<br><span style="color:var(--ink3);font-size:11px;">${esc(x.workerId)} · ${esc(x.homeArea||'')}${x.available?'':' · busy'}${x.verificationSource==='coordinator'?' · via coordinator':''}</span></td>
+        <td>${esc(x.xpertStatus)}</td><td>${x.priceCeiling!=null?ghs(x.priceFloor)+' – '+ghs(x.priceCeiling):'—'}${x.withinBand?'':' '+chip('pay above band','warn')}</td>
+        <td>${x.attendance.rate!=null?x.attendance.rate+'% ('+x.attendance.noShows+' no-shows)':'new'}</td><td>${x.taskExperience} jobs</td>
+        <td>${x.distanceKm!=null?Math.round(x.distanceKm)+' km':'—'}</td><td>${Number(x.rating||0).toFixed(1)}</td><td>${x.flags||0}</td></tr>`).join('')||'<tr><td colspan="10" class="empty">No eligible Xperts</td></tr>'}</tbody></table>
+      <div style="padding:10px;"><button class="btn-r on" onclick="assignXperts('${id}')">Assign — offer to primary</button> <button class="btn-r" onclick="document.querySelector('input[name=bak-${id}]:checked')&&(document.querySelector('input[name=bak-${id}]:checked').checked=false)">Clear backup</button></div></div>`;
+  }catch(e){el.innerHTML='<div class="empty">'+esc(e.message)+'</div>';}
+}
+async function assignXperts(id){
+  const p=document.querySelector(`input[name="pri-${id}"]:checked`)?.value, b=document.querySelector(`input[name="bak-${id}"]:checked`)?.value;
+  if(!p){showToast('Choose a primary Xpert.');return;}
+  if(b&&b===p){showToast('The backup must be a different Xpert.');return;}
+  try{await api('POST','/admin/tasks/'+id+'/assign',{primaryWorkerId:p,backupWorkerId:b||null,by:adminName()});showToast('Offer sent to the primary Xpert.');delete matchState[id];loadJobBoard();}
+  catch(e){showToast(e.message);}
+}
+async function replaceXpert(id,hasBackup){
+  const reason=prompt('Why is the Xpert being replaced? (no-show, unwell, quality…)');if(!reason)return;
+  let workerId=null;
+  if(!hasBackup||!confirm('Promote the backup Xpert? (Cancel to choose someone else)')){
+    const chosen=document.querySelector(`input[name="pri-${id}"]:checked`)?.value;
+    if(!chosen){showToast('Pick the replacement as Primary in the list below, then click Replace Xpert again.');if(!document.getElementById('match-'+id).innerHTML)openMatches(id);return;}
+    workerId=chosen;
+  }
+  try{await api('POST','/admin/tasks/'+id+'/replace',{reason,workerId,by:adminName()});showToast('Replacement offered. The employer sees “BeyondX is arranging a replacement”.');loadJobBoard();}
+  catch(e){showToast(e.message);}
+}
+
+/* ── Change orders ── */
+async function newChangeOrder(taskId){
+  const reason=prompt('What changed on site?');if(!reason)return;
+  const percent=prompt('Percentage change to the job amount (e.g. 30 for +30%, -20 for −20%). Added work is at least +25%.');if(percent===null)return;
+  try{const d=await api('POST','/admin/tasks/'+taskId+'/change-orders',{reason,percent,by:adminName()});
+    showToast('Change order logged: '+ghs(d.order.originalAmount).replace('&#8373;','₵')+' → '+ghs(d.order.newAmount).replace('&#8373;','₵')+'. Confirm with both sides on WhatsApp.');}
+  catch(e){showToast(e.message);}
+}
+async function loadChangeOrders(){
+  const box=document.getElementById('changeordersContent');box.innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const os=(await api('GET','/admin/change-orders')).orders||[];
+    box.innerHTML=ownerNote('Windin or Elim','Scope changes on site are change orders, not new negotiations. The adjustment rule calculates the new amount; confirm it with the employer and the Xpert over WhatsApp and record both here. The job amount and Xpert pay change only once both have confirmed. Log new ones from the Job Board.')
+      +`<div class="tc">${os.map(o=>`<div style="${cardStyle}">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;"><div><b>${esc(o.task?.taskType||'Job')}</b> · ${esc(o.task?.employer?.orgName||'')} · Xpert ${esc(o.task?.acceptedBy?.fullName||'—')}</div>
+          <div style="font-size:12px;text-align:right;">${ghs(o.originalAmount)} → <b>${ghs(o.newAmount)}</b>${o.newPay!=null?`<br>Xpert pay ${ghs(o.originalPay)} → ${ghs(o.newPay)}`:''}</div></div>
+        <div style="font-size:13px;margin-top:6px;">${esc(o.reason)}</div>
+        <div style="font-size:11px;color:var(--ink3);margin-top:4px;">Rule: ${esc(o.adjustmentRule)} · logged by ${esc(o.loggedBy)} ${when(o.createdAt)} · via ${esc(o.confirmationChannel)}</div>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+          ${o.employerConfirmedAt?chip('Employer confirmed '+when(o.employerConfirmedAt),'ok'):`<button class="btn-r" onclick="confirmCO('${o.id}','employer')">Employer confirmed on WhatsApp</button>`}
+          ${o.xpertConfirmedAt?chip('Xpert confirmed '+when(o.xpertConfirmedAt),'ok'):`<button class="btn-r" onclick="confirmCO('${o.id}','xpert')">Xpert confirmed on WhatsApp</button>`}
+          ${o.appliedAt?chip('Applied '+when(o.appliedAt),'ok'):''}
+        </div></div>`).join('')||'<div class="empty">No change orders</div>'}</div>`;
+  }catch(e){box.innerHTML='<div class="empty">Could not load: '+esc(e.message)+'</div>';}
+}
+async function confirmCO(id,side){
+  try{const d=await api('PATCH','/admin/change-orders/'+id,{confirm:side,by:adminName()});showToast(d.order.appliedAt?'Both confirmed — job amount and Xpert pay updated.':'Confirmation recorded.');loadChangeOrders();}
+  catch(e){showToast(e.message);}
+}
+
+/* ── Recurring services ── */
+async function loadRecurring(){
+  const box=document.getElementById('recurringContent');box.innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const ss=(await api('GET','/admin/recurring')).services||[];
+    box.innerHTML=ownerNote('Windin or Elim','Set the preferred Xpert or team for each recurring customer — the employer never chooses it. Offer each visit to the preferred team first; if they cannot make it, arrange a replacement. How the preferred team is formally chosen is not yet decided.')
+      +`<div class="tc">${ss.map(s=>`<div style="${cardStyle}">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;"><div><b>${esc(s.taskType)}</b> at ${esc(s.location)} · ${esc(s.orgName)} ${s.active?chip('Active','ok'):chip('Paused','')}</div>
+        <div style="font-size:12px;">${esc(schedLabel(s.schedulePattern))}<br>Next service: <input id="rs-next-${s.id}" type="date" value="${esc(s.nextServiceDate||'')}" style="padding:4px 6px;border:1.5px solid var(--b);border-radius:6px;"></div></div>
+        <div style="margin-top:8px;font-size:12px;"><b>Preferred team</b> (BX IDs, comma separated): <input id="rs-team-${s.id}" value="${esc(s.preferredTeam.map(x=>x.workerId).join(', '))}" style="${inputStyle}max-width:360px;"> <span style="color:var(--ink3)">${esc(s.preferredTeam.map(x=>x.fullName).join(', ')||'none yet')}</span></div>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn-r on" onclick="saveRecurring('${s.id}')">Save</button>
+          <button class="btn-r" onclick="nextVisit('${s.id}')">Create next visit</button>
+          <button class="btn-r" onclick="toggleRecurring('${s.id}',${!s.active})">${s.active?'Pause':'Resume'}</button>
+        </div></div>`).join('')||'<div class="empty">No recurring services yet</div>'}</div>`;
+  }catch(e){box.innerHTML='<div class="empty">Could not load: '+esc(e.message)+'</div>';}
+}
+async function saveRecurring(id){
+  const ids=document.getElementById('rs-team-'+id).value.split(',').map(x=>x.trim()).filter(Boolean);
+  try{await api('PATCH','/admin/recurring/'+id,{preferredWorkerIds:ids,nextServiceDate:document.getElementById('rs-next-'+id).value});showToast('Saved.');loadRecurring();}
+  catch(e){showToast(e.message);}
+}
+async function toggleRecurring(id,active){try{await api('PATCH','/admin/recurring/'+id,{active});loadRecurring();}catch(e){showToast(e.message);}}
+async function nextVisit(id){
+  if(!confirm('Create the next visit as a request in the inbox (on the next service date)?'))return;
+  try{await api('POST','/admin/recurring/'+id+'/next-job',{});showToast('Next visit created — quote it in the Request Inbox.');}
+  catch(e){showToast(e.message);}
+}
+
+/* ── Xpert status queue ── */
+const XS_LABEL={applied:'Applied',guarantor_pending:'Guarantor Pending',guarantor_confirmed:'Guarantor Confirmed',skill_verification:'Skill Verification',provisional_active:'Provisional Active',full_active:'Full Active',under_review:'Under Review',suspended:'Suspended',inactive:'Inactive',removed:'Removed',blocked_closed:'Blocked or Closed'};
+const XS_REASON=['under_review','suspended','removed'];
+let xsFilter='applied';
+function xpertHead(w){return `<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;"><div><b>${esc(w.fullName)}</b> <span style="color:var(--ink3);font-size:12px;">${esc(w.workerId)} · ${esc(w.phone||'')} · ${esc(w.homeArea||'')}</span><div style="font-size:12px;color:var(--ink3);">${esc((w.skills||[]).join(', '))} · applied ${new Date(w.createdAt).toLocaleDateString()} · ${w.verificationSource==='coordinator'?'Verified via coordinator':'Verified directly by BeyondX'}</div></div>${chip(XS_LABEL[w.xpertStatus]||w.xpertStatus,['provisional_active','full_active'].includes(w.xpertStatus)?'ok':['suspended','removed','blocked_closed'].includes(w.xpertStatus)?'bad':'info')}</div>`;}
+async function loadXStatus(f){
+  if(f)xsFilter=f;
+  const box=document.getElementById('xstatusContent');box.innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const d=await api('GET','/admin/xperts?status='+xsFilter);
+    const tabs=Object.keys(XS_LABEL).map(k=>[k,`${XS_LABEL[k]} (${d.counts[k]||0})`]);
+    box.innerHTML=ownerNote('Spencer or Jonathan for Under Review, Suspended and Removed; Windin or Elim for screening','Every status change is recorded with who made it. Moving an Xpert into or out of Under Review, Suspended or Removed needs a written reason. Removing an Xpert never deletes their record or history.')
+      +tabsHtml(xsFilter,tabs,'loadXStatus')
+      +`<div class="tc">${(d.xperts||[]).map(w=>`<div style="${cardStyle}">${xpertHead(w)}
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px;">
+          Move to <select id="xs-sel-${w.id}" style="padding:6px;border:1.5px solid var(--b);border-radius:6px;">${Object.keys(XS_LABEL).map(k=>`<option value="${k}" ${k===w.xpertStatus?'selected':''}>${XS_LABEL[k]}</option>`).join('')}</select>
+          <button class="btn-r on" onclick="changeXStatus('${w.id}','${w.xpertStatus}')">Change status</button>
+          <button class="btn-r" onclick="toggleSource('${w.id}','${w.verificationSource}')">Mark verified via ${w.verificationSource==='coordinator'?'BeyondX directly':'coordinator'}</button>
+          <button class="btn-r" onclick="showHistory('${w.id}')">History</button>
+        </div><div id="xs-hist-${w.id}"></div></div>`).join('')||'<div class="empty">No Xperts with this status</div>'}</div>`;
+  }catch(e){box.innerHTML='<div class="empty">Could not load: '+esc(e.message)+'</div>';}
+}
+async function changeXStatus(id,current){
+  const status=document.getElementById('xs-sel-'+id).value; if(status===current)return;
+  let reason='';
+  if(XS_REASON.includes(status)||XS_REASON.includes(current)){reason=prompt('Reason (required for Under Review, Suspended or Removed):');if(!reason)return;}
+  else if(!confirm('Move this Xpert to '+XS_LABEL[status]+'?'))return;
+  try{await api('PATCH','/admin/xperts/'+id+'/status',{status,reason,by:adminName(),note:status==='suspended'?reason:undefined});showToast('Status changed.');loadXStatus();}
+  catch(e){showToast(e.message);}
+}
+async function toggleSource(id,cur){try{await api('PATCH','/admin/xperts/'+id+'/verification-source',{source:cur==='coordinator'?'direct_beyondx':'coordinator'});loadXStatus();}catch(e){showToast(e.message);}}
+async function showHistory(id){
+  const el=document.getElementById('xs-hist-'+id)||document.getElementById('bd-hist-'+id);
+  if(el.innerHTML){el.innerHTML='';return;}
+  try{const d=await api('GET','/admin/xperts/'+id+'/history');
+    el.innerHTML=`<div style="margin-top:8px;font-size:12px;background:var(--bg,#f6f7f5);padding:8px 10px;border-radius:8px;">
+      <b>Status history</b>${d.statuses.map(h=>`<div>${when(h.createdAt)} · ${esc(XS_LABEL[h.oldStatus]||h.oldStatus||'—')} → <b>${esc(XS_LABEL[h.newStatus]||h.newStatus)}</b> · ${esc(h.changedBy)}${h.reason?' · '+esc(h.reason):''}</div>`).join('')||'<div>None</div>'}
+      <b style="display:block;margin-top:6px;">Price band history</b>${d.bands.map(h=>`<div>${when(h.createdAt)} · ${ghs(h.floor)} – ${ghs(h.ceiling)} · ${esc(h.adjustedBy)} · ${esc(h.reason)}</div>`).join('')||'<div>None</div>'}</div>`;}
+  catch(e){showToast(e.message);}
+}
+
+/* ── Screening queues ── */
+async function loadGuarantorQueue(){
+  const box=document.getElementById('qguarantorContent');box.innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const d=await api('GET','/admin/queues/guarantor'); const ws=d.xperts||[]; setBadge('qguarantorBadge',ws.length);
+    box.innerHTML=ownerNote('Windin or Elim','The guarantor gets an explainer message automatically at sign-up. Call them to confirm. A yes moves the applicant on; an explicit no — or no valid confirmation within '+d.timeoutDays+' days of the explainer — closes the application. The guarantor is a character reference only, with no legal or financial liability.')
+      +(d.closedForTimeout?`<div class="an-note">${d.closedForTimeout} application(s) were just closed for no guarantor confirmation within ${d.timeoutDays} days.</div>`:'')
+      +`<div class="tc">${ws.map(w=>{const days=w.guarantorExplainerSentAt?Math.floor((Date.now()-new Date(w.guarantorExplainerSentAt))/86400000):null;return `<div style="${cardStyle}">${xpertHead(w)}
+        <div style="margin-top:8px;font-size:12px;"><b>Guarantor:</b> ${esc(w.guarantorName||'—')} · <a href="tel:${esc(w.guarantorPhone||'')}">${esc(w.guarantorPhone||'')}</a> · ${esc(w.guarantorRelationship||'')}<br>
+        Explainer: ${w.guarantorExplainerSentAt?'sent '+when(w.guarantorExplainerSentAt)+` (${days} day${days===1?'':'s'} ago)`:chip('not sent','warn')} ${w.guarantorOutcome==='no_response'?' · last call: no response':''}</div>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn-r on" onclick="guarantorOutcome('${w.id}','yes')">Confirmed — yes</button>
+          <button class="btn-r" onclick="guarantorOutcome('${w.id}','no_response')">No response</button>
+          <button class="btn-r" onclick="guarantorOutcome('${w.id}','no')">Declined — no</button>
+          <button class="btn-r" onclick="resendExplainer('${w.id}')">${w.guarantorExplainerSentAt?'Resend':'Send'} explainer</button>
+        </div></div>`;}).join('')||'<div class="empty">No guarantor calls pending</div>'}</div>`;
+  }catch(e){box.innerHTML='<div class="empty">Could not load: '+esc(e.message)+'</div>';}
+}
+async function guarantorOutcome(id,outcome){
+  if(outcome==='no'&&!confirm('The guarantor declined? This closes the application.'))return;
+  try{await api('PATCH','/admin/xperts/'+id+'/guarantor',{outcome,by:adminName()});showToast('Outcome logged.');loadGuarantorQueue();}catch(e){showToast(e.message);}
+}
+async function resendExplainer(id){try{await api('POST','/admin/xperts/'+id+'/guarantor-explainer',{by:adminName()});showToast('Explainer sent. The '+'confirmation clock restarts.');loadGuarantorQueue();}catch(e){showToast(e.message);}}
+
+async function loadEvidenceQueue(){
+  const box=document.getElementById('qevidenceContent');box.innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const d=await api('GET','/admin/queues/evidence'); const ws=d.xperts||[]; setBadge('qevidenceBadge',ws.length);
+    box.innerHTML=ownerNote('Windin or Elim','Review the submitted photos or video against the checklist for the task type. Pass or fail only — no partial score. Certification is an optional extra.')
+      +`<div class="tc">${ws.map(w=>`<div style="${cardStyle}">${xpertHead(w)}
+        <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;margin-top:8px;">
+          <div style="font-size:12px;"><b>Evidence for:</b> ${esc(w.evidenceTaskType||'—')}<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">${(w.skillEvidenceUrls||[]).map(u=>/\.(jpe?g|png|webp|gif)(\?|$)/i.test(u)?thumb(u):`<a href="${esc(u)}" target="_blank" rel="noopener">Open video/link</a>`).join('')}</div>
+            ${(w.certificationUrls||[]).length?`<b style="display:block;margin-top:6px;">Certificates</b><div style="display:flex;gap:6px;">${w.certificationUrls.map(thumb).join('')}</div>`:''}
+            ${w.experienceSummary?`<div style="margin-top:6px;white-space:pre-line;">${esc(w.experienceSummary)}</div>`:''}</div>
+          <div style="font-size:12px;background:var(--bg,#f6f7f5);padding:8px 10px;border-radius:8px;"><b>Checklist</b>${d.checklist.map(c=>`<div>☐ ${esc(c)}</div>`).join('')}</div>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px;"><button class="btn-r on" onclick="evidenceOutcome('${w.id}','pass')">Pass</button><button class="btn-r" onclick="evidenceOutcome('${w.id}','fail')">Fail</button></div>
+      </div>`).join('')||'<div class="empty">No evidence to review</div>'}</div>`;
+  }catch(e){box.innerHTML='<div class="empty">Could not load: '+esc(e.message)+'</div>';}
+}
+async function evidenceOutcome(id,outcome){try{await api('PATCH','/admin/xperts/'+id+'/evidence',{outcome,by:adminName()});showToast('Evidence marked '+outcome+'.');loadEvidenceQueue();}catch(e){showToast(e.message);}}
+
+async function loadReferenceQueue(){
+  const box=document.getElementById('qreferenceContent');box.innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const d=await api('GET','/admin/queues/reference'); const ws=d.xperts||[]; setBadge('qreferenceBadge',ws.length);
+    box.innerHTML=ownerNote('Windin or Elim','Call the reference — a past employer or someone in the same trade, never family and never the guarantor. After '+d.maxAttempts+' unanswered attempts the reference is marked unreachable instead of staying open.')
+      +`<div class="tc">${ws.map(w=>`<div style="${cardStyle}">${xpertHead(w)}
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px;font-size:12px;">
+          <div><b>Reference:</b> ${esc(w.referenceName||'—')} · <a href="tel:${esc(w.referencePhone||'')}">${esc(w.referencePhone||'')}</a><br>${esc(w.referenceRelationship||'')}<br>Attempts so far: ${w.referenceAttempts||0}${w.referenceCalledAt?' · last '+when(w.referenceCalledAt)+' by '+esc(w.referenceCalledBy||''):''}${w.referenceOutcome?'<br>Last outcome: '+esc(w.referenceOutcome):''}</div>
+          <div style="background:var(--bg,#f6f7f5);padding:8px 10px;border-radius:8px;"><b>Call script</b>${d.script.map((q,i)=>`<div>${i+1}. ${esc(q)}</div>`).join('')}</div>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn-r on" onclick="referenceOutcome('${w.id}','confirmed')">Confirmed</button>
+          <button class="btn-r" onclick="referenceOutcome('${w.id}','inconclusive')">Inconclusive</button>
+          <button class="btn-r" onclick="referenceOutcome('${w.id}','no_answer')">No answer (log attempt)</button>
+          <button class="btn-r" onclick="referenceOutcome('${w.id}','unreachable')">Unreachable</button>
+        </div></div>`).join('')||'<div class="empty">No reference calls pending</div>'}</div>`;
+  }catch(e){box.innerHTML='<div class="empty">Could not load: '+esc(e.message)+'</div>';}
+}
+async function referenceOutcome(id,outcome){try{const d=await api('PATCH','/admin/xperts/'+id+'/reference',{outcome,by:adminName()});showToast(d.referenceOutcome?'Reference '+d.referenceOutcome+'.':'Attempt '+d.attempts+' logged.');loadReferenceQueue();}catch(e){showToast(e.message);}}
+
+/* ── Price bands ── */
+async function loadBands(){
+  const box=document.getElementById('bandsContent');box.innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const ws=((await api('GET','/admin/xperts?status=all')).xperts||[]).filter(w=>['provisional_active','full_active'].includes(w.xpertStatus));
+    box.innerHTML=ownerNote('Elikem or Abigail','Each Xpert\'s floor and ceiling (GHS per job) decide where a job falls: harder or longer work toward the ceiling, simpler toward the floor. No per-job bargaining. Every change needs a reason and is kept in the history.')
+      +`<div class="tc"><table><thead><tr><th>Xpert</th><th>Skills</th><th>Floor</th><th>Ceiling</th><th>Reason for change</th><th></th></tr></thead><tbody>${ws.map(w=>`<tr>
+        <td>${esc(w.fullName)}<br><span style="font-size:11px;color:var(--ink3);">${esc(w.workerId)}${w.priceBandAdjustedAt?' · last set '+new Date(w.priceBandAdjustedAt).toLocaleDateString()+' by '+esc(w.priceBandAdjustedBy||''):''}</span><div id="bd-hist-${w.id}"></div></td>
+        <td style="font-size:11px;">${esc((w.skills||[]).join(', '))}</td>
+        <td><input id="bd-f-${w.id}" type="number" value="${w.priceFloor??''}" style="width:90px;${inputStyle}"></td>
+        <td><input id="bd-c-${w.id}" type="number" value="${w.priceCeiling??''}" style="width:90px;${inputStyle}"></td>
+        <td><input id="bd-r-${w.id}" placeholder="e.g. strong attendance record" style="${inputStyle}"></td>
+        <td><button class="btn-r on" onclick="saveBand('${w.id}')">Save</button> <button class="btn-r" onclick="showHistory('${w.id}')">History</button></td></tr>`).join('')||'<tr><td colspan="6" class="empty">No active Xperts</td></tr>'}</tbody></table></div>`;
+  }catch(e){box.innerHTML='<div class="empty">Could not load: '+esc(e.message)+'</div>';}
+}
+async function saveBand(id){
+  try{await api('PATCH','/admin/xperts/'+id+'/price-band',{floor:document.getElementById('bd-f-'+id).value,ceiling:document.getElementById('bd-c-'+id).value,reason:document.getElementById('bd-r-'+id).value,by:adminName()});showToast('Price band saved.');loadBands();}
+  catch(e){showToast(e.message);}
+}
+
+/* ── Flags ── */
+let flagFilter='active';
+async function loadFlags(f){
+  if(f)flagFilter=f;
+  const box=document.getElementById('flagsContent');box.innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const fs=(await api('GET','/admin/flags?status='+flagFilter)).flags||[];
+    if(flagFilter==='active')setBadge('flagsBadge',fs.length);
+    box.innerHTML=ownerNote('Spencer or Jonathan','Flags and counter-flags name a specific incident. Investigate, then decide: clear, suspend or remove. A second set of eyes is needed before any Xpert removal. A low rating alone never raises a flag.')
+      +tabsHtml(flagFilter,[['active','Open'],['resolved','Resolved'],['all','All']],'loadFlags')
+      +`<div class="tc">${fs.map(f=>`<div style="${cardStyle}">
+        <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;"><div>${chip(f.raisedByType==='xpert'?'Counter-flag from Xpert':'Flag from employer',f.raisedByType==='xpert'?'info':'warn')} <b>${esc(f.category)}</b> · ${esc(f.task?.taskType||'')} ${esc(f.task?.location||'')}</div>
+        <span style="font-size:11px;color:var(--ink3);">Incident ${esc(f.incidentDate)} · raised ${when(f.createdAt)}</span></div>
+        <div style="font-size:12px;margin-top:4px;">${esc(f.raisedBy)} → against <b>${esc(f.against)}</b>${f.againstXpertStatus?' ('+esc(XS_LABEL[f.againstXpertStatus]||f.againstXpertStatus)+')':''}</div>
+        <div style="font-size:13px;margin-top:6px;white-space:pre-line;">${esc(f.incidentDescription)}</div>
+        ${f.status==='resolved'?`<div style="font-size:12px;margin-top:6px;">${chip('Decision: '+(f.decision||'resolved'),'ok')} ${esc(f.resolvedBy||'')} · ${esc(f.resolutionNotes||'')}</div>`:`
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+          ${f.status==='open'?`<button class="btn-r" onclick="flagReview('${f.id}')">Start review</button>`:chip('Under review','info')}
+          <button class="btn-r on" onclick="flagDecide('${f.id}','clear')">Clear</button>
+          ${f.againstType==='xpert'?`<button class="btn-r" onclick="flagDecide('${f.id}','suspend')">Suspend Xpert</button><button class="btn-r" onclick="flagDecide('${f.id}','remove')">Remove Xpert</button>`:''}
+        </div>`}</div>`).join('')||'<div class="empty">No flags</div>'}</div>`;
+  }catch(e){box.innerHTML='<div class="empty">Could not load: '+esc(e.message)+'</div>';}
+}
+async function flagReview(id){try{await api('PATCH','/admin/flags/'+id,{status:'under_review',by:adminName()});loadFlags();}catch(e){showToast(e.message);}}
+async function flagDecide(id,decision){
+  if(decision==='remove'&&!confirm('Remove this Xpert? Their record and history are kept. Has a second person reviewed this?'))return;
+  const notes=prompt('Reason for the decision (recorded):');if(!notes)return;
+  try{await api('PATCH','/admin/flags/'+id,{decision,notes,by:adminName()});showToast('Decision recorded.');loadFlags();}catch(e){showToast(e.message);}
+}
+
+/* ── Feedback view ── */
+async function loadFeedback(){
+  const box=document.getElementById('feedbackContent');box.innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const rs=(await api('GET','/admin/feedback')).reviews||[];
+    const n=v=>v==null?'—':v;
+    const emp=rs.filter(r=>r.fromRole==='employer'), xp=rs.filter(r=>r.fromRole==='worker');
+    box.innerHTML=`<div class="an-note">Structured feedback from both sides after every job. It feeds each Xpert's record and future matching. Only the overall, skills and professionalism scores are shown to the other party; the rest stays private to BeyondX.</div>
+      <div class="tc"><div class="tc-h"><span class="tc-ht">Employer feedback on Xperts</span><span class="tc-hm">${emp.length}</span></div><table><thead><tr><th>Job</th><th>Xpert</th><th>Attendance</th><th>Quality</th><th>Professionalism</th><th>Completion</th><th>Overall</th><th>Price</th><th>Comment</th></tr></thead><tbody>
+      ${emp.map(r=>`<tr><td>${esc(r.task?.taskType||'')}<br><span style="font-size:11px;color:var(--ink3);">${esc(r.task?.employer?.orgName||'')} · ${new Date(r.createdAt).toLocaleDateString()}</span></td><td>${esc(r.task?.acceptedBy?.fullName||'—')}</td><td>${n(r.attendanceRating)}</td><td>${n(r.qualityRating??r.skillsRating)}</td><td>${n(r.professionalismRating)}</td><td>${n(r.taskCompletionRating)}</td><td><b>${r.rating}</b></td><td>${esc((r.priceFairness||'—').replace('_',' '))}</td><td style="font-size:12px;">${esc(r.comment||'')}</td></tr>`).join('')||'<tr><td colspan="9" class="empty">None yet</td></tr>'}</tbody></table></div>
+      <div class="tc"><div class="tc-h"><span class="tc-ht">Xpert feedback on jobs</span><span class="tc-hm">${xp.length}</span></div><table><thead><tr><th>Job</th><th>Xpert</th><th>Task accuracy</th><th>Employer behaviour</th><th>Payment</th><th>Conditions</th><th>Scope changes</th><th>Communication</th><th>Overall</th></tr></thead><tbody>
+      ${xp.map(r=>`<tr><td>${esc(r.task?.taskType||'')}<br><span style="font-size:11px;color:var(--ink3);">${esc(r.task?.employer?.orgName||'')} · ${new Date(r.createdAt).toLocaleDateString()}</span></td><td>${esc(r.task?.acceptedBy?.fullName||'—')}</td><td>${n(r.taskAccuracyRating)}</td><td>${n(r.employerBehaviorRating)}</td><td>${n(r.paymentRating)}</td><td>${n(r.workingConditionsRating)}</td><td>${n(r.scopeChangesRating)}</td><td>${n(r.communicationRating)}</td><td><b>${r.rating}</b></td></tr>`).join('')||'<tr><td colspan="9" class="empty">None yet</td></tr>'}</tbody></table></div>`;
+  }catch(e){box.innerHTML='<div class="empty">Could not load: '+esc(e.message)+'</div>';}
+}
+
+/* ── Coordinator metrics ── */
+async function loadCoordMetrics(){
+  const box=document.getElementById('coordmetricsContent');box.innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const cs=(await api('GET','/admin/coordinator-metrics')).coordinators||[];
+    const pct=v=>v==null?'—':v+'%';
+    box.innerHTML=ownerNote('Windin or Elim','Team roster and aggregate outcomes, computed from the underlying records: complaints are flags raised against the coordinator, no-shows are replaced assignments with no arrival, disputes are scope disputes they raised — each per assigned job.')
+      +`<div class="tc"><table><thead><tr><th>Coordinator</th><th>Business</th><th>Team</th><th>Jobs</th><th>Complaint rate</th><th>No-show rate</th><th>Dispute rate</th><th>Verification source</th></tr></thead><tbody>${cs.map(c=>`<tr>
+        <td>${esc(c.fullName)}<br><span style="font-size:11px;color:var(--ink3);">${esc(c.workerId)} · ${esc(XS_LABEL[c.xpertStatus]||c.xpertStatus)}</span></td><td>${esc(c.businessName||'—')}</td>
+        <td style="font-size:12px;">${c.team.length} member(s)${c.team.length?'<br>'+c.team.map(m=>esc(m.name)).join(', '):''}</td><td>${c.jobs}</td><td>${pct(c.complaintRate)}</td><td>${pct(c.noShowRate)}</td><td>${pct(c.disputeRate)}</td>
+        <td>${c.verificationSource==='coordinator'?'Coordinator':'Direct BeyondX'}</td></tr>`).join('')||'<tr><td colspan="8" class="empty">No coordinators</td></tr>'}</tbody></table></div>`;
+  }catch(e){box.innerHTML='<div class="empty">Could not load: '+esc(e.message)+'</div>';}
+}
+
+/* ── Benchmark rates ── */
+async function loadBenchmarks(){
+  const box=document.getElementById('benchmarksContent');box.innerHTML='<div class="empty">Loading…</div>';
+  try{
+    const bs=(await api('GET','/admin/benchmarks')).benchmarks||[]; const by_=Object.fromEntries(bs.map(b=>[b.taskType,b]));
+    const cfg=await api('GET','/admin/closed-loop-config').catch(()=>null);
+    box.innerHTML=`<div class="an-note">What other providers charge for the same service — the starting point for every quote. Quotes are then adjusted for the scope the employer described.${cfg?` Default pricing type: one-time jobs <b>${esc(cfg.pricingTypeDefaults.one_time)}</b>, recurring <b>${esc(cfg.pricingTypeDefaults.recurring)}</b> (set on the server with PRICING_TYPE_DEFAULTS, since this is not yet decided).`:''}</div>
+      <div class="tc"><table><thead><tr><th>Task type</th><th>Rate (GHS)</th><th>Per</th><th>Source / notes</th><th></th></tr></thead><tbody>${CATEGORIES.map((c,i)=>{const b=by_[c]||{};return `<tr>
+        <td>${esc(c)}${b.updatedAt?`<br><span style="font-size:11px;color:var(--ink3);">updated ${new Date(b.updatedAt).toLocaleDateString()} by ${esc(b.updatedBy||'')}</span>`:''}</td>
+        <td><input id="bm-r-${i}" type="number" step="0.01" value="${b.rate??''}" style="width:100px;${inputStyle}"></td>
+        <td><select id="bm-u-${i}" style="padding:6px;border:1.5px solid var(--b);border-radius:6px;">${['job','hour','day'].map(u=>`<option ${b.unit===u?'selected':''}>${u}</option>`).join('')}</select></td>
+        <td><input id="bm-n-${i}" value="${esc(b.notes||'')}" placeholder="e.g. 3 providers surveyed Oct 2026" style="${inputStyle}"></td>
+        <td><button class="btn-r on" onclick="saveBenchmark(${i})">Save</button></td></tr>`;}).join('')}</tbody></table></div>`;
+  }catch(e){box.innerHTML='<div class="empty">Could not load: '+esc(e.message)+'</div>';}
+}
+async function saveBenchmark(i){
+  try{await api('PUT','/admin/benchmarks',{taskType:CATEGORIES[i],rate:document.getElementById('bm-r-'+i).value,unit:document.getElementById('bm-u-'+i).value,notes:document.getElementById('bm-n-'+i).value,by:adminName()});showToast('Benchmark saved.');loadBenchmarks();}
+  catch(e){showToast(e.message);}
+}
+
 function loadClosedLoopBadges(){
-  fetch(API+'/admin/invoices?status=awaiting_invoice',{headers:{'x-admin-password':pass}}).then(r=>r.json()).then(d=>setBadge('invoicesBadge',(d.tasks||[]).length)).catch(()=>{});
-  fetch(API+'/admin/applications?status=under_review',{headers:{'x-admin-password':pass}}).then(r=>r.json()).then(d=>setBadge('applicationsBadge',(d.workers||[]).length)).catch(()=>{});
-  fetch(API+'/admin/site-reports?status=open',{headers:{'x-admin-password':pass}}).then(r=>r.json()).then(d=>setBadge('siteReportsBadge',(d.reports||[]).length)).catch(()=>{});
+  const n=(path,key,id)=>fetch(API+path,{headers:{'x-admin-password':pass}}).then(r=>r.json()).then(d=>setBadge(id,(d[key]||[]).length)).catch(()=>{});
+  n('/admin/requests?view=new','tasks','invoicesBadge');
+  n('/admin/requests?view=signoff','tasks','signoffBadge');
+  n('/admin/applications?status=under_review','workers','applicationsBadge');
+  n('/admin/site-reports?status=open','reports','siteReportsBadge');
+  n('/admin/queues/evidence','xperts','qevidenceBadge');
+  n('/admin/queues/reference','xperts','qreferenceBadge');
+  n('/admin/queues/guarantor','xperts','qguarantorBadge');
+  n('/admin/flags?status=active','flags','flagsBadge');
 }
 
 async function load(){
@@ -791,7 +1265,10 @@ function nav(id,el){
   document.getElementById('sec-'+id).classList.add('on');
   el.classList.add('on');
   const T={overview:'Overview',verify:'Verify Payments',payouts:'Pay Now',active:'In Progress',open:'Open Tasks',completed:'Completed Tasks',all:'All Tasks',workers:'Workers',employers:'Employers',history:'Work History',transactions:'Transactions',messages:'SMS Log',analytics:'Site Analytics',payconfirm:'Payment Confirmations',notify:'Send Notification',inbox:'Support & Reports',disputes:'Scope Disputes',coordapps:'Coordinator Applications',coordreqs:'Coordinator Job Requests',coordteams:'Coordinator Teams',coordinators:'Coordinator Channel',pricing:'Price Tiers'};
-  Object.assign(T,{invoices:'Review & Invoice',applications:'Xpert Applications',sitereports:'Site Reports'});
+  Object.assign(T,{invoices:'Request Inbox & Quotes',applications:'Xpert Applications',sitereports:'Site Reports',workers:'Xperts',
+    signoff:'Pricing Sign-off',jobboard:'Job Board & Dispatch',recurring:'Recurring Services',changeorders:'Change Orders',
+    xstatus:'Xpert Status Queue',qguarantor:'Guarantor Calls',qevidence:'Evidence Review',qreference:'Reference Calls',
+    bands:'Price Bands',flags:'Flags',feedback:'Feedback',coordmetrics:'Coordinator Metrics',benchmarks:'Benchmark Rates'});
   document.getElementById('pageTitle').textContent=T[id]||id;
   if(id==='inbox'){ inLoad(); return; }
   if(id==='notify'){ ntChars(); ntLoad(); return; }
@@ -802,6 +1279,10 @@ function nav(id,el){
   if(id==='invoices'){ loadInvoices(); return; }
   if(id==='applications'){ loadApplications(); return; }
   if(id==='sitereports'){ loadSiteReports(); return; }
+  const CL={signoff:loadSignoff,jobboard:loadJobBoard,recurring:loadRecurring,changeorders:loadChangeOrders,xstatus:loadXStatus,
+    qguarantor:loadGuarantorQueue,qevidence:loadEvidenceQueue,qreference:loadReferenceQueue,bands:loadBands,flags:loadFlags,
+    feedback:loadFeedback,coordmetrics:loadCoordMetrics,benchmarks:loadBenchmarks};
+  if(CL[id]){ CL[id](); return; }
   if(id==='coordapps'){ loadCoordinatorApplications(); return; }
   if(id==='coordreqs'){ loadCoordinatorRequests(); return; }
   if(id==='coordteams'){ loadCoordinatorTeams(); return; }
@@ -1151,7 +1632,7 @@ function vpCard(t){
     </div>
     <div style="display:flex;gap:8px;margin-top:10px;">
       <button class="btn-ps" style="flex:1;" data-task-id="${t.id}" onclick="verifyPaymentById(this)">
-        Confirm payment received — notify worker
+        Confirm payment received
       </button>
       <button onclick="rejectPayment('${t.id}')" style="padding:10px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--f);border:1.5px solid var(--b);background:transparent;color:var(--ink3);">
         ✗ Reject
@@ -1168,7 +1649,7 @@ async function verifyPaymentById(btn){
   await verifyPayment(taskId, workerName, task);
 }
 async function verifyPayment(taskId, workerName, taskData){
-  if(!confirm('Confirm you have received payment for this task.\n\nIf an Xpert is already assigned they are offered the job; otherwise the task opens and matching Xperts are notified.')) return;
+  if(!confirm('Confirm you have received payment for this task.\n\nIf an Xpert is already assigned they are offered the job; otherwise the job moves to Job Board & Dispatch to select a primary and backup Xpert (eligible Xperts can also see it).')) return;
   try{
     // Update task status to 'offered' directly on Railway.
     // Railway's own PATCH /admin/tasks/:id/status route sends the worker's
@@ -1182,7 +1663,7 @@ async function verifyPayment(taskId, workerName, taskData){
     const d=await r.json().catch(()=>({}));
     if(!r.ok) throw new Error(d.error||'Railway returned '+r.status);
 
-    showToast(workerName ? 'Payment verified — '+workerName+' is now offered the job.' : 'Payment verified — the task is now open to Xperts.');
+    showToast(workerName ? 'Payment verified — '+workerName+' is now offered the job.' : 'Payment verified — select the Xpert in Job Board & Dispatch.');
     const td=await fetch(API+'/admin/all',{headers:{'x-admin-password':pass}}).then(r=>r.json()).catch(()=>({tasks:[]}));
     tasks=td.tasks||[];
     checkVerifyBadge();

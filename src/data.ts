@@ -260,26 +260,26 @@ export interface Step {
 export const steps: Step[] = [
   {
     number: '01',
-    title: 'Post a task or pick a worker',
+    title: 'Tell us what you need',
     description:
-      'Describe the job you need done — or browse verified worker profiles and dispatch someone directly.',
+      'Describe the job, where and when, and add photos. The more detail you give, the better we can price and match it.',
   },
   {
     number: '02',
-    title: 'We match and confirm',
-    description: 'We confirm the skill match and agree on timing.',
+    title: 'Get one firm quote',
+    description: 'BeyondX reviews your request and sends one firm quote. Accept it or decline it — no haggling. Then we select and confirm the right Xpert.',
   },
   {
     number: '03',
     title: 'Work begins — GPS-verified',
     description:
-      'Attendance is logged through GPS check-in at your site. Real-time confirmation your worker arrived.',
+      'Attendance is logged through GPS check-in at your site. Real-time confirmation your Xpert arrived — and if anything changes, BeyondX arranges the replacement.',
   },
   {
     number: '04',
     title: 'Pay securely via mobile money',
     description:
-      'When the task is complete and approved, payment is settled through secure mobile money. The worker keeps 100% of the task rate.',
+      'When the job is complete and you confirm it, BeyondX pays the Xpert through secure mobile money.',
   },
 ]
 
@@ -289,26 +289,26 @@ export const pillars: Pillar[] = [
   {
     title: 'Safety & Trust',
     description:
-      "Every worker is cleared through BeyondX's own vetting process. GPS-tracked attendance ensures employers always know who is on site and when.",
+      "Every Xpert is cleared through BeyondX's own vetting process. GPS-tracked attendance ensures employers always know who is on site and when.",
   },
   {
     title: 'Economic Dignity',
     description:
-      'Workers earn a fair market wage, paid promptly via mobile money. Earnings support both the worker and family stability.',
+      'Xperts earn a fair market wage, paid promptly via mobile money. Earnings support both the Xpert and family stability.',
   },
   {
     title: 'Lasting Opportunity',
     description:
-      'BeyondX is not a one-time placement — it is a pathway. Workers build verified records that open doors to permanent employment.',
+      'BeyondX is not a one-time placement — it is a pathway. Xperts build verified records that open doors to permanent employment.',
   },
 ]
 
 export interface Stat { value: string; label: string }
 
 export const stats: Stat[] = [
-  { value: 'GH₵20', label: 'Flat service fee per completed job' },
-  { value: '100%', label: 'Paid directly to the worker' },
-  { value: '10', label: 'Certified skill categories' },
+  { value: '1', label: 'Firm quote per request — no haggling' },
+  { value: '4', label: 'Checks before an Xpert is approved: ID, guarantor, work evidence and reference' },
+  { value: '16', label: 'Service categories' },
   { value: '100%', label: 'GPS-verified attendance' },
 ]
 
@@ -318,7 +318,7 @@ export const stories: Story[] = [
   {
     tag: 'News',
     title: 'BeyondX partners with Accra Metropolitan Assembly for city maintenance pilot',
-    excerpt: 'Twelve workers deployed across three municipal sites in a six-week pilot programme.',
+    excerpt: 'Twelve Xperts deployed across three municipal sites in a six-week pilot programme.',
     image: 'https://images.pexels.com/photos/8961065/pexels-photo-8961065.jpeg?auto=compress&cs=tinysrgb&w=800',
   },
   {

@@ -77,7 +77,7 @@ function ApplyModal({
 
         <div className="nice-scroll min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
           <p className="text-xs leading-relaxed text-ink-700/70">
-            Coordinators lead a small team, take on multi-worker jobs, and handle scope and
+            Coordinators lead a small team, take on multi-Xpert jobs, and handle scope and
             assignment for their team. BeyondX reviews every application and sets final pricing
             on team jobs. This usually takes a few days.
           </p>
@@ -188,7 +188,7 @@ export default function CoordinatorApply({
         <Users size={18} className="shrink-0 text-forest-600" aria-hidden="true" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-ink-900">Apply to become a Coordinator</p>
-          <p className="mt-0.5 text-xs text-ink-700/60">Lead a team, take on multi-worker jobs</p>
+          <p className="mt-0.5 text-xs text-ink-700/60">Lead a team, take on multi-Xpert jobs</p>
         </div>
         <ChevronRight size={16} className="shrink-0 text-ink-700/40" />
       </button>

@@ -105,8 +105,56 @@ export type Task = {
   invoiceAmount?: number | string | null
   invoiceNote?: string | null
   premium?: boolean
+  photoUrls?: string[]
+  requiredSkills?: string | null
+  specialRequirements?: string | null
+  equipmentNotes?: string | null
+  siteNotes?: string | null
+  recurrence?: 'one_time' | 'recurring'
+  schedulePattern?: string | null
+  arrivedAt?: string | null
+  startedAt?: string | null
+  replacementInProgress?: boolean
   [k: string]: unknown
 }
+
+/** What an employer sees about the Xpert on their job — never contact details. */
+export type AssignedXpert = {
+  fullName?: string
+  workerId?: string
+  rating?: number | string
+  skills?: string[]
+  experienceSummary?: string | null
+  verified?: boolean
+  idVerified?: boolean
+  relevantJobs?: number
+  tasksCompleted?: number
+}
+
+export type RecurringService = {
+  id: string
+  taskType: string
+  location: string
+  schedulePattern: string
+  nextServiceDate?: string | null
+  active: boolean
+  preferredTeamAssigned: boolean
+  workersNeeded: number
+  createdAt: string
+}
+
+export type EmployerFeedback = {
+  rating: number; attendanceRating: number; skillsRating: number; professionalismRating: number
+  taskCompletionRating: number; priceFairness: 'fair' | 'too_high' | 'too_low'
+}
+export type XpertFeedback = {
+  rating: number; taskAccuracyRating: number; employerBehaviorRating: number; paymentRating: number
+  workingConditionsRating: number; scopeChangesRating: number; communicationRating: number
+}
+
+export const scheduleLabel = (p?: string | null) =>
+  !p ? '' : ({ every_monday: 'Every Monday', every_weekday: 'Every weekday', every_saturday: 'Every Saturday' } as Record<string, string>)[p]
+    || (p.startsWith('custom:') ? p.slice(7) : p)
 
 export type Employer = {
   id?: string | number
@@ -239,6 +287,8 @@ export const auth = {
     guarantorName: string
     guarantorPhone: string
     guarantorRelationship: string
+    evidenceTaskType?: string
+    certificationUrls?: string[]
     referredBy?: string
     visitorId?: string
     homeArea?: string
@@ -283,8 +333,6 @@ export const push = {
 /* -------------------------------- workers ------------------------------ */
 
 export const workers = {
-  list: (jobLocation?: string) =>
-    request<{ workers: Worker[] }>(`/api/workers${jobLocation ? `?jobLocation=${encodeURIComponent(jobLocation)}` : ''}`),
   me: (token = session.workerToken()) => request<{ worker: Worker }>('/api/workers/me', { token }),
   updateMe: (patch: Record<string, unknown>, token = session.workerToken()) =>
     request<unknown>('/api/workers/me', { method: 'PATCH', body: patch, token }),
@@ -312,8 +360,17 @@ export const tasks = {
     request<unknown>(`/api/tasks/${id}/worker-done`, { method: 'PATCH', token }),
   report: (id: string | number, category: 'scope_change' | 'safety' | 'other', description: string, token = session.workerToken()) =>
     request<unknown>(`/api/tasks/${id}/report`, { method: 'POST', body: { category, description }, token }),
-  workerReview: (id: string | number, rating: number, comment: string, token = session.workerToken()) =>
-    request<unknown>(`/api/tasks/${id}/review`, { method: 'POST', body: { rating, comment }, token }),
+  workerReview: (id: string | number, scores: XpertFeedback, comment: string, token = session.workerToken()) =>
+    request<unknown>(`/api/tasks/${id}/review`, { method: 'POST', body: { ...scores, comment }, token }),
+  arrived: (id: string | number, token = session.workerToken()) =>
+    request<unknown>(`/api/tasks/${id}/arrived`, { method: 'PATCH', token }),
+  started: (id: string | number, token = session.workerToken()) =>
+    request<unknown>(`/api/tasks/${id}/started`, { method: 'PATCH', token }),
+  // Either side raises a named incident (what happened and when).
+  flag: (id: string | number, body: { category: string; incidentDescription: string; incidentDate: string }, token: string | null) =>
+    request<unknown>(`/api/tasks/${id}/flag`, { method: 'POST', body, token }),
+  recurring: (token = session.employerToken()) =>
+    request<{ services: RecurringService[] }>('/api/tasks/recurring', { token }),
   payInvoice: (id: string | number, paymentRef: string, token = session.employerToken()) =>
     request<unknown>(`/api/tasks/${id}/pay-invoice`, { method: 'PATCH', body: { paymentRef }, token }),
   declineInvoice: (id: string | number, token = session.employerToken()) =>
@@ -325,37 +382,21 @@ export const tasks = {
       description: string
       location: string
       duration: string
-      pay: number
-      workerId?: string | number
       workersNeeded?: number
       scheduledDate?: string
       scheduledTime?: string
       durationHours?: number
       premium?: boolean
+      requiredSkills?: string
+      specialRequirements?: string
+      equipmentNotes?: string
+      siteNotes?: string
+      photoUrls?: string[]
+      recurrence?: 'one_time' | 'recurring'
+      schedulePattern?: string
     },
     token = session.employerToken(),
   ) => request<{ task?: Task }>('/api/tasks', { method: 'POST', body: payload, token }),
-
-  // Dispatch a specific worker: a task carrying the payment reference,
-  // matching the exact shape beyondxco.com posts.
-  dispatch: (
-    args: { worker: Worker; taskType: string; jobDescription: string; location: string; duration: string; pay: number; paymentRef: string; transportAllowance?: number },
-    token = session.employerToken(),
-  ) => request<{ task?: Task }>('/api/tasks', {
-    method: 'POST',
-    token,
-    body: {
-      taskType: args.taskType,
-      description: args.jobDescription,
-      location: args.location || 'To be confirmed',
-      duration: args.duration,
-      pay: args.pay,
-      workerId: args.worker.id,
-      paymentRef: args.paymentRef,
-      status: 'payment_pending',
-      ...(args.transportAllowance ? { transportAllowance: args.transportAllowance } : {}),
-    },
-  }),
 
   complete: (id: string | number, token = session.employerToken()) =>
     request<unknown>(`/api/tasks/${id}/complete`, { method: 'PATCH', token }),
@@ -363,7 +404,7 @@ export const tasks = {
   cancel: (id: string | number, token = session.employerToken()) =>
     request<unknown>(`/api/tasks/${id}/cancel`, { method: 'PATCH', token }),
 
-  review: (id: string | number, scores: { rating: number; skillsRating: number; professionalismRating: number }, comment: string, token = session.employerToken()) =>
+  review: (id: string | number, scores: EmployerFeedback, comment: string, token = session.employerToken()) =>
     request<unknown>(`/api/tasks/${id}/review`, { method: 'POST', body: { ...scores, comment }, token }),
 
   // Attach a MoMo reference to a task that already exists but has none yet —
@@ -412,25 +453,6 @@ export type CoordinatorJobRequest = {
 }
 
 export const coordinatorRequests = {
-  // Employer sends a job to a coordinator.
-  create: (
-    payload: {
-      coordinatorWorkerId: string
-      taskType: string
-      description?: string
-      location: string
-      duration?: string
-      workersNeeded?: number
-      materialsProvided?: boolean
-      scheduledDate?: string
-      scheduledTime?: string
-    },
-    token = session.employerToken(),
-  ) => request<{ request: CoordinatorJobRequest }>('/api/coordinator-requests', { method: 'POST', body: payload, token }),
-
-  // Employer's own requests, newest first.
-  mine: (token = session.employerToken()) =>
-    request<{ requests: CoordinatorJobRequest[] }>('/api/coordinator-requests/mine', { token }),
 
   // Coordinator's own inbox.
   forMe: (token = session.workerToken()) =>

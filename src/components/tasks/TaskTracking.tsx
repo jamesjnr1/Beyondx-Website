@@ -1,6 +1,7 @@
 import { Check, ChevronRight, ShieldCheck, XCircle } from 'lucide-react'
-import type { Task } from '../../lib/api'
+import { scheduleLabel, type AssignedXpert, type Task } from '../../lib/api'
 import { PROGRESS_STEPS, STOPPED_LABEL, currentStepIndex, taskReference } from './taskProgress'
+import { JobNotices, LiveJobSteps, XpertSummary } from './JobParts'
 
 const cedis = (n?: number | string) => `GH₵ ${Number(n || 0).toLocaleString()}`
 
@@ -41,7 +42,8 @@ export default function TaskTracking({ task, workerName, statusLabel, onBack, on
     ...(startTime ? [['Start time', startTime] as [string, string]] : []),
     ...(task.duration ? [['Expected duration', task.duration] as [string, string]] : []),
     ['Number of Xperts', slots],
-    ...(task.invoiceAmount ? [['Invoice total', cedis(task.invoiceAmount ?? undefined)] as [string, string]] : []),
+    ['How often', task.recurrence === 'recurring' ? scheduleLabel(task.schedulePattern) || 'Recurring' : 'One time'],
+    ...(task.invoiceAmount ? [['Quote total', cedis(task.invoiceAmount ?? undefined)] as [string, string]] : []),
     ...(task.premium ? [['Pricing', 'Premium (within 48 hours)'] as [string, string]] : []),
   ]
 
@@ -97,16 +99,20 @@ export default function TaskTracking({ task, workerName, statusLabel, onBack, on
                       <p className={`text-sm font-semibold ${done || active ? 'text-ink-900' : 'text-ink-700/55'}`}>{s.label}</p>
                       <p className={`mt-0.5 text-xs ${active ? 'font-medium text-forest-700' : 'text-ink-700/50'}`}>{when}</p>
                       {(done || active) && <p className="mt-1.5 text-sm text-ink-700/80">{s.description}</p>}
-                      {i === 3 && (done || active) && workerName && (
-                        <p className="mt-1 text-sm font-medium text-ink-800">Xpert: {workerName}</p>
+                      {i === 3 && (done || active) && slots <= 1 && !task.replacementInProgress && (
+                        task.acceptedBy && typeof task.acceptedBy === 'object'
+                          ? <XpertSummary xpert={task.acceptedBy as AssignedXpert} taskType={task.taskType} />
+                          : workerName && <p className="mt-1 text-sm font-medium text-ink-800">Xpert: {workerName}</p>
                       )}
+                      {i === 3 && active && <LiveJobSteps task={task} />}
+                      {(i === 2 || i === 3) && active && <JobNotices task={{ ...task, recurrence: undefined }} />}
                       {i === 3 && (done || active) && slots > 1 && (
                         <p className="mt-1 text-sm font-medium text-ink-800">{filled}/{slots} Xperts confirmed</p>
                       )}
                       {i === 1 && status === 'invoice_sent' && onPayInvoice && (
                         <button onClick={onPayInvoice}
                           className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 hover:bg-forest-500">
-                          View invoice ({cedis(task.invoiceAmount ?? undefined)})
+                          Review quote ({cedis(task.invoiceAmount ?? undefined)})
                         </button>
                       )}
                       {i === 4 && active && onConfirm && (
@@ -141,6 +147,20 @@ export default function TaskTracking({ task, workerName, statusLabel, onBack, on
                 <p className="mt-0.5 whitespace-pre-line text-sm text-ink-800">{task.description}</p>
               </div>
             )}
+            {([['Required skills', task.requiredSkills], ['Special requirements', task.specialRequirements], ['Equipment or materials', task.equipmentNotes], ['Site information', task.siteNotes]] as const)
+              .filter(([, v]) => v).map(([k, v]) => (
+                <div key={k} className="mt-3">
+                  <p className="text-xs text-ink-700/60">{k}</p>
+                  <p className="mt-0.5 whitespace-pre-line text-sm text-ink-800">{v}</p>
+                </div>
+              ))}
+            {!!task.photoUrls?.length && (
+              <div className="mt-3">
+                <p className="text-xs text-ink-700/60">Photos</p>
+                <div className="mt-1 flex flex-wrap gap-2">{task.photoUrls.map((u) => <a key={u} href={u} target="_blank" rel="noopener noreferrer"><img src={u} alt="" className="h-14 w-14 rounded-md object-cover" /></a>)}</div>
+              </div>
+            )}
+            {task.recurrence === 'recurring' && <JobNotices task={{ ...task, replacementInProgress: false }} />}
           </div>
 
           <div className="rounded-2xl border border-ink-900/8 bg-white p-6 shadow-sm">

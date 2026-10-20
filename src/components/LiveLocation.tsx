@@ -58,7 +58,7 @@ export default function LiveLocation({ taskId }: { taskId: string | number }) {
     return (
       <p className="mt-3 flex items-start gap-2 border-t border-ink-900/10 pt-3 text-xs leading-relaxed text-ink-700">
         <MapPin size={13} aria-hidden="true" className="mt-0.5 shrink-0 text-ink-700/50" />
-        The worker hasn&rsquo;t shared their location for this job. They can turn it on from their dashboard.
+        The Xpert hasn&rsquo;t shared their location for this job. They can turn it on from their dashboard.
       </p>
     )
   }
@@ -193,7 +193,7 @@ function LocationMap({ lat, lng, accuracy, stale }: { lat: number; lng: number; 
     <div
       ref={boxRef}
       role="img"
-      aria-label="Map showing the worker's current location"
+      aria-label="Map showing the Xpert's current location"
       className="mb-3 h-52 w-full overflow-hidden rounded-xl border border-ink-900/10 sm:h-64"
     />
   )

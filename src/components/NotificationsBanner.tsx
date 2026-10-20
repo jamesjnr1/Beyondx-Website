@@ -64,7 +64,7 @@ export default function NotificationsBanner({ role }: { role: 'worker' | 'employ
               ? 'On iPhone, add BeyondX to your Home Screen first (Share → Add to Home Screen) — Safari only allows notifications for installed apps, not a regular tab.'
               : role === 'worker'
                 ? 'Get an alert the moment a new job or offer comes in, even when the app is closed.'
-                : 'Get an alert the moment a worker responds, so you never miss it.'}
+                : 'Get an alert the moment your job is updated, so you never miss it.'}
           </p>
         </div>
       </div>

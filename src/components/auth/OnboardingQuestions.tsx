@@ -16,12 +16,12 @@ export const EMPLOYER_QUESTIONS = [
   'What made you consider trying the platform?',
   'What kind of tasks or roles are you looking to fill?',
   'Did you have any concerns or hesitations before reaching out?',
-  'How often do you expect to need workers — one-off or ongoing?',
-  'What would make you trust a new worker enough to hire them?',
+  'How often do you expect to need Xperts — one-off or ongoing?',
+  'What would make you trust a new Xpert enough to hire them?',
 ]
 
 const WELCOME =
-  'Welcome to BeyondX! Thank you for signing up. We are still in our early stages, currently recruiting more workers and employers to the platform. It will take about two weeks before we have your first task ready to dispatch. We will keep you updated along the way and reach out as soon as a job matches your skills. Thanks for being one of our first members, we are glad to have you.'
+  'Welcome to BeyondX! Thank you for signing up. We are still in our early stages, currently recruiting more Xperts and employers to the platform. It will take about two weeks before we have your first task ready to dispatch. We will keep you updated along the way and reach out as soon as a job matches your skills. Thanks for being one of our first members, we are glad to have you.'
 
 type Props = {
   role: 'worker' | 'employer'

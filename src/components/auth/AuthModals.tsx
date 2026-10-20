@@ -1,9 +1,10 @@
 import { useEffect, useState, type ReactNode, type FormEvent, type InputHTMLAttributes } from 'react'
-import { X, ShieldCheck, ChevronLeft, ChevronRight, Mail, UserRound, Building2, Camera, Check } from 'lucide-react'
+import { X, ShieldCheck, ChevronLeft, ChevronRight, Mail, UserRound, Building2, Check } from 'lucide-react'
 import Logo from '../Logo'
 import { useAuth, type AuthView } from './AuthContext'
-import { auth, session, referral, contact, media, ApiError } from '../../lib/api'
+import { auth, session, referral, contact, ApiError } from '../../lib/api'
 import OnboardingQuestions from './OnboardingQuestions'
+import ImageUpload from '../ImageUpload'
 import * as v from '../../lib/validate'
 import { categories, remoteCategories } from '../../data'
 import { REMOTE_JOBS_ENABLED } from '../../lib/config'
@@ -41,52 +42,6 @@ const REFERENCE_RELATIONSHIPS = [
 const ID_TYPES = ['Ghana Card', 'Voter ID', 'Passport', "Driver's licence", 'NHIS card']
 
 /** Picks an image, uploads it, and reports the stored URL. */
-function ImageUpload({ label, hint, urls, onChange, max = 1, folder }: {
-  label: string; hint?: string; urls: string[]; onChange: (urls: string[]) => void; max?: number; folder: string
-}) {
-  const [busy, setBusy] = useState(false)
-  const [err, setErr] = useState<string | null>(null)
-  const pick = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    e.target.value = ''
-    if (!file) return
-    if (!['image/png', 'image/jpeg', 'image/jpg', 'image/webp'].includes(file.type)) { setErr('Choose a PNG, JPG or WebP photo.'); return }
-    if (file.size > 8 * 1024 * 1024) { setErr('That photo is over 8MB.'); return }
-    setErr(null); setBusy(true)
-    try {
-      const base64: string = await new Promise((res, rej) => {
-        const r = new FileReader(); r.onload = () => res(String(r.result)); r.onerror = () => rej(new Error('read')); r.readAsDataURL(file)
-      })
-      const { url } = await media.upload(base64, file.name, folder)
-      onChange(max === 1 ? [url] : [...urls, url].slice(0, max))
-    } catch { setErr('Upload failed — please try again.') }
-    finally { setBusy(false) }
-  }
-  return (
-    <div>
-      <p className="mb-1.5 text-sm font-medium text-ink-800">{label}</p>
-      {hint && <p className="mb-2 text-xs text-ink-700/70">{hint}</p>}
-      {urls.length > 0 && (
-        <div className="mb-2 flex flex-wrap gap-2">
-          {urls.map((u) => (
-            <span key={u} className="relative">
-              <img src={u} alt="" className="h-16 w-16 rounded-md border border-ink-900/10 object-cover" />
-              <button type="button" aria-label="Remove photo" onClick={() => onChange(urls.filter((x) => x !== u))}
-                className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-ink-900 text-white"><X size={11} /></button>
-            </span>
-          ))}
-        </div>
-      )}
-      {urls.length < max && (
-        <label className={`inline-flex cursor-pointer items-center gap-2 rounded-md border border-ink-900/15 px-3 py-2 text-sm font-medium text-ink-800 hover:bg-ink-900/5 ${busy ? 'opacity-60' : ''}`}>
-          <Camera size={15} aria-hidden="true" /> {busy ? 'Uploading…' : urls.length ? 'Add another photo' : 'Upload photo'}
-          <input type="file" accept="image/png,image/jpeg,image/webp" onChange={pick} disabled={busy} className="sr-only" />
-        </label>
-      )}
-      {err && <p className="mt-1 text-xs text-red-700">{err}</p>}
-    </div>
-  )
-}
 
 function FormError({ message }: { message: string | null }) {
   if (!message) return null
@@ -294,7 +249,7 @@ type EmployerType = 'individual' | 'enterprise'
 
 function EmployerTypeChoice({ onChoose }: { onChoose: (t: EmployerType) => void }) {
   const options: { type: EmployerType; label: string; desc: string; Icon: typeof UserRound }[] = [
-    { type: 'individual', label: 'Individual / Sole Trader', desc: 'You hire workers for your home, personal business, or as a sole trader.', Icon: UserRound },
+    { type: 'individual', label: 'Individual / Sole Trader', desc: 'You need Xperts for your home, personal business, or as a sole trader.', Icon: UserRound },
     { type: 'enterprise', label: 'Business / Enterprise', desc: 'You are registering on behalf of a registered company or organisation.', Icon: Building2 },
   ]
   return (
@@ -397,7 +352,7 @@ function EmployerLogin() {
   )
 
   return (
-    <Modal title="Employer Login" subtitle="Sign in to access the worker dispatch platform">
+    <Modal title="Employer Login" subtitle="Sign in to request Xperts and track your jobs">
       {success && <p className="mb-3 rounded-lg bg-forest-600/10 px-3 py-2 text-sm font-medium text-forest-700">{success}</p>}
       <form onSubmit={submit} className="space-y-4">
         <Field label="Email Address" type="email" placeholder="you@company.com" value={email} onChange={setEmail} />
@@ -537,7 +492,7 @@ function EmployerRegister() {
   return (
     <Modal
       title={`Create ${typeLabel} Account`}
-      subtitle={accountType === 'individual' ? 'Hire vetted workers for your home or business' : 'Set up your company on the BeyondX platform'}
+      subtitle={accountType === 'individual' ? 'Request vetted Xperts for your home or business' : 'Set up your company on the BeyondX platform'}
     >
       <Stepper step={step} total={totalSteps} />
       <form onSubmit={next} className="space-y-4">
@@ -556,7 +511,7 @@ function EmployerRegister() {
             <p className="text-sm font-medium text-ink-900">Identity verification</p>
             <p className="mt-1 text-xs leading-relaxed text-ink-700">
               We collect your Ghana Card number to confirm you are a real, traceable individual.
-              Your card number is never shared with workers or third parties — it's used only to
+              Your card number is never shared with Xperts or third parties — it's used only to
               verify your account before your first dispatch.
             </p>
           </div>
@@ -638,6 +593,9 @@ function WorkerRegister() {
   const [fieldErr, setFieldErr] = useState<Record<string, string>>({})
   const [skills, setSkills] = useState<string[]>([])
   const [evidence, setEvidence] = useState<string[]>([])
+  const [evidenceType, setEvidenceType] = useState('')
+  const [videoLink, setVideoLink] = useState('')
+  const [certs, setCerts] = useState<string[]>([])
   const [idPhoto, setIdPhoto] = useState<string[]>([])
   const set = (k: keyof typeof f) => (val: string) => setF({ ...f, [k]: val })
   const toggleSkill = (sk: string) => setSkills((c) => (c.includes(sk) ? c.filter((x) => x !== sk) : [...c, sk]))
@@ -653,7 +611,8 @@ function WorkerRegister() {
     } else if (n === 2) {
       if (!skills.length) { setErr('Select at least one skill.'); return false }
       if (f.experience.trim().length < 10) errs.experience = 'Tell us about your experience (at least a sentence).'
-      if (!evidence.length) { setFieldErr(errs); setErr('Upload at least one photo of work you have done.'); return false }
+      if (videoLink.trim() && !/^https:\/\/\S+$/.test(videoLink.trim())) errs.video = 'Paste a full link starting with https://'
+      if (!evidence.length && !videoLink.trim()) { setFieldErr(errs); setErr('Add at least one photo or a video link of work you have done.'); return false }
     } else if (n === 3) {
       errs = v.check({ idType: v.required('ID type')(f.idType), idNumber: v.required('ID number')(f.idNumber) })
       if (!idPhoto.length) { setFieldErr(errs); setErr('Upload a clear photo of your ID.'); return false }
@@ -689,7 +648,9 @@ function WorkerRegister() {
         idType: f.idType, idCardNumber: f.idNumber.trim(), idDocumentUrl: idPhoto[0],
         experienceSummary: f.experience.trim(),
         referenceName: f.rName.trim(), referencePhone: norm(f.rPhone), referenceRelationship: f.rRelationship,
-        skillEvidenceUrls: evidence,
+        skillEvidenceUrls: [...evidence, ...(videoLink.trim() ? [videoLink.trim()] : [])],
+        evidenceTaskType: evidenceType && skills.includes(evidenceType) ? evidenceType : skills[0],
+        certificationUrls: certs,
         visitorId: getVisitorId(),
       }
       const ref = referral.get()
@@ -774,8 +735,25 @@ function WorkerRegister() {
               className="w-full rounded-lg border border-ink-900/15 bg-white px-3.5 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/25" />
             {fieldErr.experience && <span className="mt-1 block text-xs text-red-700">{fieldErr.experience}</span>}
           </label>
-          <ImageUpload label="Photos of your work" hint="Show jobs you've done before — up to 5 photos. Certificates are welcome too."
+          {skills.length > 1 && (
+            <label className="block">
+              <span className="mb-1.5 block text-sm font-medium text-ink-800">Which skill does your evidence show?</span>
+              <select value={evidenceType || skills[0]} onChange={(e) => setEvidenceType(e.target.value)}
+                className="w-full rounded-lg border border-ink-900/15 bg-white px-3.5 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600">
+                {skills.map((sk) => <option key={sk}>{sk}</option>)}
+              </select>
+            </label>
+          )}
+          <ImageUpload label="Photos of your work" hint="Show jobs you've done before — up to 5 photos. BeyondX reviews them against a checklist for the task type."
             urls={evidence} onChange={setEvidence} max={5} folder="xpert-evidence" />
+          <label className="block">
+            <span className="mb-1.5 block text-sm font-medium text-ink-800">Or a short video of your work (optional)</span>
+            <input value={videoLink} onChange={(e) => setVideoLink(e.target.value)} placeholder="https:// link to a video (WhatsApp, Google Drive, YouTube…)"
+              className="w-full rounded-lg border border-ink-900/15 bg-white px-3.5 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/25" />
+            {fieldErr.video && <span className="mt-1 block text-xs text-red-700">{fieldErr.video}</span>}
+          </label>
+          <ImageUpload label="Certificates (optional)" hint="Any training or trade certificates — an optional extra."
+            urls={certs} onChange={setCerts} max={3} folder="xpert-certs" />
         </>)}
 
         {step === 3 && (<>
@@ -787,7 +765,7 @@ function WorkerRegister() {
 
         {step === 4 && (<>
           <p className="text-sm font-semibold text-ink-900">Guarantor</p>
-          <p className="-mt-3 text-xs text-ink-700/70">Someone who can vouch for you. BeyondX will call them to confirm.</p>
+          <p className="-mt-3 text-xs text-ink-700/70">Someone who can vouch for your character. We text them a short explanation, then call to confirm. Being a guarantor is a character reference only — they take on no money or legal responsibility.</p>
           <Field label="Guarantor full name" value={f.gName} onChange={set('gName')} error={fieldErr.gName} />
           <Field label="Guarantor phone number" type="tel" placeholder="0241234567" value={f.gPhone} onChange={set('gPhone')} error={fieldErr.gPhone} />
           <Select label="Relationship to guarantor" options={RELATIONSHIPS} placeholder="Select a relationship" value={f.relationship} onChange={set('relationship')} error={fieldErr.relationship} />
@@ -839,15 +817,15 @@ function EmployerOnboarding() {
   return (
     <Modal title="Before You Proceed" subtitle="Our verification standard">
       <div className="space-y-4 text-sm text-ink-700">
-        <p>All workers on this platform are individually vetted by our team.</p>
+        <p>All Xperts on this platform are individually vetted by our team.</p>
         <ul className="space-y-2">
-          {['Workers are assessed and confirmed as work-ready before listing.', 'You are hiring vetted, work-ready individuals assessed as fit for employment.', 'Hiring through this platform supports transparent, tracked work history.'].map((t) => (
+          {['Xperts are assessed and confirmed as work-ready before they are assigned.', 'You are hiring vetted, work-ready individuals assessed as fit for employment.', 'Hiring through this platform supports transparent, tracked work history.'].map((t) => (
             <li key={t} className="flex gap-2"><ShieldCheck size={16} className="mt-0.5 shrink-0 text-forest-600" /><span>{t}</span></li>
           ))}
         </ul>
         <label className="flex cursor-pointer items-start gap-3 rounded-lg bg-forest-600/5 p-3">
           <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-0.5 h-4 w-4 accent-forest-600" />
-          <span className="text-xs text-ink-800">I have read and understood this notice, and I agree to engage all workers with fairness and human dignity.</span>
+          <span className="text-xs text-ink-800">I have read and understood this notice, and I agree to engage all Xperts with fairness and human dignity.</span>
         </label>
       </div>
       <button disabled={!agreed} onClick={() => setStage('questions')} className="mt-5 w-full rounded-md bg-forest-600 px-6 py-3 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40">

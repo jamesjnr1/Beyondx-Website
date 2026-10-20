@@ -21,7 +21,7 @@ export default function Footer() {
           <div>
             <Logo tone="dark" />
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-ink-700/70 text-pretty">
-              Verified, skill-matched workers connected with employers across Ghana.
+              Reliable, verified Xperts — selected and managed by BeyondX across Ghana.
             </p>
 
             {/* Contact folded in here on mobile instead of its own stacked
@@ -79,7 +79,7 @@ export default function Footer() {
 
         <div className="mt-8 border-t border-ink-900/8 pt-5 sm:mt-12 sm:pt-6">
           <p className="text-xs leading-relaxed text-ink-700/60 text-pretty">
-            Every worker on this platform is individually vetted by our team before
+            Every Xpert on this platform is individually vetted by our team before
             being listed. © {new Date().getFullYear()} BeyondX. Where Work Meets Skill.
           </p>
         </div>

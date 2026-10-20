@@ -126,7 +126,7 @@ function TeamTab({ worker, onSaved }: { worker: Worker | null; onSaved: (patch: 
         <h2 className="font-serif text-lg font-medium text-ink-900">Your team ({active.length})</h2>
         {!adding && (
           <button onClick={() => setAdding(true)} className="inline-flex items-center gap-1.5 rounded-md bg-forest-600 px-3.5 py-1.5 text-xs font-semibold text-cream-50 hover:bg-forest-500">
-            <Plus size={13} /> Add worker
+            <Plus size={13} /> Add Xpert
           </button>
         )}
       </div>
@@ -203,7 +203,7 @@ function JobQuoteCard({
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-ink-900">{task.taskType || 'Job'}</p>
-          <p className="mt-0.5 text-xs text-ink-700/70">{task.location || 'Location TBC'} · {Number(task.workersNeeded ?? 1)} worker slots</p>
+          <p className="mt-0.5 text-xs text-ink-700/70">{task.location || 'Location TBC'} · {Number(task.workersNeeded ?? 1)} Xpert slots</p>
           {task.description && <p className="mt-1 text-xs text-ink-700/60 line-clamp-2">{String(task.description)}</p>}
         </div>
         {quote && (
@@ -280,12 +280,12 @@ function JobsTab({
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="font-serif text-lg font-medium text-ink-900">Multi-worker job requests</h2>
+        <h2 className="font-serif text-lg font-medium text-ink-900">Multi-Xpert job requests</h2>
         <p className="mt-0.5 text-xs text-ink-700/60">Bulk jobs open for a team. Inspect scope, then submit a price for BeyondX to approve.</p>
       </div>
       {bulkTasks.length === 0 ? (
         <p className="rounded-xl border border-dashed border-ink-900/15 py-8 text-center text-sm text-ink-700/60">
-          No multi-worker jobs open right now.
+          No multi-Xpert jobs open right now.
         </p>
       ) : (
         bulkTasks.map((t) => (
@@ -612,7 +612,7 @@ function RequestCard({ request, onUpdate }: { request: CoordinatorJobRequest; on
           <p className="truncate text-sm font-semibold text-ink-900">{request.taskType}</p>
           <p className="mt-0.5 text-xs text-ink-700/70">
             {request.employer?.orgName || 'Employer'} · {request.location} · {request.duration}
-            {request.workersNeeded > 1 ? ` · ${request.workersNeeded} workers` : ''}
+            {request.workersNeeded > 1 ? ` · ${request.workersNeeded} Xperts` : ''}
           </p>
           {request.description && <p className="mt-1 text-xs text-ink-700/60 line-clamp-2">{request.description}</p>}
           <p className="mt-1 text-[0.8125rem] text-ink-700/50">{request.materialsProvided ? 'Employer provides materials' : 'Materials not provided by employer'}</p>
@@ -841,7 +841,7 @@ export default function CoordinatorDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader
-        role="WORKER"
+        role="XPERT"
         title="Coordinator Dashboard"
         name={(me?.fullName as string) || (me?.name as string)}
         avatar={me?.photoUrl as string}

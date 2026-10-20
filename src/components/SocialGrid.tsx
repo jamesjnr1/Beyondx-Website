@@ -13,7 +13,7 @@ export default function SocialGrid() {
             <span className="italic gradient-text">on Instagram</span>
           </h2>
           <p className="mt-4 text-lg text-ink-700 text-pretty">
-            Real workers, real job sites, real second chances. Follow our daily work across Greater Accra.
+            Real Xperts, real job sites, real second chances. Follow our daily work across Greater Accra.
           </p>
           <a
             href="https://instagram.com/beyondx26"
