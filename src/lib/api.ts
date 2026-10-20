@@ -336,6 +336,9 @@ export const workers = {
   me: (token = session.workerToken()) => request<{ worker: Worker }>('/api/workers/me', { token }),
   updateMe: (patch: Record<string, unknown>, token = session.workerToken()) =>
     request<unknown>('/api/workers/me', { method: 'PATCH', body: patch, token }),
+  // Existing Xpert paused for re-verification submits the new requirements.
+  submitVerification: (body: Record<string, unknown>, token = session.workerToken()) =>
+    request<{ ok: true }>('/api/workers/me/verification', { method: 'PATCH', body, token }),
   proximity: (workerHomeArea: string, jobLocation: string) =>
     request<{ available: boolean; roadKm: number | null; transportAllowance: number; tier: string }>(
       `/api/workers/proximity?workerHomeArea=${encodeURIComponent(workerHomeArea)}&jobLocation=${encodeURIComponent(jobLocation)}`

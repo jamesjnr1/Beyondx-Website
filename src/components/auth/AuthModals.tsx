@@ -30,16 +30,16 @@ const COMPANY_SIZES = [
 ]
 const FIELD_SKILLS = categories.map((c) => c.title)
 const REMOTE_SKILLS = remoteCategories.map((c) => c.title)
-const RELATIONSHIPS = [
+export const RELATIONSHIPS = [
   'Family Member', 'Friend', 'Former Employer',
   'Community/Religious Leader', 'Case Worker / Social Worker', 'Other',
 ]
 // A reference must be someone who can speak to the applicant's work — never a
 // family member (the server enforces this too).
-const REFERENCE_RELATIONSHIPS = [
+export const REFERENCE_RELATIONSHIPS = [
   'Former employer', 'Supervisor or trainer', 'Colleague in the same trade', 'Past client', 'Other (not family)',
 ]
-const ID_TYPES = ['Ghana Card', 'Voter ID', 'Passport', "Driver's licence", 'NHIS card']
+export const ID_TYPES = ['Ghana Card', 'Voter ID', 'Passport', "Driver's licence", 'NHIS card']
 
 /** Picks an image, uploads it, and reports the stored URL. */
 

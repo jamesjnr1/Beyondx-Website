@@ -743,6 +743,7 @@ async function loadApplications(status){
         ${chip('Evidence: '+(w.evidenceOutcome||'pending'),w.evidenceOutcome==='pass'?'ok':w.evidenceOutcome==='fail'?'bad':'warn')}
         ${chip('Reference: '+(w.referenceOutcome||'pending'),w.referenceOutcome==='confirmed'?'ok':w.referenceOutcome==='unreachable'?'bad':'warn')}
         ${chip(XS_LABEL[w.xpertStatus]||w.xpertStatus||'','info')}
+        ${w.reverificationRequired?chip(w.verificationSubmittedAt?'Re-verification submitted':'Paused — awaiting re-verification',w.verificationSubmittedAt?'info':'warn'):''}
       </div>
       <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
         ${w.accountStatus==='under_review'?(w.guarantorOutcome==='yes'&&w.evidenceOutcome==='pass'&&w.referenceOutcome==='confirmed'
@@ -956,7 +957,7 @@ async function nextVisit(id){
 const XS_LABEL={applied:'Applied',guarantor_pending:'Guarantor Pending',guarantor_confirmed:'Guarantor Confirmed',skill_verification:'Skill Verification',provisional_active:'Provisional Active',full_active:'Full Active',under_review:'Under Review',suspended:'Suspended',inactive:'Inactive',removed:'Removed',blocked_closed:'Blocked or Closed'};
 const XS_REASON=['under_review','suspended','removed'];
 let xsFilter='applied';
-function xpertHead(w){return `<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;"><div><b>${esc(w.fullName)}</b> <span style="color:var(--ink3);font-size:12px;">${esc(w.workerId)} · ${esc(w.phone||'')} · ${esc(w.homeArea||'')}</span><div style="font-size:12px;color:var(--ink3);">${esc((w.skills||[]).join(', '))} · applied ${new Date(w.createdAt).toLocaleDateString()} · ${w.verificationSource==='coordinator'?'Verified via coordinator':'Verified directly by BeyondX'}</div></div>${chip(XS_LABEL[w.xpertStatus]||w.xpertStatus,['provisional_active','full_active'].includes(w.xpertStatus)?'ok':['suspended','removed','blocked_closed'].includes(w.xpertStatus)?'bad':'info')}</div>`;}
+function xpertHead(w){return `<div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;"><div><b>${esc(w.fullName)}</b> <span style="color:var(--ink3);font-size:12px;">${esc(w.workerId)} · ${esc(w.phone||'')} · ${esc(w.homeArea||'')}</span><div style="font-size:12px;color:var(--ink3);">${esc((w.skills||[]).join(', '))} · applied ${new Date(w.createdAt).toLocaleDateString()} · ${w.verificationSource==='coordinator'?'Verified via coordinator':'Verified directly by BeyondX'}${w.reverificationRequired?(w.verificationSubmittedAt?' · Re-verification submitted '+new Date(w.verificationSubmittedAt).toLocaleDateString():' · Paused — awaiting re-verification'):''}</div></div>${chip(XS_LABEL[w.xpertStatus]||w.xpertStatus,['provisional_active','full_active'].includes(w.xpertStatus)?'ok':['suspended','removed','blocked_closed'].includes(w.xpertStatus)?'bad':'info')}</div>`;}
 async function loadXStatus(f){
   if(f)xsFilter=f;
   const box=document.getElementById('xstatusContent');box.innerHTML='<div class="empty">Loading…</div>';
@@ -964,6 +965,7 @@ async function loadXStatus(f){
     const d=await api('GET','/admin/xperts?status='+xsFilter);
     const tabs=Object.keys(XS_LABEL).map(k=>[k,`${XS_LABEL[k]} (${d.counts[k]||0})`]);
     box.innerHTML=ownerNote('Spencer or Jonathan for Under Review, Suspended and Removed; Windin or Elim for screening','Every status change is recorded with who made it. Moving an Xpert into or out of Under Review, Suspended or Removed needs a written reason. Removing an Xpert never deletes their record or history.')
+      +'<div id="reverifyPanel"></div>'
       +tabsHtml(xsFilter,tabs,'loadXStatus')
       +`<div class="tc">${(d.xperts||[]).map(w=>`<div style="${cardStyle}">${xpertHead(w)}
         <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;font-size:12px;">
@@ -972,8 +974,49 @@ async function loadXStatus(f){
           <button class="btn-r" onclick="toggleSource('${w.id}','${w.verificationSource}')">Mark verified via ${w.verificationSource==='coordinator'?'BeyondX directly':'coordinator'}</button>
           <button class="btn-r" onclick="showHistory('${w.id}')">History</button>
         </div><div id="xs-hist-${w.id}"></div></div>`).join('')||'<div class="empty">No Xperts with this status</div>'}</div>`;
+    loadReverifyPanel();
   }catch(e){box.innerHTML='<div class="empty">Could not load: '+esc(e.message)+'</div>';}
 }
+/* ── Re-verification of existing Xperts ── */
+async function loadReverifyPanel(){
+  const el=document.getElementById('reverifyPanel'); if(!el)return;
+  try{
+    const d=await api('GET','/admin/reverification/preview');
+    el.innerHTML=`<div class="tc" style="padding:16px 18px;margin-bottom:14px;">
+      <div style="font-weight:700;font-size:14px;">Re-verify existing Xperts</div>
+      <div style="font-size:12px;color:var(--ink3);margin-top:4px;">Pauses every active Xpert (no jobs) until they complete the new verification, and texts them. They see a form on their dashboard prefilled with what we hold; submitting it sends the guarantor explainer and puts them into Guarantor Calls, Evidence Review and Reference Calls. Approve them in Xpert Applications as usual.</div>
+      <div style="display:flex;gap:18px;flex-wrap:wrap;margin:10px 0;font-size:13px;">
+        <div><b>${d.eligible}</b> active Xpert(s) will be paused (${d.withPhone} with a phone number)</div>
+        <div><b>${d.onJob.length}</b> skipped — on a job right now${d.onJob.length?' ('+d.onJob.map(w=>esc(w.fullName)).join(', ')+')':''}</div>
+        <div><b>${d.alreadyPaused}</b> paused, not yet submitted · <b>${d.submitted}</b> submitted</div>
+      </div>
+      <label style="font-size:11px;font-weight:600;">SMS message ({name} becomes their first name)</label>
+      <textarea id="rvMsg" rows="3" style="${inputStyle}">${esc(d.message)}</textarea>
+      <div style="font-size:11px;color:var(--ink3);margin-top:2px;" id="rvLen"></div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="btn-r on" ${d.eligible?'':'disabled style="opacity:.5"'} onclick="runReverify(${d.eligible})">Pause ${d.eligible} Xpert(s) &amp; send SMS</button>
+        <button class="btn-r" ${d.alreadyPaused?'':'disabled style="opacity:.5"'} onclick="remindReverify(${d.alreadyPaused})">Send reminder to ${d.alreadyPaused} who haven't submitted</button>
+      </div>
+      ${d.onJob.length?'<div style="font-size:11px;color:var(--ink3);margin-top:6px;">Run this again after their current jobs finish to include them.</div>':''}
+    </div>`;
+    const m=document.getElementById('rvMsg'), l=document.getElementById('rvLen');
+    const upd=()=>{const n=m.value.length;l.textContent=n+' characters · about '+Math.ceil(n/153)+' SMS per Xpert';};m.oninput=upd;upd();
+  }catch(e){el.innerHTML='';}
+}
+async function runReverify(n){
+  const message=document.getElementById('rvMsg').value.trim();
+  if(!message.includes('beyondxco.com')&&!confirm('The message has no link to beyondxco.com. Send anyway?'))return;
+  if(!confirm('Pause '+n+' active Xpert(s) and text each of them? They cannot take jobs until they complete verification and are approved again.'))return;
+  try{const d=await api('POST','/admin/reverification',{message,by:adminName(),confirm:true});
+    showToast(d.paused+' Xpert(s) paused. '+d.smsQueued+' SMS being sent.'+(d.skippedOnJob?' '+d.skippedOnJob+' skipped (on a job).':''));loadXStatus();}
+  catch(e){showToast(e.message);}
+}
+async function remindReverify(n){
+  if(!confirm('Text '+n+' paused Xpert(s) who have not submitted yet?'))return;
+  try{const d=await api('POST','/admin/reverification/remind',{message:document.getElementById('rvMsg').value.trim()});showToast(d.smsQueued+' reminder SMS being sent.');}
+  catch(e){showToast(e.message);}
+}
+
 async function changeXStatus(id,current){
   const status=document.getElementById('xs-sel-'+id).value; if(status===current)return;
   let reason='';
