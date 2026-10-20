@@ -751,6 +751,7 @@ export default function WorkerDashboard() {
   const [reportTask, setReportTask] = useState<Task | null>(null)
   const [rateTask, setRateTask] = useState<Task | null>(null)
   const [flagTask, setFlagTask] = useState<Task | null>(null)
+  const [showReverify, setShowReverify] = useState(false)
 
   const load = useCallback(async () => {
     setError(null)
@@ -1024,7 +1025,10 @@ export default function WorkerDashboard() {
 
   // Approved Coordinators get a different dashboard entirely (team
   // management, bulk-job quoting, payout splits) — see CoordinatorDashboard.
-  if ((me?.accountStatus || 'active') !== 'active') return <ApplicationStatus me={me} onReload={load} />
+  // An Xpert paused for re-verification while on a job keeps a slim
+  // dashboard so they can finish it; everyone else not active sees their status.
+  const pausedOnJob = !!me?.reverificationRequired && mine.some((t) => ['accepted', 'pending_confirmation'].includes(String(t.status)))
+  if ((me?.accountStatus || 'active') !== 'active' && !pausedOnJob) return <ApplicationStatus me={me} onReload={load} />
   if (isCoordinator(me)) return <CoordinatorDashboard />
 
   return (
@@ -1037,6 +1041,24 @@ export default function WorkerDashboard() {
         <p aria-live="polite" className="sr-only">{announce}</p>
 
         <NotificationsBanner role="worker" />
+
+        {pausedOnJob && (
+          <div className="mb-5 rounded-2xl border border-amber-300 bg-amber-50 p-5">
+            <p className="text-sm font-semibold text-amber-900">Your account is paused for the new BeyondX verification</p>
+            <p className="mt-1 text-sm text-amber-900/90">
+              Finish the job you're on as normal — check in, then mark it complete. You can't take new jobs until you complete the verification and BeyondX approves you.
+            </p>
+            {me?.verificationSubmittedAt ? (
+              <p className="mt-2 text-sm font-medium text-amber-900">Thanks — your verification is under review.</p>
+            ) : showReverify ? (
+              <div className="mt-3 rounded-xl bg-white p-4 sm:p-5"><ReverifyForm me={me} onSubmitted={() => { setShowReverify(false); load() }} /></div>
+            ) : (
+              <button onClick={() => setShowReverify(true)} className="mt-3 rounded-lg bg-forest-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-forest-500">
+                Complete verification
+              </button>
+            )}
+          </div>
+        )}
 
         {error && (
           <div className="mb-4 flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 sm:flex-row sm:items-center sm:justify-between">
