@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react'
-import { ChevronRight, Star, ShieldCheck, RefreshCw, AlertCircle, Check, Map, Clock, MapPin, Briefcase, Users, Wallet, LayoutDashboard, FilePlus, ClipboardList, Inbox, HelpCircle } from 'lucide-react'
+import { ChevronRight, Star, ShieldCheck, RefreshCw, AlertCircle, Check, Map, Clock, MapPin, Briefcase, Users, Wallet, LayoutDashboard, FilePlus, ClipboardList, Inbox, HelpCircle, Repeat, Flag } from 'lucide-react'
 import JobLocationMap from '../components/JobLocationMap'
 import DashboardHeader from './DashboardHeader'
 import DashboardSidebar, { DashboardMobileNav, type DashboardNavItem } from '../components/DashboardSidebar'
@@ -10,8 +10,10 @@ import SupportPanel from '../components/SupportPanel'
 import LiveLocation from '../components/LiveLocation'
 import {
   tasks as tasksApi, employers as employersApi,
-  contact, session, ApiError, type Task, type Employer,
+  contact, session, ApiError, scheduleLabel, type Task, type Employer, type AssignedXpert, type RecurringService,
 } from '../lib/api'
+import { takeRequestCategory } from '../lib/requestIntent'
+import { useEsc, RatingRow, LiveJobSteps, JobNotices, XpertSummary, FlagModal } from '../components/tasks/JobParts'
 import { MOMO_NUMBER, MOMO_NAME, PAY_METHODS } from '../lib/payments'
 import { useRefreshOnResume } from '../hooks/useRefreshOnResume'
 import NotificationsBanner from '../components/NotificationsBanner'
@@ -22,11 +24,12 @@ import { PROGRESS_STEPS, currentStepIndex } from '../components/tasks/taskProgre
 
 const cedis = (n?: number | string) => `GH\u20b5 ${Number(n || 0).toLocaleString()}`
 const STATUS: Record<string, { label: string; color: string; bar: string; note?: string; urgent?: boolean }> = {
-  awaiting_invoice:   { label: 'Under review',        color: 'text-ink-700',     bar: 'bg-ink-900/20', note: 'BeyondX is reviewing your task and will send you an invoice shortly.' },
-  invoice_sent:       { label: 'Invoice ready',       color: 'text-amber-700',   bar: 'bg-amber-400',  note: 'Your invoice is ready. Pay it in Invoices to have Xperts matched.', urgent: true },
+  awaiting_invoice:   { label: 'Under review',        color: 'text-ink-700',     bar: 'bg-ink-900/20', note: 'BeyondX is reviewing your request and will send you a quote shortly.' },
+  invoice_sent:       { label: 'Quote ready',         color: 'text-amber-700',   bar: 'bg-amber-400',  note: 'Your quote is ready. Accept or decline it under Awaiting your response.', urgent: true },
   payment_pending:    { label: 'Verifying payment',   color: 'text-amber-700',   bar: 'bg-amber-400',  note: 'We received your payment details and are confirming the transaction — usually within a few minutes.' },
-  offered:            { label: 'Xpert notified',      color: 'text-ink-700',     bar: 'bg-ink-900/30', note: 'An Xpert has been offered this job and is reviewing the details.' },
-  open:               { label: 'Finding an Xpert',    color: 'text-ink-500',     bar: 'bg-ink-900/20', note: 'Payment confirmed. We are matching an Xpert to this job.' },
+  offered:            { label: 'Xpert assigned',      color: 'text-ink-700',     bar: 'bg-ink-900/30', note: 'BeyondX has selected an Xpert, who is confirming the job.' },
+  open:               { label: 'Matching an Xpert',   color: 'text-ink-500',     bar: 'bg-ink-900/20', note: 'Payment confirmed. BeyondX is selecting the right Xpert for this job.' },
+  expired:            { label: 'Matching an Xpert',   color: 'text-ink-500',     bar: 'bg-ink-900/20', note: 'BeyondX is selecting another Xpert for this job.' },
   accepted:           { label: 'On the job',          color: 'text-forest-700',  bar: 'bg-forest-500', note: 'Work is underway. You will be notified when the Xpert marks it complete.' },
   pending_confirmation: { label: 'Action required',  color: 'text-amber-700',   bar: 'bg-amber-500',  note: 'The Xpert has marked the job as done. Confirm below to release their payment.', urgent: true },
   employer_confirmed: { label: 'Payment processing', color: 'text-ink-600',     bar: 'bg-ink-900/30', note: 'BeyondX is releasing the payment. This usually completes within a few hours.' },
@@ -38,7 +41,7 @@ const st = (s?: string) => STATUS[s || 'open'] || STATUS.open
 
 /** Assigned Xpert's name and rating — from the accepted record, or from the
  *  description older direct dispatches carried. */
-type XpertSlot = { id: string; status: string; acceptedBy?: { fullName?: string; phone?: string; rating?: number | string } }
+type XpertSlot = { id: string; status: string; arrivedAt?: string | null; startedAt?: string | null; acceptedBy?: AssignedXpert }
 
 /** True when the job (or, on a multi-Xpert job, any one Xpert's part of it) is waiting on the employer to confirm. */
 const needsConfirmation = (t: Task) =>
@@ -46,7 +49,7 @@ const needsConfirmation = (t: Task) =>
   !!(t as unknown as { acceptedWorkers?: XpertSlot[] }).acceptedWorkers?.some((w) => w.status === 'pending_confirmation')
 
 function assignedXpert(t: Task) {
-  const a = t.acceptedBy as { fullName?: string; rating?: number | string } | undefined
+  const a = t.acceptedBy as AssignedXpert | undefined
   const name = (typeof a === 'object' && a?.fullName) || dispatchDetails(t).workerName || ''
   const rating = typeof a === 'object' ? Number(a?.rating || 0) : 0
   return { name, rating }
@@ -66,25 +69,6 @@ function dispatchDetails(t: Task) {
 
 function Stars({ n }: { n: number }) {
   return <span className="inline-flex" role="img" aria-label={`${n} out of 5 stars`}>{[1, 2, 3, 4, 5].map((i) => <Star key={i} size={14} aria-hidden="true" className={i <= n ? 'fill-forest-600 text-forest-600' : 'text-ink-900/20'} />)}</span>
-}
-function StarPicker({ value, onChange }: { value: number; onChange: (n: number) => void }) {
-  return (
-    <div className="flex gap-1" role="radiogroup" aria-label="Rating out of 5">
-      {[1, 2, 3, 4, 5].map((i) => (
-        <button key={i} type="button" role="radio" aria-checked={value === i} aria-label={`${i} star${i > 1 ? 's' : ''}`}
-          onClick={() => onChange(i)} className="rounded transition-transform focus:outline-none focus:ring-2 focus:ring-forest-600/40 active:scale-90">
-          <Star size={30} aria-hidden="true" className={i <= value ? 'fill-forest-600 text-forest-600' : 'text-ink-900/20 hover:text-forest-600/40'} />
-        </button>
-      ))}
-    </div>
-  )
-}
-function useEsc(onClose: () => void) {
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [onClose])
 }
 function Empty({ text, icon }: { text: string; icon?: ReactNode }) {
   return (
@@ -118,7 +102,11 @@ function Skeleton() {
 }
 
 export default function EmployerDashboard() {
-  const [tab, setTab] = useState<'overview' | 'post' | 'invoices' | 'history' | 'support'>('overview')
+  // A category clicked on the public site opens the request flow with it chosen.
+  const [initialCategory] = useState(() => takeRequestCategory())
+  const [tab, setTab] = useState<'overview' | 'post' | 'invoices' | 'history' | 'recurring' | 'support'>(initialCategory ? 'post' : 'overview')
+  const [flagging, setFlagging] = useState<Task | null>(null)
+  const [services, setServices] = useState<RecurringService[]>([])
   const [rating, setRating] = useState<Task | null>(null)
   const [editing, setEditing] = useState(false)
   const [submitted, setSubmitted] = useState<SubmittedTask | null>(null)
@@ -138,11 +126,13 @@ export default function EmployerDashboard() {
   const load = useCallback(async () => {
     setError(null)
     try {
-      const [tRes, pRes] = await Promise.all([
+      const [tRes, pRes, rRes] = await Promise.all([
         tasksApi.all(),
         employersApi.profile().catch(() => null),
+        tasksApi.recurring().catch(() => null),
       ])
       setTaskList(tRes?.tasks || [])
+      setServices(rRes?.services || [])
       const emp = (pRes as { employer?: Employer } | null)?.employer
       if (emp) { setProfile(emp); session.patchEmployer(emp) }
     } catch (e) {
@@ -189,9 +179,10 @@ export default function EmployerDashboard() {
 
   const navItems: DashboardNavItem[] = [
     { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'post', label: 'Post a Task', icon: FilePlus },
-    { id: 'invoices', label: 'Invoices', icon: Inbox, badge: invoicesDue.length },
+    { id: 'post', label: 'Request an Xpert', icon: FilePlus },
+    { id: 'invoices', label: 'Quotes & Invoices', icon: Inbox, badge: invoicesDue.length },
     { id: 'history', label: 'My Jobs', icon: ClipboardList, badge: pendingConfirmCount },
+    { id: 'recurring', label: 'Recurring Services', icon: Repeat },
     { id: 'support', label: 'Support', icon: HelpCircle },
   ]
   // Short set for the top bar — the sidebar carries the full list.
@@ -220,7 +211,7 @@ export default function EmployerDashboard() {
     <div className="min-h-screen bg-gray-50">
       <DashboardHeader role="EMPLOYER" title="Employer Dashboard" name={orgName} avatar={logo} onEditProfile={() => setEditing(true)} tasks={taskList}
         navItems={headerNavItems} active={tab} onSelect={goTab}
-        cta={{ label: 'Post a Task', onClick: () => goTab('post') }} />
+        cta={{ label: 'Request an Xpert', onClick: () => goTab('post') }} />
       <div className="lg:flex">
         <DashboardSidebar items={navItems} active={tab} onSelect={goTab} />
         <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-8 lg:px-10">
@@ -244,7 +235,7 @@ export default function EmployerDashboard() {
                 ? `${pendingConfirmCount} job${pendingConfirmCount === 1 ? '' : 's'} waiting on your confirmation.`
                 : activeJobsCount > 0
                   ? `${activeJobsCount} active job${activeJobsCount === 1 ? '' : 's'} right now.`
-                  : 'No active jobs — post a task to get started.'}
+                  : 'No active jobs — request an Xpert to get started.'}
             </p>
           </div>
           <button onClick={() => { setLoading(true); load() }} aria-label="Refresh dashboard"
@@ -268,13 +259,13 @@ export default function EmployerDashboard() {
                     </p>
                     <p className="mt-3 text-sm text-ink-700/75">
                       {invoicesDue.length > 0
-                        ? `${invoicesDue.length} invoice${invoicesDue.length === 1 ? '' : 's'} ready for you to review.`
+                        ? `${invoicesDue.length} quote${invoicesDue.length === 1 ? '' : 's'} awaiting your response.`
                         : pendingConfirmCount > 0
                           ? `${pendingConfirmCount} job${pendingConfirmCount === 1 ? '' : 's'} waiting on your confirmation.`
                           : "You're all caught up on your jobs."}
                     </p>
                     <button onClick={() => setTab(invoicesDue.length ? 'invoices' : 'history')} className="mt-4 text-sm font-medium text-forest-700 underline underline-offset-4 hover:text-forest-500">
-                      {invoicesDue.length ? 'View invoices →' : 'View My Jobs →'}
+                      {invoicesDue.length ? 'Review quotes →' : 'View My Jobs →'}
                     </button>
                     {Number(profile?.rating || 0) > 0 && (
                       <p className="mt-4 flex items-center gap-2 border-t border-ink-900/8 pt-3 text-sm text-ink-700">
@@ -304,7 +295,7 @@ export default function EmployerDashboard() {
                         <p className="mt-2 text-sm text-ink-700/70">No active jobs right now.</p>
                         <button onClick={() => goTab('post')}
                           className="mt-3 rounded-md border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-800 hover:bg-ink-900/5">
-                          Post a task
+                          Request an Xpert
                         </button>
                       </>
                     )}
@@ -319,7 +310,7 @@ export default function EmployerDashboard() {
 
                 <div>
                   {loading ? <Skeleton /> : (
-                    <ActivityFeed title="Recent Activity" items={recentActivity} empty="No activity yet — your posted tasks will show up here." />
+                    <ActivityFeed title="Recent Activity" items={recentActivity} empty="No activity yet — your requests will show up here." />
                   )}
                 </div>
               </div>
@@ -336,18 +327,48 @@ export default function EmployerDashboard() {
         {tab === 'invoices' && (
           <div className="space-y-4">
             <div>
-              <h2 className="text-xl font-bold text-ink-900">Invoices</h2>
-              <p className="mt-1 text-sm text-ink-700/70">BeyondX reviews every task you post and sends an invoice. Pay it to have Xperts matched, or decline it to close the request.</p>
+              <h2 className="text-xl font-bold text-ink-900">Awaiting your response</h2>
+              <p className="mt-1 text-sm text-ink-700/70">BeyondX reviews every request and sends one firm quote. Accept it to have the right Xpert assigned, or decline it to close the request. There is no counter offer.</p>
             </div>
             {loading ? <Skeleton /> : invoicesDue.length ? invoicesDue.map((t) => (
               <InvoiceCard key={String(t.id)} task={t} onChanged={(msg) => { setToast({ id: Date.now(), kind: 'success', title: msg, detail: '' }); load() }} />
             )) : (
-              <Empty icon={<Inbox size={20} aria-hidden="true" />} text="No invoices waiting. When BeyondX finishes reviewing a task you posted, its invoice appears here." />
+              <Empty icon={<Inbox size={20} aria-hidden="true" />} text="No quotes waiting. When BeyondX finishes reviewing a request, its quote appears here." />
             )}
             {taskList.some((t) => t.status === 'awaiting_invoice') && (
               <p className="text-sm text-ink-700/70">
-                {taskList.filter((t) => t.status === 'awaiting_invoice').length} task(s) under review — invoices are on the way.
+                {taskList.filter((t) => t.status === 'awaiting_invoice').length} request(s) under review — quotes are on the way.
               </p>
+            )}
+          </div>
+        )}
+
+        {tab === 'recurring' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-xl font-bold text-ink-900">Recurring Services</h2>
+              <p className="mt-1 text-sm text-ink-700/70">Work you need regularly. BeyondX assigns a preferred team and prioritizes them for every visit.</p>
+            </div>
+            {loading ? <Skeleton /> : services.length ? services.map((sv) => (
+              <div key={sv.id} className="rounded-2xl border border-ink-900/8 bg-white p-5 shadow-sm">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="text-base font-semibold text-ink-900">{sv.taskType}{sv.location ? ` at ${sv.location}` : ''}</p>
+                    <p className="mt-0.5 text-sm text-ink-700/75">{scheduleLabel(sv.schedulePattern)} · {sv.workersNeeded} Xpert{sv.workersNeeded === 1 ? '' : 's'}</p>
+                  </div>
+                  <span className={`text-sm font-semibold ${sv.active ? 'text-forest-700' : 'text-ink-500'}`}>{sv.active ? 'Active' : 'Paused'}</span>
+                </div>
+                <div className="mt-3 grid gap-2 text-sm text-ink-700 sm:grid-cols-2">
+                  <p><span className="text-ink-700/60">Preferred team:</span> {sv.preferredTeamAssigned ? 'Assigned by BeyondX' : 'Being assigned by BeyondX'}</p>
+                  <p><span className="text-ink-700/60">Next service:</span> {sv.nextServiceDate ? new Date(`${sv.nextServiceDate}T00:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) : 'To be scheduled'}</p>
+                </div>
+                <p className="mt-3 flex items-start gap-2 rounded-lg bg-gray-50 px-3 py-2.5 text-sm text-ink-700">
+                  <Repeat size={15} className="mt-0.5 shrink-0 text-forest-700" aria-hidden="true" />
+                  Your usual team will be prioritized whenever available. If they cannot make it, we will arrange a replacement.
+                </p>
+              </div>
+            )) : (
+              <Empty icon={<Repeat size={20} aria-hidden="true" />} text="No recurring services yet. When you request an Xpert, choose “Recurring” to set one up." />
             )}
           </div>
         )}
@@ -360,6 +381,7 @@ export default function EmployerDashboard() {
           />
         ) : (
           <PostTaskWizard
+            initialCategory={initialCategory}
             onSubmitted={(s) => { setSubmitted(s); load() }}
             onContactSupport={() => goTab('support')}
             onBack={() => goTab('overview')}
@@ -388,9 +410,13 @@ export default function EmployerDashboard() {
         {tab === 'history' && trackingId == null && (
           <div className="mt-6">
             {loading ? <Skeleton /> : taskList.length ? (() => {
+              const today = new Date().toISOString().slice(0, 10)
               const urgent = taskList.filter(needsConfirmation)
-              const active = taskList.filter((t) => !needsConfirmation(t) && ['awaiting_invoice', 'invoice_sent', 'open', 'payment_pending', 'offered', 'accepted'].includes(String(t.status)))
-              const done = taskList.filter((t) => ['employer_confirmed', 'completed', 'payment_rejected'].includes(String(t.status)))
+              const inFlight = (t: Task) => !needsConfirmation(t) && ['awaiting_invoice', 'invoice_sent', 'open', 'payment_pending', 'offered', 'accepted', 'expired'].includes(String(t.status))
+              const isActiveNow = (t: Task) => t.status === 'accepted' || (String(t.scheduledDate || '') <= today && ['open', 'offered', 'expired'].includes(String(t.status)) && !!t.scheduledDate)
+              const active = taskList.filter((t) => inFlight(t) && isActiveNow(t))
+              const upcoming = taskList.filter((t) => inFlight(t) && !isActiveNow(t))
+              const done = taskList.filter((t) => ['employer_confirmed', 'completed', 'payment_rejected', 'cancelled'].includes(String(t.status)))
 
               const TaskItem = ({ t }: { t: Task }) => {
                 const s = st(t.status)
@@ -403,6 +429,8 @@ export default function EmployerDashboard() {
                 const [showMap, setShowMap] = useState(false)
                 const currentStep = currentStepIndex(t.status as string)
                 const isTerminal = ['completed', 'employer_confirmed', 'payment_rejected', 'cancelled'].includes(t.status as string)
+                const myReview = t.reviews?.find((r) => r.fromRole === 'employer')
+                const theirReview = t.reviews?.find((r) => r.fromRole === 'worker')
 
                 return (
                   <div className={`rounded-2xl bg-white shadow-sm border border-ink-900/8 transition-shadow hover:shadow-md`}>
@@ -414,8 +442,8 @@ export default function EmployerDashboard() {
                           <p className="mt-0.5 text-sm text-ink-700">
                             {slots > 1
                               ? <span className="font-medium text-ink-800">{filled}/{slots} Xperts confirmed</span>
-                              : workerName && <span className="font-medium text-ink-800">{workerName}{xpertRating > 0 ? ` ★ ${xpertRating.toFixed(1)}` : ''}</span>}
-                            {(workerName || slots > 1) && t.location ? ' · ' : ''}{t.location || ''}
+                              : workerName && isTerminal && <span className="font-medium text-ink-800">{workerName}{xpertRating > 0 ? ` ★ ${xpertRating.toFixed(1)}` : ''}</span>}
+                            {((workerName && isTerminal) || slots > 1) && t.location ? ' · ' : ''}{t.location || ''}
                             {t.duration ? ` · ${t.duration}` : ''}
                           </p>
                           {(t.scheduledDate as string) && (
@@ -428,6 +456,7 @@ export default function EmployerDashboard() {
                         <div className="shrink-0 text-right">
                           <p className={s.color + ' text-sm font-semibold'}>{s.label}</p>
                           {rev && <div className="mt-1 flex items-center justify-end gap-1"><Stars n={Number(rev)} /></div>}
+                          {t.invoiceAmount != null && Number(t.invoiceAmount) > 0 && <p className="mt-1 text-xs text-ink-700/70">{cedis(t.invoiceAmount ?? undefined)}</p>}
                         </div>
                       </div>
 
@@ -438,7 +467,8 @@ export default function EmployerDashboard() {
                             <div key={w.id} className="flex items-center gap-2 text-xs text-ink-700">
                               <span className="h-1.5 w-1.5 rounded-[9999px] bg-forest-600" />
                               <span className="font-medium">{w.acceptedBy?.fullName || `Xpert ${i + 1}`}</span>
-                              {w.acceptedBy?.phone && <span className="text-ink-700/50">· {w.acceptedBy.phone}</span>}
+                              {w.acceptedBy?.verified && <span className="text-forest-700">· Verified</span>}
+                              {typeof w.acceptedBy?.relevantJobs === 'number' && <span className="text-ink-700/60">· {w.acceptedBy.relevantJobs} similar jobs</span>}
                               {w.status === 'pending_confirmation' ? (
                                 <button onClick={() => setRating({ ...t, id: w.id, status: w.status, acceptedBy: w.acceptedBy } as Task)}
                                   className="ml-auto rounded-lg bg-forest-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-forest-500">
@@ -484,10 +514,31 @@ export default function EmployerDashboard() {
                         <p className="mt-2.5 text-xs leading-relaxed text-ink-700/70">{s.note}</p>
                       )}
 
+                      {/* The job, not the whole Xpert: who is assigned and how it's going */}
+                      {slots <= 1 && !isTerminal && ['offered', 'accepted', 'pending_confirmation'].includes(String(t.status)) && !t.replacementInProgress && (
+                        <XpertSummary xpert={t.acceptedBy as AssignedXpert | undefined} taskType={t.taskType} />
+                      )}
+                      {['accepted', 'pending_confirmation'].includes(String(t.status)) && <LiveJobSteps task={t} />}
+                      <JobNotices task={t} />
+
+                      {/* Past job record: amount paid, payment reference and feedback */}
+                      {isTerminal && (
+                        <div className="mt-3 grid gap-2 rounded-lg bg-gray-50 px-4 py-3 text-xs text-ink-700 sm:grid-cols-3">
+                          <div><span className="block text-ink-700/60">Amount</span>{t.invoiceAmount != null ? cedis(t.invoiceAmount ?? undefined) : '—'}</div>
+                          <div><span className="block text-ink-700/60">Payment reference</span>{String(t.paymentRef || '—')}</div>
+                          <div><span className="block text-ink-700/60">Feedback</span>{myReview ? `You rated ${myReview.rating}/5` : 'Not given'}{theirReview ? ` · Xpert rated you ${theirReview.rating}/5` : ''}</div>
+                        </div>
+                      )}
+                      {['employer_confirmed', 'completed'].includes(String(t.status)) && (
+                        <button onClick={() => setFlagging(t)} className="mt-3 mr-4 inline-flex items-center gap-1 text-xs font-medium text-ink-700 hover:underline">
+                          <Flag size={12} aria-hidden="true" /> Report an incident
+                        </button>
+                      )}
+
                       {t.status === 'invoice_sent' && (
                         <button onClick={() => goTab('invoices')}
                           className="mt-3 mr-4 rounded-lg bg-forest-600 px-4 py-2 text-sm font-semibold text-white hover:bg-forest-500">
-                          Review & pay invoice ({cedis(t.invoiceAmount ?? undefined)})
+                          Review quote ({cedis(t.invoiceAmount ?? undefined)})
                         </button>
                       )}
                       <button
@@ -555,23 +606,28 @@ export default function EmployerDashboard() {
                     </section>
                   )}
 
-                  {active.length > 0 && (
-                    <section>
-                      <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-ink-700/50">In progress</h2>
-                      <div className="space-y-3">{active.map((t) => <TaskItem key={String(t.id)} t={t} />)}</div>
-                    </section>
+                  {invoicesDue.length > 0 && (
+                    <button onClick={() => goTab('invoices')} className="flex w-full items-center justify-between rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-left text-sm font-medium text-amber-900">
+                      {invoicesDue.length} quote{invoicesDue.length === 1 ? '' : 's'} awaiting your response <ChevronRight size={16} aria-hidden="true" />
+                    </button>
                   )}
 
-                  {done.length > 0 && (
-                    <section>
-                      <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-ink-700/50">Completed</h2>
-                      <div className="space-y-3">{done.map((t) => <TaskItem key={String(t.id)} t={t} />)}</div>
+                  {[
+                    { title: 'Active jobs', list: active, empty: 'No jobs on site right now.' },
+                    { title: 'Upcoming', list: upcoming, empty: 'Nothing upcoming.' },
+                    { title: 'Past jobs', list: done, empty: 'No past jobs yet.' },
+                  ].map((g) => (
+                    <section key={g.title}>
+                      <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-ink-700/50">{g.title} ({g.list.length})</h2>
+                      {g.list.length
+                        ? <div className="space-y-3">{g.list.map((t) => <TaskItem key={String(t.id)} t={t} />)}</div>
+                        : <p className="text-sm text-ink-700/60">{g.empty}</p>}
                     </section>
-                  )}
+                  ))}
                 </div>
               )
             })() : (
-              <Empty icon={<Briefcase size={20} aria-hidden="true" />} text="No jobs yet. Post a task and BeyondX will send you an invoice." />
+              <Empty icon={<Briefcase size={20} aria-hidden="true" />} text="No jobs yet. Request an Xpert and BeyondX will send you a quote." />
             )}
           </div>
         )}
@@ -584,6 +640,8 @@ export default function EmployerDashboard() {
       <Toast toast={toast} onClose={() => setToast(null)} />
 
       {rating && <RateModal task={rating} onClose={() => setRating(null)} onDone={afterConfirm} onError={(m) => setToast({ id: Date.now(), kind: 'info', title: 'Could not confirm', detail: m })} />}
+      {flagging && <FlagModal task={flagging} side="employer" token={session.employerToken()} onClose={() => setFlagging(null)}
+        onDone={() => { setFlagging(null); setToast({ id: Date.now(), kind: 'success', title: 'Report sent', detail: 'BeyondX will review it and follow up with you.' }) }} />}
       {editing && profile !== undefined && (
         <ProfileModal
           role="EMPLOYER"
@@ -626,9 +684,9 @@ function InvoiceCard({ task, onChanged }: { task: Task; onChanged: (msg: string)
     catch (e) { setErr(e instanceof ApiError ? e.message : 'Could not submit payment. Please try again.'); setBusy(null) }
   }
   const decline = async () => {
-    if (busy || !window.confirm('Decline this invoice? The request will be closed. You can post a new task at any time.')) return
+    if (busy || !window.confirm('Decline this quote? The request will be closed. You can make a new request at any time.')) return
     setBusy('decline'); setErr(null)
-    try { await tasksApi.declineInvoice(task.id); onChanged('Invoice declined') }
+    try { await tasksApi.declineInvoice(task.id); onChanged('Quote declined') }
     catch (e) { setErr(e instanceof ApiError ? e.message : 'Could not decline. Please try again.'); setBusy(null) }
   }
 
@@ -643,13 +701,14 @@ function InvoiceCard({ task, onChanged }: { task: Task; onChanged: (msg: string)
           </p>
         </div>
         <div className="text-right">
-          <p className="text-xs text-ink-700/60">Invoice total</p>
+          <p className="text-xs text-ink-700/60">Quote total</p>
           <p className="text-2xl font-bold text-ink-900">{cedis(amount)}</p>
         </div>
       </div>
       {task.invoiceNote && <p className="mt-3 whitespace-pre-line rounded-lg bg-gray-50 px-4 py-3 text-sm text-ink-800">{task.invoiceNote}</p>}
 
       <div className="mt-5 border-t border-ink-900/8 pt-5">
+        <p className="mb-2 text-sm text-ink-700">To accept, pay the quote in full. Payment is held by BeyondX and released to the Xpert after you confirm the work.</p>
         <p className="text-sm text-ink-800">
           Send <span className="font-semibold">{cedis(amount)}</span> to <span className="font-semibold">{MOMO_NUMBER}</span> ({MOMO_NAME}), then enter the transaction reference below.
         </p>
@@ -666,12 +725,12 @@ function InvoiceCard({ task, onChanged }: { task: Task; onChanged: (msg: string)
             className="flex-1 rounded-lg border border-ink-900/15 bg-white px-3.5 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/25" />
           <button onClick={pay} disabled={!ref.trim() || !!busy}
             className="rounded-lg bg-forest-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-forest-500 disabled:opacity-50">
-            {busy === 'pay' ? 'Submitting…' : 'Pay invoice'}
+            {busy === 'pay' ? 'Submitting…' : 'Accept & pay'}
           </button>
         </div>
         {err && <p className="mt-2 text-sm text-red-700">{err}</p>}
         <button onClick={decline} disabled={!!busy} className="mt-4 text-sm font-medium text-red-600 hover:underline disabled:opacity-50">
-          {busy === 'decline' ? 'Declining…' : 'Decline invoice'}
+          {busy === 'decline' ? 'Declining…' : 'Decline quote'}
         </button>
       </div>
     </div>
@@ -680,22 +739,28 @@ function InvoiceCard({ task, onChanged }: { task: Task; onChanged: (msg: string)
 
 function RateModal({ task, onClose, onDone, onError }: { task: Task; onClose: () => void; onDone: (worker: string) => void; onError: (m: string) => void }) {
   useEsc(onClose)
-  const [skills, setSkills] = useState(0)
-  const [professionalism, setProfessionalism] = useState(0)
-  const [stars, setStars] = useState(0)
+  const [scores, setScores] = useState({ attendanceRating: 0, skillsRating: 0, professionalismRating: 0, taskCompletionRating: 0, rating: 0 })
+  const [priceFairness, setPriceFairness] = useState<'' | 'fair' | 'too_high' | 'too_low'>('')
   const [comment, setComment] = useState('')
-  const rated = skills > 0 && professionalism > 0 && stars > 0
+  const [incident, setIncident] = useState(false)
+  const [incidentText, setIncidentText] = useState('')
+  const [incidentDate, setIncidentDate] = useState(String(task.scheduledDate || new Date().toISOString().slice(0, 10)))
+  const rated = Object.values(scores).every((n) => n > 0) && !!priceFairness && (!incident || incidentText.trim().length >= 10)
   const [busy, setBusy] = useState(false)
   const { workerId } = dispatchDetails(task)
   const workerName = assignedXpert(task).name
-  const worker = workerName || (typeof task.employer === 'string' ? task.employer : task.taskType || 'the Xpert')
+  const worker = workerName || 'the Xpert'
+  const set = (k: keyof typeof scores) => (n: number) => setScores((s) => ({ ...s, [k]: n }))
 
   const submit = async () => {
-    if (busy || !rated) return
+    if (busy || !rated || !priceFairness) return
     setBusy(true)
     try {
       await tasksApi.complete(task.id)
-      await tasksApi.review(task.id, { rating: stars, skillsRating: skills, professionalismRating: professionalism }, comment).catch(() => null)
+      await tasksApi.review(task.id, { ...scores, priceFairness }, comment).catch(() => null)
+      if (incident) {
+        await tasksApi.flag(task.id, { category: 'Reported at confirmation', incidentDescription: incidentText.trim(), incidentDate }, session.employerToken()).catch(() => null)
+      }
       const emp = session.employer()
       const orgName = (emp?.orgName as string) || 'An employer'
       contact.send({
@@ -703,13 +768,11 @@ function RateModal({ task, onClose, onDone, onError }: { task: Task; onClose: ()
         email: (emp?.email as string) || undefined,
         phone: (emp?.phone as string) || undefined,
         message:
-          `${orgName} confirmed the work is complete. Payment is now due to the worker.\n\n` +
-          `Worker: ${workerName || worker}${workerId ? ` (${workerId})` : ''}\n` +
+          `${orgName} confirmed the work is complete. Payment is now due to the Xpert.\n\n` +
+          `Xpert: ${worker}${workerId ? ` (${workerId})` : ''}\n` +
           `Task: ${task.taskType || '—'}\nLocation: ${task.location || '—'}\nDuration: ${task.duration || '—'}\n` +
-          `Worker is owed: GHS ${Number(task.pay || 0).toFixed(2)}\n` +
-          `Employer rating: skills ${skills}/5, professionalism ${professionalism}/5, overall ${stars}/5\n` +
-          (comment.trim() ? `Feedback: ${comment.trim()}\n` : '') +
-          `\nPlease release the worker's payment to complete this job.`,
+          `Xpert is owed: GHS ${Number(task.pay || 0).toFixed(2)}\n` +
+          `\nPlease release the Xpert's payment to complete this job.`,
         category: 'payment_due',
       }).catch(() => null)
       onDone(worker)
@@ -721,13 +784,12 @@ function RateModal({ task, onClose, onDone, onError }: { task: Task; onClose: ()
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/60 p-4" onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby="rt-title" className="w-full max-w-sm rounded-2xl bg-white shadow-xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
-        {/* Header */}
+      <div role="dialog" aria-modal="true" aria-labelledby="rt-title" className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white shadow-xl" onClick={(e) => e.stopPropagation()}>
         <div className="bg-forest-700 px-6 py-5 text-center">
           <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-cream-50/15">
             <ShieldCheck size={22} aria-hidden="true" className="text-cream-50" />
           </div>
-          <h2 id="rt-title" className="font-serif text-lg font-semibold text-cream-50">Confirm the work is done</h2>
+          <h2 id="rt-title" className="font-serif text-lg font-semibold text-cream-50">How did the job go?</h2>
           <p className="mt-1 text-xs text-forest-200/80">{task.taskType}{task.location ? ` · ${task.location}` : ''}</p>
         </div>
 
@@ -736,29 +798,46 @@ function RateModal({ task, onClose, onDone, onError }: { task: Task; onClose: ()
             Once you confirm, BeyondX will release payment to {worker}. This cannot be undone.
           </p>
 
-          {/* Ratings: skills and professionalism first, then overall */}
-          <p className="mb-3 text-sm font-semibold text-ink-900">Rate {worker}</p>
-          <div className="space-y-3">
-            <div>
-              <div className="mb-1 text-xs font-semibold text-ink-700">Skills</div>
-              <StarPicker value={skills} onChange={setSkills} />
-            </div>
-            <div>
-              <div className="mb-1 text-xs font-semibold text-ink-700">Professionalism</div>
-              <StarPicker value={professionalism} onChange={setProfessionalism} />
-            </div>
-            <div>
-              <div className="mb-1 text-xs font-semibold text-ink-700">Overall rating</div>
-              <StarPicker value={stars} onChange={setStars} />
-            </div>
+          <p className="mb-2 text-sm font-semibold text-ink-900">Rate {worker}</p>
+          <div className="space-y-2.5">
+            <RatingRow label="Attendance" value={scores.attendanceRating} onChange={set('attendanceRating')} />
+            <RatingRow label="Quality of work (skills)" value={scores.skillsRating} onChange={set('skillsRating')} />
+            <RatingRow label="Professionalism" value={scores.professionalismRating} onChange={set('professionalismRating')} />
+            <RatingRow label="Task completion" value={scores.taskCompletionRating} onChange={set('taskCompletionRating')} />
+            <RatingRow label="Overall experience" value={scores.rating} onChange={set('rating')} />
           </div>
+
+          <fieldset className="mt-4">
+            <legend className="mb-1.5 text-sm font-semibold text-ink-900">Was the price fair for the work done?</legend>
+            <div className="grid grid-cols-3 gap-2">
+              {([['fair', 'Fair'], ['too_high', 'Too high'], ['too_low', 'Too low']] as const).map(([v, l]) => (
+                <button key={v} type="button" onClick={() => setPriceFairness(v)} aria-pressed={priceFairness === v}
+                  className={`rounded-md border px-2 py-2 text-sm ${priceFairness === v ? 'border-forest-600 bg-gray-50 font-semibold text-forest-700' : 'border-ink-900/15 text-ink-700'}`}>{l}</button>
+              ))}
+            </div>
+          </fieldset>
 
           <label htmlFor="rt-comment" className="sr-only">Optional feedback</label>
           <textarea id="rt-comment" value={comment} onChange={(e) => setComment(e.target.value)} rows={2}
-            placeholder="Optional feedback for BeyondX (not shown publicly)"
+            placeholder="Optional feedback for BeyondX (private)"
             className="mt-4 w-full rounded-xl border border-ink-900/12 bg-gray-50 p-3 text-sm text-ink-900 placeholder:text-ink-700/50 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/25" />
 
-          <div className="mt-4 flex gap-2">
+          <label className="mt-3 flex items-start gap-2 text-sm text-ink-800">
+            <input type="checkbox" checked={incident} onChange={(e) => setIncident(e.target.checked)} className="mt-0.5 h-4 w-4" />
+            <span><Flag size={13} className="mr-1 inline" aria-hidden="true" />Something specific went wrong — report an incident</span>
+          </label>
+          {incident && (
+            <div className="mt-2 space-y-2">
+              <textarea value={incidentText} onChange={(e) => setIncidentText(e.target.value)} rows={3}
+                placeholder="What happened? Be specific."
+                className="w-full rounded-lg border border-ink-900/15 p-3 text-sm outline-none focus:border-forest-600" />
+              <label className="block text-xs font-medium text-ink-700">When did it happen?
+                <input type="date" value={incidentDate} onChange={(e) => setIncidentDate(e.target.value)} className="mt-1 block rounded-md border border-ink-900/15 px-2 py-1.5 text-sm" />
+              </label>
+            </div>
+          )}
+
+          <div className="mt-5 flex gap-2">
             <button onClick={onClose} className="flex-1 rounded-md border border-ink-900/15 px-4 py-2.5 text-sm font-medium text-ink-700 hover:bg-ink-900/5">
               Not yet
             </button>

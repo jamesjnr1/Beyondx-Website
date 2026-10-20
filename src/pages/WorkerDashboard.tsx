@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
-import { MapPin, Calendar, Check, Star, RotateCcw, RefreshCw, AlertCircle, Camera, Plus, Trash2, Phone, AlertTriangle, ChevronRight, Map, ClipboardList, Wallet, Bus, Clock, Users, CheckCircle2, Loader2, LayoutDashboard, ShieldCheck, UserRound, HelpCircle } from 'lucide-react'
+import { MapPin, Calendar, Check, Star, RotateCcw, RefreshCw, AlertCircle, Camera, Plus, Trash2, Phone, AlertTriangle, ChevronRight, Map, ClipboardList, Wallet, Bus, Clock, Users, CheckCircle2, Loader2, LayoutDashboard, ShieldCheck, UserRound, HelpCircle, Flag, CircleDot } from 'lucide-react'
 import JobLocationMap from '../components/JobLocationMap'
 import DashboardHeader from './DashboardHeader'
 import DashboardSidebar, { DashboardMobileNav, type DashboardNavItem } from '../components/DashboardSidebar'
@@ -17,6 +17,7 @@ import { useRefreshOnResume } from '../hooks/useRefreshOnResume'
 import NotificationsBanner from '../components/NotificationsBanner'
 import { useAuth } from '../components/auth/AuthContext'
 import { BEYONDX_PHONE } from '../lib/payments'
+import { RatingRow, FlagModal } from '../components/tasks/JobParts'
 
 // ---------------------------------------------------------------------------
 // Work Experience & Certifications Card
@@ -387,17 +388,6 @@ function Stars({ n }: { n: number }) {
   )
 }
 
-const STAR_BTN = (value: number, onChange: (n: number) => void, label: string) => (
-  <div className="flex gap-1" role="radiogroup" aria-label={label}>
-    {[1, 2, 3, 4, 5].map((i) => (
-      <button key={i} type="button" role="radio" aria-checked={value === i} aria-label={`${i} star${i > 1 ? 's' : ''}`}
-        onClick={() => onChange(i)} className="rounded active:scale-90">
-        <Star size={28} aria-hidden="true" className={i <= value ? 'fill-forest-600 text-forest-600' : 'text-ink-900/20 hover:text-forest-600/40'} />
-      </button>
-    ))}
-  </div>
-)
-
 /** Report something on site that differs from what was agreed, or a safety
  *  issue. Goes to BeyondX staff. */
 function ReportModal({ task, onClose, onSent }: { task: Task; onClose: () => void; onSent: () => void }) {
@@ -442,33 +432,65 @@ function ReportModal({ task, onClose, onSent }: { task: Task; onClose: () => voi
   )
 }
 
-/** Xpert rates the employer after a completed job. */
-function RateEmployerModal({ task, onClose, onDone }: { task: Task; onClose: () => void; onDone: () => void }) {
-  const [stars, setStars] = useState(0)
+/** "How was this job?" — the Xpert's structured feedback after a job. Only the
+ *  overall score is shown to the employer; the rest is private to BeyondX. */
+function RateEmployerModal({ task, onClose, onDone, onFlag }: { task: Task; onClose: () => void; onDone: () => void; onFlag: () => void }) {
+  const [scores, setScores] = useState({ taskAccuracyRating: 0, employerBehaviorRating: 0, paymentRating: 0, workingConditionsRating: 0, scopeChangesRating: 0, communicationRating: 0, rating: 0 })
   const [comment, setComment] = useState('')
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
+  const done = Object.values(scores).every((n) => n > 0)
+  const set = (k: keyof typeof scores) => (n: number) => setScores((v) => ({ ...v, [k]: n }))
   const submit = async () => {
-    if (!stars || busy) return
+    if (!done || busy) return
     setBusy(true); setErr(null)
-    try { await tasksApi.workerReview(task.id, stars, comment.trim()); onDone() }
-    catch (e) { setErr(e instanceof ApiError ? e.message : 'Could not save your rating.'); setBusy(false) }
+    try { await tasksApi.workerReview(task.id, scores, comment.trim()); onDone() }
+    catch (e) { setErr(e instanceof ApiError ? e.message : 'Could not save your feedback.'); setBusy(false) }
   }
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center bg-ink-950/60 p-4 sm:items-center" onClick={onClose}>
-      <div role="dialog" aria-modal="true" aria-labelledby="rate-emp-title" className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
-        <h2 id="rate-emp-title" className="text-lg font-semibold text-ink-900">Rate {employerName(task)}</h2>
-        <p className="mt-1 text-sm text-ink-700/75">How was working for this employer on "{task.taskType}"?</p>
-        <div className="mt-4">{STAR_BTN(stars, setStars, 'Rating out of 5')}</div>
-        <textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={3} placeholder="Optional: payment, respect, working conditions…"
+      <div role="dialog" aria-modal="true" aria-labelledby="rate-emp-title" className="max-h-[92vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-xl" onClick={(e) => e.stopPropagation()}>
+        <h2 id="rate-emp-title" className="text-lg font-semibold text-ink-900">How was this job?</h2>
+        <p className="mt-1 text-sm text-ink-700/75">{task.taskType} for {employerName(task)}. Your answers go to BeyondX; the employer only sees your overall score.</p>
+        <div className="mt-4 space-y-2.5">
+          <RatingRow label="Task matched what was described" value={scores.taskAccuracyRating} onChange={set('taskAccuracyRating')} />
+          <RatingRow label="Employer behaviour" value={scores.employerBehaviorRating} onChange={set('employerBehaviorRating')} />
+          <RatingRow label="Payment" value={scores.paymentRating} onChange={set('paymentRating')} />
+          <RatingRow label="Working conditions" value={scores.workingConditionsRating} onChange={set('workingConditionsRating')} />
+          <RatingRow label="Scope changes handled fairly" value={scores.scopeChangesRating} onChange={set('scopeChangesRating')} />
+          <RatingRow label="Communication" value={scores.communicationRating} onChange={set('communicationRating')} />
+          <RatingRow label="Overall" value={scores.rating} onChange={set('rating')} />
+        </div>
+        <textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={2} placeholder="Anything else BeyondX should know? (private)"
           className="mt-4 w-full rounded-lg border border-ink-900/15 px-3.5 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/25" />
+        <button onClick={onFlag} className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-ink-700 hover:underline">
+          <Flag size={12} aria-hidden="true" /> Something specific happened? Report an incident
+        </button>
         {err && <p className="mt-2 text-sm text-red-700">{err}</p>}
         <div className="mt-4 flex gap-2">
           <button onClick={onClose} className="flex-1 rounded-md border border-ink-900/15 px-4 py-2.5 text-sm font-medium text-ink-800 hover:bg-ink-900/5">Later</button>
-          <button onClick={submit} disabled={!stars || busy} className="flex-1 rounded-md bg-forest-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busy ? 'Saving…' : 'Submit rating'}</button>
+          <button onClick={submit} disabled={!done || busy} className="flex-1 rounded-md bg-forest-600 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{busy ? 'Saving…' : 'Submit feedback'}</button>
         </div>
       </div>
     </div>
+  )
+}
+
+/** Plain-language verification checklist — never internal status names. */
+function VerificationSteps({ me }: { me: Worker | null }) {
+  const steps = (me?.verificationSteps as { key: string; label: string; state: 'done' | 'in_progress' | 'needed'; detail: string }[] | undefined) || []
+  if (!steps.length) return null
+  return (
+    <ul className="mt-4 space-y-2">
+      {steps.map((st) => (
+        <li key={st.key} className="flex items-start gap-3 rounded-lg border border-ink-900/8 bg-white px-4 py-3">
+          {st.state === 'done' ? <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-forest-600" aria-hidden="true" />
+            : st.state === 'needed' ? <AlertTriangle size={18} className="mt-0.5 shrink-0 text-amber-600" aria-hidden="true" />
+            : <CircleDot size={18} className="mt-0.5 shrink-0 text-ink-700/50" aria-hidden="true" />}
+          <span><span className="block text-sm font-semibold text-ink-900">{st.label}</span><span className="block text-sm text-ink-700">{st.detail}</span></span>
+        </li>
+      ))}
+    </ul>
   )
 }
 
@@ -482,6 +504,9 @@ function ApplicationStatus({ me }: { me: Worker | null }) {
     rejected: { title: "We couldn't approve your application", body: 'Unfortunately we could not approve your application at this time.' },
     suspended: { title: 'Your account is suspended', body: 'Your BeyondX account is suspended, so you can\'t take jobs right now.' },
   }
+  if (status === 'under_review' && me?.activatedAt) {
+    copy.under_review = { title: 'Your account is under review', body: 'BeyondX is reviewing your account, so you can\'t take new jobs for now. We will contact you.' }
+  }
   const c = copy[status] || copy.under_review
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
@@ -489,6 +514,7 @@ function ApplicationStatus({ me }: { me: Worker | null }) {
         <p className="text-sm text-ink-700/70">Hi {name},</p>
         <h1 className="mt-1 text-2xl font-bold text-ink-900">{c.title}</h1>
         <p className="mt-3 text-sm leading-relaxed text-ink-700">{c.body}</p>
+        {status === 'under_review' && !me?.activatedAt && <VerificationSteps me={me} />}
         {!!me?.applicationNote && status !== 'under_review' && (
           <p className="mt-4 rounded-lg bg-gray-50 px-4 py-3 text-sm text-ink-800"><span className="font-semibold">Note from BeyondX:</span> {String(me.applicationNote)}</p>
         )}
@@ -538,7 +564,10 @@ function Empty({ text, icon }: { text: string; icon?: ReactNode }) {
 }
 
 function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
-  const empPhone = typeof task.employer === 'object' ? (task.employer as Record<string, unknown>)?.phone as string | undefined : undefined
+  // Employer contact and site details are revealed once the Xpert accepts.
+  const revealed = ['accepted', 'pending_confirmation', 'employer_confirmed', 'completed'].includes(String(task.status))
+  const empPhone = revealed && typeof task.employer === 'object' ? (task.employer as Record<string, unknown>)?.phone as string | undefined : undefined
+  const empContact = revealed && typeof task.employer === 'object' ? (task.employer as Record<string, unknown>)?.contactPerson as string | undefined : undefined
   const empOrg = typeof task.employer === 'object' ? (task.employer as Record<string, unknown>)?.orgName as string | undefined : undefined
   const [showMap, setShowMap] = useState(false)
 
@@ -629,6 +658,22 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
           </p>
         )}
 
+        {/* Requirements are visible before accepting; site details after */}
+        {([['Required skills', task.requiredSkills], ['Special requirements', task.specialRequirements], ['Equipment or materials', task.equipmentNotes]] as const)
+          .filter(([, v]) => v).map(([k, v]) => (
+            <p key={k} className="mt-2 text-xs text-ink-700"><span className="font-semibold text-ink-900">{k}:</span> {v}</p>
+          ))}
+        {revealed && (task.siteNotes || empContact || !!task.photoUrls?.length) && (
+          <div className="mt-3 rounded-xl bg-gray-50 px-3 py-2.5 text-xs text-ink-700">
+            <p className="font-semibold text-ink-900">Site information</p>
+            {task.siteNotes && <p className="mt-1 whitespace-pre-line">{task.siteNotes}</p>}
+            {empContact && <p className="mt-1">Contact on site: {empContact}{empPhone ? ` · ${empPhone}` : ''}</p>}
+            {!!task.photoUrls?.length && (
+              <div className="mt-2 flex flex-wrap gap-2">{task.photoUrls.map((u) => <a key={u} href={u} target="_blank" rel="noopener noreferrer"><img src={u} alt="" className="h-12 w-12 rounded object-cover" /></a>)}</div>
+            )}
+          </div>
+        )}
+
         {/* Map */}
         {showMap && task.location && task.location !== 'Remote' && (
           <div className="mt-3">
@@ -696,6 +741,7 @@ export default function WorkerDashboard() {
   const [toast, setToast] = useState<ToastMsg>(null)
   const [reportTask, setReportTask] = useState<Task | null>(null)
   const [rateTask, setRateTask] = useState<Task | null>(null)
+  const [flagTask, setFlagTask] = useState<Task | null>(null)
 
   const load = useCallback(async () => {
     setError(null)
@@ -840,6 +886,14 @@ export default function WorkerDashboard() {
       `${employerName(t)} will confirm, then BeyondX releases your payment.`,
     )
 
+  const checkIn = (t: Task, step: 'arrived' | 'started') =>
+    act(
+      t,
+      () => (step === 'arrived' ? tasksApi.arrived(t.id) : tasksApi.started(t.id)),
+      step === 'arrived' ? 'Arrival recorded' : 'Work started',
+      step === 'arrived' ? 'The employer can see you are on site.' : 'Tap Mark complete when the job is done.',
+    )
+
   const [confirmDeclineTask, setConfirmDeclineTask] = useState<Task | null>(null)
 
   const declineOffer = async (t: Task) => {
@@ -866,7 +920,7 @@ export default function WorkerDashboard() {
           `Location: ${t.location || '—'}\n` +
           `Employer: ${emp}\n` +
           `Amount: GHS ${Number(t.pay || 0).toFixed(2)}\n\n` +
-          `Action needed: Contact the employer to ask whether they want a replacement worker or a refund of their payment.`,
+          `Action needed: Contact the employer to ask whether they want a replacement Xpert or a refund of their payment.`,
         category: 'task_declined',
       }).catch(() => null)
       await load()
@@ -889,7 +943,7 @@ export default function WorkerDashboard() {
   // first-served. Re-enabled — this was restricted during the early-stage
   // rollout; the platform has since grown past that.
   const available = [...offers, ...open]
-  const displayName = (me?.fullName as string) || (me?.name as string) || 'Worker'
+  const displayName = (me?.fullName as string) || (me?.name as string) || 'Xpert'
   const photo = (me?.photoUrl as string) || undefined
   const completed = history.length
   const earned = history.reduce((sum, t) => sum + Number(t.pay || 0), 0)
@@ -966,7 +1020,7 @@ export default function WorkerDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <DashboardHeader role="WORKER" title="Worker Dashboard" name={displayName} avatar={photo} onEditProfile={() => setEditing(true)} tasks={[...offers, ...mine, ...history]}
+      <DashboardHeader role="XPERT" title="Xpert Dashboard" name={displayName} avatar={photo} onEditProfile={() => setEditing(true)} tasks={[...offers, ...mine, ...history]}
         navItems={headerNavItems} active={section} onSelect={(id) => setSection(id as typeof section)} />
       <div className="lg:flex">
         <DashboardSidebar items={navItems} active={section} onSelect={(id) => setSection(id as typeof section)} />
@@ -1120,6 +1174,16 @@ export default function WorkerDashboard() {
                                   <span className="inline-flex items-center gap-1.5 rounded-md bg-ink-900/8 px-3 py-1.5 text-xs font-semibold text-ink-700">
                                     <CheckCircle2 size={12} aria-hidden="true" className="text-forest-600" /> Awaiting confirmation
                                   </span>
+                                ) : canMarkDone && !t.arrivedAt && t.status === 'accepted' && !isRemote(t.taskType || '') ? (
+                                  <button onClick={() => checkIn(t, 'arrived')} disabled={busyId === t.id}
+                                    className="shrink-0 rounded-md bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
+                                    {busyId === t.id ? 'Saving…' : "I've arrived"}
+                                  </button>
+                                ) : canMarkDone && !t.startedAt && t.status === 'accepted' ? (
+                                  <button onClick={() => checkIn(t, 'started')} disabled={busyId === t.id}
+                                    className="shrink-0 rounded-md bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
+                                    {busyId === t.id ? 'Saving…' : 'Start work'}
+                                  </button>
                                 ) : canMarkDone ? (
                                   <button onClick={() => markDone(t)} disabled={busyId === t.id} aria-label={`Mark ${t.taskType || 'task'} complete`}
                                     className="shrink-0 rounded-md bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] disabled:opacity-60">
@@ -1167,6 +1231,9 @@ export default function WorkerDashboard() {
 
             {section === 'verification' && (
               <div>
+                <h2 className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-ink-700/50">Your verification</h2>
+                <p className="px-1 text-sm text-ink-700/70">Your status: <span className="font-semibold text-ink-900">{me?.accountStatus === 'active' ? 'Active' : me?.accountStatus === 'suspended' ? 'Suspended' : 'Under review'}</span></p>
+                <div className="mb-8"><VerificationSteps me={me} /></div>
                 <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-ink-700/50">Work experience & certifications</h2>
                 <p className="mb-4 px-1 text-sm text-ink-700/70">
                   This is how BeyondX verifies your skills. Certifications you add here can be reviewed and marked verified by our team.
@@ -1210,9 +1277,12 @@ export default function WorkerDashboard() {
                               <span className="text-xs text-ink-700/70">You rated them {myReview.rating}/5</span>
                             ) : (
                               <button onClick={() => setRateTask(t)} className="rounded-md border border-ink-900/15 px-3 py-1.5 text-xs font-semibold text-ink-800 hover:bg-ink-900/5">
-                                Rate employer
+                                How was this job?
                               </button>
                             )}
+                            <button onClick={() => setFlagTask(t)} className="inline-flex items-center gap-1 text-xs text-ink-700/70 hover:underline">
+                              <Flag size={11} aria-hidden="true" /> Report
+                            </button>
                             <span className="font-semibold text-ink-900">{cedis(t.pay)}</span>
                           </div>
                         </div>
@@ -1334,8 +1404,12 @@ export default function WorkerDashboard() {
           onSent={() => { setReportTask(null); setToast({ id: Date.now(), kind: 'success', title: 'Report sent', detail: 'Thank you — the BeyondX team will follow up.' }) }} />
       )}
       {rateTask && (
-        <RateEmployerModal task={rateTask} onClose={() => setRateTask(null)}
-          onDone={() => { setRateTask(null); setToast({ id: Date.now(), kind: 'success', title: 'Rating saved', detail: 'Thanks for rating this employer.' }); load() }} />
+        <RateEmployerModal task={rateTask} onClose={() => setRateTask(null)} onFlag={() => { setFlagTask(rateTask); setRateTask(null) }}
+          onDone={() => { setRateTask(null); setToast({ id: Date.now(), kind: 'success', title: 'Feedback saved', detail: 'Thank you — it helps BeyondX match better jobs.' }); load() }} />
+      )}
+      {flagTask && (
+        <FlagModal task={flagTask} side="xpert" token={session.workerToken()} onClose={() => setFlagTask(null)}
+          onDone={() => { setFlagTask(null); setToast({ id: Date.now(), kind: 'success', title: 'Report sent', detail: 'BeyondX will review it privately and follow up.' }) }} />
       )}
       {confirmDeclineTask && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-950/60 p-4">

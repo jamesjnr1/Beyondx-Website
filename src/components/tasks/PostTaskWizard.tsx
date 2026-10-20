@@ -1,16 +1,23 @@
 import { useState, type ReactNode } from 'react'
-import { AlertTriangle, Check, ChevronRight, MessageCircle, Phone, Zap } from 'lucide-react'
+import { AlertTriangle, Check, ChevronRight, MessageCircle, Phone, Repeat, Zap } from 'lucide-react'
+import ImageUpload from '../ImageUpload'
 import { tasks as tasksApi, ApiError, type Task } from '../../lib/api'
 import { categories, remoteCategories, allCategories } from '../../data'
 import { REMOTE_JOBS_ENABLED } from '../../lib/config'
 import { BEYONDX_PHONE } from '../../lib/payments'
 
-const STEPS = ['Task Details', 'Location & Time', 'Additional Info', 'Review & Submit'] as const
+const STEPS = ['What do you need', 'Where and when', 'Tell us about the work', 'Review & Submit'] as const
+const SCHEDULES = [
+  { value: 'every_monday', label: 'Every Monday' },
+  { value: 'every_weekday', label: 'Every weekday' },
+  { value: 'every_saturday', label: 'Every Saturday' },
+  { value: 'custom', label: 'Custom schedule' },
+] as const
 const PREMIUM_WINDOW_HOURS = 48
 
 export interface SubmittedTask {
   task: Task
-  summary: { taskType: string; location: string; duration: string; workersNeeded: number; scheduledDate?: string; scheduledTime?: string; premium: boolean }
+  summary: { taskType: string; location: string; duration: string; workersNeeded: number; scheduledDate?: string; scheduledTime?: string; premium: boolean; recurring?: string }
 }
 
 /** Jobs starting within 48 hours of posting are premium (charged extra);
@@ -37,7 +44,7 @@ function PricingNotice({ premium }: { premium: boolean }) {
   return premium ? (
     <div className="flex items-start gap-3 rounded-lg border border-ink-900/15 bg-white px-4 py-3 text-sm text-ink-800">
       <Zap size={17} className="mt-0.5 shrink-0 text-amber-600" aria-hidden="true" />
-      <p><strong>Premium job.</strong> This job starts within 48 hours, so premium pricing applies and your invoice will include an extra charge.</p>
+      <p><strong>Premium job.</strong> This job starts within 48 hours, so premium pricing applies and your quote will include an extra charge.</p>
     </div>
   ) : (
     <div className="rounded-lg border border-ink-900/10 bg-gray-50 px-4 py-3 text-sm text-ink-700">
@@ -65,20 +72,28 @@ function ReviewRow({ label, value }: { label: string; value: ReactNode }) {
   )
 }
 
-export default function PostTaskWizard({ onSubmitted, onContactSupport, onBack }: {
+export default function PostTaskWizard({ onSubmitted, onContactSupport, onBack, initialCategory }: {
   onSubmitted: (s: SubmittedTask) => void
   onContactSupport: () => void
   onBack: () => void
+  initialCategory?: string | null
 }) {
   const [step, setStep] = useState(0)
-  const [taskType, setTaskType] = useState('')
+  const [taskType, setTaskType] = useState(() => (initialCategory && allCategories.some((c) => c.title === initialCategory) ? initialCategory : ''))
   const [description, setDescription] = useState('')
   const [workersNeeded, setWorkersNeeded] = useState('')
   const [hours, setHours] = useState('')
   const [location, setLocation] = useState('')
   const [scheduledDate, setScheduledDate] = useState('')
   const [scheduledTime, setScheduledTime] = useState('08:00')
-  const [notes, setNotes] = useState('')
+  const [requiredSkills, setRequiredSkills] = useState('')
+  const [specialRequirements, setSpecialRequirements] = useState('')
+  const [equipmentNotes, setEquipmentNotes] = useState('')
+  const [siteNotes, setSiteNotes] = useState('')
+  const [photoUrls, setPhotoUrls] = useState<string[]>([])
+  const [recurring, setRecurring] = useState(false)
+  const [schedule, setSchedule] = useState('')
+  const [customSchedule, setCustomSchedule] = useState('')
   const [agreed, setAgreed] = useState(false)
   const [busy, setBusy] = useState(false)
   const [err, setErr] = useState<string | null>(null)
@@ -91,9 +106,12 @@ export default function PostTaskWizard({ onSubmitted, onContactSupport, onBack }
   const premium = isPremiumStart(scheduledDate, scheduledTime)
   const today = new Date().toISOString().split('T')[0]
 
+  const schedulePattern = !recurring ? null : schedule === 'custom' ? (customSchedule.trim() ? `custom:${customSchedule.trim()}` : '') : schedule
+  const scheduleText = !recurring ? 'One time' : schedule === 'custom' ? customSchedule.trim() : SCHEDULES.find((x) => x.value === schedule)?.label || ''
   const stepValid = [
-    !!taskType && description.trim().length > 0 && workers >= 1 && workers <= 100 && durationHours > 0 && durationHours <= 1000,
-    (isRemote || location.trim().length > 0) && !!scheduledDate && !!scheduledTime,
+    !!taskType && description.trim().length > 0,
+    (isRemote || location.trim().length > 0) && !!scheduledDate && !!scheduledTime
+      && workers >= 1 && workers <= 100 && durationHours > 0 && durationHours <= 1000 && (!recurring || !!schedulePattern),
     true,
     agreed,
   ]
@@ -105,19 +123,20 @@ export default function PostTaskWizard({ onSubmitted, onContactSupport, onBack }
     if (busy) return
     setErr(null); setBusy(true)
     const loc = isRemote ? 'Remote' : location.trim()
-    const fullDescription = notes.trim() ? `${description.trim()}\n\nAdditional info: ${notes.trim()}` : description.trim()
     try {
       const res = await tasksApi.create({
-        taskType, description: fullDescription, location: loc,
-        duration, durationHours, pay: 0, workersNeeded: workers,
+        taskType, description: description.trim(), location: loc,
+        duration, durationHours, workersNeeded: workers,
         scheduledDate, scheduledTime, premium,
+        requiredSkills, specialRequirements, equipmentNotes, siteNotes, photoUrls,
+        recurrence: recurring ? 'recurring' : 'one_time', schedulePattern: schedulePattern || undefined,
       })
       onSubmitted({
         task: res?.task || { id: '—', taskType, status: 'awaiting_invoice' },
-        summary: { taskType, location: loc, duration, workersNeeded: workers, scheduledDate, scheduledTime, premium },
+        summary: { taskType, location: loc, duration, workersNeeded: workers, scheduledDate, scheduledTime, premium, recurring: recurring ? scheduleText : undefined },
       })
     } catch (e) {
-      setErr(e instanceof ApiError ? e.message : 'Could not post your task. Please try again.')
+      setErr(e instanceof ApiError ? e.message : 'Could not send your request. Please try again.')
     } finally {
       setBusy(false)
     }
@@ -133,11 +152,11 @@ export default function PostTaskWizard({ onSubmitted, onContactSupport, onBack }
       <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-sm text-ink-700/70">
         <button onClick={onBack} className="hover:text-ink-900 hover:underline">Dashboard</button>
         <ChevronRight size={14} aria-hidden="true" />
-        <span className="font-medium text-ink-900">Post a Task</span>
+        <span className="font-medium text-ink-900">Request an Xpert</span>
       </nav>
 
-      <h1 className="mt-4 text-3xl font-bold text-ink-900">Post a Task</h1>
-      <p className="mt-1.5 text-sm text-ink-700/75">Tell us what you need. BeyondX reviews your task, sends you an invoice, and matches the right verified Xperts once it's paid.</p>
+      <h1 className="mt-4 text-3xl font-bold text-ink-900">Request an Xpert</h1>
+      <p className="mt-1.5 text-sm text-ink-700/75">Tell us what work you need done. BeyondX reviews it, sends you one firm quote, and then finds, verifies and manages the right Xpert for you.</p>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <div>
@@ -166,7 +185,7 @@ export default function PostTaskWizard({ onSubmitted, onContactSupport, onBack }
             <div className="mt-6 space-y-5">
               {step === 0 && (
                 <>
-                  <Field label="Task category" required>
+                  <Field label="Service category" required>
                     <select value={taskType} onChange={(e) => setTaskType(e.target.value)} className={inp}>
                       <option value="" disabled>Select a category</option>
                       {REMOTE_JOBS_ENABLED ? (<>
@@ -175,22 +194,12 @@ export default function PostTaskWizard({ onSubmitted, onContactSupport, onBack }
                       </>) : categories.map((c) => <option key={c.title}>{c.title}</option>)}
                     </select>
                   </Field>
-                  <Field label="Task description" required hint="Be as detailed as you can — BeyondX prices your invoice and matches Xperts from what you write.">
-                    <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={5}
-                      placeholder="e.g. Deep clean of a 3-bedroom office (about 120 m²): sweep and mop all floors, clean 12 windows inside and out, scrub 2 washrooms. Cleaning supplies provided."
+                  <Field label="Describe the work" required hint="The more detail the better — what needs doing, how big it is, the standard you expect. BeyondX prices your quote and matches the Xpert from what you write.">
+                    <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={6}
+                      placeholder="e.g. Deep clean of a 3-bedroom office (about 120 m²) on the second floor: sweep and mop all floors, clean 12 windows inside and out, scrub 2 washrooms and empty all bins. The kitchen is not included. We want it ready for clients by 2 pm."
                       className={`${inp} resize-y`} />
                   </Field>
                   <SurchargeNotice />
-                  <div className="grid gap-5 sm:grid-cols-2">
-                    <Field label="Number of Xperts needed" required>
-                      <input type="number" inputMode="numeric" min={1} max={100} step={1} value={workersNeeded}
-                        onChange={(e) => setWorkersNeeded(e.target.value)} placeholder="e.g. 2" className={inp} />
-                    </Field>
-                    <Field label="Expected duration (hours)" required hint="Total working hours, e.g. 4 for half a day, 8 for a full day.">
-                      <input type="number" inputMode="decimal" min={0.5} max={1000} step={0.5} value={hours}
-                        onChange={(e) => setHours(e.target.value)} placeholder="e.g. 6" className={inp} />
-                    </Field>
-                  </div>
                 </>
               )}
 
@@ -210,32 +219,90 @@ export default function PostTaskWizard({ onSubmitted, onContactSupport, onBack }
                     <Field label="Start time" required hint="Xperts get a reminder one hour before.">
                       <input type="time" value={scheduledTime} onChange={(e) => setScheduledTime(e.target.value)} className={inp} />
                     </Field>
+                    <Field label="Expected duration (hours)" required hint="Total working hours, e.g. 4 for half a day, 8 for a full day.">
+                      <input type="number" inputMode="decimal" min={0.5} max={1000} step={0.5} value={hours}
+                        onChange={(e) => setHours(e.target.value)} placeholder="e.g. 6" className={inp} />
+                    </Field>
+                    <Field label="Number of Xperts needed" required>
+                      <input type="number" inputMode="numeric" min={1} max={100} step={1} value={workersNeeded}
+                        onChange={(e) => setWorkersNeeded(e.target.value)} placeholder="e.g. 2" className={inp} />
+                    </Field>
                   </div>
                   {scheduledDate && <PricingNotice premium={premium} />}
+
+                  <fieldset>
+                    <legend className="mb-1.5 text-sm font-medium text-ink-800">How often do you need this?</legend>
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {[{ v: false, l: 'One time' }, { v: true, l: 'Recurring — I need this regularly' }].map((o) => (
+                        <label key={o.l} className={`flex cursor-pointer items-center gap-2.5 rounded-lg border px-3.5 py-2.5 text-sm ${recurring === o.v ? 'border-forest-600 bg-gray-50 font-medium text-ink-900' : 'border-ink-900/15 text-ink-800'}`}>
+                          <input type="radio" name="recurrence" checked={recurring === o.v} onChange={() => setRecurring(o.v)} className="h-4 w-4 text-forest-600" />
+                          {o.l}
+                        </label>
+                      ))}
+                    </div>
+                  </fieldset>
+                  {recurring && (
+                    <div className="space-y-3 rounded-lg border border-ink-900/10 bg-gray-50 px-4 py-3.5">
+                      <div className="flex flex-wrap gap-2">
+                        {SCHEDULES.map((o) => (
+                          <button key={o.value} type="button" onClick={() => setSchedule(o.value)}
+                            className={`rounded-lg border px-3 py-1.5 text-sm ${schedule === o.value ? 'border-forest-600 bg-white font-semibold text-forest-700' : 'border-ink-900/15 bg-white text-ink-800'}`}>
+                            {o.label}
+                          </button>
+                        ))}
+                      </div>
+                      {schedule === 'custom' && (
+                        <input value={customSchedule} onChange={(e) => setCustomSchedule(e.target.value)} placeholder="e.g. Every other Wednesday and Friday" className={inp} />
+                      )}
+                      <p className="flex items-start gap-2 text-sm text-ink-700">
+                        <Repeat size={15} className="mt-0.5 shrink-0 text-forest-700" aria-hidden="true" />
+                        Your usual team will be prioritized whenever available. If they cannot make it, we will arrange a replacement.
+                      </p>
+                    </div>
+                  )}
                 </>
               )}
 
               {step === 2 && (
                 <>
-                  <Field label="Anything else the Xperts should know?" hint="Required skills, equipment or materials, access instructions, who to ask for — optional.">
-                    <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={4} placeholder="e.g. Ask for Ama at the front desk. Ladder needed for the high windows." className={`${inp} resize-y`} />
+                  <Field label="Required skills" hint="Optional. e.g. tiling, operating a floor scrubber, food handling.">
+                    <input value={requiredSkills} onChange={(e) => setRequiredSkills(e.target.value)} placeholder="e.g. Window cleaning at height" className={inp} />
                   </Field>
+                  <Field label="Special requirements" hint="Optional. Anything the Xpert must have or do.">
+                    <textarea value={specialRequirements} onChange={(e) => setSpecialRequirements(e.target.value)} rows={2} placeholder="e.g. Must wear closed shoes; quiet work only before 10 am" className={`${inp} resize-y`} />
+                  </Field>
+                  <Field label="Equipment or materials" hint="Optional. Say what you provide and what the Xpert should bring.">
+                    <textarea value={equipmentNotes} onChange={(e) => setEquipmentNotes(e.target.value)} rows={2} placeholder="e.g. We provide cleaning supplies; bring a ladder" className={`${inp} resize-y`} />
+                  </Field>
+                  <Field label="Site information" hint="Optional. Access, parking, who to ask for. Only shared with the Xpert once they accept.">
+                    <textarea value={siteNotes} onChange={(e) => setSiteNotes(e.target.value)} rows={2} placeholder="e.g. Second floor, ask for Ama at the front desk" className={`${inp} resize-y`} />
+                  </Field>
+                  <ImageUpload label="Photos of the site or the job" hint="Strongly encouraged — photos help us price and match accurately. Up to 6."
+                    urls={photoUrls} onChange={setPhotoUrls} max={6} folder="job-requests" />
                   <div className="rounded-lg border border-ink-900/10 bg-gray-50 px-4 py-3.5 text-sm text-ink-700">
                     <p className="font-semibold text-ink-900">How pricing works</p>
-                    <p className="mt-1">There's no price at this stage. BeyondX reviews your task and sends you an invoice. You review it, then pay to have Xperts matched — or decline it at no cost.</p>
+                    <p className="mt-1">There's no price at this stage. BeyondX reviews your request and sends you one firm quote. You can accept it or decline it — no haggling, and declining costs nothing.</p>
                   </div>
                 </>
               )}
 
               {step === 3 && (
                 <dl className="divide-y divide-ink-900/8">
-                  <ReviewRow label="Task category" value={taskType} />
-                  <ReviewRow label="Task description" value={notes.trim() ? `${description.trim()}\n\nAdditional info: ${notes.trim()}` : description.trim()} />
+                  <ReviewRow label="Service category" value={taskType} />
+                  <ReviewRow label="Description" value={description.trim()} />
                   <ReviewRow label="Location" value={isRemote ? 'Remote' : location} />
                   <ReviewRow label="Date & start time" value={scheduleLabel} />
                   <ReviewRow label="Expected duration" value={duration} />
                   <ReviewRow label="Number of Xperts" value={workers} />
-                  <ReviewRow label="Pricing" value={premium ? 'Premium (starts within 48 hours) — invoice to follow' : 'Standard — invoice to follow'} />
+                  <ReviewRow label="How often" value={scheduleText} />
+                  {requiredSkills.trim() && <ReviewRow label="Required skills" value={requiredSkills.trim()} />}
+                  {specialRequirements.trim() && <ReviewRow label="Special requirements" value={specialRequirements.trim()} />}
+                  {equipmentNotes.trim() && <ReviewRow label="Equipment or materials" value={equipmentNotes.trim()} />}
+                  {siteNotes.trim() && <ReviewRow label="Site information" value={siteNotes.trim()} />}
+                  <ReviewRow label="Photos" value={photoUrls.length ? (
+                    <span className="flex flex-wrap gap-2">{photoUrls.map((u) => <img key={u} src={u} alt="" className="h-14 w-14 rounded-md object-cover" />)}</span>
+                  ) : 'None added'} />
+                  <ReviewRow label="Pricing" value={premium ? 'Premium (starts within 48 hours) — quote to follow' : 'Standard — quote to follow'} />
                 </dl>
               )}
               {step === 3 && (
@@ -264,7 +331,7 @@ export default function PostTaskWizard({ onSubmitted, onContactSupport, onBack }
               ) : (
                 <button onClick={submit} disabled={busy || !agreed}
                   className="rounded-lg bg-ink-900 px-8 py-2.5 text-sm font-semibold text-cream-50 transition-colors hover:bg-ink-800 disabled:opacity-60">
-                  {busy ? 'Submitting…' : 'Submit Task'}
+                  {busy ? 'Submitting…' : 'Submit request'}
                 </button>
               )}
             </div>
@@ -274,7 +341,7 @@ export default function PostTaskWizard({ onSubmitted, onContactSupport, onBack }
         {/* Need help? */}
         <aside className="h-fit rounded-2xl border border-ink-900/10 bg-gray-100 p-6 lg:mt-14">
           <h2 className="text-base font-semibold text-ink-900">Need help?</h2>
-          <p className="mt-1.5 text-sm text-ink-700/80">Our team is here to assist you in creating the right task.</p>
+          <p className="mt-1.5 text-sm text-ink-700/80">Our team can help you describe the work so we can match the right Xpert.</p>
           <div className="mt-5 space-y-4">
             <a href={`tel:${BEYONDX_PHONE.replace(/\s/g, '')}`} className="flex items-start gap-3 text-sm">
               <Phone size={17} className="mt-0.5 shrink-0 text-ink-900" aria-hidden="true" />

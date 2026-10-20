@@ -7,7 +7,7 @@ const chain = [
   { icon: UserCheck, label: 'Assigned' },
   { icon: Hammer, label: 'Performs' },
   { icon: Star, label: 'Reviewed' },
-  { icon: TrendingUp, label: 'Record updated' },
+  { icon: TrendingUp, label: 'Performance record updated' },
 ]
 
 export default function TrustChain() {
@@ -21,12 +21,12 @@ export default function TrustChain() {
             How we build trust
           </span>
           <h2 className="font-serif text-2xl font-medium leading-tight text-ink-900 text-balance sm:text-4xl lg:text-5xl">
-            A record that grows with{' '}
-            <span className="italic gradient-text">every job.</span>
+            How BeyondX{' '}
+            <span className="italic gradient-text">verifies Xperts.</span>
           </h2>
           <p className="mt-4 text-base text-ink-700 text-pretty sm:text-lg">
-            We don't just ask whether someone says they can do the job. We verify
-            their information, then build a record of their performance over time.
+            We do not just ask whether someone says they can do the job. We verify
+            their information and build a record of their performance over time.
           </p>
         </div>
 

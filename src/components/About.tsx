@@ -5,16 +5,16 @@ const blocks = [
   {
     eyebrow: 'About BeyondX',
     title: 'Work that restores dignity. Hire that builds trust.',
-    body: 'BeyondX is a verified labour marketplace. It places vetted, skill-matched workers into short-term roles with responsible employers across Greater Accra, and tracks impact for workers rebuilding after setbacks as part of that mission.',
+    body: 'BeyondX is a managed labour service. You tell us what work you need done, and we find, verify and manage the right Xpert for it across Greater Accra — while tracking impact for Xperts rebuilding after setbacks as part of that mission.',
     image: '/about.jpg',
-    alt: 'Certified workers in safety harnesses on a construction site in Greater Accra',
+    alt: 'Certified Xperts in safety harnesses on a construction site in Greater Accra',
   },
   {
     eyebrow: 'How we work',
-    title: 'Every worker vetted. Every shift GPS-verified.',
-    body: 'Every worker is vetted through our guarantor verification process and carries a digital work record tracked in real time. Every employer receives GPS-verified attendance logs and responsive support if anything comes up.',
+    title: 'Every Xpert vetted. Every shift GPS-verified.',
+    body: 'Every Xpert is verified before they can take a job and builds a work record with every assignment. Every employer receives GPS-verified attendance logs, and if anything comes up, BeyondX handles it.',
     image: 'https://images.pexels.com/photos/8961342/pexels-photo-8961342.jpeg?auto=compress&cs=tinysrgb&w=1200',
-    alt: 'Workers collaborating on site',
+    alt: 'Xperts collaborating on site',
     reverse: true,
   },
 ]

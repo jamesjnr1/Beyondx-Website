@@ -6,12 +6,12 @@ const tiers = [
   {
     name: 'Seed Sponsor',
     amount: 'GHS 800',
-    description: 'Fund the certification of one worker — tools, training, and orientation.',
+    description: 'Fund the certification of one Xpert — tools, training, and orientation.',
   },
   {
     name: 'Growth Partner',
     amount: 'Cohort of 5',
-    description: 'Sponsor a cohort of five workers. Named co-branding and a quarterly impact report.',
+    description: 'Sponsor a cohort of five Xperts. Named co-branding and a quarterly impact report.',
   },
   {
     name: 'Anchor Partner',

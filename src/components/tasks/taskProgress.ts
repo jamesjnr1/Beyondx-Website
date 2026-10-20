@@ -11,9 +11,9 @@ export interface ProgressStep {
  *  moves it: awaiting_invoice → invoice_sent → payment_pending → open →
  *  offered → accepted → pending_confirmation → employer_confirmed → completed. */
 export const PROGRESS_STEPS: ProgressStep[] = [
-  { label: 'Task posted', description: 'BeyondX has received your task and is reviewing it.', icon: ClipboardCheck },
-  { label: 'Invoice & payment', description: 'BeyondX sends your invoice. Pay it to have Xperts matched.', icon: FileText },
-  { label: 'Matching an Xpert', description: 'Verified Xperts are being matched to your job.', icon: Search },
+  { label: 'Request received', description: 'BeyondX has received your request and is reviewing it.', icon: ClipboardCheck },
+  { label: 'Quote & payment', description: 'BeyondX sends one firm quote. Accept and pay it to have an Xpert assigned.', icon: FileText },
+  { label: 'Matching an Xpert', description: 'BeyondX is selecting and confirming the right verified Xpert.', icon: Search },
   { label: 'Xpert on the job', description: 'An Xpert has accepted and the job is underway.', icon: HardHat },
   { label: 'Confirm the work', description: 'The Xpert has marked the job done — confirm it to release payment.', icon: ShieldCheck },
   { label: 'Payment released', description: 'BeyondX pays the Xpert and the job is complete.', icon: Wallet },
@@ -30,6 +30,7 @@ export function currentStepIndex(status?: string): number {
       return 1
     case 'open':
     case 'offered':
+    case 'expired':
       return 2
     case 'accepted':
       return 3
@@ -40,7 +41,6 @@ export function currentStepIndex(status?: string): number {
     case 'completed':
       return PROGRESS_STEPS.length
     case 'cancelled':
-    case 'expired':
     case 'payment_rejected':
       return -1
     default:
@@ -50,7 +50,6 @@ export function currentStepIndex(status?: string): number {
 
 export const STOPPED_LABEL: Record<string, string> = {
   cancelled: 'Cancelled',
-  expired: 'Expired — no Xpert accepted in time',
   payment_rejected: 'Payment could not be verified',
 }
 

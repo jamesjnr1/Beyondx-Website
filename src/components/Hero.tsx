@@ -16,7 +16,7 @@ export default function Hero() {
           <source media="(max-width: 639px)" srcSet="/hero-mobile.jpg" />
           <img
             src="/hero.jpg"
-            alt="A BeyondX worker on a job site in Greater Accra"
+            alt="A BeyondX Xpert on a job site in Greater Accra"
             className="h-full w-full object-cover"
             loading="eager"
           />
@@ -35,15 +35,16 @@ export default function Hero() {
             className="max-w-2xl"
           >
             <p className="mb-4 text-[0.875rem] font-medium uppercase tracking-[0.18em] text-cream-200/80">
-              Skills-Verified Hiring
+              Skills-Verified Xperts
             </p>
             <h1 className="font-serif text-5xl font-medium leading-[1.05] text-cream-50 text-balance sm:text-6xl lg:text-7xl">
-              Where Work
-              <span className="block italic gradient-text">Meets Skill.</span>
+              Reliable Xperts.
+              <span className="block italic gradient-text">Managed by BeyondX.</span>
             </h1>
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-cream-200/90 text-pretty">
-              BeyondX connects Greater Accra employers with vetted, skill-matched
-              workers — verified, ready to work, and hired on merit.
+              Need reliable Xperts for a task, shift or ongoing work? Tell us what
+              you need. BeyondX handles the Xpert selection, coordination and
+              follow through.
             </p>
           </motion.div>
 

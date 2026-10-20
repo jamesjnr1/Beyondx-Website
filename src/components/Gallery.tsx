@@ -24,7 +24,7 @@ export default function Gallery() {
             <span className="italic gradient-text">soon</span>
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-lg text-ink-700 text-pretty">
-            We're putting together a look at BeyondX workers on the job, events, and
+            We're putting together a look at BeyondX Xperts on the job, events, and
             moments from the programme. Check back soon.
           </p>
         </motion.div>

@@ -31,7 +31,7 @@ function NoticeCard({
   return (
     <div className="h-full rounded-2xl border border-ink-900/8 bg-cream-50 p-5 shadow-sm sm:p-8">
       <h3 className="mb-1 font-serif text-lg font-semibold text-ink-900 sm:mb-6 sm:text-xl">
-        {audience === 'employer' ? 'For Employers' : 'For Workers'}
+        {audience === 'employer' ? 'For Employers' : 'For Xperts'}
       </h3>
       <p className="mb-4 text-sm font-medium text-ink-700 sm:-mt-4 sm:mb-5">{heading}</p>
       <ul className="space-y-3 sm:space-y-4">
@@ -62,7 +62,7 @@ export default function Transparency() {
             <span className="italic gradient-text">both sides.</span>
           </h2>
           <p className="mt-3 text-base text-ink-700 text-pretty sm:mt-4 sm:text-lg">
-            BeyondX makes clear commitments to every employer and every worker on this platform.
+            BeyondX makes clear commitments to every employer and every Xpert on this platform.
           </p>
         </div>
 
@@ -81,7 +81,7 @@ export default function Transparency() {
                   : 'bg-ink-900/5 text-ink-700 hover:bg-ink-900/10'
               }`}
             >
-              {a === 'employer' ? 'For Employers' : 'For Workers'}
+              {a === 'employer' ? 'For Employers' : 'For Xperts'}
             </button>
           ))}
         </div>
@@ -124,8 +124,8 @@ export default function Transparency() {
         >
           <p className="text-xs leading-relaxed text-ink-700 text-pretty sm:text-sm">
             <span className="font-semibold text-clay-600">Important:</span> Every
-            worker on this platform is individually vetted by our team before being
-            listed. Verification confirms identity and work-readiness. All workers
+            Xpert on this platform is individually vetted by our team before being
+            assigned. Verification confirms identity and work-readiness. All Xperts
             are held to the same standard of conduct and fairness.
           </p>
         </motion.div>

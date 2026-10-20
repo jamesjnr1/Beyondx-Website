@@ -6,7 +6,7 @@ const problems = [
   {
     icon: UserX,
     title: 'No-shows',
-    description: 'A worker agrees to a job, then never arrives — and you find out when the job was supposed to start.',
+    description: 'Someone agrees to a job, then never arrives — and you find out when the job was supposed to start.',
   },
   {
     icon: AlertTriangle,
@@ -30,7 +30,7 @@ const problems = [
   },
   {
     icon: Users,
-    title: 'Unreliable referrals',
+    title: 'Unreliable informal referrals',
     description: 'A friend-of-a-friend recommendation is only as good as the last job they happened to do well.',
   },
 ]

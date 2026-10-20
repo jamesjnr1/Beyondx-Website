@@ -8,7 +8,7 @@ import type { DashboardNavItem } from '../components/DashboardSidebar'
 export default function DashboardHeader({
   role, title, name, avatar, onEditProfile, tasks = [], navItems, active, onSelect, cta,
 }: {
-  role: 'WORKER' | 'EMPLOYER'
+  role: 'XPERT' | 'EMPLOYER'
   title: string
   name?: string
   avatar?: string
@@ -68,7 +68,7 @@ export default function DashboardHeader({
               {cta.label}
             </button>
           )}
-          <Notifications role={role === 'WORKER' ? 'worker' : 'employer'} tasks={tasks} />
+          <Notifications role={role === 'XPERT' ? 'worker' : 'employer'} tasks={tasks} />
           <button onClick={logout} aria-label="Log out and return home"
             className="flex h-9 w-9 items-center justify-center rounded-full border border-ink-900/15 text-ink-700 transition-colors hover:bg-ink-900/5 active:scale-[0.98] sm:w-auto sm:gap-1.5 sm:px-3">
             <LogOut size={15} aria-hidden="true" />

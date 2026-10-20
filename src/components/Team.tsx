@@ -36,7 +36,7 @@ export default function Team() {
           </h2>
           <p className="mt-4 text-lg leading-relaxed text-ink-700 text-pretty">
             BeyondX is built by a lean founding team out of Ashesi University,
-            connecting employers across Greater Accra with skilled, verified workers
+            connecting employers across Greater Accra with skilled, verified Xperts
             through a fast, mobile-first platform.
           </p>
           <p className="mt-3 text-sm font-medium uppercase tracking-wide text-ink-700/70">

@@ -2,6 +2,29 @@ import { motion } from 'framer-motion'
 import { useReveal } from '../hooks/useReveal'
 import { categories, remoteCategories } from '../data'
 import { REMOTE_JOBS_ENABLED } from '../lib/config'
+import { session } from '../lib/api'
+import { setRequestCategory } from '../lib/requestIntent'
+import { useAuth } from './auth/AuthContext'
+import { ArrowRight } from 'lucide-react'
+
+/** Every category leads into the request flow with that category chosen —
+ *  never to a list of Xperts. */
+function useRequestCategory() {
+  const { open, go } = useAuth()
+  return (category: string) => {
+    setRequestCategory(category)
+    if (session.employerToken()) go('employer-dashboard')
+    else open('employer-login')
+  }
+}
+
+function RequestLink() {
+  return (
+    <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-forest-700 sm:text-sm">
+      Request an Xpert <ArrowRight size={13} aria-hidden="true" />
+    </span>
+  )
+}
 
 const REMOTE_IMAGES: Record<string, string> = {
   'Data Entry & Digitisation': '/categories/remote/data-entry.jpg',
@@ -33,19 +56,24 @@ function CategoryTile({
   title,
   description,
   delay,
+  onRequest,
 }: {
   image: string
   title: string
   description: string
   delay: number
+  onRequest: (category: string) => void
 }) {
   return (
-    <motion.div
+    <motion.button
+      type="button"
+      onClick={() => onRequest(title)}
+      aria-label={`Request an Xpert for ${title}`}
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.3, margin: '0px 0px -10% 0px' }}
       transition={{ duration: 0.45, delay }}
-      className="overflow-hidden rounded-xl bg-cream-50 shadow-sm border border-ink-900/8 sm:rounded-2xl"
+      className="overflow-hidden rounded-xl bg-cream-50 text-left shadow-sm border border-ink-900/8 transition-shadow hover:shadow-md sm:rounded-2xl"
     >
       <div className="img-zoom relative overflow-hidden">
         <img
@@ -63,29 +91,31 @@ function CategoryTile({
         <p className="mt-1 text-xs leading-snug text-ink-700 text-pretty sm:mt-1.5 sm:text-sm sm:leading-relaxed">
           {description}
         </p>
+        <RequestLink />
       </div>
-    </motion.div>
+    </motion.button>
   )
 }
 
 export default function WorkerCategories() {
   const { ref, visible } = useReveal()
+  const request = useRequestCategory()
   const [featured, ...rest] = categories
 
   return (
-    <section id="workers" ref={ref} className="relative py-16 sm:py-32">
+    <section id="services" ref={ref} className="relative py-16 sm:py-32">
       <div className="mx-auto max-w-7xl px-5 sm:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <span className="mb-3 inline-block text-sm font-semibold uppercase tracking-widest text-clay-500 sm:mb-4">
-            What our workers do
+            What our Xperts do
           </span>
           <h2 className="font-serif text-2xl font-medium leading-tight text-ink-900 text-balance sm:text-4xl lg:text-5xl">
             Vetted across{' '}
             <span className="italic gradient-text">every category</span>
           </h2>
           <p className="mt-3 text-base text-ink-700 text-pretty sm:mt-4 sm:text-lg">
-            Workers are vetted and matched to employer needs throughout
-            Greater Accra{REMOTE_JOBS_ENABLED ? ' — on site or remote.' : '.'}
+            Choose a category and tell us what you need. BeyondX selects and
+            manages the right Xpert throughout Greater Accra{REMOTE_JOBS_ENABLED ? ' — on site or remote.' : '.'}
           </p>
         </div>
 
@@ -97,11 +127,14 @@ export default function WorkerCategories() {
         <div className="mt-10 sm:mt-16">
           {REMOTE_JOBS_ENABLED && <SectionLabel>On the field</SectionLabel>}
 
-          <motion.div
+          <motion.button
+            type="button"
+            onClick={() => request(featured.title)}
+            aria-label={`Request an Xpert for ${featured.title}`}
             initial={{ opacity: 0, y: 20 }}
             animate={visible ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5 }}
-            className="overflow-hidden rounded-xl bg-cream-50 shadow-sm border border-ink-900/8 sm:rounded-2xl"
+            className="block w-full overflow-hidden rounded-xl bg-cream-50 text-left shadow-sm border border-ink-900/8 transition-shadow hover:shadow-md sm:rounded-2xl"
           >
             <div className="img-zoom relative overflow-hidden">
               <img
@@ -119,8 +152,9 @@ export default function WorkerCategories() {
               <p className="mt-1.5 max-w-md text-sm leading-relaxed text-ink-700 text-pretty sm:mt-2 sm:text-base">
                 {featured.description}
               </p>
+              <RequestLink />
             </div>
-          </motion.div>
+          </motion.button>
 
           <div className="mt-3 grid grid-cols-2 gap-3 sm:mt-5 sm:gap-5 lg:grid-cols-3">
             {rest.map((cat, i) => (
@@ -130,6 +164,7 @@ export default function WorkerCategories() {
                 title={cat.title}
                 description={cat.description}
                 delay={(i % 3) * 0.06}
+                onRequest={request}
               />
             ))}
           </div>
@@ -151,13 +186,14 @@ export default function WorkerCategories() {
                   title={cat.title}
                   description={cat.description}
                   delay={(i % 3) * 0.06}
+                  onRequest={request}
                 />
               ))}
             </div>
 
             <p className="mt-5 text-center text-xs leading-relaxed text-ink-700/80 sm:mt-6 sm:text-sm">
               These are the categories we support today. As BeyondX grows, more
-              will be added based on demand from workers and employers.
+              will be added based on demand from Xperts and employers.
             </p>
           </div>
         )}

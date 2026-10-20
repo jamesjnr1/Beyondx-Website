@@ -12,7 +12,7 @@ const OPTIONS = {
   ],
   employer: [
     { value: 'employer_support', label: 'General support' },
-    { value: 'employer_report', label: 'Report a worker' },
+    { value: 'employer_report', label: 'Report a problem with an Xpert' },
   ],
 } as const
 
@@ -46,7 +46,7 @@ export default function SupportPanel({
     try {
       if (role === 'worker') {
         await contact.send({
-          name: (worker?.fullName as string) || (worker?.name as string) || 'BeyondX Worker',
+          name: (worker?.fullName as string) || (worker?.name as string) || 'BeyondX Xpert',
           phone: (worker?.phone as string) || undefined,
           message: `[${(worker?.workerId as string) || '—'}] ${text}`,
           category,
