@@ -763,7 +763,8 @@ async function reviewApplication(id,action){
   let note='';
   if(action!=='approve'){note=prompt(action==='reactivate'?'Reason for reactivating:':'Reason (shown to the Xpert):');if(!note)return;}
   else if(!confirm('Approve this applicant? Their account and dashboard are activated and they are texted.'))return;
-  try{await api('PATCH','/admin/applications/'+id,{action,note,by:adminName()});showToast('Saved.');loadApplications();loadClosedLoopBadges();}
+  try{await api('PATCH','/admin/applications/'+id,{action,note,by:adminName()});showToast('Saved.');loadApplications();loadClosedLoopBadges();
+    api('GET','/admin/workers').then(d=>{workers=d.workers||[];}).catch(()=>{});}
   catch(e){showToast(e.message);}
 }
 
@@ -1583,7 +1584,12 @@ async function asAssign(workerId){
 }
 function rw(){
   const q=(document.getElementById('wSearch')?.value||'').toLowerCase();
-  const list=q?workers.filter(w=>[w.fullName,w.workerId,w.phone,...(w.skills||[])].join(' ').toLowerCase().includes(q)):workers;
+  // Approved (active) Xperts first, most recently approved at the top; then
+  // everyone else by newest sign-up.
+  const t=d=>d?new Date(d).getTime():0;
+  const act=w=>(w.accountStatus||'active')==='active';
+  const sorted=[...workers].sort((a,b)=>act(a)!==act(b)?(act(a)?-1:1):act(a)?((t(b.activatedAt)-t(a.activatedAt))||(t(b.createdAt)-t(a.createdAt))):(t(b.createdAt)-t(a.createdAt)));
+  const list=q?sorted.filter(w=>[w.fullName,w.workerId,w.phone,...(w.skills||[])].join(' ').toLowerCase().includes(q)):sorted;
   document.getElementById('wc').textContent=list.length+' of '+workers.length+' registered';
   const noArea=workers.filter(w=>!w.homeArea).length;
   if(noArea>0 && !q){
@@ -1591,7 +1597,7 @@ function rw(){
     if(br && br.style.display==='none') br.innerHTML='';
   }
   const shown=list.slice(0,wtShown);
-  document.getElementById('wt').innerHTML=shown.map(w=>`<tr class="trow" onclick="showWorkerDetail('${w.id}')"><td class="tn">${w.fullName}</td><td class="tm">${w.workerId}</td><td class="tm">${w.phone||'&mdash;'}</td><td style="font-size:11px">${w.homeArea?`<span style="color:var(--g2);font-weight:600">${w.homeArea}</span>`:'<span style="color:#b91c1c;font-size:10px;">Not set</span>'}</td><td>${w.isBusy?'<span style="color:#b91c1c;font-weight:600;font-size:11px;">On a Job</span>':'<span style="color:var(--g3);font-weight:600;font-size:11px;">Available</span>'}</td><td style="font-size:11px;color:var(--ink3)">${(w.skills||[]).slice(0,2).join(', ')+(w.skills?.length>2?'&hellip;':'')}</td><td class="tg">${w.tasksCompleted}</td><td>${w.rating>0?parseFloat(w.rating).toFixed(1)+'&star;':'&mdash;'}</td></tr>`).join('')||`<tr><td colspan="8" class="empty">No matches</td></tr>`;
+  document.getElementById('wt').innerHTML=shown.map(w=>`<tr class="trow" onclick="showWorkerDetail('${w.id}')"><td class="tn">${w.fullName}${w.accountStatus==='active'&&w.activatedAt?`<div style="font-size:10.5px;font-weight:500;color:var(--g3);">Approved ${new Date(w.activatedAt).toLocaleDateString('en-GB',{day:'numeric',month:'short'})}</div>`:''}</td><td class="tm">${w.workerId}</td><td class="tm">${w.phone||'&mdash;'}</td><td style="font-size:11px">${w.homeArea?`<span style="color:var(--g2);font-weight:600">${w.homeArea}</span>`:'<span style="color:#b91c1c;font-size:10px;">Not set</span>'}</td><td>${w.accountStatus&&w.accountStatus!=='active'?`<span style="color:#92400e;font-weight:600;font-size:11px;">${w.reverificationRequired?'Paused — re-verifying':w.accountStatus==='suspended'?'Suspended':w.accountStatus==='rejected'?'Closed':'Under review'}</span>${w.isBusy?'<br><span style="color:#b91c1c;font-size:10.5px;">On a job</span>':''}`:w.isBusy?'<span style="color:#b91c1c;font-weight:600;font-size:11px;">On a Job</span>':'<span style="color:var(--g3);font-weight:600;font-size:11px;">Available</span>'}</td><td style="font-size:11px;color:var(--ink3)">${(w.skills||[]).slice(0,2).join(', ')+(w.skills?.length>2?'&hellip;':'')}</td><td class="tg">${w.tasksCompleted}</td><td>${w.rating>0?parseFloat(w.rating).toFixed(1)+'&star;':'&mdash;'}</td></tr>`).join('')||`<tr><td colspan="8" class="empty">No matches</td></tr>`;
   document.getElementById('wtMore').innerHTML=showMoreHtml(list.length-wtShown,'wtShown+=20;rw();');
 }
 async function blastLocationRequest(){
