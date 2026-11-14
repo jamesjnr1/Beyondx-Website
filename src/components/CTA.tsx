@@ -1,59 +1,43 @@
-import { motion } from 'framer-motion'
-import { useReveal } from '../hooks/useReveal'
 import { ArrowRight } from 'lucide-react'
 import { useAuth } from './auth/AuthContext'
+import { Reveal, container } from './site/ui'
 
+/** Closing call to action: one full-width deep-green band, straight above the footer. */
 export default function CTA() {
-  const { ref, visible } = useReveal()
   const { open } = useAuth()
-
   return (
-    <section id="cta" ref={ref} className="relative overflow-hidden py-14 sm:py-32">
-      <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={visible ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.7 }}
-          className="relative overflow-hidden rounded-3xl bg-forest-700 p-8 text-center grain sm:p-16"
-        >
-          <div className="pointer-events-none absolute inset-0">
-            <div className="absolute -right-20 -top-20 h-64 w-64 rounded-full bg-forest-400/20 blur-[80px]" />
-            <div className="absolute -bottom-20 -left-20 h-64 w-64 rounded-full bg-clay-400/15 blur-[80px]" />
+    <section id="cta" className="relative isolate overflow-hidden bg-gradient-to-br from-forest-800 to-forest-900 text-cream-50">
+      <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 -z-10">
+        {[260, 380, 500].map((s) => (
+          <span key={s} className="absolute right-0 top-0 rounded-full border border-cream-50/10" style={{ width: s, height: s, transform: `translate(${(s - 260) / 2}px, -${(s - 260) / 2}px)` }} />
+        ))}
+      </div>
+      <div className={`${container} grid items-center gap-8 py-16 sm:py-20 lg:grid-cols-[1.3fr_1fr] lg:gap-16`}>
+        <Reveal>
+          <h2 className="font-serif text-4xl font-medium leading-[1.08] tracking-[-0.015em] text-balance sm:text-5xl sm:leading-[1.08]">
+            Ready to <span className="italic text-forest-300">hire with purpose?</span>
+          </h2>
+          <p className="mt-4 max-w-xl text-lg leading-relaxed text-cream-100/80 text-pretty">
+            Join employers across Ghana building better businesses — and better futures — through BeyondX.
+          </p>
+        </Reveal>
+        <Reveal delay={0.08} className="flex flex-col gap-3 lg:items-end">
+          <div className="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
+            <button type="button" onClick={() => open('employer-login')}
+              className="group inline-flex items-center justify-center gap-2 rounded-full bg-cream-50 px-7 py-3.5 text-base font-semibold text-forest-900 transition-all hover:bg-white active:scale-[0.98]">
+              Hire an Xpert
+              <ArrowRight size={18} aria-hidden="true" className="transition-transform group-hover:translate-x-1" />
+            </button>
+            <button type="button" onClick={() => open('worker-login')}
+              className="inline-flex items-center justify-center rounded-full border border-cream-50/35 px-7 py-3.5 text-base font-semibold text-cream-50 transition-colors hover:bg-cream-50/10">
+              Sign up to be an Xpert
+            </button>
           </div>
-
-          <div className="relative z-10">
-            <h2 className="font-serif text-3xl font-medium leading-tight text-cream-50 text-balance sm:text-4xl lg:text-5xl">
-              Ready to{' '}
-              <span className="italic text-clay-300">hire with purpose?</span>
-            </h2>
-            <p className="mx-auto mt-5 max-w-xl text-lg text-cream-200/80 text-pretty">
-              Join employers across Ghana building better businesses —
-              and better futures — through BeyondX.
-            </p>
-
-            <div className="mt-9 flex flex-col items-center justify-center gap-3 sm:flex-row">
-              <button
-                type="button"
-                onClick={() => open('employer-login')}
-                className="group inline-flex items-center justify-center gap-2 rounded-full bg-cream-50 px-8 py-4 text-base font-semibold text-forest-700 shadow-lg transition-all hover:bg-cream-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-cream-50/70"
-              >
-                Hire an Xpert
-                <ArrowRight size={18} aria-hidden="true" className="transition-transform group-hover:translate-x-1" />
-              </button>
-              <button
-                type="button"
-                onClick={() => open('worker-login')}
-                className="inline-flex items-center justify-center gap-2 rounded-full border border-cream-50/30 px-8 py-4 text-base font-medium text-cream-50 transition-colors hover:bg-cream-50/10 focus:outline-none focus-visible:ring-2 focus-visible:ring-cream-50/70"
-              >
-                Sign up to be an Xpert
-              </button>
-            </div>
-            <p className="mt-5 text-sm text-cream-200/60">
-              Already have an account?{' '}
-              <button type="button" onClick={() => open('worker-login')} className="text-clay-300 underline-offset-2 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-cream-50/70">Sign in</button>
-            </p>
-          </div>
-        </motion.div>
+          <p className="text-sm text-cream-100/70">
+            Already have an account?{' '}
+            <button type="button" onClick={() => open('worker-login')} className="font-medium text-cream-50 underline underline-offset-4 hover:no-underline">Sign in</button>
+          </p>
+        </Reveal>
       </div>
     </section>
   )

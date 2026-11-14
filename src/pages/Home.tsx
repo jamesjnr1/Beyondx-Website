@@ -11,20 +11,21 @@ import Testimonial from '../components/Testimonial'
 import Sponsors from '../components/Sponsors'
 import CTA from '../components/CTA'
 
+/** Home: the promise, the problem, how it works, what we cover, why to trust it, then the next step. */
 export default function Home() {
   return (
     <>
       <Hero />
       <ProblemSection />
-      <Stats />
-      <About />
       <HowItWorks />
       <WorkerCategories />
+      <Stats />
+      <About />
       <Pillars />
       <TrustChain />
       <Transparency />
-      <Sponsors />
       <Testimonial />
+      <Sponsors />
       <CTA />
     </>
   )

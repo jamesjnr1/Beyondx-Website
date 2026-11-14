@@ -6,6 +6,7 @@ import { session } from '../lib/api'
 import { setRequestCategory } from '../lib/requestIntent'
 import { useAuth } from './auth/AuthContext'
 import { ArrowRight } from 'lucide-react'
+import { Accent, SectionHead, container, sectionY } from './site/ui'
 
 /** Every category leads into the request flow with that category chosen —
  *  never to a list of Xperts. */
@@ -20,7 +21,7 @@ function useRequestCategory() {
 
 function RequestLink() {
   return (
-    <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-forest-700 sm:text-sm">
+    <span className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-forest-800 sm:text-sm">
       Request an Xpert <ArrowRight size={13} aria-hidden="true" />
     </span>
   )
@@ -73,7 +74,7 @@ function CategoryTile({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.3, margin: '0px 0px -10% 0px' }}
       transition={{ duration: 0.45, delay }}
-      className="overflow-hidden rounded-xl bg-cream-50 text-left shadow-sm border border-ink-900/8 transition-shadow hover:shadow-md sm:rounded-2xl"
+      className="group overflow-hidden rounded-2xl border border-ink-900/10 bg-white text-left transition-colors hover:border-forest-600/50"
     >
       <div className="img-zoom relative overflow-hidden">
         <img
@@ -84,8 +85,8 @@ function CategoryTile({
           decoding="async"
         />
       </div>
-      <div className="p-2.5 sm:p-4">
-        <h3 className="font-serif text-[0.875rem] font-semibold leading-tight text-ink-900 sm:text-lg">
+      <div className="p-3.5 sm:p-5">
+        <h3 className="font-serif text-base font-medium leading-tight text-ink-900 sm:text-xl">
           {title}
         </h3>
         <p className="mt-1 text-xs leading-snug text-ink-700 text-pretty sm:mt-1.5 sm:text-sm sm:leading-relaxed">
@@ -103,21 +104,13 @@ export default function WorkerCategories() {
   const [featured, ...rest] = categories
 
   return (
-    <section id="services" ref={ref} className="relative py-16 sm:py-32">
-      <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <div className="mx-auto max-w-2xl text-center">
-          <span className="mb-3 inline-block text-sm font-semibold uppercase tracking-widest text-clay-500 sm:mb-4">
-            What our Xperts do
-          </span>
-          <h2 className="font-serif text-2xl font-medium leading-tight text-ink-900 text-balance sm:text-4xl lg:text-5xl">
-            Vetted across{' '}
-            <span className="italic gradient-text">every category</span>
-          </h2>
-          <p className="mt-3 text-base text-ink-700 text-pretty sm:mt-4 sm:text-lg">
-            Choose a category and tell us what you need. BeyondX selects and
-            manages the right Xpert throughout Greater Accra{REMOTE_JOBS_ENABLED ? ' — on site or remote.' : '.'}
-          </p>
-        </div>
+    <section id="services" ref={ref} className={`bg-white ${sectionY}`}>
+      <div className={container}>
+        <SectionHead
+          chip="What our Xperts do"
+          title={<>Vetted across <Accent>every category</Accent></>}
+          lead={<>Choose a category and tell us what you need. BeyondX selects and manages the right Xpert throughout Greater Accra{REMOTE_JOBS_ENABLED ? ' — on site or remote.' : '.'}</>}
+        />
 
         {/* On the field — one featured tile up top, then a compact grid.
             Seven items never divide evenly into a grid, so rather than leave
@@ -134,19 +127,19 @@ export default function WorkerCategories() {
             initial={{ opacity: 0, y: 20 }}
             animate={visible ? { opacity: 1, y: 0 } : {}}
             transition={{ duration: 0.5 }}
-            className="block w-full overflow-hidden rounded-xl bg-cream-50 text-left shadow-sm border border-ink-900/8 transition-shadow hover:shadow-md sm:rounded-2xl"
+            className="group block w-full overflow-hidden rounded-2xl border border-ink-900/10 bg-white text-left transition-colors hover:border-forest-600/50 sm:grid sm:grid-cols-2 sm:items-stretch"
           >
             <div className="img-zoom relative overflow-hidden">
               <img
                 src={featured.image}
                 alt=""
-                className="aspect-[16/10] w-full object-cover sm:aspect-[21/9]"
+                className="aspect-[16/10] h-full w-full object-cover sm:aspect-auto sm:min-h-[280px]"
                 loading="eager"
                 decoding="async"
               />
             </div>
-            <div className="p-4 sm:p-6 lg:p-8">
-              <h3 className="font-serif text-lg font-semibold text-ink-900 sm:text-2xl lg:text-3xl">
+            <div className="flex flex-col justify-center p-5 sm:p-8 lg:p-10">
+              <h3 className="font-serif text-2xl font-medium text-ink-900 lg:text-3xl">
                 {featured.title}
               </h3>
               <p className="mt-1.5 max-w-md text-sm leading-relaxed text-ink-700 text-pretty sm:mt-2 sm:text-base">

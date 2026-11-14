@@ -20,8 +20,9 @@ export default {
         '7xl': ['3.5rem', { lineHeight: '3.65rem' }],    // 56px  (was 72)
       },
       fontFamily: {
+        // Poppins for text, Fraunces for headings; both bundled with the site (see main.tsx)
         sans: ['Poppins', 'system-ui', 'sans-serif'],
-        serif: ['Fraunces', 'Georgia', 'serif'],
+        serif: ['"Fraunces Variable"', 'Fraunces', 'Georgia', 'serif'],
       },
       colors: {
         // Clean cool-neutral off-whites (faint green-grey tint to harmonise with brand green)

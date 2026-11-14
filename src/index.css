@@ -8,7 +8,7 @@
     -webkit-font-smoothing: antialiased;
   }
   body {
-    @apply bg-cream-50 text-ink-900 font-sans antialiased;
+    @apply bg-white text-ink-900 font-sans antialiased;
   }
   ::selection {
     @apply bg-forest-500/20 text-forest-800;
@@ -50,12 +50,9 @@
 @layer utilities {
   .text-balance { text-wrap: balance; }
   .text-pretty { text-wrap: pretty; }
+  /* Accent words in headings: italic serif in one solid brand green (was a gradient) */
   .gradient-text {
-    /* BeyondX Green → brighter lime */
-    background: linear-gradient(135deg, #6bab21 0%, #8bc53f 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: #578c1a;
   }
   .img-zoom { overflow: hidden; }
   .img-zoom img { transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1); }

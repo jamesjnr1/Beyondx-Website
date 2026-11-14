@@ -1,29 +1,20 @@
-import { motion } from 'framer-motion'
-import { useReveal } from '../hooks/useReveal'
 import { stats } from '../data'
+import { Reveal, container } from './site/ui'
 
 export default function Stats() {
-  const { ref, visible } = useReveal()
-
   return (
-    <section ref={ref} className="relative bg-forest-700 py-16 grain">
-      <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <div className="grid grid-cols-2 gap-8 lg:grid-cols-4">
-          {stats.map((stat, i) => (
-            <motion.div
-              key={stat.label}
-              initial={{ opacity: 0, y: 24 }}
-              animate={visible ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.5, delay: i * 0.1 }}
-              className="text-center"
-            >
-              <div className="font-serif text-4xl font-bold text-cream-50 sm:text-5xl">
-                {stat.value}
-              </div>
-              <div className="mt-2 text-sm text-cream-200/80">{stat.label}</div>
-            </motion.div>
-          ))}
-        </div>
+    <section aria-label="BeyondX at a glance" className="bg-white pb-16 sm:pb-24">
+      <div className={container}>
+        <Reveal>
+          <ul className="grid grid-cols-2 border-y border-ink-900/15 lg:grid-cols-4 lg:divide-x lg:divide-ink-900/10">
+            {stats.map((stat, i) => (
+              <li key={stat.label} className={`py-8 pr-4 sm:py-10 lg:px-8 ${i === 0 ? 'lg:pl-0' : ''} ${i > 1 ? 'border-t border-ink-900/10 lg:border-t-0' : ''}`}>
+                <p className="font-serif text-5xl font-medium leading-none tracking-[-0.02em] text-ink-900 sm:text-6xl">{stat.value}</p>
+                <p className="mt-3 max-w-[24ch] text-sm leading-relaxed text-ink-700/75">{stat.label}</p>
+              </li>
+            ))}
+          </ul>
+        </Reveal>
       </div>
     </section>
   )
