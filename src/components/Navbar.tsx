@@ -41,19 +41,31 @@ export default function Navbar() {
           <Logo tone={dark ? 'light' : 'dark'} />
         </button>
 
-        <div className="hidden items-center gap-8 md:flex">
+        {/* Page tabs: one pill group; the active page sits in a filled pill that slides between tabs. */}
+        <div className={`hidden items-center gap-1 rounded-full p-1 md:flex ${
+          dark ? 'border border-cream-50/15 bg-cream-50/10 backdrop-blur-md' : 'border border-ink-900/10 bg-white/70'
+        }`}>
           {tabs.map((t) => {
             const active = page === t.page
             return (
               <button
                 key={t.page}
                 onClick={() => go(t.page)}
-                className={`group relative text-sm font-medium transition-colors ${
-                  dark ? 'text-cream-200/90 hover:text-cream-50' : active ? 'text-forest-700' : 'text-ink-700 hover:text-forest-600'
+                aria-current={active ? 'page' : undefined}
+                className={`relative isolate rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                  active
+                    ? dark ? 'text-ink-900' : 'text-white'
+                    : dark ? 'text-cream-100/85 hover:bg-cream-50/10 hover:text-cream-50' : 'text-ink-700 hover:bg-ink-900/5 hover:text-ink-900'
                 }`}
               >
-                {t.label}
-                <span className={`absolute -bottom-1 left-0 h-0.5 bg-clay-400 transition-all duration-300 ${active && !dark ? 'w-full' : 'w-0 group-hover:w-full'}`} />
+                {active && (
+                  <motion.span
+                    layoutId="nav-active"
+                    transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+                    className={`absolute inset-0 -z-10 rounded-full ${dark ? 'bg-cream-50' : 'bg-forest-700'}`}
+                  />
+                )}
+                <span className="relative">{t.label}</span>
               </button>
             )
           })}
