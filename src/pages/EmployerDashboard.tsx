@@ -1,9 +1,18 @@
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
-import { ChevronRight, Star, ShieldCheck, RefreshCw, AlertCircle, Check, Map, Clock, MapPin, Briefcase, Users, Wallet, LayoutDashboard, FilePlus, ClipboardList, Inbox, HelpCircle, Repeat, Flag } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { ChevronRight, Star, ShieldCheck, AlertCircle, Map, Clock, Repeat, Flag } from 'lucide-react'
 import JobLocationMap from '../components/JobLocationMap'
 import DashboardHeader from './DashboardHeader'
 import DashboardSidebar, { DashboardMobileNav, type DashboardNavItem } from '../components/DashboardSidebar'
 import ActivityFeed, { type ActivityItem } from '../components/ActivityFeed'
+import {
+  SquaresFour, FilePlus as FilePlusP, Receipt, ClipboardText, Repeat as RepeatP, Lifebuoy, Briefcase as BriefcaseP,
+  UsersThree, Wallet as WalletP, ArrowsClockwise, Plus, WarningCircle, MapPin as MapPinP, CalendarBlank, UserCircle,
+  Buildings, Star as StarP, ShieldCheck as ShieldCheckP, Tray, HardHat, Hourglass,
+} from '@phosphor-icons/react'
+import {
+  PageHeader, KpiTile, Panel, Status, toneFromClass, InfoRow, ListRow, AlertBanner, EmptyState, SkeletonRows,
+  btnPrimary, btnSecondary, btnGhost, type IconType,
+} from '../components/dash/kit'
 import ProfileModal from '../components/ProfileModal'
 import Toast, { type ToastMsg } from '../components/Toast'
 import SupportPanel from '../components/SupportPanel'
@@ -70,35 +79,11 @@ function dispatchDetails(t: Task) {
 function Stars({ n }: { n: number }) {
   return <span className="inline-flex" role="img" aria-label={`${n} out of 5 stars`}>{[1, 2, 3, 4, 5].map((i) => <Star key={i} size={14} aria-hidden="true" className={i <= n ? 'fill-forest-600 text-forest-600' : 'text-ink-900/20'} />)}</span>
 }
-function Empty({ text, icon }: { text: string; icon?: ReactNode }) {
-  return (
-    <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-ink-900/15 bg-gray-50 p-10 text-center">
-      {icon && <span className="flex h-11 w-11 items-center justify-center rounded-full bg-ink-900/5 text-ink-700/50">{icon}</span>}
-      <p className="text-sm text-ink-700">{text}</p>
-    </div>
-  )
-}
-
-function Stat({ icon, label, value, extra }: { icon: ReactNode; label: string; value: string; extra?: ReactNode }) {
-  return (
-    <div className="rounded-2xl border border-ink-900/8 bg-white px-5 py-5 shadow-sm">
-      <div className="flex items-center gap-2.5 text-sm font-medium text-ink-700">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-ink-900/10 text-forest-600">{icon}</span>
-        <span className="truncate">{label}</span>
-      </div>
-      <div className="mt-3 flex items-center gap-2.5">
-        <span className="text-2xl font-bold text-ink-900">{value}</span>
-        {extra}
-      </div>
-    </div>
-  )
+function Empty({ text, icon }: { text: string; icon: IconType }) {
+  return <Panel bodyClassName=""><EmptyState icon={icon} text={text} /></Panel>
 }
 function Skeleton() {
-  return <div className="space-y-3" aria-hidden="true">{[0, 1, 2].map((i) => (
-    <div key={i} className="rounded-xl bg-white p-5 shadow-sm border border-ink-900/8">
-      <div className="h-4 w-1/3 animate-pulse rounded bg-ink-900/10" />
-      <div className="mt-2 h-3 w-1/2 animate-pulse rounded bg-ink-900/5" />
-    </div>))}</div>
+  return <SkeletonRows rows={3} />
 }
 
 export default function EmployerDashboard() {
@@ -178,12 +163,12 @@ export default function EmployerDashboard() {
   }
 
   const navItems: DashboardNavItem[] = [
-    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'post', label: 'Request an Xpert', icon: FilePlus },
-    { id: 'invoices', label: 'Quotes & Invoices', icon: Inbox, badge: invoicesDue.length },
-    { id: 'history', label: 'My Jobs', icon: ClipboardList, badge: pendingConfirmCount },
-    { id: 'recurring', label: 'Recurring Services', icon: Repeat },
-    { id: 'support', label: 'Support', icon: HelpCircle },
+    { id: 'overview', label: 'Overview', icon: SquaresFour },
+    { id: 'post', label: 'Request an Xpert', icon: FilePlusP },
+    { id: 'invoices', label: 'Quotes & Invoices', icon: Receipt, badge: invoicesDue.length },
+    { id: 'history', label: 'My Jobs', icon: ClipboardText, badge: pendingConfirmCount },
+    { id: 'recurring', label: 'Recurring Services', icon: RepeatP },
+    { id: 'support', label: 'Support', icon: Lifebuoy },
   ]
 
   const urgentTask = taskList.find((t) => t.status === 'pending_confirmation')
@@ -198,7 +183,7 @@ export default function EmployerDashboard() {
         ? 'success' : t.status === 'pending_confirmation' ? 'warning' : 'info'
       return {
         id: String(t.id),
-        icon: <Briefcase size={15} aria-hidden="true" />,
+        icon: <BriefcaseP size={20} weight="duotone" />,
         title: t.taskType || 'Task',
         detail: t.location as string | undefined,
         status: { label: s.label, tone },
@@ -224,93 +209,113 @@ export default function EmployerDashboard() {
           </div>
         )}
 
-        {!taskScreen && (
-        <div className="mb-6 flex items-start justify-between gap-3">
-          <div>
-            <h1 className="font-display text-2xl font-bold text-ink-900 sm:text-[1.75rem]">Welcome back, {orgName}!</h1>
-            <p className="mt-0.5 text-sm text-ink-700/70">
-              {pendingConfirmCount > 0
+        {!taskScreen && (() => {
+          const meta: Record<string, { title: string; subtitle: string }> = {
+            overview: {
+              title: `Welcome back, ${orgName}`,
+              subtitle: pendingConfirmCount > 0
                 ? `${pendingConfirmCount} job${pendingConfirmCount === 1 ? '' : 's'} waiting on your confirmation.`
-                : activeJobsCount > 0
-                  ? `${activeJobsCount} active job${activeJobsCount === 1 ? '' : 's'} right now.`
-                  : 'No active jobs — request an Xpert to get started.'}
-            </p>
-          </div>
-          <button onClick={() => { setLoading(true); load() }} aria-label="Refresh dashboard"
-            className="flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium text-ink-700/60 transition-colors hover:bg-ink-900/5 hover:text-ink-900">
-            <RefreshCw size={13} aria-hidden="true" /> Refresh
-          </button>
-        </div>
-        )}
+                : activeJobsCount > 0 ? `${activeJobsCount} active job${activeJobsCount === 1 ? '' : 's'} right now.`
+                : 'Here is everything happening with your requests and jobs.',
+            },
+            invoices: { title: 'Quotes & invoices', subtitle: 'BeyondX reviews every request and sends one firm quote. Accept it to have the right Xpert assigned, or decline it to close the request. There is no counter offer.' },
+            history: { title: 'My jobs', subtitle: 'Every job you have requested, from review to payment.' },
+            recurring: { title: 'Recurring services', subtitle: 'Work you need regularly. BeyondX assigns a preferred team and prioritises them for every visit.' },
+            support: { title: 'Support', subtitle: 'Questions, a problem on a job, or feedback. Our team replies quickly.' },
+          }
+          const m = meta[tab] || meta.overview
+          return (
+            <PageHeader title={m.title} subtitle={m.subtitle} actions={
+              <>
+                <button onClick={() => { setLoading(true); load() }} aria-label="Refresh dashboard" className={btnSecondary}>
+                  <ArrowsClockwise size={16} weight="bold" /> Refresh
+                </button>
+              </>
+            } />
+          )
+        })()}
 
         <div>
           <DashboardMobileNav items={navItems} active={tab} onSelect={goTab} />
 
           <div className="min-w-0 flex-1">
             {tab === 'overview' && (
-              <div className="space-y-5">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-ink-900/8 bg-white p-6 shadow-sm">
-                    <p className="text-sm font-medium text-ink-700">Your Current Status</p>
-                    <p className="mt-4 flex items-center gap-2 text-lg font-semibold text-forest-700">
-                      <Check size={20} strokeWidth={3} aria-hidden="true" /> Active
-                    </p>
-                    <p className="mt-3 text-sm text-ink-700/75">
-                      {invoicesDue.length > 0
-                        ? `${invoicesDue.length} quote${invoicesDue.length === 1 ? '' : 's'} awaiting your response.`
-                        : pendingConfirmCount > 0
-                          ? `${pendingConfirmCount} job${pendingConfirmCount === 1 ? '' : 's'} waiting on your confirmation.`
-                          : "You're all caught up on your jobs."}
-                    </p>
-                    <button onClick={() => setTab(invoicesDue.length ? 'invoices' : 'history')} className="mt-4 text-sm font-medium text-forest-700 underline underline-offset-4 hover:text-forest-500">
-                      {invoicesDue.length ? 'Review quotes →' : 'View My Jobs →'}
-                    </button>
-                    {Number(profile?.rating || 0) > 0 && (
-                      <p className="mt-4 flex items-center gap-2 border-t border-ink-900/8 pt-3 text-sm text-ink-700">
-                        Your rating from Xperts: <span className="font-semibold text-ink-900">{Number(profile?.rating).toFixed(1)}</span> <Stars n={Math.round(Number(profile?.rating))} />
-                      </p>
-                    )}
-                  </div>
+              <div className="space-y-6">
+                {(invoicesDue.length > 0 || pendingConfirmCount > 0) && (
+                  <AlertBanner
+                    tone="warning"
+                    icon={WarningCircle}
+                    title={pendingConfirmCount > 0
+                      ? `${pendingConfirmCount} job${pendingConfirmCount === 1 ? ' is' : 's are'} waiting for you to confirm the work`
+                      : `${invoicesDue.length} quote${invoicesDue.length === 1 ? ' is' : 's are'} ready for your response`}
+                    text={pendingConfirmCount > 0 ? 'Confirming releases payment to the Xpert.' : 'Accept and pay to have an Xpert assigned, or decline to close the request.'}
+                    action={<button onClick={() => goTab(pendingConfirmCount > 0 ? 'history' : 'invoices')} className={btnPrimary}>Review now</button>}
+                  />
+                )}
 
-                  <div className="rounded-2xl border border-ink-900/8 bg-white p-6 shadow-sm">
-                    <p className="border-b border-ink-900/8 pb-3 text-sm font-semibold text-ink-900">Next Job</p>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+                  <KpiTile tone="green" icon={BriefcaseP} label="Active jobs" value={activeJobsCount}
+                    hint={pendingConfirmCount ? `${pendingConfirmCount} waiting on you` : 'In progress right now'} onClick={() => goTab('history')} />
+                  <KpiTile tone="teal" icon={Receipt} label="Quotes to review" value={invoicesDue.length}
+                    hint={invoicesDue.length ? 'Ready for your response' : 'Nothing waiting'} onClick={() => goTab('invoices')} />
+                  <KpiTile tone="blue" icon={UsersThree} label="Xperts hired" value={workersHiredCount} hint="Across all your jobs" />
+                  <KpiTile tone="violet" icon={WalletP} label="Spend this month" value={cedis(spendThisMonth)} hint="Paid to Xperts" />
+                </div>
+
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                  <Panel className="lg:col-span-2" title="Next job" subtitle="The job that needs attention first" icon={HardHat}
+                    action={nextActiveTask ? <button onClick={() => trackTask(nextActiveTask.id)} className={btnGhost}>Track job</button> : undefined}>
                     {nextActiveTask ? (
-                      <>
-                        <p className="mt-3 text-lg font-semibold text-ink-900">{nextActiveTask.taskType || 'Task'}</p>
-                        <div className="mt-1.5 space-y-1 text-sm text-ink-700/75">
-                          <p className={st(nextActiveTask.status).color + ' font-medium'}>{st(nextActiveTask.status).label}</p>
-                          {nextActiveTask.location && (
-                            <p className="flex items-center gap-1.5"><MapPin size={13} aria-hidden="true" /> {nextActiveTask.location}</p>
+                      <div>
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <p className="font-display text-xl font-semibold text-ink-900">{nextActiveTask.taskType || 'Task'}</p>
+                          <Status tone={toneFromClass(st(nextActiveTask.status).color)}>{st(nextActiveTask.status).label}</Status>
+                        </div>
+                        <div className="mt-3 divide-y divide-ink-900/[0.06]">
+                          {nextActiveTask.location && <InfoRow icon={MapPinP} label="Location">{nextActiveTask.location}</InfoRow>}
+                          {!!nextActiveTask.scheduledDate && (
+                            <InfoRow icon={CalendarBlank} label="Scheduled">
+                              {new Date(`${nextActiveTask.scheduledDate}T${(nextActiveTask.scheduledTime as string) || '08:00'}:00`).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                            </InfoRow>
+                          )}
+                          {assignedXpert(nextActiveTask).name && <InfoRow icon={UserCircle} label="Xpert">{assignedXpert(nextActiveTask).name}</InfoRow>}
+                          {nextActiveTask.invoiceAmount != null && Number(nextActiveTask.invoiceAmount) > 0 && (
+                            <InfoRow icon={WalletP} label="Quote">{cedis(nextActiveTask.invoiceAmount ?? undefined)}</InfoRow>
                           )}
                         </div>
-                        <button onClick={() => trackTask(nextActiveTask.id)}
-                          className="mt-4 rounded-lg bg-forest-600 px-7 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98]">
-                          View Details
-                        </button>
-                      </>
+                        {st(nextActiveTask.status).note && <p className="mt-3 text-sm leading-relaxed text-ink-700/70">{st(nextActiveTask.status).note}</p>}
+                        <button onClick={() => trackTask(nextActiveTask.id)} className={`${btnPrimary} mt-5`}>View details</button>
+                      </div>
                     ) : (
-                      <>
-                        <p className="mt-2 text-sm text-ink-700/70">No active jobs right now.</p>
-                        <button onClick={() => goTab('post')}
-                          className="mt-3 rounded-md border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-800 hover:bg-ink-900/5">
-                          Request an Xpert
-                        </button>
-                      </>
+                      <EmptyState icon={Hourglass} title="No active jobs" text="When you request an Xpert, the job and its progress show here."
+                        action={<button onClick={() => goTab('post')} className={btnPrimary}><Plus size={16} weight="bold" /> Request an Xpert</button>} />
                     )}
-                  </div>
+                  </Panel>
+
+                  <Panel title="Your account" icon={Buildings}>
+                    <Status tone="success">Active employer</Status>
+                    <p className="mt-2 text-sm text-ink-700/70">
+                      {invoicesDue.length > 0 ? `${invoicesDue.length} quote${invoicesDue.length === 1 ? '' : 's'} awaiting your response.`
+                        : pendingConfirmCount > 0 ? `${pendingConfirmCount} job${pendingConfirmCount === 1 ? '' : 's'} waiting on your confirmation.`
+                        : "You're all caught up."}
+                    </p>
+                    {Number(profile?.rating || 0) > 0 && (
+                      <div className="mt-4 flex items-center gap-2 text-sm text-ink-700">
+                        <StarP size={18} weight="fill" className="text-amber-500" />
+                        <span className="font-semibold text-ink-900">{Number(profile?.rating).toFixed(1)}</span> rating from Xperts
+                      </div>
+                    )}
+                    <div className="-mx-5 mt-4 divide-y divide-ink-900/[0.06] border-t border-ink-900/[0.06] sm:-mx-6">
+                      <ListRow icon={FilePlusP} title="Request an Xpert" detail="Get one firm quote" onClick={() => goTab('post')} />
+                      <ListRow icon={RepeatP} title="Recurring services" detail="Regular work, preferred team" onClick={() => goTab('recurring')} />
+                      <ListRow icon={ShieldCheckP} title="Support" detail="We reply quickly" onClick={() => goTab('support')} />
+                    </div>
+                  </Panel>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <Stat icon={<Briefcase size={18} />} label="Active Jobs" value={`${activeJobsCount}`} />
-                  <Stat icon={<Users size={18} />} label="Xperts Hired" value={`${workersHiredCount}`} />
-                  <Stat icon={<Wallet size={18} />} label="Spend This Month" value={cedis(spendThisMonth)} />
-                </div>
-
-                <div>
-                  {loading ? <Skeleton /> : (
-                    <ActivityFeed title="Recent Activity" items={recentActivity} empty="No activity yet — your requests will show up here." />
-                  )}
-                </div>
+                {loading ? <Skeleton /> : (
+                  <ActivityFeed title="Recent activity" items={recentActivity} empty="No activity yet. Your requests will show up here." />
+                )}
               </div>
             )}
 
@@ -324,14 +329,10 @@ export default function EmployerDashboard() {
 
         {tab === 'invoices' && (
           <div className="space-y-4">
-            <div>
-              <h2 className="text-xl font-bold text-ink-900">Awaiting your response</h2>
-              <p className="mt-1 text-sm text-ink-700/70">BeyondX reviews every request and sends one firm quote. Accept it to have the right Xpert assigned, or decline it to close the request. There is no counter offer.</p>
-            </div>
             {loading ? <Skeleton /> : invoicesDue.length ? invoicesDue.map((t) => (
               <InvoiceCard key={String(t.id)} task={t} onChanged={(msg) => { setToast({ id: Date.now(), kind: 'success', title: msg, detail: '' }); load() }} />
             )) : (
-              <Empty icon={<Inbox size={20} aria-hidden="true" />} text="No quotes waiting. When BeyondX finishes reviewing a request, its quote appears here." />
+              <Empty icon={Tray} text="No quotes waiting. When BeyondX finishes reviewing a request, its quote appears here." />
             )}
             {taskList.some((t) => t.status === 'awaiting_invoice') && (
               <p className="text-sm text-ink-700/70">
@@ -343,30 +344,26 @@ export default function EmployerDashboard() {
 
         {tab === 'recurring' && (
           <div className="space-y-4">
-            <div>
-              <h2 className="text-xl font-bold text-ink-900">Recurring Services</h2>
-              <p className="mt-1 text-sm text-ink-700/70">Work you need regularly. BeyondX assigns a preferred team and prioritizes them for every visit.</p>
-            </div>
             {loading ? <Skeleton /> : services.length ? services.map((sv) => (
-              <div key={sv.id} className="rounded-2xl border border-ink-900/8 bg-white p-5 shadow-sm">
+              <div key={sv.id} className="rounded-2xl border border-ink-900/[0.08] bg-white p-5 shadow-[0_1px_2px_rgba(18,24,14,0.04)] sm:p-6">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-base font-semibold text-ink-900">{sv.taskType}{sv.location ? ` at ${sv.location}` : ''}</p>
+                    <p className="font-display text-lg font-semibold text-ink-900">{sv.taskType}{sv.location ? ` at ${sv.location}` : ''}</p>
                     <p className="mt-0.5 text-sm text-ink-700/75">{scheduleLabel(sv.schedulePattern)} · {sv.workersNeeded} Xpert{sv.workersNeeded === 1 ? '' : 's'}</p>
                   </div>
-                  <span className={`text-sm font-semibold ${sv.active ? 'text-forest-700' : 'text-ink-500'}`}>{sv.active ? 'Active' : 'Paused'}</span>
+                  <Status tone={sv.active ? 'success' : 'muted'}>{sv.active ? 'Active' : 'Paused'}</Status>
                 </div>
                 <div className="mt-3 grid gap-2 text-sm text-ink-700 sm:grid-cols-2">
                   <p><span className="text-ink-700/60">Preferred team:</span> {sv.preferredTeamAssigned ? 'Assigned by BeyondX' : 'Being assigned by BeyondX'}</p>
                   <p><span className="text-ink-700/60">Next service:</span> {sv.nextServiceDate ? new Date(`${sv.nextServiceDate}T00:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }) : 'To be scheduled'}</p>
                 </div>
-                <p className="mt-3 flex items-start gap-2 rounded-lg bg-gray-50 px-3 py-2.5 text-sm text-ink-700">
+                <p className="mt-3 flex items-start gap-2 rounded-xl bg-forest-50 px-4 py-3 text-sm text-ink-700">
                   <Repeat size={15} className="mt-0.5 shrink-0 text-forest-700" aria-hidden="true" />
                   Your usual team will be prioritized whenever available. If they cannot make it, we will arrange a replacement.
                 </p>
               </div>
             )) : (
-              <Empty icon={<Repeat size={20} aria-hidden="true" />} text="No recurring services yet. When you request an Xpert, choose “Recurring” to set one up." />
+              <Empty icon={RepeatP} text="No recurring services yet. When you request an Xpert, choose “Recurring” to set one up." />
             )}
           </div>
         )}
@@ -389,7 +386,7 @@ export default function EmployerDashboard() {
         {tab === 'history' && trackingId != null && (() => {
           const t = taskList.find((x) => String(x.id) === String(trackingId))
           if (!t) return loading ? <Skeleton /> : (
-            <Empty icon={<Briefcase size={20} aria-hidden="true" />} text="This task isn't in your list yet — refresh in a moment." />
+            <Empty icon={BriefcaseP} text="This task isn't in your list yet — refresh in a moment." />
           )
           return (
             <TaskTracking
@@ -406,7 +403,7 @@ export default function EmployerDashboard() {
         })()}
 
         {tab === 'history' && trackingId == null && (
-          <div className="mt-6">
+          <div>
             {loading ? <Skeleton /> : taskList.length ? (() => {
               const today = new Date().toISOString().slice(0, 10)
               const urgent = taskList.filter(needsConfirmation)
@@ -431,12 +428,12 @@ export default function EmployerDashboard() {
                 const theirReview = t.reviews?.find((r) => r.fromRole === 'worker')
 
                 return (
-                  <div className={`rounded-2xl bg-white shadow-sm border border-ink-900/8 transition-shadow hover:shadow-md`}>
-                    <div className="p-5">
+                  <div className="rounded-2xl border border-ink-900/[0.08] bg-white shadow-[0_1px_2px_rgba(18,24,14,0.04)] transition-shadow hover:shadow-md">
+                    <div className="p-5 sm:p-6">
                       {/* Header */}
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
-                          <p className="font-serif text-base font-semibold text-ink-900">{t.taskType || 'Task'}</p>
+                          <p className="font-display text-lg font-semibold text-ink-900">{t.taskType || 'Task'}</p>
                           <p className="mt-0.5 text-sm text-ink-700">
                             {slots > 1
                               ? <span className="font-medium text-ink-800">{filled}/{slots} Xperts confirmed</span>
@@ -452,7 +449,7 @@ export default function EmployerDashboard() {
                           )}
                         </div>
                         <div className="shrink-0 text-right">
-                          <p className={s.color + ' text-sm font-semibold'}>{s.label}</p>
+                          <Status tone={toneFromClass(s.color)}>{s.label}</Status>
                           {rev && <div className="mt-1 flex items-center justify-end gap-1"><Stars n={Number(rev)} /></div>}
                           {t.invoiceAmount != null && Number(t.invoiceAmount) > 0 && <p className="mt-1 text-xs text-ink-700/70">{cedis(t.invoiceAmount ?? undefined)}</p>}
                         </div>
@@ -521,7 +518,7 @@ export default function EmployerDashboard() {
 
                       {/* Past job record: amount paid, payment reference and feedback */}
                       {isTerminal && (
-                        <div className="mt-3 grid gap-2 rounded-lg bg-gray-50 px-4 py-3 text-xs text-ink-700 sm:grid-cols-3">
+                        <div className="mt-3 grid gap-2 rounded-xl bg-forest-50 px-4 py-3 text-xs text-ink-700 sm:grid-cols-3">
                           <div><span className="block text-ink-700/60">Amount</span>{t.invoiceAmount != null ? cedis(t.invoiceAmount ?? undefined) : '—'}</div>
                           <div><span className="block text-ink-700/60">Payment reference</span>{String(t.paymentRef || '—')}</div>
                           <div><span className="block text-ink-700/60">Feedback</span>{myReview ? `You rated ${myReview.rating}/5` : 'Not given'}{theirReview ? ` · Xpert rated you ${theirReview.rating}/5` : ''}</div>
@@ -550,7 +547,7 @@ export default function EmployerDashboard() {
                       {['awaiting_invoice', 'invoice_sent', 'open', 'payment_pending'].includes(String(t.status)) && (
                         <button
                           onClick={() => cancelTask(t)}
-                          className="mt-3 text-xs font-medium text-red-600/80 underline decoration-red-600/30 underline-offset-2 transition-colors hover:text-red-700"
+                          className="mt-3 mr-4 text-xs font-medium text-red-600/80 underline decoration-red-600/30 underline-offset-2 transition-colors hover:text-red-700"
                         >
                           Cancel this job
                         </button>
@@ -596,9 +593,8 @@ export default function EmployerDashboard() {
                 <div className="space-y-6">
                   {urgent.length > 0 && (
                     <section>
-                      <h2 className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-amber-700">
-                        <span className="flex h-4 w-4 items-center justify-center rounded-full bg-amber-600 text-[0.6875rem] font-bold text-white">{urgent.length}</span>
-                        Need your confirmation
+                      <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-amber-800">
+                        <WarningCircle size={22} weight="duotone" /> Need your confirmation <span className="text-amber-700/70">{urgent.length}</span>
                       </h2>
                       <div className="space-y-3">{urgent.map((t) => <TaskItem key={String(t.id)} t={t} />)}</div>
                     </section>
@@ -616,16 +612,16 @@ export default function EmployerDashboard() {
                     { title: 'Past jobs', list: done, empty: 'No past jobs yet.' },
                   ].map((g) => (
                     <section key={g.title}>
-                      <h2 className="mb-3 text-xs font-semibold uppercase tracking-widest text-ink-700/50">{g.title} ({g.list.length})</h2>
+                      <h2 className="mb-3 font-display text-lg font-semibold text-ink-900">{g.title} <span className="text-ink-700/45">{g.list.length}</span></h2>
                       {g.list.length
                         ? <div className="space-y-3">{g.list.map((t) => <TaskItem key={String(t.id)} t={t} />)}</div>
-                        : <p className="text-sm text-ink-700/60">{g.empty}</p>}
+                        : <p className="rounded-2xl border border-dashed border-ink-900/15 px-5 py-6 text-center text-sm text-ink-700/60">{g.empty}</p>}
                     </section>
                   ))}
                 </div>
               )
             })() : (
-              <Empty icon={<Briefcase size={20} aria-hidden="true" />} text="No jobs yet. Request an Xpert and BeyondX will send you a quote." />
+              <Empty icon={BriefcaseP} text="No jobs yet. Request an Xpert and BeyondX will send you a quote." />
             )}
           </div>
         )}
@@ -689,10 +685,10 @@ function InvoiceCard({ task, onChanged }: { task: Task; onChanged: (msg: string)
   }
 
   return (
-    <div className="rounded-2xl border border-ink-900/8 bg-white p-6 shadow-sm">
+    <div className="rounded-2xl border border-ink-900/[0.08] bg-white p-6 shadow-[0_1px_2px_rgba(18,24,14,0.04)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-lg font-semibold text-ink-900">{task.taskType || 'Task'}</p>
+          <p className="font-display text-xl font-semibold text-ink-900">{task.taskType || 'Task'}</p>
           <p className="mt-0.5 text-sm text-ink-700/70">
             {[task.location, task.duration, `${xperts} Xpert${xperts > 1 ? 's' : ''}`].filter(Boolean).join(' · ')}
             {task.premium ? ' · Premium (within 48 hours)' : ''}
@@ -700,10 +696,10 @@ function InvoiceCard({ task, onChanged }: { task: Task; onChanged: (msg: string)
         </div>
         <div className="text-right">
           <p className="text-xs text-ink-700/60">Quote total</p>
-          <p className="text-2xl font-bold text-ink-900">{cedis(amount)}</p>
+          <p className="font-display text-3xl font-bold text-forest-800">{cedis(amount)}</p>
         </div>
       </div>
-      {task.invoiceNote && <p className="mt-3 whitespace-pre-line rounded-lg bg-gray-50 px-4 py-3 text-sm text-ink-800">{task.invoiceNote}</p>}
+      {task.invoiceNote && <p className="mt-3 whitespace-pre-line rounded-xl bg-forest-50 px-4 py-3 text-sm text-ink-800">{task.invoiceNote}</p>}
 
       <div className="mt-5 border-t border-ink-900/8 pt-5">
         <p className="mb-2 text-sm text-ink-700">To accept, pay the quote in full. Payment is held by BeyondX and released to the Xpert after you confirm the work.</p>
@@ -722,7 +718,7 @@ function InvoiceCard({ task, onChanged }: { task: Task; onChanged: (msg: string)
           <input value={ref} onChange={(e) => setRef(e.target.value)} placeholder="Transaction reference"
             className="flex-1 rounded-lg border border-ink-900/15 bg-white px-3.5 py-2.5 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-forest-600/25" />
           <button onClick={pay} disabled={!ref.trim() || !!busy}
-            className="rounded-lg bg-forest-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-forest-500 disabled:opacity-50">
+            className={btnPrimary}>
             {busy === 'pay' ? 'Submitting…' : 'Accept & pay'}
           </button>
         </div>
