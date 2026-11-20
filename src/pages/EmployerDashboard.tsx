@@ -209,8 +209,9 @@ export default function EmployerDashboard() {
     <div className="min-h-screen bg-cream-50">
       <DashboardHeader role="EMPLOYER" title="Employer Dashboard" name={orgName} avatar={logo} onEditProfile={() => setEditing(true)} tasks={taskList}
         cta={{ label: 'Request an Xpert', onClick: () => goTab('post') }} />
-      <div className="lg:flex">
-        <DashboardSidebar items={navItems} active={tab} onSelect={goTab} />
+      <div className="lg:pl-64">
+        <DashboardSidebar items={navItems} active={tab} onSelect={goTab} roleLabel="Employer" onEditProfile={() => setEditing(true)}
+          card={{ title: 'Need an Xpert?', text: 'Tell us the job and we send one firm quote.', label: 'Request an Xpert', onClick: () => goTab('post') }} />
         <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-8 lg:px-10">
         <p aria-live="polite" className="sr-only">{announce}</p>
 

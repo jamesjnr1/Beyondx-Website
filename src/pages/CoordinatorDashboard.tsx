@@ -846,8 +846,8 @@ export default function CoordinatorDashboard() {
         onEditProfile={() => setEditing(true)}
       />
 
-      <div className="lg:flex">
-        <DashboardSidebar items={navItems} active={tab} onSelect={(id) => setTab(id as typeof tab)} />
+      <div className="lg:pl-64">
+        <DashboardSidebar items={navItems} active={tab} onSelect={(id) => setTab(id as typeof tab)} roleLabel="Coordinator" onEditProfile={() => setEditing(true)} />
         <main className="min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-8 lg:px-10">
         <NotificationsBanner role="worker" />
 
