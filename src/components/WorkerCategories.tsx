@@ -31,7 +31,6 @@ const REMOTE_IMAGES: Record<string, string> = {
 function CategoryCard({ cat, image, delay, onRequest }: {
   cat: Category; image: string; delay: number; onRequest: (c: string) => void
 }) {
-  const Icon = cat.icon
   return (
     <Reveal delay={delay} className="h-full">
       <button
@@ -48,9 +47,6 @@ function CategoryCard({ cat, image, delay, onRequest }: {
             decoding="async"
             className="aspect-[16/10] w-full object-cover transition-transform duration-500 group-hover:scale-105"
           />
-          <span className="absolute left-4 top-4 grid h-10 w-10 place-items-center rounded-xl bg-white/95 text-forest-700 shadow-sm transition-colors group-hover:bg-forest-700 group-hover:text-white">
-            <Icon size={20} aria-hidden="true" />
-          </span>
         </div>
         <div className="flex flex-1 flex-col p-6">
           <h3 className="font-display text-lg font-semibold text-ink-900">{cat.title}</h3>

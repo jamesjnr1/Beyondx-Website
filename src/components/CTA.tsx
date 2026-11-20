@@ -1,4 +1,4 @@
-import { ArrowRight, CheckCircle2 } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { useAuth } from './auth/AuthContext'
 import { Reveal, SectionHead, container, sectionY } from './site/ui'
 
@@ -18,7 +18,7 @@ const steps = [
 export default function CTA() {
   const { open } = useAuth()
   return (
-    <section id="hire" className={`bg-cream-50 ${sectionY}`}>
+    <section id="hire" className={`bg-white ${sectionY}`}>
       <div className={`${container} grid gap-12 lg:grid-cols-2 lg:gap-16`}>
         <div>
           <SectionHead
@@ -29,7 +29,7 @@ export default function CTA() {
           <dl className="mt-10 space-y-6">
             {assurances.map(([term, desc]) => (
               <Reveal key={term}>
-                <div className="border-l-2 border-forest-500 pl-5">
+                <div>
                   <dt className="font-semibold text-ink-900">{term}</dt>
                   <dd className="mt-1 text-ink-700/80">{desc}</dd>
                 </div>
@@ -45,10 +45,9 @@ export default function CTA() {
               Join employers across Ghana building better businesses, and better futures, through BeyondX.
             </p>
             <ol className="mt-7 space-y-3.5">
-              {steps.map((s) => (
-                <li key={s} className="flex items-center gap-3 text-ink-900">
-                  <CheckCircle2 size={20} aria-hidden="true" className="shrink-0 text-forest-600" />
-                  <span>{s}</span>
+              {steps.map((s, i) => (
+                <li key={s} className="text-ink-900">
+                  <span className="mr-2 font-semibold text-forest-700">{i + 1}.</span>{s}
                 </li>
               ))}
             </ol>
