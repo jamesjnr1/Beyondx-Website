@@ -22,7 +22,7 @@ export default function DashboardHeader({
     <header className="sticky top-0 z-40 border-b border-ink-900/10 bg-white">
       <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:pl-0 lg:pr-8">
         {/* Logo sits directly above the sidebar rail on desktop */}
-        <div className="flex shrink-0 items-center lg:h-full lg:w-64 lg:border-r lg:border-ink-900/10 lg:pl-6">
+        <div className="flex shrink-0 items-center lg:h-full lg:w-64 lg:border-r lg:border-forest-600/15 lg:bg-[#dcefc5] lg:pl-6">
           <button onClick={() => go('home')} aria-label="Go to BeyondX home" className="shrink-0">
             <Logo tone="dark" className="h-7 sm:h-8" />
           </button>

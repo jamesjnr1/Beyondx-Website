@@ -20,21 +20,21 @@ export default function Team() {
 
   return (
     <section id="team" ref={ref} className="bg-white py-14 sm:py-20">
-      <div className="mx-auto max-w-[1200px] px-5 sm:px-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-700/60">
+      <div className="mx-auto w-full max-w-7xl px-5 sm:px-8">
+        <p className="text-sm font-semibold uppercase tracking-widest text-forest-700">
           Team Rainbow · 11 Members · Foundation of Design Thinking &amp; Entrepreneurship
         </p>
 
-        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-10 grid grid-cols-1 gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
           {members.map((m, i) => (
             <motion.div
               key={m.name}
               initial={{ opacity: 0, y: 20 }}
               animate={visible ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.4, delay: 0.05 + (i % 4) * 0.06 }}
-              className="flex items-center gap-4 rounded-2xl border border-ink-900/10 bg-white p-5"
+              className="flex items-center gap-4"
             >
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ink-900 text-sm font-semibold text-cream-50">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-forest-700 text-sm font-semibold text-cream-50">
                 {m.initials}
               </span>
               <span className="min-w-0">

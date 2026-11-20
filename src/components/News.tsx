@@ -152,7 +152,7 @@ export default function News() {
 
   return (
     <section id="news" ref={ref} className="bg-white py-14 sm:py-20">
-      <div className="mx-auto max-w-3xl px-5 sm:px-8">
+      <div className="mx-auto w-full max-w-7xl px-5 sm:px-8"><div className="max-w-3xl">
         {!hasNews && (
           <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-forest-600/10">
             <Newspaper size={28} className="text-forest-800" aria-hidden="true" />
@@ -198,7 +198,7 @@ export default function News() {
             </p>
           </motion.div>
         )}
-      </div>
+      </div></div>
     </section>
   )
 }

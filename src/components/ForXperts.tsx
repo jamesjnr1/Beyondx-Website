@@ -1,5 +1,4 @@
 import { BadgeCheck, ClipboardList, PhoneCall, TrendingUp, Wallet } from 'lucide-react'
-import { useAuth } from './auth/AuthContext'
 import { Reveal, SectionHead, container, sectionY } from './site/ui'
 
 const promises = [
@@ -18,10 +17,9 @@ const path = [
 
 /** For Xperts: what BeyondX promises them, and their path on the platform. */
 export default function ForXperts() {
-  const { open } = useAuth()
   return (
     <section id="xperts" className={`bg-white ${sectionY}`}>
-      <div className={`${container} grid items-start gap-14 lg:grid-cols-2`}>
+      <div className={`${container} grid items-start gap-12 lg:grid-cols-2 lg:gap-16`}>
         <div>
           <SectionHead
             chip="For Xperts"
@@ -40,7 +38,7 @@ export default function ForXperts() {
           </ul>
         </div>
 
-        <Reveal className="lg:mt-12">
+        <Reveal>
           <div className="rounded-3xl bg-forest-900 p-8 text-cream-50 sm:p-10">
             <h3 className="font-display text-2xl font-bold">Your path on BeyondX</h3>
             <ol className="mt-8 space-y-7">
@@ -54,13 +52,6 @@ export default function ForXperts() {
                 </li>
               ))}
             </ol>
-            <button
-              type="button"
-              onClick={() => open('worker-login')}
-              className="mt-9 inline-block rounded-full bg-forest-500 px-6 py-3 font-semibold text-ink-900 transition-all hover:-translate-y-0.5 hover:bg-forest-400 hover:shadow-lg"
-            >
-              Sign up to be an Xpert
-            </button>
           </div>
         </Reveal>
       </div>
