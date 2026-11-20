@@ -1,6 +1,9 @@
 import { motion } from 'framer-motion'
 import { useReveal } from '../hooks/useReveal'
 
+/** Photos are in /public/team, named after each person (from the team's Canva deck). */
+const photo = (name: string) => `/team/${name.toLowerCase().replace(/[^a-z]+/g, '-')}.jpg`
+
 const members = [
   { initials: 'SA', name: 'Spencer Amoo-Yankey', role: 'Chief Executive Officer' },
   { initials: 'JD', name: 'Jonathan James Duah', role: 'Chief Technical Officer' },
@@ -25,19 +28,23 @@ export default function Team() {
           Team Rainbow · 11 Members · Foundation of Design Thinking &amp; Entrepreneurship
         </p>
 
-        <div className="mt-10 grid grid-cols-1 gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mt-12 grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3 lg:grid-cols-4">
           {members.map((m, i) => (
             <motion.div
               key={m.name}
               initial={{ opacity: 0, y: 20 }}
               animate={visible ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.4, delay: 0.05 + (i % 4) * 0.06 }}
-              className="flex items-center gap-4"
+              className="flex flex-col items-center text-center"
             >
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-forest-700 text-sm font-semibold text-cream-50">
-                {m.initials}
-              </span>
-              <span className="min-w-0">
+              <img
+                src={photo(m.name)}
+                alt={m.name}
+                loading="lazy"
+                decoding="async"
+                className="h-28 w-28 rounded-full object-cover ring-4 ring-forest-600/15 sm:h-32 sm:w-32"
+              />
+              <span className="mt-4 min-w-0">
                 <span className="block text-base font-semibold leading-snug text-ink-900 [overflow-wrap:anywhere]">{m.name}</span>
                 <span className="mt-0.5 block text-sm leading-snug text-ink-700/75">{m.role}</span>
               </span>
