@@ -20,8 +20,11 @@ export default {
         '7xl': ['3.5rem', { lineHeight: '3.65rem' }],    // 56px  (was 72)
       },
       fontFamily: {
-        sans: ['Poppins', 'system-ui', 'sans-serif'],
-        serif: ['Fraunces', 'Georgia', 'serif'],
+        // Inter for text, Sora for headings; both bundled with the site (see main.tsx).
+        // `serif` is kept as an alias of the heading face so older markup follows.
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+        display: ['Sora', 'Inter', 'system-ui', 'sans-serif'],
+        serif: ['Sora', 'Inter', 'system-ui', 'sans-serif'],
       },
       colors: {
         // Clean cool-neutral off-whites (faint green-grey tint to harmonise with brand green)

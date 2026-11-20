@@ -1,11 +1,10 @@
-import { motion } from 'framer-motion'
-import { useReveal } from '../hooks/useReveal'
-import { categories, remoteCategories } from '../data'
+import { ArrowRight } from 'lucide-react'
+import { categories, remoteCategories, type Category } from '../data'
 import { REMOTE_JOBS_ENABLED } from '../lib/config'
 import { session } from '../lib/api'
 import { setRequestCategory } from '../lib/requestIntent'
 import { useAuth } from './auth/AuthContext'
-import { ArrowRight } from 'lucide-react'
+import { Reveal, SectionHead, container, sectionY } from './site/ui'
 
 /** Every category leads into the request flow with that category chosen —
  *  never to a list of Xperts. */
@@ -18,14 +17,6 @@ function useRequestCategory() {
   }
 }
 
-function RequestLink() {
-  return (
-    <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-forest-700 sm:text-sm">
-      Request an Xpert <ArrowRight size={13} aria-hidden="true" />
-    </span>
-  )
-}
-
 const REMOTE_IMAGES: Record<string, string> = {
   'Data Entry & Digitisation': '/categories/remote/data-entry.jpg',
   'Customer Support': '/categories/remote/customer-support.jpg',
@@ -35,166 +26,85 @@ const REMOTE_IMAGES: Record<string, string> = {
   'Virtual Assistance': '/categories/remote/virtual-assistance.jpg',
 }
 
-function SectionLabel({ children }: { children: string }) {
-  return (
-    <span className="mb-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-clay-500">
-      <span className="h-px w-6 bg-clay-400/60" aria-hidden="true" />
-      {children}
-    </span>
-  )
-}
-
-/** Photo on top, title and description below in normal document flow — never
- *  overlaid on the image. Text laid over a fixed-height photo has to be
- *  clipped by `overflow-hidden` the moment it needs more room than the photo
- *  allows, which is exactly what happens when the accessibility text-size
- *  setting is turned up. Putting the text in its own block below means the
- *  card simply grows taller instead — safe at any text size, and nothing is
- *  ever hidden to save space. */
-function CategoryTile({
-  image,
-  title,
-  description,
-  delay,
-  onRequest,
-}: {
-  image: string
-  title: string
-  description: string
-  delay: number
-  onRequest: (category: string) => void
+/** Photo on top, text below in normal flow, so the card grows rather than
+ *  clipping when the accessibility text size is turned up. */
+function CategoryCard({ cat, image, delay, onRequest }: {
+  cat: Category; image: string; delay: number; onRequest: (c: string) => void
 }) {
   return (
-    <motion.button
-      type="button"
-      onClick={() => onRequest(title)}
-      aria-label={`Request an Xpert for ${title}`}
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.3, margin: '0px 0px -10% 0px' }}
-      transition={{ duration: 0.45, delay }}
-      className="overflow-hidden rounded-xl bg-cream-50 text-left shadow-sm border border-ink-900/8 transition-shadow hover:shadow-md sm:rounded-2xl"
-    >
-      <div className="img-zoom relative overflow-hidden">
-        <img
-          src={image}
-          alt=""
-          className="aspect-[4/3] w-full object-cover"
-          loading="lazy"
-          decoding="async"
-        />
-      </div>
-      <div className="p-2.5 sm:p-4">
-        <h3 className="font-serif text-[0.875rem] font-semibold leading-tight text-ink-900 sm:text-lg">
-          {title}
-        </h3>
-        <p className="mt-1 text-xs leading-snug text-ink-700 text-pretty sm:mt-1.5 sm:text-sm sm:leading-relaxed">
-          {description}
-        </p>
-        <RequestLink />
-      </div>
-    </motion.button>
+    <Reveal delay={delay} className="h-full">
+      <button
+        type="button"
+        onClick={() => onRequest(cat.title)}
+        aria-label={`Request an Xpert for ${cat.title}`}
+        className="group flex h-full w-full flex-col overflow-hidden rounded-2xl border border-ink-900/10 bg-white text-left transition-all hover:-translate-y-1 hover:border-forest-600/40 hover:shadow-lg"
+      >
+        <div className="relative overflow-hidden">
+          <img
+            src={image}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="aspect-[16/10] w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        </div>
+        <div className="flex flex-1 flex-col p-6">
+          <h3 className="font-display text-lg font-semibold text-ink-900">{cat.title}</h3>
+          <p className="mt-2 flex-1 text-sm leading-relaxed text-ink-700/80">{cat.description}</p>
+          <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-forest-700">
+            Request an Xpert
+            <ArrowRight size={15} aria-hidden="true" className="transition-transform group-hover:translate-x-1" />
+          </span>
+        </div>
+      </button>
+    </Reveal>
   )
 }
 
 export default function WorkerCategories() {
-  const { ref, visible } = useReveal()
   const request = useRequestCategory()
-  const [featured, ...rest] = categories
 
   return (
-    <section id="services" ref={ref} className="relative py-16 sm:py-32">
-      <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <div className="mx-auto max-w-2xl text-center">
-          <span className="mb-3 inline-block text-sm font-semibold uppercase tracking-widest text-clay-500 sm:mb-4">
-            What our Xperts do
-          </span>
-          <h2 className="font-serif text-2xl font-medium leading-tight text-ink-900 text-balance sm:text-4xl lg:text-5xl">
-            Vetted across{' '}
-            <span className="italic gradient-text">every category</span>
-          </h2>
-          <p className="mt-3 text-base text-ink-700 text-pretty sm:mt-4 sm:text-lg">
-            Choose a category and tell us what you need. BeyondX selects and
-            manages the right Xpert throughout Greater Accra{REMOTE_JOBS_ENABLED ? ' — on site or remote.' : '.'}
-          </p>
+    <section id="services" className={`bg-cream-50 ${sectionY}`}>
+      <div className={container}>
+        <SectionHead
+          chip="Service categories"
+          title={`Vetted Xperts across ${categories.length} categories`}
+          lead={<>Every Xpert is checked before they are approved, and matched to the work you actually need done throughout Greater Accra{REMOTE_JOBS_ENABLED ? ', on site or remote.' : '.'}</>}
+        />
+
+        <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {categories.map((cat, i) => (
+            <CategoryCard key={cat.title} cat={cat} image={cat.image} delay={(i % 3) * 0.05} onRequest={request} />
+          ))}
+
+          <Reveal className="sm:col-span-2 lg:col-span-2">
+            <button
+              type="button"
+              onClick={() => request('')}
+              className="flex h-full w-full flex-col justify-between rounded-2xl bg-ink-900 p-7 text-left text-cream-50 transition-all hover:-translate-y-1 hover:shadow-lg sm:p-9"
+            >
+              <div>
+                <p className="font-display text-xl font-semibold sm:text-2xl">Need a category not listed?</p>
+                <p className="mt-3 max-w-md text-sm leading-relaxed text-cream-100/70 sm:text-base">
+                  Tell us what you need. Our coordinators source and vet Xperts for new categories on request.
+                </p>
+              </div>
+              <span className="mt-8 inline-flex w-fit items-center gap-1.5 rounded-full bg-forest-500 px-5 py-2.5 text-sm font-semibold text-ink-900">
+                Ask us <ArrowRight size={15} aria-hidden="true" />
+              </span>
+            </button>
+          </Reveal>
         </div>
 
-        {/* On the field — one featured tile up top, then a compact grid.
-            Seven items never divide evenly into a grid, so rather than leave
-            one tile stranded on its own row, the odd one out becomes the
-            lead. Its text sits below the photo too, for the same reason as
-            the grid tiles: never clipped, however large the text gets. */}
-        <div className="mt-10 sm:mt-16">
-          {REMOTE_JOBS_ENABLED && <SectionLabel>On the field</SectionLabel>}
-
-          <motion.button
-            type="button"
-            onClick={() => request(featured.title)}
-            aria-label={`Request an Xpert for ${featured.title}`}
-            initial={{ opacity: 0, y: 20 }}
-            animate={visible ? { opacity: 1, y: 0 } : {}}
-            transition={{ duration: 0.5 }}
-            className="block w-full overflow-hidden rounded-xl bg-cream-50 text-left shadow-sm border border-ink-900/8 transition-shadow hover:shadow-md sm:rounded-2xl"
-          >
-            <div className="img-zoom relative overflow-hidden">
-              <img
-                src={featured.image}
-                alt=""
-                className="aspect-[16/10] w-full object-cover sm:aspect-[21/9]"
-                loading="eager"
-                decoding="async"
-              />
-            </div>
-            <div className="p-4 sm:p-6 lg:p-8">
-              <h3 className="font-serif text-lg font-semibold text-ink-900 sm:text-2xl lg:text-3xl">
-                {featured.title}
-              </h3>
-              <p className="mt-1.5 max-w-md text-sm leading-relaxed text-ink-700 text-pretty sm:mt-2 sm:text-base">
-                {featured.description}
-              </p>
-              <RequestLink />
-            </div>
-          </motion.button>
-
-          <div className="mt-3 grid grid-cols-2 gap-3 sm:mt-5 sm:gap-5 lg:grid-cols-3">
-            {rest.map((cat, i) => (
-              <CategoryTile
-                key={cat.title}
-                image={cat.image}
-                title={cat.title}
-                description={cat.description}
-                delay={(i % 3) * 0.06}
-                onRequest={request}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Remote — same card system as the field grid, real photos rather
-            than a solid colour stand-in. Six items split evenly into two
-            rows regardless of column count, so there's no orphan tile here
-            either. Hidden while REMOTE_JOBS_ENABLED is off — see lib/config.ts. */}
         {REMOTE_JOBS_ENABLED && (
-          <div className="mt-10 sm:mt-20">
-            <SectionLabel>Remote</SectionLabel>
-
-            <div className="grid grid-cols-2 gap-3 sm:gap-5 lg:grid-cols-3">
+          <div className="mt-16">
+            <h3 className="font-display text-2xl font-semibold text-ink-900">Remote work</h3>
+            <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {remoteCategories.map((cat, i) => (
-                <CategoryTile
-                  key={cat.title}
-                  image={REMOTE_IMAGES[cat.title] || cat.image}
-                  title={cat.title}
-                  description={cat.description}
-                  delay={(i % 3) * 0.06}
-                  onRequest={request}
-                />
+                <CategoryCard key={cat.title} cat={cat} image={REMOTE_IMAGES[cat.title] || cat.image} delay={(i % 3) * 0.05} onRequest={request} />
               ))}
             </div>
-
-            <p className="mt-5 text-center text-xs leading-relaxed text-ink-700/80 sm:mt-6 sm:text-sm">
-              These are the categories we support today. As BeyondX grows, more
-              will be added based on demand from Xperts and employers.
-            </p>
           </div>
         )}
       </div>

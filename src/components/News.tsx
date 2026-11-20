@@ -151,26 +151,16 @@ export default function News() {
   const hasNews = newsItems.length > 0
 
   return (
-    <section id="news" ref={ref} className="relative bg-cream-100 py-24 sm:py-32">
+    <section id="news" ref={ref} className="bg-white py-14 sm:py-20">
       <div className="mx-auto max-w-3xl px-5 sm:px-8">
-        <motion.div
-          className="text-center"
-          initial={{ opacity: 0, y: 24 }}
-          animate={visible ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-        >
-          <span className="mb-4 inline-block text-sm font-semibold uppercase tracking-widest text-clay-500">
-            News &amp; Events
-          </span>
-          {!hasNews && (
-            <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-forest-600/10">
-              <Newspaper size={36} className="text-forest-600" aria-hidden="true" />
-            </div>
-          )}
-        </motion.div>
+        {!hasNews && (
+          <div className="mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-2xl bg-forest-600/10">
+            <Newspaper size={28} className="text-forest-800" aria-hidden="true" />
+          </div>
+        )}
 
         {hasNews ? (
-          <div className="mt-8 space-y-6">
+          <div className="space-y-6">
             {newsItems.map((item, i) =>
               item.featured ? (
                 <LaunchCard key={i} item={item} visible={visible} />
@@ -182,7 +172,7 @@ export default function News() {
                   animate={visible ? { opacity: 1, y: 0 } : {}}
                   transition={{ delay: 0.1 * i, duration: 0.5 }}
                 >
-                  <p className="text-xs font-semibold uppercase tracking-widest text-clay-500">{item.date}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.12em] text-forest-800">{item.date}</p>
                   <h3 className="mt-2 font-serif text-xl font-medium text-ink-900">{item.title}</h3>
                   {item.body.map((para, j) => (
                     <p key={j} className="mt-2 text-sm leading-relaxed text-ink-700">{para}</p>

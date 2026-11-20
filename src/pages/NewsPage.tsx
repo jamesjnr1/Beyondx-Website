@@ -1,9 +1,11 @@
 import News from '../components/News'
+import { Accent, PageHero } from '../components/site/ui'
 
 export default function NewsPage() {
   return (
-    <div className="min-h-[70vh] pt-16">
+    <>
+      <PageHero chip="News & Events" title={<>What's new at <Accent>BeyondX</Accent></>} lead="Launches, partnerships, milestones and upcoming events." />
       <News />
-    </div>
+    </>
   )
 }

@@ -1,7 +1,6 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { useReveal } from '../hooks/useReveal'
-import { CircleCheck as CheckCircle } from 'lucide-react'
+import { Check } from 'lucide-react'
+import { Accent, Reveal, SectionHead, card, container, sectionY } from './site/ui'
 
 const employerPoints = [
   'Every candidate is individually assessed and vetted for work-readiness before being listed',
@@ -17,27 +16,17 @@ const workerPoints = [
   'Your work speaks for you here.',
 ]
 
-function NoticeCard({
-  audience,
-  heading,
-  points,
-  dotColor,
-}: {
-  audience: 'employer' | 'worker'
-  heading: string
-  points: string[]
-  dotColor: string
-}) {
+function NoticeCard({ label, heading, points }: { label: string; heading: string; points: string[] }) {
   return (
-    <div className="h-full rounded-2xl border border-ink-900/8 bg-cream-50 p-5 shadow-sm sm:p-8">
-      <h3 className="mb-1 font-serif text-lg font-semibold text-ink-900 sm:mb-6 sm:text-xl">
-        {audience === 'employer' ? 'For Employers' : 'For Xperts'}
-      </h3>
-      <p className="mb-4 text-sm font-medium text-ink-700 sm:-mt-4 sm:mb-5">{heading}</p>
-      <ul className="space-y-3 sm:space-y-4">
+    <div className={`${card} h-full p-6 sm:p-8`}>
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-forest-800">{label}</p>
+      <h3 className="mt-2 text-xl font-semibold text-ink-900">{heading}</h3>
+      <ul className="mt-6 space-y-4">
         {points.map((point) => (
           <li key={point} className="flex items-start gap-3">
-            <CheckCircle size={18} className={`mt-0.5 shrink-0 ${dotColor} sm:size-5`} />
+            <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-forest-600 text-white">
+              <Check size={12} strokeWidth={3} aria-hidden="true" />
+            </span>
             <span className="text-sm leading-relaxed text-ink-700">{point}</span>
           </li>
         ))}
@@ -47,88 +36,42 @@ function NoticeCard({
 }
 
 export default function Transparency() {
-  const { ref, visible } = useReveal()
   const [audience, setAudience] = useState<'employer' | 'worker'>('employer')
-
   return (
-    <section ref={ref} className="relative overflow-hidden bg-cream-100 py-14 sm:py-32">
-      <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <div className="mx-auto max-w-2xl text-center">
-          <span className="mb-3 inline-block text-sm font-semibold uppercase tracking-widest text-clay-500 sm:mb-4">
-            Our Commitments
-          </span>
-          <h2 className="font-serif text-2xl font-medium leading-tight text-ink-900 text-balance sm:text-4xl lg:text-5xl">
-            Transparency on{' '}
-            <span className="italic gradient-text">both sides.</span>
-          </h2>
-          <p className="mt-3 text-base text-ink-700 text-pretty sm:mt-4 sm:text-lg">
-            BeyondX makes clear commitments to every employer and every Xpert on this platform.
-          </p>
-        </div>
+    <section className={`bg-cream-100 ${sectionY}`}>
+      <div className={container}>
+        <SectionHead
+          chip="Our commitments"
+          title={<>Transparency on <Accent>both sides</Accent></>}
+          />
 
-        {/* Both cards carry four bullet points each — full length on a phone.
-            A toggle shows one at a time on mobile (same pattern used in the
-            employer dashboard's field/remote switch), and both sit side by
-            side from `lg:` up where there's room. */}
-        <div className="mt-6 flex justify-center gap-2 lg:hidden">
+        {/* One card at a time on phones, both side by side from lg up */}
+        <div className="mt-8 flex gap-2 lg:hidden">
           {(['employer', 'worker'] as const).map((a) => (
-            <button
-              key={a}
-              onClick={() => setAudience(a)}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                audience === a
-                  ? 'bg-ink-900 text-cream-50'
-                  : 'bg-ink-900/5 text-ink-700 hover:bg-ink-900/10'
-              }`}
-            >
+            <button key={a} onClick={() => setAudience(a)} aria-pressed={audience === a}
+              className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${audience === a ? 'bg-ink-900 text-cream-50' : 'bg-white text-ink-700 ring-1 ring-ink-900/10'}`}>
               {a === 'employer' ? 'For Employers' : 'For Xperts'}
             </button>
           ))}
         </div>
 
-        <div className="mt-5 grid gap-6 sm:mt-8 lg:mt-16 lg:grid-cols-2">
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={visible ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.6 }}
-            className={audience === 'employer' ? 'block' : 'hidden lg:block'}
-          >
-            <NoticeCard
-              audience="employer"
-              heading="Our Verification Standard"
-              points={employerPoints}
-              dotColor="text-forest-600"
-            />
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={visible ? { opacity: 1, x: 0 } : {}}
-            transition={{ duration: 0.6, delay: 0.15 }}
-            className={audience === 'worker' ? 'block' : 'hidden lg:block'}
-          >
-            <NoticeCard
-              audience="worker"
-              heading="Welcome. You Belong Here."
-              points={workerPoints}
-              dotColor="text-clay-500"
-            />
-          </motion.div>
+        <div className="mt-5 grid gap-5 lg:mt-14 lg:grid-cols-2">
+          <Reveal className={audience === 'employer' ? 'block' : 'hidden lg:block'}>
+            <NoticeCard label="For Employers" heading="Our Verification Standard" points={employerPoints} />
+          </Reveal>
+          <Reveal delay={0.08} className={audience === 'worker' ? 'block' : 'hidden lg:block'}>
+            <NoticeCard label="For Xperts" heading="Welcome. You Belong Here." points={workerPoints} />
+          </Reveal>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={visible ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6, delay: 0.5 }}
-          className="mx-auto mt-6 max-w-3xl rounded-xl border border-clay-400/30 bg-clay-400/8 p-4 text-center sm:mt-10 sm:p-5"
-        >
-          <p className="text-xs leading-relaxed text-ink-700 text-pretty sm:text-sm">
-            <span className="font-semibold text-clay-600">Important:</span> Every
+        <Reveal delay={0.12} className="mt-5 rounded-2xl border border-forest-600/25 bg-forest-600/[0.07] p-5 sm:p-6">
+          <p className="text-sm leading-relaxed text-ink-800 text-pretty">
+            <span className="font-semibold text-forest-800">Important:</span> Every
             Xpert on this platform is individually vetted by our team before being
             assigned. Verification confirms identity and work-readiness. All Xperts
             are held to the same standard of conduct and fairness.
           </p>
-        </motion.div>
+        </Reveal>
       </div>
     </section>
   )

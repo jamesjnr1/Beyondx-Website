@@ -19,52 +19,33 @@ export default function Team() {
   const { ref, visible } = useReveal()
 
   return (
-    <section id="team" ref={ref} className="relative overflow-hidden bg-cream-100 py-24 sm:py-32">
-      <div className="mx-auto max-w-7xl px-5 sm:px-8">
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={visible ? { opacity: 1, y: 0 } : {}}
-          transition={{ duration: 0.6 }}
-          className="mx-auto max-w-2xl text-center"
-        >
-          <span className="mb-4 inline-block text-sm font-semibold uppercase tracking-widest text-clay-500">
-            The team
-          </span>
-          <h2 className="font-serif text-3xl font-medium leading-tight text-ink-900 text-balance sm:text-4xl lg:text-5xl">
-            Meet the{' '}
-            <span className="italic gradient-text">Team</span>
-          </h2>
-          <p className="mt-4 text-lg leading-relaxed text-ink-700 text-pretty">
-            BeyondX is built by a lean founding team out of Ashesi University,
-            connecting employers across Greater Accra with skilled, verified Xperts
-            through a fast, mobile-first platform.
-          </p>
-          <p className="mt-3 text-sm font-medium uppercase tracking-wide text-ink-700/70">
-            Team Rainbow · 11 Members · Foundation of Design Thinking &amp; Entrepreneurship
-          </p>
-        </motion.div>
+    <section id="team" ref={ref} className="bg-white py-14 sm:py-20">
+      <div className="mx-auto max-w-[1200px] px-5 sm:px-8">
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-700/60">
+          Team Rainbow · 11 Members · Foundation of Design Thinking &amp; Entrepreneurship
+        </p>
 
-        <div className="mt-14 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {members.map((m, i) => (
             <motion.div
               key={m.name}
               initial={{ opacity: 0, y: 20 }}
               animate={visible ? { opacity: 1, y: 0 } : {}}
               transition={{ duration: 0.4, delay: 0.05 + (i % 4) * 0.06 }}
-              className="flex flex-col items-center gap-2 rounded-xl bg-cream-50 p-4 text-center shadow-sm border border-ink-900/8 sm:flex-row sm:gap-3 sm:text-left"
+              className="flex items-center gap-4 rounded-2xl border border-ink-900/10 bg-white p-5"
             >
-              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-forest-600 text-sm font-bold text-cream-50">
+              <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-ink-900 text-sm font-semibold text-cream-50">
                 {m.initials}
               </span>
               <span className="min-w-0">
-                <span className="block font-serif text-[1rem] font-medium leading-snug text-ink-900 [overflow-wrap:anywhere] sm:text-base">{m.name}</span>
-                <span className="mt-0.5 block text-xs leading-snug text-ink-700">{m.role}</span>
+                <span className="block text-base font-semibold leading-snug text-ink-900 [overflow-wrap:anywhere]">{m.name}</span>
+                <span className="mt-0.5 block text-sm leading-snug text-ink-700/75">{m.role}</span>
               </span>
             </motion.div>
           ))}
         </div>
 
-        <p className="mt-12 text-center text-sm text-ink-700/70">
+        <p className="mt-10 border-t border-ink-900/10 pt-6 text-sm text-ink-700/70">
           Ashesi University · Berekuso, Eastern Region, Ghana
         </p>
       </div>
