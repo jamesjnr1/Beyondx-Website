@@ -6,7 +6,7 @@ import { useAuth, type Page } from './auth/AuthContext'
 
 const tabs: { label: string; page: Page }[] = [
   { label: 'Home', page: 'home' },
-  { label: 'Meet the Team', page: 'team' },
+  { label: 'About', page: 'team' },
   { label: 'Gallery', page: 'gallery' },
   { label: 'News & Events', page: 'news' },
 ]

@@ -16,7 +16,7 @@ export default function Footer() {
 
   const nav: { label: string; onClick: () => void }[] = [
     { label: 'Home', onClick: () => go('home') },
-    { label: 'Meet the Team', onClick: () => go('team') },
+    { label: 'About', onClick: () => go('team') },
     { label: 'Gallery', onClick: () => go('gallery') },
     { label: 'News & Events', onClick: () => go('news') },
     { label: 'Hire an Xpert', onClick: () => open('employer-login') },

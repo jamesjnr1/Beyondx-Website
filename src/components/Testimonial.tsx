@@ -3,7 +3,7 @@ import { Chip, Reveal, container, sectionY } from './site/ui'
 /** The CEO's message, on its own. */
 export default function Testimonial() {
   return (
-    <section className={`bg-cream-50 ${sectionY}`}>
+    <section className={`bg-forest-50 ${sectionY}`}>
       <div className={container}>
         <Reveal className="mx-auto max-w-4xl text-center">
           <Chip>A message from our CEO</Chip>
