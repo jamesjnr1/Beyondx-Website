@@ -16,7 +16,7 @@ import {
 import ProfileModal from '../components/ProfileModal'
 import Toast, { type ToastMsg } from '../components/Toast'
 import SupportPanel from '../components/SupportPanel'
-import LiveLocation from '../components/LiveLocation'
+import TrackingMap from '../components/tasks/TrackingMap'
 import {
   tasks as tasksApi, employers as employersApi,
   contact, session, ApiError, scheduleLabel, type Task, type Employer, type AssignedXpert, type RecurringService,
@@ -566,8 +566,8 @@ export default function EmployerDashboard() {
                         </div>
                       )}
 
-                      {/* Job location map */}
-                      {t.location && t.location !== 'Remote' && (
+                      {/* Job location map (an accepted job shows the live tracking map instead) */}
+                      {t.location && t.location !== 'Remote' && t.status !== 'accepted' && (
                         <button
                           onClick={() => setShowMap((v) => !v)}
                           className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-forest-700 hover:underline"
@@ -582,8 +582,10 @@ export default function EmployerDashboard() {
                         </div>
                       )}
 
-                      {/* Live location for accepted jobs */}
-                      {t.status === 'accepted' && <LiveLocation taskId={t.id} />}
+                      {/* Live tracking for jobs under way */}
+                      {t.status === 'accepted' && t.location && t.location !== 'Remote' && (
+                        <div className="mt-4"><TrackingMap task={t} xpertName={workerName || assignedXpert(t).name || undefined} live compact /></div>
+                      )}
                     </div>
                   </div>
                 )

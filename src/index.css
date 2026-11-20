@@ -164,3 +164,27 @@ html.a11y-contrast :focus-visible { outline: 3px solid #000000; outline-offset: 
 /* Sora has no italic: accent words in headings are set apart by colour, not slant. */
 .font-serif .italic, .font-serif.italic, .font-display .italic, .font-display.italic { font-style: normal; }
 .font-serif, .font-display { letter-spacing: -0.02em; }
+
+/* Tracking map pins and tooltips */
+.bx-site-pin svg { filter: drop-shadow(0 4px 8px rgba(18, 24, 14, 0.3)); }
+.bx-xpert-pin { position: relative; width: 44px; height: 44px; display: grid; place-items: center; }
+.bx-xpert-dot {
+  position: relative; z-index: 1; width: 34px; height: 34px; border-radius: 9999px; display: grid; place-items: center;
+  background: linear-gradient(135deg, #7bbb2e, #446d14); color: #fff; font: 600 12px/1 Inter, system-ui, sans-serif;
+  border: 3px solid #fff; box-shadow: 0 4px 12px rgba(18, 24, 14, 0.3);
+}
+.bx-xpert-ring {
+  position: absolute; inset: 0; border-radius: 9999px; background: rgba(107, 171, 33, 0.35);
+  animation: bx-ring 1.8s ease-out infinite;
+}
+.bx-xpert-pin.is-stale .bx-xpert-dot { background: linear-gradient(135deg, #f59e0b, #b45309); }
+.bx-xpert-pin.is-stale .bx-xpert-ring { display: none; }
+@keyframes bx-ring { 0% { transform: scale(0.6); opacity: 0.9; } 100% { transform: scale(1.6); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .bx-xpert-ring { animation: none; } }
+.leaflet-tooltip.bx-map-tip {
+  border: 0; border-radius: 8px; padding: 4px 8px; background: #12180e; color: #fff;
+  font: 600 12px/1.3 Inter, system-ui, sans-serif; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+.leaflet-tooltip.bx-map-tip::before { border-top-color: #12180e; }
+.leaflet-container .leaflet-control-zoom { border: 0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(18, 24, 14, 0.12); }
+.leaflet-container .leaflet-control-zoom a { width: 36px; height: 36px; line-height: 36px; color: #1e2419; }
