@@ -41,8 +41,13 @@ export default function Navbar() {
           <Logo tone={dark ? 'light' : 'dark'} />
         </button>
 
-        {/* Page links: plain text; the current page is bolder, coloured and marked with a small dot. */}
-        <div className="hidden items-center gap-9 md:flex">
+        {/* Page links in a frosted glass bar; the current page sits in a glass
+            pill that slides between links. */}
+        <div className={`relative hidden items-center gap-1 rounded-full p-1.5 backdrop-blur-xl md:flex ${
+          dark
+            ? 'border border-white/20 bg-white/10 shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_8px_24px_rgba(0,0,0,0.18)]'
+            : 'border border-ink-900/[0.08] bg-white/60 shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_6px_20px_rgba(18,24,14,0.06)]'
+        }`}>
           {tabs.map((t) => {
             const active = page === t.page
             return (
@@ -50,20 +55,24 @@ export default function Navbar() {
                 key={t.page}
                 onClick={() => go(t.page)}
                 aria-current={active ? 'page' : undefined}
-                className={`relative py-1 text-sm transition-colors ${
+                className={`relative isolate rounded-full px-4 py-2 text-sm font-medium transition-colors duration-200 ${
                   active
-                    ? dark ? 'font-semibold text-white' : 'font-semibold text-forest-700'
-                    : dark ? 'font-medium text-cream-100/80 hover:text-white' : 'font-medium text-ink-700 hover:text-ink-900'
+                    ? dark ? 'text-ink-900' : 'text-white'
+                    : dark ? 'text-white/80 hover:bg-white/10 hover:text-white' : 'text-ink-700 hover:bg-ink-900/[0.04] hover:text-ink-900'
                 }`}
               >
-                {t.label}
                 {active && (
                   <motion.span
-                    layoutId="nav-active"
-                    transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-                    className={`absolute -bottom-1.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full ${dark ? 'bg-forest-300' : 'bg-forest-600'}`}
+                    layoutId="nav-glass"
+                    transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+                    className={`absolute inset-0 -z-10 rounded-full ${
+                      dark
+                        ? 'bg-white/90 shadow-[inset_0_1px_0_rgba(255,255,255,1),0_4px_14px_rgba(0,0,0,0.18)]'
+                        : 'bg-gradient-to-b from-forest-600 to-forest-700 shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_4px_12px_rgba(87,140,26,0.35)]'
+                    }`}
                   />
                 )}
+                <span className="relative">{t.label}</span>
               </button>
             )
           })}
