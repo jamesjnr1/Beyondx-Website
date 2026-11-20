@@ -20,7 +20,7 @@ function NoticeCard({ label, heading, points }: { label: string; heading: string
   return (
     <div className={`${card} h-full p-6 sm:p-8`}>
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-forest-800">{label}</p>
-      <h3 className="mt-2 font-serif text-2xl font-medium text-ink-900">{heading}</h3>
+      <h3 className="mt-2 text-xl font-semibold text-ink-900">{heading}</h3>
       <ul className="mt-6 space-y-4">
         {points.map((point) => (
           <li key={point} className="flex items-start gap-3">
@@ -43,8 +43,7 @@ export default function Transparency() {
         <SectionHead
           chip="Our commitments"
           title={<>Transparency on <Accent>both sides</Accent></>}
-          lead="BeyondX makes clear commitments to every employer and every Xpert on this platform."
-        />
+          />
 
         {/* One card at a time on phones, both side by side from lg up */}
         <div className="mt-8 flex gap-2 lg:hidden">

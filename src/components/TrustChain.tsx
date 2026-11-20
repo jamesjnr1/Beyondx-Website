@@ -11,7 +11,7 @@ const chain = [
 
 export default function TrustChain() {
   return (
-    <section className={`bg-white ${sectionY}`}>
+    <section className={`bg-cream-100 ${sectionY}`}>
       <div className={container}>
         <SectionHead
           center
@@ -26,12 +26,12 @@ export default function TrustChain() {
                 {i < chain.length - 1 && (
                   <ChevronRight size={18} aria-hidden="true" className="absolute right-[-9px] top-6 hidden text-ink-900/25 sm:block" />
                 )}
-                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-ink-900 text-cream-50">
+                <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-forest-600 text-white">
                   <Icon size={21} aria-hidden="true" />
                 </span>
                 <span className="sm:mt-4 sm:px-3">
                   <span className="block text-xs font-semibold tracking-[0.12em] text-ink-700/50">STEP {i + 1}</span>
-                  <span className="mt-0.5 block font-serif text-base font-medium text-ink-900 sm:text-lg">{label}</span>
+                  <span className="mt-0.5 block text-base font-semibold text-ink-900">{label}</span>
                 </span>
               </li>
             ))}

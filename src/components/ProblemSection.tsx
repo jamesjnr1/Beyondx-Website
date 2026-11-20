@@ -1,35 +1,39 @@
-import { Accent, Reveal, SectionHead, container, sectionY } from './site/ui'
+import { UserX, AlertTriangle, ShieldAlert, CalendarX, RefreshCw, Users } from 'lucide-react'
+import { Accent, Reveal, SectionHead, card, container, sectionY } from './site/ui'
 
 const problems = [
-  { title: 'No-shows', description: 'Someone agrees to a job, then never arrives — and you find out when the job was supposed to start.' },
-  { title: 'Poor quality', description: 'The work gets done, but not to a standard you can rely on, and there is no record to hold anyone to.' },
-  { title: 'Unverified skills', description: '"I can do the job" is easy to say. Without verification, you have no way to know if it is true.' },
-  { title: 'Last-minute cancellations', description: 'Plans fall through with no notice, leaving you to scramble right when you needed things to go smoothly.' },
-  { title: 'Finding replacements', description: 'When someone falls through, starting the search over again costs time you did not have to spare.' },
-  { title: 'Unreliable informal referrals', description: 'A friend-of-a-friend recommendation is only as good as the last job they happened to do well.' },
+  { icon: UserX, title: 'No-shows', description: 'Someone agrees to a job, then never arrives.' },
+  { icon: AlertTriangle, title: 'Poor quality', description: 'The work is done, but not to a standard you can rely on.' },
+  { icon: ShieldAlert, title: 'Unverified skills', description: '"I can do the job" is easy to say and hard to check.' },
+  { icon: CalendarX, title: 'Last-minute cancellations', description: 'Plans fall through with no notice.' },
+  { icon: RefreshCw, title: 'Finding replacements', description: 'Starting the search again costs time you do not have.' },
+  { icon: Users, title: 'Unreliable informal referrals', description: 'A recommendation is only as good as the last job.' },
 ]
 
 export default function ProblemSection() {
   return (
-    <section className={`bg-white ${sectionY}`}>
-      <div className={`${container} grid gap-10 lg:grid-cols-[0.9fr_1.3fr] lg:gap-20`}>
+    <section className={`bg-cream-100 ${sectionY}`}>
+      <div className={container}>
         <SectionHead
           chip="The problem with informal hiring"
           title={<>Finding someone is not always the hard part. <Accent>Knowing they will be the ideal person for you is.</Accent></>}
-          lead="These are the problems employers told us about. BeyondX is built to take each one off your hands."
-          className="lg:sticky lg:top-28 lg:self-start"
+          className="max-w-3xl"
         />
-        <Reveal delay={0.08}>
-          <ol className="grid gap-x-10 sm:grid-cols-2">
-            {problems.map(({ title, description }, i) => (
-              <li key={title} className="border-t border-ink-900/15 py-6">
-                <span className="font-serif text-sm italic text-forest-700">0{i + 1}</span>
-                <h3 className="mt-2 font-serif text-xl font-medium text-ink-900">{title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-ink-700/80">{description}</p>
-              </li>
-            ))}
-          </ol>
-        </Reveal>
+        <ul className="mt-10 grid gap-4 sm:mt-12 sm:grid-cols-2 lg:grid-cols-3">
+          {problems.map(({ icon: Icon, title, description }, i) => (
+            <li key={title}>
+              <Reveal delay={(i % 3) * 0.06} className={`${card} flex h-full items-start gap-4 p-5`}>
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-forest-600/10 text-forest-800">
+                  <Icon size={19} aria-hidden="true" />
+                </span>
+                <span>
+                  <h3 className="text-base font-semibold text-ink-900">{title}</h3>
+                  <p className="mt-1 text-sm leading-relaxed text-ink-700/80">{description}</p>
+                </span>
+              </Reveal>
+            </li>
+          ))}
+        </ul>
       </div>
     </section>
   )

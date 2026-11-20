@@ -3,14 +3,14 @@ import { Chip, Reveal, container, sectionY } from './site/ui'
 
 export default function Testimonial() {
   return (
-    <section className={`bg-cream-100 ${sectionY}`}>
+    <section className={`bg-white ${sectionY}`}>
       <div className={container}>
         <Reveal className="mx-auto max-w-4xl">
           <div className="flex items-center gap-3">
             <Quote size={26} aria-hidden="true" className="text-forest-600" />
             <Chip>A message from our CEO</Chip>
           </div>
-          <blockquote className="mt-6 font-serif text-2xl font-medium leading-snug text-ink-900 text-pretty sm:text-4xl sm:leading-[1.25]">
+          <blockquote className="mt-6 font-serif text-2xl font-medium leading-snug text-ink-900 text-pretty sm:text-3xl sm:leading-[1.3]">
             &ldquo;BeyondX exists because hiring should not be a gamble. Every job
             completed on our platform builds a verified record of skill and
             reliability, so employers know who they can trust before the work

@@ -1,42 +1,81 @@
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, CheckCircle2 } from 'lucide-react'
 import { useAuth } from './auth/AuthContext'
-import { Reveal, container } from './site/ui'
+import { Reveal, SectionHead, container, sectionY } from './site/ui'
 
-/** Closing call to action: one full-width deep-green band, straight above the footer. */
+const assurances: [string, string][] = [
+  ['No sourcing hassle', 'BeyondX selects, confirms and manages the right Xpert for the job.'],
+  ['One firm quote', 'You accept or decline one clear quote before anyone is dispatched. No haggling.'],
+  ['Verified follow-through', 'Attendance is GPS-verified and every completed job is recorded.'],
+]
+
+const steps = [
+  'Create your employer account',
+  'Tell us the job, where and when',
+  'Accept the quote and we send your Xpert',
+]
+
+/** Hire an Xpert: why it is easy on the left, the way in on the right. */
 export default function CTA() {
   const { open } = useAuth()
   return (
-    <section id="cta" className="relative isolate overflow-hidden bg-gradient-to-br from-forest-800 to-forest-900 text-cream-50">
-      <div aria-hidden="true" className="pointer-events-none absolute -right-24 -top-24 -z-10">
-        {[260, 380, 500].map((s) => (
-          <span key={s} className="absolute right-0 top-0 rounded-full border border-cream-50/10" style={{ width: s, height: s, transform: `translate(${(s - 260) / 2}px, -${(s - 260) / 2}px)` }} />
-        ))}
-      </div>
-      <div className={`${container} grid items-center gap-8 py-16 sm:py-20 lg:grid-cols-[1.3fr_1fr] lg:gap-16`}>
-        <Reveal>
-          <h2 className="font-serif text-4xl font-medium leading-[1.08] tracking-[-0.015em] text-balance sm:text-5xl sm:leading-[1.08]">
-            Ready to <span className="italic text-forest-300">hire with purpose?</span>
-          </h2>
-          <p className="mt-4 max-w-xl text-lg leading-relaxed text-cream-100/80 text-pretty">
-            Join employers across Ghana building better businesses — and better futures — through BeyondX.
-          </p>
-        </Reveal>
-        <Reveal delay={0.08} className="flex flex-col gap-3 lg:items-end">
-          <div className="flex flex-col gap-3 sm:flex-row lg:flex-col xl:flex-row">
-            <button type="button" onClick={() => open('employer-login')}
-              className="group inline-flex items-center justify-center gap-2 rounded-full bg-cream-50 px-7 py-3.5 text-base font-semibold text-forest-900 transition-all hover:bg-white active:scale-[0.98]">
-              Hire an Xpert
-              <ArrowRight size={18} aria-hidden="true" className="transition-transform group-hover:translate-x-1" />
-            </button>
-            <button type="button" onClick={() => open('worker-login')}
-              className="inline-flex items-center justify-center rounded-full border border-cream-50/35 px-7 py-3.5 text-base font-semibold text-cream-50 transition-colors hover:bg-cream-50/10">
-              Sign up to be an Xpert
-            </button>
+    <section id="hire" className={`bg-cream-50 ${sectionY}`}>
+      <div className={`${container} grid gap-12 lg:grid-cols-2 lg:gap-16`}>
+        <div>
+          <SectionHead
+            chip="Hire an Xpert"
+            title="Tell us what work you need done"
+            lead="Send a request and BeyondX reviews it, sends you one firm quote and confirms the right Xpert before anyone is dispatched."
+          />
+          <dl className="mt-10 space-y-6">
+            {assurances.map(([term, desc]) => (
+              <Reveal key={term}>
+                <div className="border-l-2 border-forest-500 pl-5">
+                  <dt className="font-semibold text-ink-900">{term}</dt>
+                  <dd className="mt-1 text-ink-700/80">{desc}</dd>
+                </div>
+              </Reveal>
+            ))}
+          </dl>
+        </div>
+
+        <Reveal className="self-center">
+          <div className="rounded-3xl border border-ink-900/10 bg-white p-7 shadow-sm sm:p-10">
+            <h3 className="font-display text-2xl font-bold text-ink-900">Ready to hire with purpose?</h3>
+            <p className="mt-3 text-ink-700/80">
+              Join employers across Ghana building better businesses, and better futures, through BeyondX.
+            </p>
+            <ol className="mt-7 space-y-3.5">
+              {steps.map((s) => (
+                <li key={s} className="flex items-center gap-3 text-ink-900">
+                  <CheckCircle2 size={20} aria-hidden="true" className="shrink-0 text-forest-600" />
+                  <span>{s}</span>
+                </li>
+              ))}
+            </ol>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+              <button
+                type="button"
+                onClick={() => open('employer-login')}
+                className="group inline-flex flex-1 whitespace-nowrap items-center justify-center gap-2 rounded-full bg-forest-700 px-6 py-3.5 font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-forest-800 hover:shadow-md"
+              >
+                Hire an Xpert
+                <ArrowRight size={18} aria-hidden="true" className="transition-transform group-hover:translate-x-1" />
+              </button>
+              <button
+                type="button"
+                onClick={() => open('worker-login')}
+                className="inline-flex flex-1 whitespace-nowrap items-center justify-center rounded-full border border-ink-900/15 px-6 py-3.5 font-semibold text-ink-900 transition-colors hover:border-ink-900/30 hover:bg-ink-900/5"
+              >
+                Sign up to be an Xpert
+              </button>
+            </div>
+            <p className="mt-5 text-center text-sm text-ink-700/70">
+              Already have an account?{' '}
+              <button type="button" onClick={() => open('employer-login')} className="font-semibold text-forest-700 underline underline-offset-4 hover:no-underline">
+                Sign in
+              </button>
+            </p>
           </div>
-          <p className="text-sm text-cream-100/70">
-            Already have an account?{' '}
-            <button type="button" onClick={() => open('worker-login')} className="font-medium text-cream-50 underline underline-offset-4 hover:no-underline">Sign in</button>
-          </p>
         </Reveal>
       </div>
     </section>

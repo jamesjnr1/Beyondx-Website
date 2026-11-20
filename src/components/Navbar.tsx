@@ -22,10 +22,9 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
 
-  // Every public page opens on a dark band (the hero, or the page header)
-  const solid = scrolled
-  // Every public page opens on a light surface, so the bar's text is always dark
-  const dark = false
+  const onHero = page === 'home'
+  const solid = scrolled || !onHero
+  const dark = !solid
 
   return (
     <motion.header
@@ -33,30 +32,28 @@ export default function Navbar() {
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.6, ease: 'easeOut' }}
       className={`fixed left-0 right-0 z-50 transition-all duration-300 ${
-        solid ? 'border-b border-ink-900/10 bg-white/90 backdrop-blur-md' : 'border-b border-transparent bg-transparent'
+        solid ? 'bg-cream-50/90 backdrop-blur-md shadow-sm' : 'bg-transparent'
       }`}
       style={{ top: 'var(--bx-banner-h, 0px)' }}
     >
-      <nav className="mx-auto flex max-w-[1200px] items-center justify-between px-5 py-3.5 sm:px-8">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8">
         <button onClick={() => go('home')} aria-label="BeyondX home">
           <Logo tone={dark ? 'light' : 'dark'} />
         </button>
 
-        <div className="hidden items-center gap-1 md:flex">
+        <div className="hidden items-center gap-8 md:flex">
           {tabs.map((t) => {
             const active = page === t.page
             return (
               <button
                 key={t.page}
                 onClick={() => go(t.page)}
-                aria-current={active ? 'page' : undefined}
-                className={`rounded-full px-4 py-2 text-sm font-medium transition-colors ${
-                  dark
-                    ? active ? 'bg-cream-50/10 text-cream-50' : 'text-cream-100/85 hover:bg-cream-50/10 hover:text-cream-50'
-                    : active ? 'bg-ink-900/[0.06] text-ink-900' : 'text-ink-700 hover:bg-ink-900/[0.04] hover:text-ink-900'
+                className={`group relative text-sm font-medium transition-colors ${
+                  dark ? 'text-cream-200/90 hover:text-cream-50' : active ? 'text-forest-700' : 'text-ink-700 hover:text-forest-600'
                 }`}
               >
                 {t.label}
+                <span className={`absolute -bottom-1 left-0 h-0.5 bg-clay-400 transition-all duration-300 ${active && !dark ? 'w-full' : 'w-0 group-hover:w-full'}`} />
               </button>
             )
           })}
@@ -73,7 +70,7 @@ export default function Navbar() {
           </button>
           <button
             onClick={() => openAuth('employer-login')}
-            className="rounded-full bg-forest-600 px-5 py-2 text-sm font-semibold text-white transition-all hover:bg-forest-500 active:scale-[0.97]"
+            className="rounded-full bg-forest-600 px-5 py-2 text-sm font-semibold text-cream-50 shadow-sm transition-all hover:bg-forest-500 active:scale-[0.97]"
           >
             Employer Login
           </button>
@@ -91,7 +88,7 @@ export default function Navbar() {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.25 }}
-            className="overflow-hidden border-t border-ink-900/10 bg-white md:hidden"
+            className="overflow-hidden bg-cream-50/95 backdrop-blur-md md:hidden"
           >
             <div className="flex flex-col gap-1 px-5 py-4">
               {tabs.map((t) => (

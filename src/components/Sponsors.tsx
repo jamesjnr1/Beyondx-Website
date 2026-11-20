@@ -9,7 +9,7 @@ const tiers = [
 
 export default function Sponsors() {
   return (
-    <section id="sponsors" className={`bg-white ${sectionY}`}>
+    <section id="sponsors" className={`bg-cream-100 ${sectionY}`}>
       <div className={container}>
         <SectionHead
           chip="For sponsors & partners"
@@ -20,7 +20,7 @@ export default function Sponsors() {
           {tiers.map((t, i) => (
             <Reveal key={t.name} delay={i * 0.08} className={`${card} flex w-[80%] shrink-0 snap-center flex-col p-6 transition-colors hover:border-forest-600/40 sm:w-auto sm:shrink sm:p-8`}>
               <span className="text-xs font-semibold uppercase tracking-[0.18em] text-forest-800">{t.name}</span>
-              <span className="mt-3 font-serif text-3xl font-medium text-ink-900">{t.amount}</span>
+              <span className="mt-3 text-2xl font-semibold text-ink-900">{t.amount}</span>
               <p className="mt-4 text-sm leading-relaxed text-ink-700/80">{t.description}</p>
             </Reveal>
           ))}

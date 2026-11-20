@@ -50,9 +50,12 @@
 @layer utilities {
   .text-balance { text-wrap: balance; }
   .text-pretty { text-wrap: pretty; }
-  /* Accent words in headings: italic serif in one solid brand green (was a gradient) */
   .gradient-text {
-    color: #578c1a;
+    /* BeyondX Green → brighter lime */
+    background: linear-gradient(135deg, #6bab21 0%, #8bc53f 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
   .img-zoom { overflow: hidden; }
   .img-zoom img { transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1); }
@@ -157,3 +160,7 @@ html.a11y-contrast :focus-visible { outline: 3px solid #000000; outline-offset: 
     background-color: rgba(18, 24, 14, 0.3);
   }
 }
+
+/* Sora has no italic: accent words in headings are set apart by colour, not slant. */
+.font-serif .italic, .font-serif.italic, .font-display .italic, .font-display.italic { font-style: normal; }
+.font-serif, .font-display { letter-spacing: -0.02em; }

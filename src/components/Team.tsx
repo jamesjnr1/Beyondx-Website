@@ -38,7 +38,7 @@ export default function Team() {
                 {m.initials}
               </span>
               <span className="min-w-0">
-                <span className="block font-serif text-lg font-medium leading-snug text-ink-900 [overflow-wrap:anywhere]">{m.name}</span>
+                <span className="block text-base font-semibold leading-snug text-ink-900 [overflow-wrap:anywhere]">{m.name}</span>
                 <span className="mt-0.5 block text-sm leading-snug text-ink-700/75">{m.role}</span>
               </span>
             </motion.div>
