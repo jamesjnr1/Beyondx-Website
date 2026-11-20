@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import { motion } from 'framer-motion'
 
 /** One container and one vertical rhythm for every public section, so the page reads as a single system. */
-export const container = 'mx-auto w-full max-w-6xl px-5 sm:px-6'
+export const container = 'mx-auto w-full max-w-7xl px-5 sm:px-8'
 export const sectionY = 'py-20 lg:py-28'
 
 /** Fade-and-rise once, when scrolled into view. */

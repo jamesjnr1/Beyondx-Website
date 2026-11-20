@@ -17,9 +17,9 @@ type NavProps = {
  *  Small screens use DashboardMobileNav instead. */
 export default function DashboardSidebar({ items, active, onSelect }: NavProps) {
   return (
-    <aside className="hidden w-64 shrink-0 border-r border-ink-900/10 bg-white lg:block">
+    <aside className="hidden w-64 shrink-0 border-r border-forest-600/15 bg-gradient-to-b from-[#dcefc5] via-[#eaf5dd] to-[#f6faf0] lg:block">
       <nav className="sticky top-16 flex h-[calc(100vh-4rem)] flex-col gap-1 overflow-y-auto px-4 py-6" aria-label="Dashboard sections">
-        <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-widest text-ink-700/50">Menu</p>
+        <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-widest text-forest-800/60">Menu</p>
         {items.map((item) => {
           const Icon = item.icon
           const isActive = active === item.id
@@ -29,7 +29,7 @@ export default function DashboardSidebar({ items, active, onSelect }: NavProps) 
               onClick={() => onSelect(item.id)}
               aria-current={isActive ? 'page' : undefined}
               className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors focus:outline-none ${
-                isActive ? 'bg-forest-600/10 text-forest-800' : 'text-ink-700 hover:bg-ink-900/[0.04] hover:text-ink-900'
+                isActive ? 'bg-white text-forest-800 shadow-sm ring-1 ring-forest-600/15' : 'text-ink-700 hover:bg-white/60 hover:text-ink-900'
               }`}
             >
               <Icon size={18} aria-hidden="true" className={isActive ? 'text-forest-700' : 'text-ink-700/60'} />
