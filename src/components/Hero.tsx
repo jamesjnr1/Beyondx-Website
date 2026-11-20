@@ -37,7 +37,7 @@ export default function Hero() {
             <p className="mb-4 text-[0.875rem] font-medium uppercase tracking-[0.18em] text-cream-200/80">
               Skills-Verified Xperts
             </p>
-            <h1 className="font-serif text-5xl font-medium leading-[1.05] text-cream-50 text-balance sm:text-6xl lg:text-7xl">
+            <h1 className="font-serif text-5xl font-bold leading-[1.05] text-cream-50 text-balance sm:text-6xl lg:text-7xl">
               Reliable Xperts.
               <span className="block italic gradient-text">Managed by BeyondX.</span>
             </h1>
