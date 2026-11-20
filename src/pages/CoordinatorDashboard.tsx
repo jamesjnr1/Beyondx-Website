@@ -10,15 +10,16 @@
 // the two actions here that reach BeyondX for real, via the existing
 // contact/lead endpoint.
 
-import { useCallback, useEffect, useState, type ReactNode } from 'react'
-import {
-  Plus, Trash2, ClipboardList, Wallet, AlertTriangle, Star,
-  RefreshCw, AlertCircle, CheckCircle2, XCircle, Clock, Inbox,
-  LayoutDashboard, Users, Package, HelpCircle, Check,
-} from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { Plus, Trash2, AlertTriangle, Star, AlertCircle, CheckCircle2, XCircle, Clock } from 'lucide-react'
 import DashboardHeader from './DashboardHeader'
 import DashboardSidebar, { DashboardMobileNav, type DashboardNavItem } from '../components/DashboardSidebar'
 import ActivityFeed, { type ActivityItem } from '../components/ActivityFeed'
+import {
+  SquaresFour, Tray, ClipboardText, UsersThree, Package as PackageP, HandCoins, Scales, Lifebuoy, ArrowsClockwise,
+  CheckCircle as CheckCircleP, XCircle as XCircleP, Briefcase, MapPin as MapPinP, Hourglass, IdentificationCard, WarningCircle,
+} from '@phosphor-icons/react'
+import { PageHeader, KpiTile, Panel, Status, InfoRow, ListRow, AlertBanner, EmptyState, btnPrimary, btnSecondary, btnGhost } from '../components/dash/kit'
 import Toast, { type ToastMsg } from '../components/Toast'
 import SupportPanel from '../components/SupportPanel'
 import ProfileModal, { type Profile } from '../components/ProfileModal'
@@ -35,21 +36,6 @@ import {
 
 const cedis = (n: number) => `GH₵ ${Number(n || 0).toLocaleString()}`
 const inp = 'w-full rounded-lg border border-ink-900/12 bg-white px-3 py-2 text-sm text-ink-900 outline-none focus:border-forest-600 focus:ring-2 focus:ring-gray-200'
-
-function Stat({ icon, label, value, extra }: { icon: ReactNode; label: string; value: string; extra?: ReactNode }) {
-  return (
-    <div className="rounded-2xl border border-ink-900/8 bg-white px-5 py-5 shadow-sm">
-      <div className="flex items-center gap-2.5 text-sm font-medium text-ink-700">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-ink-900/10 text-forest-600">{icon}</span>
-        <span className="truncate">{label}</span>
-      </div>
-      <div className="mt-3 flex items-center gap-2.5">
-        <span className="text-2xl font-bold text-ink-900">{value}</span>
-        {extra}
-      </div>
-    </div>
-  )
-}
 
 /* ------------------------------- Team tab -------------------------------- */
 
@@ -123,7 +109,7 @@ function TeamTab({ worker, onSaved }: { worker: Worker | null; onSaved: (patch: 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="font-serif text-lg font-medium text-ink-900">Your team ({active.length})</h2>
+        <h2 className="font-display text-lg font-semibold text-ink-900">Your team ({active.length})</h2>
         {!adding && (
           <button onClick={() => setAdding(true)} className="inline-flex items-center gap-1.5 rounded-md bg-forest-600 px-3.5 py-1.5 text-xs font-semibold text-cream-50 hover:bg-forest-500">
             <Plus size={13} /> Add Xpert
@@ -199,7 +185,7 @@ function JobQuoteCard({
   }
 
   return (
-    <div className="rounded-2xl border border-ink-900/8 bg-white p-4 space-y-3">
+    <div className="space-y-3 rounded-2xl border border-ink-900/[0.08] bg-white p-5 shadow-[0_1px_2px_rgba(18,24,14,0.04)]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-ink-900">{task.taskType || 'Job'}</p>
@@ -280,7 +266,7 @@ function JobsTab({
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="font-serif text-lg font-medium text-ink-900">Multi-Xpert job requests</h2>
+        <h2 className="font-display text-lg font-semibold text-ink-900">Multi-Xpert job requests</h2>
         <p className="mt-0.5 text-xs text-ink-700/60">Bulk jobs open for a team. Inspect scope, then submit a price for BeyondX to approve.</p>
       </div>
       {bulkTasks.length === 0 ? (
@@ -314,7 +300,7 @@ function PayoutsTab({
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="font-serif text-lg font-medium text-ink-900">Payout splits</h2>
+        <h2 className="font-display text-lg font-semibold text-ink-900">Payout splits</h2>
         <p className="mt-0.5 text-xs text-ink-700/60">BeyondX pays completed team jobs to your account in full. Record how you split each payout across the team.</p>
       </div>
 
@@ -326,7 +312,7 @@ function PayoutsTab({
         const existing = splits[tid]
         const isOpen = openTaskId === tid
         return (
-          <div key={tid} className="rounded-2xl border border-ink-900/8 bg-white p-4">
+          <div key={tid} className="rounded-2xl border border-ink-900/[0.08] bg-white p-5 shadow-[0_1px_2px_rgba(18,24,14,0.04)]">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-ink-900">{t.taskType || 'Job'}</p>
@@ -478,7 +464,7 @@ function DisputesTab({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-serif text-lg font-medium text-ink-900">Team disputes</h2>
+          <h2 className="font-display text-lg font-semibold text-ink-900">Team disputes</h2>
           <p className="mt-0.5 text-xs text-ink-700/60">You're the first point of contact — escalate to BeyondX if it can't be resolved within the team.</p>
         </div>
         {!adding && (
@@ -606,7 +592,7 @@ function RequestQuoteForm({ request, onQuoted, onDeclined }: {
 function RequestCard({ request, onUpdate }: { request: CoordinatorJobRequest; onUpdate: (r: CoordinatorJobRequest) => void }) {
   const s = REQUEST_STATUS[request.status]
   return (
-    <div className="rounded-2xl border border-ink-900/8 bg-white p-4">
+    <div className="rounded-2xl border border-ink-900/[0.08] bg-white p-5 shadow-[0_1px_2px_rgba(18,24,14,0.04)]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-ink-900">{request.taskType}</p>
@@ -650,7 +636,7 @@ function RequestsTab({ requests, onUpdate }: { requests: CoordinatorJobRequest[]
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="font-serif text-lg font-medium text-ink-900">Job requests</h2>
+        <h2 className="font-display text-lg font-semibold text-ink-900">Job requests</h2>
         <p className="mt-0.5 text-xs text-ink-700/60">Jobs employers have sent you directly. Accept and quote a price, or decline.</p>
       </div>
       {sorted.length === 0 ? (
@@ -685,7 +671,7 @@ function ActiveJobCard({ task, onChanged }: { task: Task; onChanged: () => void 
   }
 
   return (
-    <div className="rounded-2xl border border-ink-900/8 bg-white p-4">
+    <div className="rounded-2xl border border-ink-900/[0.08] bg-white p-5 shadow-[0_1px_2px_rgba(18,24,14,0.04)]">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold text-ink-900">{task.taskType || 'Job'}</p>
@@ -745,7 +731,7 @@ function ActiveJobsTab({ tasks, onReload }: { tasks: Task[]; onReload: () => voi
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="font-serif text-lg font-medium text-ink-900">Active jobs</h2>
+        <h2 className="font-display text-lg font-semibold text-ink-900">Active jobs</h2>
         <p className="mt-0.5 text-xs text-ink-700/60">Jobs from approved requests — accept the offer once the employer has paid, then mark it done when finished.</p>
       </div>
       {sorted.length === 0 ? (
@@ -806,14 +792,14 @@ export default function CoordinatorDashboard() {
   const displayName = (me?.fullName as string) || (me?.name as string) || 'Coordinator'
 
   const navItems: DashboardNavItem[] = [
-    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'requests', label: 'Requests', icon: Inbox, badge: pendingRequests },
-    { id: 'active', label: 'Active Jobs', icon: ClipboardList, badge: activeCount },
-    { id: 'team', label: 'Team', icon: Users },
-    { id: 'jobs', label: 'Bulk Jobs', icon: Package },
-    { id: 'payouts', label: 'Payouts', icon: Wallet },
-    { id: 'disputes', label: 'Disputes', icon: AlertTriangle },
-    { id: 'support', label: 'Support', icon: HelpCircle },
+    { id: 'overview', label: 'Overview', icon: SquaresFour },
+    { id: 'requests', label: 'Requests', icon: Tray, badge: pendingRequests },
+    { id: 'active', label: 'Active Jobs', icon: ClipboardText, badge: activeCount },
+    { id: 'team', label: 'Team', icon: UsersThree },
+    { id: 'jobs', label: 'Bulk Jobs', icon: PackageP },
+    { id: 'payouts', label: 'Payouts', icon: HandCoins },
+    { id: 'disputes', label: 'Disputes', icon: Scales },
+    { id: 'support', label: 'Support', icon: Lifebuoy },
   ]
 
   const recentActivity: ActivityItem[] = [
@@ -821,7 +807,7 @@ export default function CoordinatorDashboard() {
       const isNegative = r.status === 'admin_rejected' || r.status === 'declined'
       return {
         id: `req-${r.id}`,
-        icon: isNegative ? <XCircle size={15} aria-hidden="true" /> : <CheckCircle2 size={15} aria-hidden="true" />,
+        icon: isNegative ? <XCircleP size={20} weight="duotone" /> : <CheckCircleP size={20} weight="duotone" />,
         title: r.taskType || 'Job request',
         detail: [r.employer?.orgName || 'Employer', new Date(r.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })].join(' · '),
         status: { label: REQUEST_STATUS[r.status].label, tone: isNegative ? ('info' as const) : ('success' as const) },
@@ -829,7 +815,7 @@ export default function CoordinatorDashboard() {
     }),
     ...myTasks.slice(0, 4).map((t) => ({
       id: `task-${t.id}`,
-      icon: <ClipboardList size={15} aria-hidden="true" />,
+      icon: <Briefcase size={20} weight="duotone" />,
       title: t.taskType || 'Job',
       detail: t.location as string | undefined,
       status: { label: (t.status || '').replace(/_/g, ' '), tone: 'info' as const },
@@ -858,77 +844,79 @@ export default function CoordinatorDashboard() {
           </div>
         )}
 
-        <div className="mb-6 flex items-start justify-between gap-3">
-          <div>
-            <h1 className="font-display text-2xl font-bold text-ink-900 sm:text-[1.75rem]">Welcome back, {displayName.split(' ')[0]}!</h1>
-            <p className="mt-0.5 text-sm text-ink-700/70">
-              {application?.businessName ? `${application.businessName} · Coordinator account` : 'Coordinator account'}
-            </p>
-          </div>
-          <button onClick={() => { setLoading(true); load() }} aria-label="Refresh dashboard"
-            className="flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium text-ink-700/60 transition-colors hover:bg-ink-900/5 hover:text-ink-900">
-            <RefreshCw size={13} aria-hidden="true" /> Refresh
-          </button>
-        </div>
+        {(() => {
+          const meta: Record<string, { title: string; subtitle: string }> = {
+            overview: { title: `Welcome back, ${displayName.split(' ')[0]}`, subtitle: application?.businessName ? `${application.businessName} · Coordinator account` : 'Coordinator account' },
+            requests: { title: 'Job requests', subtitle: 'Requests BeyondX has routed to your team. Quote them or decline.' },
+            active: { title: 'Active jobs', subtitle: 'Jobs your team is working on now.' },
+            team: { title: 'Your team', subtitle: 'The Xperts you coordinate and the categories they cover.' },
+            jobs: { title: 'Bulk jobs', subtitle: 'Multi-Xpert jobs you can quote for.' },
+            payouts: { title: 'Payouts', subtitle: 'How payment for each job is split across your team.' },
+            disputes: { title: 'Disputes', subtitle: 'Issues raised about your team, and how they were resolved.' },
+            support: { title: 'Support', subtitle: 'Questions, a problem on a job, or feedback. Our team replies quickly.' },
+          }
+          const m = meta[tab] || meta.overview
+          return (
+            <PageHeader title={m.title} subtitle={m.subtitle} actions={
+              <button onClick={() => { setLoading(true); load() }} aria-label="Refresh dashboard" className={btnSecondary}>
+                <ArrowsClockwise size={16} weight="bold" /> Refresh
+              </button>
+            } />
+          )
+        })()}
 
         <div>
           <DashboardMobileNav items={navItems} active={tab} onSelect={(id) => setTab(id as typeof tab)} />
 
           <div className="min-w-0 flex-1">
             {loading ? (
-              <p className="py-10 text-center text-sm text-ink-700/60">Loading…</p>
+              <div className="py-16 text-center text-sm text-ink-700/60">Loading your dashboard…</div>
             ) : (
               <>
                 {tab === 'overview' && (
-                  <div className="space-y-5">
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <div className="rounded-2xl border border-ink-900/8 bg-white p-6 shadow-sm">
-                        <p className="text-sm font-medium text-ink-700">Your Current Status</p>
-                        <p className="mt-4 flex items-center gap-2 text-lg font-semibold text-forest-700">
-                      <Check size={20} strokeWidth={3} aria-hidden="true" /> Active
-                    </p>
-                        <p className="mt-3 text-sm text-ink-700/75">
-                          {pendingRequests > 0
-                            ? `You have ${pendingRequests} request${pendingRequests === 1 ? '' : 's'} awaiting your quote.`
-                            : "You're all caught up on job requests."}
-                        </p>
-                        <button onClick={() => setTab('requests')} className="mt-4 text-sm font-medium text-forest-700 underline underline-offset-4 hover:text-forest-500">
-                          View requests →
-                        </button>
-                      </div>
-
-                      <div className="rounded-2xl border border-ink-900/8 bg-white p-6 shadow-sm">
-                        <p className="border-b border-ink-900/8 pb-3 text-sm font-semibold text-ink-900">Next Active Job</p>
+                  <div className="space-y-6">
+                    {pendingRequests > 0 && (
+                      <AlertBanner tone="warning" icon={WarningCircle}
+                        title={`${pendingRequests} request${pendingRequests === 1 ? ' is' : 's are'} waiting for your quote`}
+                        text="Quote them so BeyondX can confirm the job with the employer."
+                        action={<button onClick={() => setTab('requests')} className={btnPrimary}>Review requests</button>} />
+                    )}
+                    <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+                      <KpiTile tone="green" icon={Tray} label="Pending requests" value={pendingRequests} hint="Awaiting your quote" onClick={() => setTab('requests')} />
+                      <KpiTile tone="teal" icon={ClipboardText} label="Active jobs" value={activeCount} hint="Your team is on them" onClick={() => setTab('active')} />
+                      <KpiTile tone="blue" icon={UsersThree} label="Team members" value={getActiveTeam(me).length} hint="Active Xperts you coordinate" onClick={() => setTab('team')} />
+                      <KpiTile tone="violet" icon={HandCoins} label="Total earned" value={cedis(Number(me?.totalEarned || 0))} hint="Across all jobs" onClick={() => setTab('payouts')} />
+                    </div>
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                      <Panel className="lg:col-span-2" title="Next active job" subtitle="The job your team is working on" icon={Briefcase}
+                        action={myTasks[0] ? <button onClick={() => setTab('active')} className={btnGhost}>Open</button> : undefined}>
                         {myTasks[0] ? (
-                          <>
-                            <p className="mt-3 text-lg font-semibold text-ink-900">{myTasks[0].taskType || 'Job'}</p>
-                            {myTasks[0].location && <p className="mt-1 text-sm text-ink-700/75">{myTasks[0].location}</p>}
-                            <button onClick={() => setTab('active')}
-                              className="mt-4 rounded-lg bg-forest-600 px-7 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98]">
-                              View Details
-                            </button>
-                          </>
+                          <div>
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                              <p className="font-display text-xl font-semibold text-ink-900">{myTasks[0].taskType || 'Job'}</p>
+                              <Status tone="info">{(myTasks[0].status || '').replace(/_/g, ' ')}</Status>
+                            </div>
+                            {myTasks[0].location && <div className="mt-3"><InfoRow icon={MapPinP} label="Location">{myTasks[0].location}</InfoRow></div>}
+                            <button onClick={() => setTab('active')} className={`${btnPrimary} mt-5`}>View details</button>
+                          </div>
                         ) : (
-                          <>
-                            <p className="mt-2 text-sm text-ink-700/70">No active jobs yet.</p>
-                            <button onClick={() => setTab('requests')}
-                              className="mt-3 rounded-md border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-800 hover:bg-ink-900/5">
-                              Review requests
-                            </button>
-                          </>
+                          <EmptyState icon={Hourglass} title="No active jobs yet" text="Quoted requests that employers accept show here."
+                            action={<button onClick={() => setTab('requests')} className={btnPrimary}>Review requests</button>} />
                         )}
-                      </div>
+                      </Panel>
+                      <Panel title="Your account" icon={IdentificationCard}>
+                        <Status tone="success">Active Coordinator</Status>
+                        <p className="mt-2 text-sm text-ink-700/70">
+                          {pendingRequests > 0 ? `${pendingRequests} request${pendingRequests === 1 ? '' : 's'} awaiting your quote.` : "You're all caught up on job requests."}
+                        </p>
+                        <div className="-mx-5 mt-4 divide-y divide-ink-900/[0.06] border-t border-ink-900/[0.06] sm:-mx-6">
+                          <ListRow icon={UsersThree} title="Your team" detail="Members and categories" onClick={() => setTab('team')} />
+                          <ListRow icon={HandCoins} title="Payouts" detail="Splits per job" onClick={() => setTab('payouts')} />
+                          <ListRow icon={Lifebuoy} title="Support" detail="We reply quickly" onClick={() => setTab('support')} />
+                        </div>
+                      </Panel>
                     </div>
-
-                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                      <Stat icon={<Inbox size={18} />} label="Pending Requests" value={`${pendingRequests}`} />
-                      <Stat icon={<ClipboardList size={18} />} label="Active Jobs" value={`${activeCount}`} />
-                      <Stat icon={<Wallet size={18} />} label="Total Earnings" value={cedis(Number(me?.totalEarned || 0))} />
-                    </div>
-
-                    <div>
-                      <ActivityFeed title="Recent Activity" items={recentActivity} empty="No activity yet — job requests and assignments will show up here." />
-                    </div>
+                    <ActivityFeed title="Recent activity" items={recentActivity} empty="No activity yet. Job requests and assignments will show up here." />
                   </div>
                 )}
                 {tab === 'requests' && (

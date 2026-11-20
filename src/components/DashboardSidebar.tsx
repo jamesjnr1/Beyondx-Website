@@ -1,11 +1,12 @@
-import { Globe, LifeBuoy, LogOut, UserRound, type LucideIcon } from 'lucide-react'
+import { Globe, Lifebuoy, SignOut, UserCircle } from '@phosphor-icons/react'
+import type { IconType } from './dash/kit'
 import Logo from './Logo'
 import { useAuth } from './auth/AuthContext'
 
 export interface DashboardNavItem {
   id: string
   label: string
-  icon: LucideIcon
+  icon: IconType
   badge?: number
 }
 
@@ -51,7 +52,7 @@ export default function DashboardSidebar({ items, active, onSelect, roleLabel, o
             const isActive = active === item.id
             return (
               <button key={item.id} onClick={() => onSelect(item.id)} aria-current={isActive ? 'page' : undefined} className={itemCls(isActive)}>
-                <Icon size={18} aria-hidden="true" className={isActive ? 'text-white' : 'text-white/60'} />
+                <Icon size={20} weight={isActive ? 'fill' : 'duotone'} className={isActive ? 'text-white' : 'text-white/65'} />
                 <span className="flex-1">{item.label}</span>
                 {typeof item.badge === 'number' && item.badge > 0 ? (
                   <span className="grid h-5 min-w-[1.25rem] place-items-center rounded-full bg-red-500 px-1.5 text-[0.6875rem] font-semibold text-white">
@@ -67,20 +68,20 @@ export default function DashboardSidebar({ items, active, onSelect, roleLabel, o
         <div className="flex flex-col gap-0.5">
           {onEditProfile && (
             <button onClick={onEditProfile} className={itemCls(false)}>
-              <UserRound size={18} aria-hidden="true" className="text-white/60" /> <span>Edit profile</span>
+              <UserCircle size={20} weight="duotone" className="text-white/65" /> <span>Edit profile</span>
             </button>
           )}
           <button onClick={() => go('home')} className={itemCls(false)}>
-            <Globe size={18} aria-hidden="true" className="text-white/60" /> <span>BeyondX website</span>
+            <Globe size={20} weight="duotone" className="text-white/65" /> <span>BeyondX website</span>
           </button>
           <button onClick={logout} className={itemCls(false)}>
-            <LogOut size={18} aria-hidden="true" className="text-white/60" /> <span>Sign out</span>
+            <SignOut size={20} weight="duotone" className="text-white/65" /> <span>Sign out</span>
           </button>
         </div>
       </nav>
 
       <div className="m-4 rounded-2xl bg-white/10 p-4 ring-1 ring-white/10">
-        <p className="flex items-center gap-2 text-sm font-semibold"><LifeBuoy size={16} aria-hidden="true" className="text-forest-300" /> {foot.title}</p>
+        <p className="flex items-center gap-2 text-sm font-semibold"><Lifebuoy size={18} weight="duotone" className="text-forest-300" /> {foot.title}</p>
         <p className="mt-1 text-xs leading-relaxed text-white/65">{foot.text}</p>
         <button onClick={foot.onClick} className="mt-3 w-full rounded-full bg-white py-2 text-sm font-semibold text-forest-900 transition-colors hover:bg-cream-100">
           {foot.label}

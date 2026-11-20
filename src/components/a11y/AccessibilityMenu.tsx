@@ -62,7 +62,7 @@ export default function AccessibilityMenu() {
         aria-expanded={open}
         aria-haspopup="dialog"
         aria-label="Accessibility options"
-        className={`fixed bottom-4 left-4 z-[70] flex h-14 w-14 items-center justify-center rounded-[9999px] bg-forest-600 text-cream-50 shadow-lg transition-all hover:bg-forest-500 active:scale-95 focus:outline-none focus-visible:ring-4 focus-visible:ring-forest-600/40 sm:bottom-6 sm:left-6 ${onDashboard ? 'lg:left-[17.5rem]' : ''}`}
+        className={`fixed bottom-4 left-4 z-[70] flex h-14 w-14 items-center justify-center rounded-[9999px] bg-forest-600 text-cream-50 shadow-lg transition-all hover:bg-forest-500 active:scale-95 focus:outline-none focus-visible:ring-4 focus-visible:ring-forest-600/40 sm:bottom-6 sm:left-6 ${onDashboard ? 'lg:left-auto lg:right-6' : ''}`}
       >
         <Accessibility size={26} aria-hidden="true" />
       </button>
@@ -76,7 +76,7 @@ export default function AccessibilityMenu() {
             role="dialog"
             aria-modal="true"
             aria-labelledby="a11y-title"
-            className={`fixed bottom-0 left-0 right-0 z-[80] max-h-[85vh] overflow-y-auto rounded-t-2xl bg-cream-50 p-5 shadow-2xl outline-none sm:bottom-24 sm:left-6 sm:right-auto sm:w-[22rem] sm:rounded-2xl ${onDashboard ? 'lg:left-[17.5rem]' : ''}`}
+            className={`fixed bottom-0 left-0 right-0 z-[80] max-h-[85vh] overflow-y-auto rounded-t-2xl bg-cream-50 p-5 shadow-2xl outline-none sm:bottom-24 sm:left-6 sm:right-auto sm:w-[22rem] sm:rounded-2xl ${onDashboard ? 'lg:left-auto lg:right-6' : ''}`}
           >
             <div className="mb-1 flex items-center justify-between">
               <h2 id="a11y-title" className="font-serif text-lg font-medium text-ink-900">Accessibility</h2>

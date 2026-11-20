@@ -1,9 +1,18 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react'
-import { MapPin, Calendar, Check, Star, RotateCcw, RefreshCw, AlertCircle, Camera, Plus, Trash2, Phone, AlertTriangle, ChevronRight, Map, ClipboardList, Wallet, Bus, Clock, Users, CheckCircle2, Loader2, LayoutDashboard, ShieldCheck, UserRound, HelpCircle, Flag, CircleDot } from 'lucide-react'
+import { MapPin, Calendar, Check, Star, RotateCcw, AlertCircle, Camera, Plus, Trash2, Phone, AlertTriangle, ChevronRight, Map, Bus, Clock, Users, CheckCircle2, Loader2, Flag } from 'lucide-react'
 import JobLocationMap from '../components/JobLocationMap'
 import DashboardHeader from './DashboardHeader'
 import DashboardSidebar, { DashboardMobileNav, type DashboardNavItem } from '../components/DashboardSidebar'
 import ActivityFeed, { type ActivityItem } from '../components/ActivityFeed'
+import {
+  SquaresFour, ClipboardText, ShieldCheck as ShieldCheckP, Wallet as WalletP, UserCircle, Lifebuoy, ArrowsClockwise,
+  Briefcase, CheckCircle as CheckCircleP, Star as StarP, MapPin as MapPinP, CalendarBlank, Buildings, Hourglass, Tray,
+  ArrowCounterClockwise, Coins, HandCoins, IdentificationCard, Certificate, Clock as ClockP, WarningCircle,
+} from '@phosphor-icons/react'
+import {
+  PageHeader, KpiTile, Panel, Status, InfoRow, ListRow, AlertBanner, EmptyState, SkeletonRows, TextTabs,
+  btnPrimary, btnSecondary, btnGhost, type IconType,
+} from '../components/dash/kit'
 import ProfileModal, { type Profile } from '../components/ProfileModal'
 import Toast, { type ToastMsg } from '../components/Toast'
 import SupportPanel from '../components/SupportPanel'
@@ -213,7 +222,7 @@ function WorkExperienceCard({
       {/* Accordion header */}
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex w-full items-center justify-between px-4 py-3.5 text-left hover:bg-ink-900/[0.02] transition-colors focus:outline-none"
+        className="flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-forest-50/60 focus:outline-none sm:px-6"
         aria-expanded={open}
       >
         <div>
@@ -479,16 +488,32 @@ function RateEmployerModal({ task, onClose, onDone, onFlag }: { task: Task; onCl
 
 /** Plain-language verification checklist — never internal status names. */
 function VerificationSteps({ me }: { me: Worker | null }) {
-  const steps = (me?.verificationSteps as { key: string; label: string; state: 'done' | 'in_progress' | 'needed'; detail: string }[] | undefined) || []
-  if (!steps.length) return null
+  type Step = { key: string; label: string; state: 'done' | 'in_progress' | 'needed'; detail: string }
+  let steps = (me?.verificationSteps as Step[] | undefined) || []
+  // An approved Xpert has passed all four checks, even when the server sends no step list.
+  if (!steps.length && me?.accountStatus === 'active') {
+    steps = [
+      { key: 'id', label: 'ID verified', state: 'done', detail: 'Your Ghana Card or ID was checked.' },
+      { key: 'guarantor', label: 'Guarantor confirmed', state: 'done', detail: 'Someone who knows you vouched for you.' },
+      { key: 'work', label: 'Work evidence reviewed', state: 'done', detail: 'Proof of your past work was reviewed.' },
+      { key: 'reference', label: 'Reference checked', state: 'done', detail: 'A past employer or client was contacted.' },
+    ]
+  }
+  if (!steps.length) return <p className="text-sm text-ink-700/70">Your checks will appear here once BeyondX starts reviewing your application.</p>
   return (
-    <ul className="mt-4 space-y-2">
+    <ul className="-mx-5 -my-5 divide-y divide-ink-900/[0.06] sm:-mx-6 sm:-my-6">
       {steps.map((st) => (
-        <li key={st.key} className="flex items-start gap-3 rounded-lg border border-ink-900/8 bg-white px-4 py-3">
-          {st.state === 'done' ? <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-forest-600" aria-hidden="true" />
-            : st.state === 'needed' ? <AlertTriangle size={18} className="mt-0.5 shrink-0 text-amber-600" aria-hidden="true" />
-            : <CircleDot size={18} className="mt-0.5 shrink-0 text-ink-700/50" aria-hidden="true" />}
-          <span><span className="block text-sm font-semibold text-ink-900">{st.label}</span><span className="block text-sm text-ink-700">{st.detail}</span></span>
+        <li key={st.key} className="flex items-start gap-4 px-5 py-4 sm:px-6">
+          {st.state === 'done' ? <CheckCircleP size={24} weight="duotone" className="shrink-0 text-forest-600" />
+            : st.state === 'needed' ? <WarningCircle size={24} weight="duotone" className="shrink-0 text-amber-600" />
+            : <ClockP size={24} weight="duotone" className="shrink-0 text-ink-700/50" />}
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold text-ink-900">{st.label}</span>
+            <span className="mt-0.5 block text-sm text-ink-700/70">{st.detail}</span>
+          </span>
+          <Status tone={st.state === 'done' ? 'success' : st.state === 'needed' ? 'warning' : 'muted'}>
+            {st.state === 'done' ? 'Done' : st.state === 'needed' ? 'Needed' : 'In progress'}
+          </Status>
         </li>
       ))}
     </ul>
@@ -534,42 +559,12 @@ function ApplicationStatus({ me, onReload }: { me: Worker | null; onReload: () =
   )
 }
 
-function Stat({ icon, label, value, extra }: { icon: ReactNode; label: string; value: string; extra?: ReactNode }) {
-  return (
-    <div className="rounded-2xl border border-ink-900/8 bg-white px-5 py-5 shadow-sm">
-      <div className="flex items-center gap-2.5 text-sm font-medium text-ink-700">
-        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-ink-900/10 text-forest-600">{icon}</span>
-        <span className="truncate">{label}</span>
-      </div>
-      <div className="mt-3 flex items-center gap-2.5">
-        <span className="text-2xl font-bold text-ink-900">{value}</span>
-        {extra}
-      </div>
-    </div>
-  )
-}
-
 function Skeleton() {
-  return (
-    <div className="space-y-3" aria-hidden="true">
-      {[0, 1, 2].map((i) => (
-        <div key={i} className="rounded-xl bg-white p-5 shadow-sm border border-ink-900/8">
-          <div className="h-3 w-24 animate-pulse rounded bg-ink-900/10" />
-          <div className="mt-3 h-4 w-2/3 animate-pulse rounded bg-ink-900/10" />
-          <div className="mt-2 h-3 w-1/2 animate-pulse rounded bg-ink-900/5" />
-        </div>
-      ))}
-    </div>
-  )
+  return <SkeletonRows rows={3} />
 }
 
-function Empty({ text, icon }: { text: string; icon?: ReactNode }) {
-  return (
-    <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-ink-900/15 bg-gray-50 p-10 text-center">
-      {icon && <span className="flex h-11 w-11 items-center justify-center rounded-full bg-ink-900/5 text-ink-700/50">{icon}</span>}
-      <p className="text-sm text-ink-700">{text}</p>
-    </div>
-  )
+function Empty({ text, icon }: { text: string; icon: IconType }) {
+  return <Panel bodyClassName=""><EmptyState icon={icon} text={text} /></Panel>
 }
 
 function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
@@ -594,7 +589,7 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
   const isIntercityJob = transportAmt >= 80  // Tier 4
 
   return (
-    <div className={`overflow-hidden rounded-2xl bg-white border transition-shadow hover:shadow-md ${isOffer ? 'border-ink-900/10' : 'border-ink-900/8'} shadow-sm`}>
+    <div className={`overflow-hidden rounded-2xl border bg-white shadow-[0_1px_2px_rgba(18,24,14,0.04)] transition-shadow hover:shadow-md ${isOffer ? 'border-forest-600/30' : 'border-ink-900/[0.08]'}`}>
 
       {/* Offer / intercity banner */}
       {isOffer && (
@@ -610,12 +605,12 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
         </div>
       )}
 
-      <div className="px-4 py-4 sm:px-5 sm:py-5">
+      <div className="px-5 py-5 sm:px-6">
 
         {/* Title + pay */}
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="font-semibold leading-snug text-ink-900">{task.taskType || 'Task'}</p>
+            <p className="font-display text-lg font-semibold leading-snug text-ink-900">{task.taskType || 'Task'}</p>
             {empOrg && <p className="mt-0.5 text-xs text-ink-700/50">{empOrg}</p>}
             {Number((task.employer as Record<string, unknown> | undefined)?.rating || 0) > 0 && (
               <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-ink-700/70">
@@ -625,7 +620,7 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
             )}
           </div>
           <div className="shrink-0 text-right">
-            <p className="font-semibold text-forest-700">{cedis(task.pay)}</p>
+            <p className="font-display text-xl font-bold text-forest-800">{cedis(task.pay)}</p>
             {transportAmt > 0 && (
               <p className="mt-0.5 text-[0.8125rem] text-ink-700/50">+ GH₵{transportAmt} transport</p>
             )}
@@ -673,7 +668,7 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
             <p key={k} className="mt-2 text-xs text-ink-700"><span className="font-semibold text-ink-900">{k}:</span> {v}</p>
           ))}
         {revealed && (task.siteNotes || empContact || !!task.photoUrls?.length) && (
-          <div className="mt-3 rounded-xl bg-gray-50 px-3 py-2.5 text-xs text-ink-700">
+          <div className="mt-3 rounded-xl bg-forest-50 px-4 py-3 text-xs text-ink-700">
             <p className="font-semibold text-ink-900">Site information</p>
             {task.siteNotes && <p className="mt-1 whitespace-pre-line">{task.siteNotes}</p>}
             {empContact && <p className="mt-1">Contact on site: {empContact}{empPhone ? ` · ${empPhone}` : ''}</p>}
@@ -722,7 +717,7 @@ function TaskCard({ task, children }: { task: Task; children?: ReactNode }) {
 
       {/* Footer */}
       {children && (
-        <div className="flex items-center justify-between border-t border-ink-900/6 px-4 py-3 sm:px-5">
+        <div className="flex items-center justify-between border-t border-ink-900/[0.06] bg-cream-50/60 px-5 py-3.5 sm:px-6">
           {empPhone
             ? <a href={`tel:${empPhone}`} className="inline-flex items-center gap-1.5 text-xs text-ink-700/40 hover:text-ink-900 transition-colors"><Phone size={11} aria-hidden="true" />{empPhone}</a>
             : <span />}
@@ -968,19 +963,14 @@ export default function WorkerDashboard() {
     hasTools: 'hasTools' in (me || {}) ? Boolean((me as Record<string,unknown>)?.hasTools) : undefined,
   }
 
-  const assignmentTabs = [
-    { id: 'available', label: `Available (${available.length})` },
-    { id: 'mine', label: `My Tasks (${mine.length})` },
-    { id: 'declined', label: `Declined (${declined.length})` },
-  ] as const
 
   const navItems: DashboardNavItem[] = [
-    { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-    { id: 'assignments', label: 'My Assignments', icon: ClipboardList, badge: available.length },
-    { id: 'verification', label: 'Verification', icon: ShieldCheck },
-    { id: 'earnings', label: 'Earnings', icon: Wallet },
-    { id: 'profile', label: 'Profile', icon: UserRound },
-    { id: 'support', label: 'Support', icon: HelpCircle },
+    { id: 'overview', label: 'Overview', icon: SquaresFour },
+    { id: 'assignments', label: 'My Assignments', icon: ClipboardText, badge: available.length },
+    { id: 'verification', label: 'Verification', icon: ShieldCheckP },
+    { id: 'earnings', label: 'Earnings', icon: WalletP },
+    { id: 'profile', label: 'Profile', icon: UserCircle },
+    { id: 'support', label: 'Support', icon: Lifebuoy },
   ]
 
   const activityDate = (t: Task) => t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : undefined
@@ -988,21 +978,21 @@ export default function WorkerDashboard() {
   const recentActivity: ActivityItem[] = [
     ...mine.map((t) => ({
       id: `mine-${t.id}`,
-      icon: <Clock size={15} aria-hidden="true" />,
+      icon: <ClockP size={20} weight="duotone" />,
       title: `${t.taskType || 'Task'} — in progress`,
       detail: [employerName(t), activityDate(t)].filter(Boolean).join(' · '),
       status: { label: 'In progress', tone: 'info' as const },
     })),
     ...declined.slice(0, 3).map((t) => ({
       id: `declined-${t.id}`,
-      icon: <RotateCcw size={15} aria-hidden="true" />,
+      icon: <ArrowCounterClockwise size={20} weight="duotone" />,
       title: `${t.taskType || 'Task'} declined`,
       detail: [employerName(t), activityDate(t)].filter(Boolean).join(' · '),
       status: { label: 'Declined', tone: 'info' as const },
     })),
     ...history.slice(0, 5).map((t) => ({
       id: `history-${t.id}`,
-      icon: <CheckCircle2 size={15} aria-hidden="true" />,
+      icon: <CheckCircleP size={20} weight="duotone" />,
       title: `${t.taskType || 'Task'} completed`,
       detail: [employerName(t), activityDate(t)].filter(Boolean).join(' · '),
       status: { label: 'Completed', tone: 'success' as const },
@@ -1068,94 +1058,103 @@ export default function WorkerDashboard() {
           </div>
         )}
 
-        <div className="mb-6">
-          <h1 className="font-display text-2xl font-bold text-ink-900 sm:text-[1.75rem]">Welcome back, {displayName.split(' ')[0]}!</h1>
-          <p className="mt-0.5 text-sm text-ink-700/70">Here's what's happening with your profile and assignments.</p>
-        </div>
+        {(() => {
+          const meta: Record<string, { title: string; subtitle: string }> = {
+            overview: { title: `Welcome back, ${displayName.split(' ')[0]}`, subtitle: offers.length ? `You have ${offers.length} offer${offers.length === 1 ? '' : 's'} waiting for your answer.` : "Here's what's happening with your jobs and your record." },
+            assignments: { title: 'My assignments', subtitle: 'Offers from BeyondX, the jobs you have accepted, and the ones you declined.' },
+            verification: { title: 'Verification', subtitle: 'Your checks, work experience and certifications. This is how BeyondX verifies your skills.' },
+            earnings: { title: 'Earnings', subtitle: 'Every completed job, what you were paid and how the employer rated you.' },
+            profile: { title: 'Profile', subtitle: 'Your details, your home area and your Coordinator application.' },
+            support: { title: 'Support', subtitle: 'Questions, a problem on a job, or feedback. Our team replies quickly.' },
+          }
+          const m = meta[section] || meta.overview
+          return (
+            <PageHeader title={m.title} subtitle={m.subtitle} actions={
+              <button onClick={() => { setLoading(true); load() }} aria-label="Refresh dashboard" className={btnSecondary}>
+                <ArrowsClockwise size={16} weight="bold" /> Refresh
+              </button>
+            } />
+          )
+        })()}
 
         <div>
           <DashboardMobileNav items={navItems} active={section} onSelect={(id) => setSection(id as typeof section)} />
 
           <div className="min-w-0 flex-1">
             {section === 'overview' && (
-              <div className="space-y-5">
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-ink-900/8 bg-white p-6 shadow-sm">
-                    <p className="text-sm font-medium text-ink-700">Your Current Status</p>
-                    <p className="mt-4 flex items-center gap-2 text-lg font-semibold text-forest-700">
-                      <Check size={20} strokeWidth={3} aria-hidden="true" /> Active
-                    </p>
-                    <p className="mt-3 text-sm text-ink-700/75">
-                      {offers.length > 0
-                        ? `You have ${offers.length} offer${offers.length === 1 ? '' : 's'} awaiting your response.`
-                        : "You're all set — eligible for new assignments."}
-                    </p>
-                    <button onClick={() => setSection('verification')} className="mt-4 text-sm font-medium text-forest-700 underline underline-offset-4 hover:text-forest-500">
-                      View status details →
-                    </button>
-                  </div>
+              <div className="space-y-6">
+                {offers.length > 0 && (
+                  <AlertBanner tone="warning" icon={WarningCircle}
+                    title={`${offers.length} job offer${offers.length === 1 ? ' is' : 's are'} waiting for your answer`}
+                    text="Offers expire, so accept or decline them soon."
+                    action={<button onClick={() => { setSection('assignments'); setTab('available') }} className={btnPrimary}>View offers</button>} />
+                )}
 
-                  <div className="rounded-2xl border border-ink-900/8 bg-white p-6 shadow-sm">
-                    <p className="border-b border-ink-900/8 pb-3 text-sm font-semibold text-ink-900">Next Assignment</p>
+                <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+                  <KpiTile tone="green" icon={Tray} label="Open offers" value={available.length}
+                    hint={offers.length ? `${offers.length} sent to you directly` : 'Jobs you can accept'} onClick={() => { setSection('assignments'); setTab('available') }} />
+                  <KpiTile tone="teal" icon={Briefcase} label="My jobs" value={mine.length}
+                    hint={nextAssignmentWhen ? `Next: ${nextAssignmentWhen}` : 'Accepted and in progress'} onClick={() => { setSection('assignments'); setTab('mine') }} />
+                  <KpiTile tone="blue" icon={CheckCircleP} label="Completed" value={completed} hint="Jobs on your record" onClick={() => setSection('earnings')} />
+                  <KpiTile tone="violet" icon={HandCoins} label="Total earned" value={cedis(earned)} hint="Paid by mobile money" onClick={() => setSection('earnings')} />
+                </div>
+
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                  <Panel className="lg:col-span-2" title="Next assignment" subtitle="Your soonest accepted job" icon={CalendarBlank}
+                    action={nextAssignment ? <button onClick={() => { setSection('assignments'); setTab('mine') }} className={btnGhost}>Open</button> : undefined}>
                     {nextAssignment ? (
-                      <>
-                        <p className="mt-3 text-lg font-semibold text-ink-900">{nextAssignment.taskType || 'Task'}</p>
-                        <div className="mt-1.5 space-y-1 text-sm text-ink-700/75">
-                          {nextAssignmentWhen && (
-                            <p className="flex items-center gap-1.5"><Calendar size={13} aria-hidden="true" /> {nextAssignmentWhen}</p>
-                          )}
-                          {nextAssignment.location && (
-                            <p className="flex items-center gap-1.5"><MapPin size={13} aria-hidden="true" /> {nextAssignment.location}</p>
-                          )}
+                      <div>
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <p className="font-display text-xl font-semibold text-ink-900">{nextAssignment.taskType || 'Task'}</p>
+                          <p className="font-display text-xl font-bold text-forest-800">{cedis(nextAssignment.pay)}</p>
                         </div>
-                        <button onClick={() => { setSection('assignments'); setTab('mine') }}
-                          className="mt-4 rounded-lg bg-forest-600 px-7 py-2.5 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98]">
-                          View Details
-                        </button>
-                      </>
+                        <div className="mt-3 divide-y divide-ink-900/[0.06]">
+                          {nextAssignmentWhen && <InfoRow icon={CalendarBlank} label="When">{nextAssignmentWhen}</InfoRow>}
+                          {nextAssignment.location && <InfoRow icon={MapPinP} label="Where">{nextAssignment.location}</InfoRow>}
+                          {employerName(nextAssignment) && <InfoRow icon={Buildings} label="Employer">{employerName(nextAssignment)}</InfoRow>}
+                        </div>
+                        <button onClick={() => { setSection('assignments'); setTab('mine') }} className={`${btnPrimary} mt-5`}>View details</button>
+                      </div>
                     ) : (
-                      <>
-                        <p className="mt-2 text-sm text-ink-700/70">No upcoming assignment yet.</p>
-                        <button onClick={() => { setSection('assignments'); setTab('available') }}
-                          className="mt-3 rounded-md border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-800 hover:bg-ink-900/5">
-                          Browse available jobs
-                        </button>
-                      </>
+                      <EmptyState icon={Hourglass} title="No upcoming assignment" text="When you accept a job, its time, place and employer show here."
+                        action={<button onClick={() => { setSection('assignments'); setTab('available') }} className={btnPrimary}>Browse offers</button>} />
                     )}
-                  </div>
+                  </Panel>
+
+                  <Panel title="Your record" icon={IdentificationCard}>
+                    <Status tone="success">Active Xpert</Status>
+                    <p className="mt-2 text-sm text-ink-700/70">
+                      {offers.length > 0 ? `${offers.length} offer${offers.length === 1 ? '' : 's'} awaiting your response.` : "You're all set and eligible for new jobs."}
+                    </p>
+                    <div className="mt-4 flex items-center gap-2 text-sm text-ink-700">
+                      <StarP size={18} weight="fill" className="text-amber-500" />
+                      {me?.rating && Number(me.rating) > 0
+                        ? <><span className="font-semibold text-ink-900">{Number(me.rating).toFixed(1)}</span> average rating</>
+                        : <span>No ratings yet</span>}
+                    </div>
+                    <div className="-mx-5 mt-4 divide-y divide-ink-900/[0.06] border-t border-ink-900/[0.06] sm:-mx-6">
+                      <ListRow icon={ShieldCheckP} title="Verification" detail="Checks and certifications" onClick={() => setSection('verification')} />
+                      <ListRow icon={Certificate} title="Profile" detail="Skills, photo and home area" onClick={() => setSection('profile')} />
+                      <ListRow icon={Lifebuoy} title="Support" detail="We reply quickly" onClick={() => setSection('support')} />
+                    </div>
+                  </Panel>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                  <Stat icon={<ClipboardList size={18} />} label="Completed Jobs" value={`${completed}`} />
-                  <Stat icon={<Wallet size={18} />} label="Total Earnings" value={cedis(earned)} />
-                  <Stat icon={<Star size={18} />} label="Average Rating"
-                    value={me?.rating && Number(me.rating) > 0 ? Number(me.rating).toFixed(1) : '—'}
-                    extra={me?.rating && Number(me.rating) > 0 ? <Stars n={Math.round(Number(me.rating))} /> : undefined} />
-                </div>
-
-                <div>
-                  {loading ? <Skeleton /> : (
-                    <ActivityFeed title="Recent Activity" items={recentActivity} empty="No activity yet — accepted and completed jobs will show up here." />
-                  )}
-                </div>
+                {loading ? <Skeleton /> : (
+                  <ActivityFeed title="Recent activity" items={recentActivity} empty="No activity yet. Accepted and completed jobs will show up here." />
+                )}
               </div>
             )}
 
             {section === 'assignments' && (
               <div>
-                <div className="mb-5 flex items-center gap-3">
-                  <div className="flex min-w-0 items-center gap-1 overflow-x-auto rounded-md bg-ink-900/5 p-1" role="tablist" aria-label="Assignment status">
-                    {assignmentTabs.map((t) => (
-                      <button key={t.id} role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
-                        className={`shrink-0 rounded-md px-3.5 py-2 text-sm font-medium transition-colors focus:outline-none ${tab === t.id ? 'bg-white text-forest-700 shadow-sm' : 'text-ink-700 hover:text-ink-900'}`}>
-                        {t.label}
-                      </button>
-                    ))}
-                  </div>
-                  <button onClick={() => { setLoading(true); load() }} aria-label="Refresh tasks"
-                    className="ml-auto flex shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-xs font-medium text-ink-700/60 transition-colors hover:bg-ink-900/5 hover:text-ink-900">
-                    <RefreshCw size={13} aria-hidden="true" /> Refresh
-                  </button>
+                <div className="mb-5">
+                  <TextTabs label="Assignment status" active={tab} onChange={(id) => setTab(id)}
+                    tabs={[
+                      { id: 'available', label: 'Available', count: available.length },
+                      { id: 'mine', label: 'My tasks', count: mine.length },
+                      { id: 'declined', label: 'Declined', count: declined.length },
+                    ] as const} />
                 </div>
 
                 <div className="space-y-3">
@@ -1181,7 +1180,7 @@ export default function WorkerDashboard() {
                             </button>
                           )}
                         </TaskCard>
-                      )) : <Empty text="No jobs available right now. Check back soon." icon={<ClipboardList size={20} aria-hidden="true" />} />)}
+                      )) : <Empty text="No jobs available right now. Check back soon." icon={Tray} />)}
 
                       {tab === 'mine' && (
                         <>
@@ -1223,7 +1222,7 @@ export default function WorkerDashboard() {
                                   </span>
                                 )}
                               </TaskCard>
-                              <div className="-mt-1 rounded-b-xl bg-white px-4 pb-4 shadow-sm border border-ink-900/8 sm:px-5">
+                              <div className="-mt-2 rounded-b-2xl border border-t-0 border-ink-900/[0.08] bg-white px-5 pb-5 pt-4 sm:px-6">
                                 <LocationShare
                                   taskId={t.id}
                                   workerId={(me?.workerId as string) || undefined}
@@ -1240,7 +1239,7 @@ export default function WorkerDashboard() {
                                 </div>
                               </div>
                             </div>
-                          )}) : <Empty text="You haven't accepted any tasks yet." icon={<Check size={20} aria-hidden="true" />} />}
+                          )}) : <Empty text="You haven't accepted any tasks yet." icon={Briefcase} />}
                         </>
                       )}
 
@@ -1250,7 +1249,7 @@ export default function WorkerDashboard() {
                             <RotateCcw size={13} aria-hidden="true" /> Declined
                           </span>
                         </TaskCard>
-                      )) : <Empty text="You haven't declined any offers in this session." icon={<RotateCcw size={20} aria-hidden="true" />} />)}
+                      )) : <Empty text="You haven't declined any offers in this session." icon={ArrowCounterClockwise} />)}
                     </>
                   )}
                 </div>
@@ -1258,25 +1257,25 @@ export default function WorkerDashboard() {
             )}
 
             {section === 'verification' && (
-              <div>
-                <h2 className="mb-1 px-1 text-xs font-semibold uppercase tracking-wide text-ink-700/50">Your verification</h2>
-                <p className="px-1 text-sm text-ink-700/70">Your status: <span className="font-semibold text-ink-900">{me?.accountStatus === 'active' ? 'Active' : me?.accountStatus === 'suspended' ? 'Suspended' : 'Under review'}</span></p>
-                <div className="mb-8"><VerificationSteps me={me} /></div>
-                <h2 className="mb-2 px-1 text-xs font-semibold uppercase tracking-wide text-ink-700/50">Work experience & certifications</h2>
-                <p className="mb-4 px-1 text-sm text-ink-700/70">
-                  This is how BeyondX verifies your skills. Certifications you add here can be reviewed and marked verified by our team.
-                </p>
-                <div className="rounded-2xl bg-white border border-ink-900/8 overflow-hidden">
+              <div className="space-y-6">
+                <Panel title="Your verification" subtitle="The checks every Xpert passes before taking jobs" icon={ShieldCheckP}
+                  action={<Status tone={me?.accountStatus === 'active' ? 'success' : me?.accountStatus === 'suspended' ? 'danger' : 'warning'}>
+                    {me?.accountStatus === 'active' ? 'Active' : me?.accountStatus === 'suspended' ? 'Suspended' : 'Under review'}
+                  </Status>}>
+                  <VerificationSteps me={me} />
+                </Panel>
+                <Panel bodyClassName="">
                   <WorkExperienceCard worker={me} onSaved={(patch) => { session.patchWorker(patch); setMe((m) => ({ ...(m || {}), ...patch })) }} />
-                </div>
+                </Panel>
               </div>
             )}
 
             {section === 'earnings' && (
-              <div className="space-y-5">
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <Stat icon={<Wallet size={18} />} label="Total Earnings" value={cedis(earned)} />
-                  <Stat icon={<ClipboardList size={18} />} label="Completed Jobs" value={`${completed}`} />
+              <div className="space-y-6">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <KpiTile tone="violet" icon={HandCoins} label="Total earned" value={cedis(earned)} hint="Paid by mobile money" />
+                  <KpiTile tone="blue" icon={CheckCircleP} label="Completed jobs" value={completed} hint="On your verified record" />
+                  <KpiTile tone="green" icon={StarP} label="Average rating" value={me?.rating && Number(me.rating) > 0 ? Number(me.rating).toFixed(1) : '—'} hint="From employers" />
                 </div>
                 <div className="space-y-3">
                   {loading ? <Skeleton /> : (history.length ? history.map((t) => {
@@ -1284,11 +1283,11 @@ export default function WorkerDashboard() {
                     const myReview = t.reviews?.find((r) => r.fromRole === 'worker')
                     const rating = empReview?.rating
                     return (
-                      <div key={t.id} className="rounded-xl bg-white p-4 shadow-sm border border-ink-900/8 sm:p-5">
+                      <div key={t.id} className="rounded-2xl border border-ink-900/[0.08] bg-white p-5 shadow-[0_1px_2px_rgba(18,24,14,0.04)] sm:p-6">
                         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                           <div>
-                            <span className="mb-1 inline-block rounded-md bg-ink-900/5 px-2.5 py-0.5 text-xs font-medium text-ink-700">{t.taskType || 'Task'}</span>
-                            <h3 className="font-serif text-lg font-medium text-ink-900">{t.description || t.taskType}</h3>
+                            <span className="mb-1 block text-xs font-semibold uppercase tracking-widest text-forest-700">{t.taskType || 'Task'}</span>
+                            <h3 className="font-display text-lg font-semibold text-ink-900">{t.description || t.taskType}</h3>
                             <p className="mt-0.5 text-sm text-ink-700">{employerName(t)}{t.location ? ` · ${t.location}` : ''}</p>
                           </div>
                           <div className="flex items-center gap-4">
@@ -1311,44 +1310,44 @@ export default function WorkerDashboard() {
                             <button onClick={() => setFlagTask(t)} className="inline-flex items-center gap-1 text-xs text-ink-700/70 hover:underline">
                               <Flag size={11} aria-hidden="true" /> Report
                             </button>
-                            <span className="font-semibold text-ink-900">{cedis(t.pay)}</span>
+                            <span className="font-display text-lg font-bold text-forest-800">{cedis(t.pay)}</span>
                           </div>
                         </div>
                       </div>
                     )
-                  }) : <Empty text="No completed tasks yet." icon={<Star size={20} aria-hidden="true" />} />)}
+                  }) : <Empty text="No completed tasks yet." icon={Coins} />)}
                 </div>
               </div>
             )}
 
             {section === 'profile' && (
               <div className="space-y-5">
-                <div className="flex items-center justify-between rounded-2xl border border-ink-900/8 bg-white p-4">
+                <div className="flex items-center justify-between rounded-2xl border border-ink-900/[0.08] bg-white p-5 shadow-[0_1px_2px_rgba(18,24,14,0.04)] sm:p-6">
                   <div className="flex items-center gap-3">
                     {photo
-                      ? <img src={photo} alt="" className="h-12 w-12 rounded-full object-cover" />
-                      : <span className="flex h-12 w-12 items-center justify-center rounded-full bg-forest-600 text-cream-50"><UserRound size={20} /></span>}
+                      ? <img src={photo} alt="" className="h-14 w-14 rounded-full object-cover" />
+                      : <span className="flex h-14 w-14 items-center justify-center rounded-full bg-forest-50 text-forest-700"><UserCircle size={30} weight="duotone" /></span>}
                     <div>
-                      <p className="font-semibold text-ink-900">{displayName}</p>
+                      <p className="font-display text-lg font-semibold text-ink-900">{displayName}</p>
                       <p className="text-sm text-ink-700/60">{(me?.phone as string) || ''}</p>
                     </div>
                   </div>
                   <button onClick={() => setEditing(true)}
-                    className="shrink-0 rounded-md border border-ink-900/15 px-4 py-2 text-sm font-medium text-ink-800 hover:bg-ink-900/5">
+                    className={btnSecondary}>
                     Edit profile
                   </button>
                 </div>
 
-                <div className="rounded-2xl bg-white border border-ink-900/8 overflow-hidden">
+                <div className="overflow-hidden rounded-2xl border border-ink-900/[0.08] bg-white shadow-[0_1px_2px_rgba(18,24,14,0.04)]">
                   <button
                     onClick={() => {
                       const card = document.getElementById('home-area-inline')
                       if (card) card.classList.toggle('hidden')
                     }}
-                    className="flex w-full items-center justify-between px-4 py-3.5 text-left hover:bg-ink-900/[0.02] transition-colors focus:outline-none"
+                    className="flex w-full items-center justify-between px-5 py-4 text-left transition-colors hover:bg-forest-50/60 focus:outline-none sm:px-6"
                   >
                     <div className="flex items-center gap-2.5">
-                      <MapPin size={15} className="shrink-0 text-forest-600" aria-hidden="true" />
+                      <MapPinP size={20} weight="duotone" className="shrink-0 text-forest-700" />
                       <div>
                         <span className="text-sm font-semibold text-ink-900">Home area</span>
                         <span className="ml-2 text-sm text-ink-700/60">
