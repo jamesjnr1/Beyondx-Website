@@ -2,6 +2,7 @@ import { Check, ChevronRight, ShieldCheck, XCircle } from 'lucide-react'
 import { scheduleLabel, type AssignedXpert, type Task } from '../../lib/api'
 import { PROGRESS_STEPS, STOPPED_LABEL, currentStepIndex, taskReference } from './taskProgress'
 import { JobNotices, LiveJobSteps, XpertSummary } from './JobParts'
+import TrackingMap from './TrackingMap'
 
 const cedis = (n?: number | string) => `GH₵ ${Number(n || 0).toLocaleString()}`
 
@@ -66,6 +67,26 @@ export default function TaskTracking({ task, workerName, statusLabel, onBack, on
           <span key={i} className="flex items-center gap-2">{i > 0 && <span aria-hidden="true">•</span>}{part}</span>
         ))}
       </p>
+
+      {task.location && String(task.location).toLowerCase() !== 'remote' && !stopped && (
+        <section className="mt-8">
+          <div className="mb-3 flex items-end justify-between gap-3">
+            <div>
+              <h2 className="font-display text-lg font-semibold text-ink-900">Live tracking</h2>
+              <p className="text-sm text-ink-700/65">
+                {['accepted', 'pending_confirmation'].includes(status)
+                  ? 'Where your Xpert is, and how far they are from the site.'
+                  : 'The job site. Your Xpert appears here once they are on the way.'}
+              </p>
+            </div>
+          </div>
+          <TrackingMap
+            task={task}
+            xpertName={(task.acceptedBy && typeof task.acceptedBy === 'object' ? (task.acceptedBy as AssignedXpert).fullName : undefined) || workerName?.replace(/\s*\(rated.*\)$/, '')}
+            live={['accepted', 'pending_confirmation'].includes(status)}
+          />
+        </section>
+      )}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         {/* Timeline */}

@@ -10,7 +10,7 @@ const TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">Open
 type Coords = { lat: number; lng: number }
 
 // Geocode a location string using Nominatim, biased to Ghana
-async function geocode(location: string): Promise<Coords | null> {
+export async function geocode(location: string): Promise<Coords | null> {
   if (!location || location.toLowerCase() === 'remote') return null
   try {
     const q = encodeURIComponent(`${location}, Ghana`)

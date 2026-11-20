@@ -16,7 +16,7 @@ export default function Testimonial() {
             <span className="text-forest-700">Where skill meets tasks.</span>&rdquo;
           </blockquote>
           <div className="mt-8 flex items-center justify-center gap-3.5">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-ink-900 text-base font-semibold text-cream-50">SA</div>
+            <img src="/team/spencer-amoo-yankey.jpg" alt="Spencer Amoo-Yankey" loading="lazy" decoding="async" className="h-16 w-16 rounded-full object-cover ring-4 ring-white shadow-md" />
             <div className="text-left">
               <div className="font-semibold text-ink-900">Spencer Amoo-Yankey</div>
               <div className="text-sm text-ink-700/70">Chief Executive Officer, BeyondX</div>
