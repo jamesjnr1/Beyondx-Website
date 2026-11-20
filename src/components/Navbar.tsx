@@ -41,10 +41,8 @@ export default function Navbar() {
           <Logo tone={dark ? 'light' : 'dark'} />
         </button>
 
-        {/* Page tabs: one pill group; the active page sits in a filled pill that slides between tabs. */}
-        <div className={`hidden items-center gap-1 rounded-full p-1 md:flex ${
-          dark ? 'border border-cream-50/15 bg-cream-50/10 backdrop-blur-md' : 'border border-ink-900/10 bg-white/70'
-        }`}>
+        {/* Page links: plain text; the current page is bolder, coloured and marked with a small dot. */}
+        <div className="hidden items-center gap-9 md:flex">
           {tabs.map((t) => {
             const active = page === t.page
             return (
@@ -52,20 +50,20 @@ export default function Navbar() {
                 key={t.page}
                 onClick={() => go(t.page)}
                 aria-current={active ? 'page' : undefined}
-                className={`relative isolate rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+                className={`relative py-1 text-sm transition-colors ${
                   active
-                    ? dark ? 'text-ink-900' : 'text-white'
-                    : dark ? 'text-cream-100/85 hover:bg-cream-50/10 hover:text-cream-50' : 'text-ink-700 hover:bg-ink-900/5 hover:text-ink-900'
+                    ? dark ? 'font-semibold text-white' : 'font-semibold text-forest-700'
+                    : dark ? 'font-medium text-cream-100/80 hover:text-white' : 'font-medium text-ink-700 hover:text-ink-900'
                 }`}
               >
+                {t.label}
                 {active && (
                   <motion.span
                     layoutId="nav-active"
                     transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-                    className={`absolute inset-0 -z-10 rounded-full ${dark ? 'bg-cream-50' : 'bg-forest-700'}`}
+                    className={`absolute -bottom-1.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full ${dark ? 'bg-forest-300' : 'bg-forest-600'}`}
                   />
                 )}
-                <span className="relative">{t.label}</span>
               </button>
             )
           })}

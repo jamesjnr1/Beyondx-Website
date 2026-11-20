@@ -90,11 +90,11 @@ export default function DashboardSidebar({ items, active, onSelect, roleLabel, o
   )
 }
 
-/** Pill tabs, scrollable sideways, standing in for the sidebar below `lg:`. */
+/** Text tabs, scrollable sideways, standing in for the sidebar below `lg:`. The current one is bold and green with a dot. */
 export function DashboardMobileNav({ items, active, onSelect }: NavProps) {
   return (
     <nav
-      className="-mx-4 mb-6 flex min-w-0 items-center gap-2 overflow-x-auto px-4 pb-1 sm:-mx-8 sm:px-8 lg:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      className="-mx-4 mb-6 flex min-w-0 items-center gap-6 overflow-x-auto px-4 pb-3 sm:-mx-8 sm:px-8 lg:hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       aria-label="Dashboard sections"
       role="tablist"
     >
@@ -106,11 +106,12 @@ export function DashboardMobileNav({ items, active, onSelect }: NavProps) {
             role="tab"
             aria-selected={isActive}
             onClick={() => onSelect(item.id)}
-            className={`shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition-colors focus:outline-none ${
-              isActive ? 'border-forest-700 bg-forest-700 text-white' : 'border-ink-900/10 bg-white text-ink-700 hover:text-ink-900'
+            className={`relative shrink-0 py-1.5 text-sm transition-colors focus:outline-none ${
+              isActive ? 'font-semibold text-forest-700' : 'font-medium text-ink-700/70 hover:text-ink-900'
             }`}
           >
             {item.label}{typeof item.badge === 'number' && item.badge > 0 ? ` (${item.badge})` : ''}
+            {isActive && <span aria-hidden="true" className="absolute -bottom-1.5 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-forest-600" />}
           </button>
         )
       })}

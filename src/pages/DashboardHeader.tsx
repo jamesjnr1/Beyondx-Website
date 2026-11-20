@@ -46,7 +46,7 @@ export default function DashboardHeader({
             <span className="block truncate text-sm font-semibold text-ink-900">{name || 'Your account'}</span>
             <span className="block truncate text-xs text-ink-700/60">{title}</span>
           </span>
-          <span className="ml-1 rounded-full bg-forest-600/10 px-2.5 py-0.5 text-xs font-semibold text-forest-800">
+          <span className="ml-2 text-xs font-semibold uppercase tracking-widest text-forest-700">
             {title.startsWith('Coordinator') ? 'Coordinator' : role === 'XPERT' ? 'Xpert' : 'Employer'}
           </span>
         </button>
@@ -59,7 +59,7 @@ export default function DashboardHeader({
             </button>
           )}
           <Notifications role={role === 'XPERT' ? 'worker' : 'employer'} tasks={tasks} />
-          <span className="hidden items-center gap-2 rounded-full border border-ink-900/10 px-3.5 py-2 text-sm text-ink-700 lg:flex">
+          <span className="ml-2 hidden items-center gap-2 text-sm text-ink-700 lg:flex">
             <CalendarDays size={15} aria-hidden="true" className="text-forest-700" /> {today}
           </span>
           {/* Phones: sign out and profile (desktop has both in the sidebar) */}
