@@ -1032,8 +1032,8 @@ export default function WorkerDashboard() {
   return (
     <div className="min-h-screen bg-cream-50">
       <DashboardHeader role="XPERT" title="Xpert Dashboard" name={displayName} avatar={photo} onEditProfile={() => setEditing(true)} tasks={[...offers, ...mine, ...history]} />
-      <div className="lg:flex">
-        <DashboardSidebar items={navItems} active={section} onSelect={(id) => setSection(id as typeof section)} />
+      <div className="lg:pl-64">
+        <DashboardSidebar items={navItems} active={section} onSelect={(id) => setSection(id as typeof section)} roleLabel="Xpert" />
         <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-8 lg:px-10">
         <p aria-live="polite" className="sr-only">{announce}</p>
 

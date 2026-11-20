@@ -8,7 +8,7 @@ export default function Hero() {
       <motion.div
         initial={{ scale: 1.1 }}
         animate={{ scale: 1 }}
-        transition={{ duration: 2, ease: 'easeOut' }}
+        transition={{ duration: 1.1, ease: 'easeOut' }}
         className="absolute inset-0"
       >
         <picture>
@@ -31,7 +31,7 @@ export default function Hero() {
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
+            transition={{ duration: 0.45, delay: 0.05, ease: 'easeOut' }}
             className="max-w-2xl"
           >
             <p className="mb-4 text-[0.875rem] font-medium uppercase tracking-[0.18em] text-cream-200/80">
@@ -51,7 +51,7 @@ export default function Hero() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
+            transition={{ duration: 0.45, delay: 0.15, ease: 'easeOut' }}
             className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4"
           >
             <button

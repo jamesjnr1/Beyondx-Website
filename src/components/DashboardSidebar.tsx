@@ -1,4 +1,6 @@
-import type { LucideIcon } from 'lucide-react'
+import { Globe, LifeBuoy, LogOut, UserRound, type LucideIcon } from 'lucide-react'
+import Logo from './Logo'
+import { useAuth } from './auth/AuthContext'
 
 export interface DashboardNavItem {
   id: string
@@ -13,36 +15,77 @@ type NavProps = {
   onSelect: (id: string) => void
 }
 
-/** The one dashboard navigation on desktop: a light rail under the top bar.
- *  Small screens use DashboardMobileNav instead. */
-export default function DashboardSidebar({ items, active, onSelect }: NavProps) {
+type SidebarProps = NavProps & {
+  /** Shown under the logo, e.g. "Employer". */
+  roleLabel: string
+  onEditProfile?: () => void
+  /** The card at the foot of the rail. Defaults to a link to Support. */
+  card?: { title: string; text: string; label: string; onClick: () => void }
+}
+
+const itemCls = (isActive: boolean) =>
+  `flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors focus:outline-none ${
+    isActive ? 'bg-white/15 text-white shadow-sm ring-1 ring-white/10' : 'text-white/75 hover:bg-white/10 hover:text-white'
+  }`
+
+/** The one dashboard navigation on desktop: a full-height brand-green rail
+ *  with the logo, the sections, general links and a help card. Small screens
+ *  use DashboardMobileNav instead. */
+export default function DashboardSidebar({ items, active, onSelect, roleLabel, onEditProfile, card }: SidebarProps) {
+  const { go, logout } = useAuth()
+  const foot = card ?? { title: 'Need help?', text: 'Our team is here for you, every step of the way.', label: 'Contact support', onClick: () => onSelect('support') }
   return (
-    <aside className="hidden w-64 shrink-0 border-r border-forest-600/15 bg-gradient-to-b from-[#dcefc5] via-[#eaf5dd] to-[#f6faf0] lg:block">
-      <nav className="sticky top-16 flex h-[calc(100vh-4rem)] flex-col gap-1 overflow-y-auto px-4 py-6" aria-label="Dashboard sections">
-        <p className="mb-2 px-3 text-xs font-semibold uppercase tracking-widest text-forest-800/60">Menu</p>
-        {items.map((item) => {
-          const Icon = item.icon
-          const isActive = active === item.id
-          return (
-            <button
-              key={item.id}
-              onClick={() => onSelect(item.id)}
-              aria-current={isActive ? 'page' : undefined}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm font-medium transition-colors focus:outline-none ${
-                isActive ? 'bg-white text-forest-800 shadow-sm ring-1 ring-forest-600/15' : 'text-ink-700 hover:bg-white/60 hover:text-ink-900'
-              }`}
-            >
-              <Icon size={18} aria-hidden="true" className={isActive ? 'text-forest-700' : 'text-ink-700/60'} />
-              <span className="flex-1">{item.label}</span>
-              {typeof item.badge === 'number' && item.badge > 0 ? (
-                <span className={`min-w-[1.5rem] rounded-full px-1.5 py-0.5 text-center text-xs font-semibold ${isActive ? 'bg-forest-700 text-white' : 'bg-ink-900/[0.06] text-ink-700'}`}>
-                  {item.badge}
-                </span>
-              ) : null}
+    <aside className="hidden lg:fixed lg:inset-y-0 lg:left-0 lg:z-40 lg:flex lg:w-64 lg:flex-col bg-gradient-to-b from-forest-700 via-forest-800 to-forest-900 text-white">
+      <button onClick={() => go('home')} aria-label="Go to BeyondX home" className="flex items-center gap-3 px-6 pb-6 pt-6 text-left">
+        <Logo tone="light" className="h-8" />
+        <span className="border-l border-white/20 pl-3 text-[0.6875rem] font-semibold uppercase leading-tight tracking-[0.14em] text-white/70">
+          {roleLabel}<span className="block font-normal normal-case tracking-normal text-white/50">Dashboard</span>
+        </span>
+      </button>
+
+      <nav className="flex-1 overflow-y-auto px-4" aria-label="Dashboard sections">
+        <p className="mb-2 px-3 text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-white/50">Menu</p>
+        <div className="flex flex-col gap-0.5">
+          {items.map((item) => {
+            const Icon = item.icon
+            const isActive = active === item.id
+            return (
+              <button key={item.id} onClick={() => onSelect(item.id)} aria-current={isActive ? 'page' : undefined} className={itemCls(isActive)}>
+                <Icon size={18} aria-hidden="true" className={isActive ? 'text-white' : 'text-white/60'} />
+                <span className="flex-1">{item.label}</span>
+                {typeof item.badge === 'number' && item.badge > 0 ? (
+                  <span className="grid h-5 min-w-[1.25rem] place-items-center rounded-full bg-red-500 px-1.5 text-[0.6875rem] font-semibold text-white">
+                    {item.badge}
+                  </span>
+                ) : null}
+              </button>
+            )
+          })}
+        </div>
+
+        <p className="mb-2 mt-7 px-3 text-[0.6875rem] font-semibold uppercase tracking-[0.16em] text-white/50">General</p>
+        <div className="flex flex-col gap-0.5">
+          {onEditProfile && (
+            <button onClick={onEditProfile} className={itemCls(false)}>
+              <UserRound size={18} aria-hidden="true" className="text-white/60" /> <span>Edit profile</span>
             </button>
-          )
-        })}
+          )}
+          <button onClick={() => go('home')} className={itemCls(false)}>
+            <Globe size={18} aria-hidden="true" className="text-white/60" /> <span>BeyondX website</span>
+          </button>
+          <button onClick={logout} className={itemCls(false)}>
+            <LogOut size={18} aria-hidden="true" className="text-white/60" /> <span>Sign out</span>
+          </button>
+        </div>
       </nav>
+
+      <div className="m-4 rounded-2xl bg-white/10 p-4 ring-1 ring-white/10">
+        <p className="flex items-center gap-2 text-sm font-semibold"><LifeBuoy size={16} aria-hidden="true" className="text-forest-300" /> {foot.title}</p>
+        <p className="mt-1 text-xs leading-relaxed text-white/65">{foot.text}</p>
+        <button onClick={foot.onClick} className="mt-3 w-full rounded-full bg-white py-2 text-sm font-semibold text-forest-900 transition-colors hover:bg-cream-100">
+          {foot.label}
+        </button>
+      </div>
     </aside>
   )
 }

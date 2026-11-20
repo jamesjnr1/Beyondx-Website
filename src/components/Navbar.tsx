@@ -30,7 +30,7 @@ export default function Navbar() {
     <motion.header
       initial={{ y: -80, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.6, ease: 'easeOut' }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
       className={`fixed left-0 right-0 z-50 transition-all duration-300 ${
         solid ? 'bg-cream-50/90 backdrop-blur-md shadow-sm' : 'bg-transparent'
       }`}
