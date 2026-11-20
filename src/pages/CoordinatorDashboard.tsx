@@ -815,8 +815,6 @@ export default function CoordinatorDashboard() {
     { id: 'disputes', label: 'Disputes', icon: AlertTriangle },
     { id: 'support', label: 'Support', icon: HelpCircle },
   ]
-  // Short set for the top bar — the sidebar carries the full list.
-  const headerNavItems = navItems.filter((i) => ['overview', 'requests', 'team', 'support'].includes(i.id))
 
   const recentActivity: ActivityItem[] = [
     ...coordRequests.filter((r) => r.status !== 'pending_coordinator').slice(0, 4).map((r) => {
@@ -839,16 +837,13 @@ export default function CoordinatorDashboard() {
   ].slice(0, 8)
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-cream-50">
       <DashboardHeader
         role="XPERT"
         title="Coordinator Dashboard"
         name={(me?.fullName as string) || (me?.name as string)}
         avatar={me?.photoUrl as string}
         onEditProfile={() => setEditing(true)}
-        navItems={headerNavItems}
-        active={tab}
-        onSelect={(id) => setTab(id as typeof tab)}
       />
 
       <div className="lg:flex">
@@ -865,7 +860,7 @@ export default function CoordinatorDashboard() {
 
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-ink-900 sm:text-[1.75rem]">Welcome back, {displayName.split(' ')[0]}!</h1>
+            <h1 className="font-display text-2xl font-bold text-ink-900 sm:text-[1.75rem]">Welcome back, {displayName.split(' ')[0]}!</h1>
             <p className="mt-0.5 text-sm text-ink-700/70">
               {application?.businessName ? `${application.businessName} · Coordinator account` : 'Coordinator account'}
             </p>

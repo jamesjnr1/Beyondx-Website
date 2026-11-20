@@ -39,10 +39,12 @@ export default function TrustSafety() {
         <div className="mt-14 grid gap-x-16 gap-y-12 sm:grid-cols-2">
           {commitments.map(({ icon: Icon, title, body }, i) => (
             <Reveal key={title} delay={(i % 2) * 0.06}>
-              <div>
-                <Icon size={30} strokeWidth={1.75} aria-hidden="true" className="text-forest-300" />
-                <h3 className="mt-5 font-display text-xl font-semibold">{title}</h3>
-                <p className="mt-3 leading-relaxed text-cream-100/70">{body}</p>
+              <div className="flex gap-5">
+                <Icon size={32} strokeWidth={1.6} aria-hidden="true" className="mt-0.5 shrink-0 text-forest-300" />
+                <div className="max-w-md">
+                  <h3 className="font-display text-xl font-semibold">{title}</h3>
+                  <p className="mt-2.5 leading-relaxed text-cream-100/70">{body}</p>
+                </div>
               </div>
             </Reveal>
           ))}
