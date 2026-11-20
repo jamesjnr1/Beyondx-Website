@@ -37,6 +37,7 @@ export default {
         },
         // BeyondX Green — anchored on #6BAB21 (brand primary = forest-600)
         forest: {
+          50: '#eef6e4', // light green section background
           300: '#a6d96a',
           400: '#8bc53f',
           500: '#7bbb2e',

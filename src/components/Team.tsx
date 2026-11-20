@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion'
 import { useReveal } from '../hooks/useReveal'
+import { SectionHead, container, sectionY } from './site/ui'
 
 /** Photos are in /public/team, named after each person (from the team's Canva deck). */
 const photo = (name: string) => `/team/${name.toLowerCase().replace(/[^a-z]+/g, '-')}.jpg`
@@ -22,11 +23,13 @@ export default function Team() {
   const { ref, visible } = useReveal()
 
   return (
-    <section id="team" ref={ref} className="bg-white py-14 sm:py-20">
-      <div className="mx-auto w-full max-w-7xl px-5 sm:px-8">
-        <p className="text-sm font-semibold uppercase tracking-widest text-forest-700">
-          Team Rainbow · 11 Members · Foundation of Design Thinking &amp; Entrepreneurship
-        </p>
+    <section id="team" ref={ref} className={`bg-white ${sectionY}`}>
+      <div className={container}>
+        <SectionHead
+          chip="Our team"
+          title="The people behind BeyondX"
+          lead="Eleven founders from Ashesi University, known in class as Team Rainbow, building the service we wished existed in Accra."
+        />
 
         <div className="mt-12 grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-3 lg:grid-cols-4">
           {members.map((m, i) => (
@@ -52,9 +55,6 @@ export default function Team() {
           ))}
         </div>
 
-        <p className="mt-10 border-t border-ink-900/10 pt-6 text-sm text-ink-700/70">
-          Ashesi University · Berekuso, Eastern Region, Ghana
-        </p>
       </div>
     </section>
   )

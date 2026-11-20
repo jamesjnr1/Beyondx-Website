@@ -24,13 +24,12 @@ const commitments = [
   },
 ]
 
-/** Trust & safety: the commitments on a dark band. */
+/** Trust & safety: the commitments on a light green band. */
 export default function TrustSafety() {
   return (
-    <section id="trust" className={`bg-ink-900 text-cream-50 ${sectionY}`}>
+    <section id="trust" className={`bg-forest-50 text-ink-900 ${sectionY}`}>
       <div className={container}>
         <SectionHead
-          dark
           chip="Trust & safety"
           title="Trust you can verify, not just claim"
           lead="BeyondX makes clear commitments to every employer and every Xpert on the platform, and builds the systems to keep them."
@@ -40,10 +39,10 @@ export default function TrustSafety() {
           {commitments.map(({ icon: Icon, title, body }, i) => (
             <Reveal key={title} delay={(i % 2) * 0.06}>
               <div className="flex gap-5">
-                <Icon size={32} strokeWidth={1.6} aria-hidden="true" className="mt-0.5 shrink-0 text-forest-300" />
+                <Icon size={32} strokeWidth={1.6} aria-hidden="true" className="mt-0.5 shrink-0 text-forest-700" />
                 <div className="max-w-md">
-                  <h3 className="font-display text-xl font-semibold">{title}</h3>
-                  <p className="mt-2.5 leading-relaxed text-cream-100/70">{body}</p>
+                  <h3 className="font-display text-xl font-semibold text-ink-900">{title}</h3>
+                  <p className="mt-2.5 leading-relaxed text-ink-700/80">{body}</p>
                 </div>
               </div>
             </Reveal>
