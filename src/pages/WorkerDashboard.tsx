@@ -982,8 +982,6 @@ export default function WorkerDashboard() {
     { id: 'profile', label: 'Profile', icon: UserRound },
     { id: 'support', label: 'Support', icon: HelpCircle },
   ]
-  // Short set for the top bar — the sidebar carries the full list.
-  const headerNavItems = navItems.filter((i) => ['overview', 'assignments', 'profile', 'support'].includes(i.id))
 
   const activityDate = (t: Task) => t.createdAt ? new Date(t.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : undefined
 
@@ -1032,9 +1030,8 @@ export default function WorkerDashboard() {
   if (isCoordinator(me)) return <CoordinatorDashboard />
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <DashboardHeader role="XPERT" title="Xpert Dashboard" name={displayName} avatar={photo} onEditProfile={() => setEditing(true)} tasks={[...offers, ...mine, ...history]}
-        navItems={headerNavItems} active={section} onSelect={(id) => setSection(id as typeof section)} />
+    <div className="min-h-screen bg-cream-50">
+      <DashboardHeader role="XPERT" title="Xpert Dashboard" name={displayName} avatar={photo} onEditProfile={() => setEditing(true)} tasks={[...offers, ...mine, ...history]} />
       <div className="lg:flex">
         <DashboardSidebar items={navItems} active={section} onSelect={(id) => setSection(id as typeof section)} />
         <main id="main" className="min-w-0 flex-1 px-4 py-6 sm:px-8 sm:py-8 lg:px-10">
@@ -1072,7 +1069,7 @@ export default function WorkerDashboard() {
         )}
 
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-ink-900 sm:text-[1.75rem]">Welcome back, {displayName.split(' ')[0]}!</h1>
+          <h1 className="font-display text-2xl font-bold text-ink-900 sm:text-[1.75rem]">Welcome back, {displayName.split(' ')[0]}!</h1>
           <p className="mt-0.5 text-sm text-ink-700/70">Here's what's happening with your profile and assignments.</p>
         </div>
 

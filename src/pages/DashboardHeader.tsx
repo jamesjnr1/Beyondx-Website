@@ -3,10 +3,9 @@ import Logo from '../components/Logo'
 import { useAuth } from '../components/auth/AuthContext'
 import Notifications from '../components/Notifications'
 import type { Task } from '../lib/api'
-import type { DashboardNavItem } from '../components/DashboardSidebar'
 
 export default function DashboardHeader({
-  role, title, name, avatar, onEditProfile, tasks = [], navItems, active, onSelect, cta,
+  role, title, name, avatar, onEditProfile, tasks = [], cta,
 }: {
   role: 'XPERT' | 'EMPLOYER'
   title: string
@@ -14,57 +13,28 @@ export default function DashboardHeader({
   avatar?: string
   onEditProfile?: () => void
   tasks?: Task[]
-  /** A short, curated subset of the sidebar's sections (3-4 items), shown as
-   *  a full-width top nav bar on large screens — the sidebar itself carries
-   *  the complete list. */
-  navItems?: DashboardNavItem[]
-  active?: string
-  onSelect?: (id: string) => void
   /** Primary action button in the right cluster (e.g. Post a Task). */
   cta?: { label: string; onClick: () => void }
 }) {
   const { go, logout } = useAuth()
-  const hasNav = !!navItems && navItems.length > 0
   const initials = (name || '').split(' ').filter(Boolean).map((p) => p[0]).slice(0, 2).join('').toUpperCase()
   return (
     <header className="sticky top-0 z-40 border-b border-ink-900/10 bg-white">
       <div className="flex h-16 items-center gap-3 px-4 sm:px-6 lg:pl-0 lg:pr-8">
         {/* Logo sits directly above the sidebar rail on desktop */}
-        <div className="flex shrink-0 items-center lg:w-60 lg:pl-7">
+        <div className="flex shrink-0 items-center lg:h-full lg:w-64 lg:border-r lg:border-ink-900/10 lg:pl-6">
           <button onClick={() => go('home')} aria-label="Go to BeyondX home" className="shrink-0">
             <Logo tone="dark" className="h-7 sm:h-8" />
           </button>
         </div>
-        <span aria-hidden="true" className={`hidden h-6 w-px shrink-0 bg-ink-900/15 sm:block ${hasNav ? 'lg:hidden' : ''}`} />
-        <h1 className={`min-w-0 truncate font-serif text-base font-medium text-ink-900 sm:text-lg ${hasNav ? 'lg:sr-only' : ''}`}>{title}</h1>
-
-        {/* Top links, starting at the content column's edge like the mockup */}
-        {hasNav && (
-          <nav className="hidden min-w-0 items-center gap-1 lg:flex lg:pl-6" aria-label="Main sections">
-            {navItems!.map((item) => {
-              const isActive = active === item.id
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => onSelect?.(item.id)}
-                  aria-current={isActive ? 'page' : undefined}
-                  className={`relative shrink-0 px-3.5 py-5 text-sm font-medium transition-colors focus:outline-none ${
-                    isActive ? 'text-ink-900' : 'text-ink-700/70 hover:text-ink-900'
-                  }`}
-                >
-                  {item.label}
-                  {isActive && <span aria-hidden="true" className="absolute inset-x-3 bottom-0 h-0.5 rounded-full bg-forest-600" />}
-                </button>
-              )
-            })}
-          </nav>
-        )}
+        <span aria-hidden="true" className="hidden h-6 w-px shrink-0 bg-ink-900/15 sm:block lg:hidden" />
+        <h1 className="sr-only min-w-0 truncate font-display text-base font-semibold text-ink-900 sm:not-sr-only sm:text-lg lg:pl-4">{title}</h1>
 
         {/* Right cluster */}
         <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
           {cta && (
             <button onClick={cta.onClick}
-              className="mr-1 hidden rounded-lg bg-forest-600 px-4 py-2 text-sm font-semibold text-cream-50 transition-colors hover:bg-forest-500 sm:block">
+              className="mr-1 hidden rounded-full bg-forest-700 px-5 py-2 text-sm font-semibold text-white transition-colors hover:bg-forest-800 sm:block">
               {cta.label}
             </button>
           )}

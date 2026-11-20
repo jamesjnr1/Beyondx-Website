@@ -185,8 +185,6 @@ export default function EmployerDashboard() {
     { id: 'recurring', label: 'Recurring Services', icon: Repeat },
     { id: 'support', label: 'Support', icon: HelpCircle },
   ]
-  // Short set for the top bar — the sidebar carries the full list.
-  const headerNavItems = navItems.filter((i) => ['overview', 'invoices', 'history', 'support'].includes(i.id))
 
   const urgentTask = taskList.find((t) => t.status === 'pending_confirmation')
   const nextActiveTask = urgentTask || invoicesDue[0] || taskList.find((t) => ['awaiting_invoice', 'open', 'payment_pending', 'offered', 'accepted'].includes(String(t.status)))
@@ -208,9 +206,8 @@ export default function EmployerDashboard() {
     })
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-cream-50">
       <DashboardHeader role="EMPLOYER" title="Employer Dashboard" name={orgName} avatar={logo} onEditProfile={() => setEditing(true)} tasks={taskList}
-        navItems={headerNavItems} active={tab} onSelect={goTab}
         cta={{ label: 'Request an Xpert', onClick: () => goTab('post') }} />
       <div className="lg:flex">
         <DashboardSidebar items={navItems} active={tab} onSelect={goTab} />
@@ -229,7 +226,7 @@ export default function EmployerDashboard() {
         {!taskScreen && (
         <div className="mb-6 flex items-start justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-ink-900 sm:text-[1.75rem]">Welcome back, {orgName}!</h1>
+            <h1 className="font-display text-2xl font-bold text-ink-900 sm:text-[1.75rem]">Welcome back, {orgName}!</h1>
             <p className="mt-0.5 text-sm text-ink-700/70">
               {pendingConfirmCount > 0
                 ? `${pendingConfirmCount} job${pendingConfirmCount === 1 ? '' : 's'} waiting on your confirmation.`
