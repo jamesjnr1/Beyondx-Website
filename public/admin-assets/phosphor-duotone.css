@@ -237,6 +237,14 @@
   content: "\e2f3";
   margin-left: -1em;
 }
+.ph-duotone.ph-lock-key:before {
+  content: "\e2fe";
+  opacity: 0.2;
+}
+.ph-duotone.ph-lock-key:after {
+  content: "\e2ff";
+  margin-left: -1em;
+}
 .ph-duotone.ph-map-pin:before {
   content: "\e316";
   opacity: 0.2;
@@ -259,6 +267,14 @@
 }
 .ph-duotone.ph-megaphone:after {
   content: "\e325";
+  margin-left: -1em;
+}
+.ph-duotone.ph-path:before {
+  content: "\e39c";
+  opacity: 0.2;
+}
+.ph-duotone.ph-path:after {
+  content: "\e39d";
   margin-left: -1em;
 }
 .ph-duotone.ph-phone-call:before {
@@ -299,6 +315,14 @@
 }
 .ph-duotone.ph-seal-check:after {
   content: "\e607";
+  margin-left: -1em;
+}
+.ph-duotone.ph-shield-check:before {
+  content: "\e40c";
+  opacity: 0.2;
+}
+.ph-duotone.ph-shield-check:after {
+  content: "\e40f";
   margin-left: -1em;
 }
 .ph-duotone.ph-sign-out:before {

@@ -318,41 +318,84 @@ tr:hover td{background:#f7faf3;}
   .sc-mini .sc-v{font-size:20px;}
   .two{grid-template-columns:1fr;}
 }
+
+/* ── Sign-in page, matching the dashboards ── */
+.login{background:#f7f9f4;}
+.login-brand{position:relative;overflow:hidden;isolation:isolate;flex:0 0 460px;padding:44px 48px 44px;background:linear-gradient(160deg,#6bab21 0%,#578c1a 35%,#33520f 100%);}
+.lb-ring{position:absolute;border-radius:50%;border:1px solid rgba(255,255,255,.14);z-index:-1;pointer-events:none;}
+.lb-ring-1{width:420px;height:420px;right:-180px;top:-140px;}
+.lb-ring-2{width:260px;height:260px;right:-100px;top:-60px;}
+.login-brand-logo{display:flex;align-items:center;gap:14px;margin-bottom:72px;}
+.login-brand-logo img{height:34px;}
+.lb-tag{padding-left:14px;border-left:1px solid rgba(255,255,255,.25);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.8);line-height:1.25;}
+.lb-tag span{display:block;font-weight:400;letter-spacing:0;text-transform:none;color:rgba(255,255,255,.55);}
+.login-brand h1{font-family:var(--d);font-size:40px;font-weight:700;line-height:1.12;letter-spacing:-.03em;color:#fff;}
+.login-brand p{margin-top:18px;max-width:340px;font-size:15px;line-height:1.65;color:rgba(255,255,255,.78);}
+.login-brand-features{gap:20px;}
+.lbf{align-items:center;gap:14px;}
+.lbf i{font-size:26px;color:#fff;flex-shrink:0;}
+.lbf-t{font-size:14px;color:rgba(255,255,255,.9);}
+.login-form-wrap{padding:40px 32px;}
+.lbox{max-width:400px;padding:40px 36px;background:#fff;border:1px solid rgba(18,24,14,.08);border-radius:20px;box-shadow:0 12px 40px rgba(18,24,14,.07);}
+.lbox-icon{display:block;font-size:40px;color:#578c1a;margin-bottom:18px;}
+.lbox h2{font-family:var(--d);font-size:28px;font-weight:700;letter-spacing:-.02em;color:#12180e;}
+.lbox .lbox-sub{margin-bottom:28px;font-size:14px;color:rgba(42,50,38,.65);}
+.lbox label{font-size:12.5px;font-weight:600;letter-spacing:0;text-transform:none;color:#2a3226;margin-bottom:8px;}
+.lbox input[type=password],.lbox input[type=text]{padding:13px 44px 13px 14px;border:1px solid rgba(18,24,14,.14);border-radius:12px;font-size:14px;background:#fff;}
+.lbox input:focus{border-color:#6bab21;box-shadow:0 0 0 3px rgba(107,171,33,.18);}
+.lbox button.lbox-btn{padding:14px;border-radius:12px;font-size:14.5px;background:linear-gradient(180deg,#6bab21,#578c1a);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 6px 16px rgba(87,140,26,.28);}
+.lbox button.lbox-btn:hover{background:linear-gradient(180deg,#578c1a,#446d14);}
+.lerr{font-size:13px;}
+.lbox-note{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:24px;font-size:12.5px;color:rgba(42,50,38,.55);}
+.lbox-note i{font-size:16px;color:#578c1a;}
+@media(max-width:900px){
+  .login{flex-direction:column;}
+  .login-brand{display:flex!important;flex:none;padding:28px 24px 30px;}
+  .login-brand-logo{margin-bottom:28px;}
+  .login-brand h1{font-size:28px;}
+  .login-brand-features{display:none;}
+  .login-form-wrap{padding:24px 16px 40px;align-items:flex-start;}
+  .lbox{padding:28px 22px;}
+}
 </style>
 </head>
 <body>
 <div class="login" id="loginScreen">
   <!-- Brand panel -->
   <div class="login-brand">
+    <span class="lb-ring lb-ring-1" aria-hidden="true"></span>
+    <span class="lb-ring lb-ring-2" aria-hidden="true"></span>
     <div class="login-brand-top">
       <div class="login-brand-logo">
         <img src="/beyondx-logo-light.png" alt="BeyondX" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
-        <span style="display:none;font-family:var(--d);font-size:18px;font-weight:600;color:#fff">BeyondX</span>
+        <span style="display:none;font-family:var(--d);font-size:20px;font-weight:700;color:#fff">BeyondX</span>
+        <span class="lb-tag">Admin<span>Console</span></span>
       </div>
-      <h1>Workforce<br>management<br>built on trust.</h1>
-      <p>Monitor operations, verify payments, manage workers and employers across Ghana.</p>
+      <h1>Run every job<br>from one place.</h1>
+      <p>Review requests, verify payments, dispatch Xperts and keep every job on track across Greater Accra.</p>
     </div>
     <div class="login-brand-features">
-      <div class="lbf"><div class="lbf-dot"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div><span class="lbf-t">Verify payments and dispatch workers in one place</span></div>
-      <div class="lbf"><div class="lbf-dot"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div><span class="lbf-t">Track every job from posting to payout</span></div>
-      <div class="lbf"><div class="lbf-dot"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg></div><span class="lbf-t">Full oversight of Ghana's verified workforce</span></div>
+      <div class="lbf"><i class="ph-duotone ph-receipt" aria-hidden="true"></i><span class="lbf-t">Quote requests and verify payments before work starts</span></div>
+      <div class="lbf"><i class="ph-duotone ph-path" aria-hidden="true"></i><span class="lbf-t">Track every job from request to payout</span></div>
+      <div class="lbf"><i class="ph-duotone ph-shield-check" aria-hidden="true"></i><span class="lbf-t">Check, approve and manage every Xpert</span></div>
     </div>
   </div>
   <!-- Form panel -->
   <div class="login-form-wrap">
     <div class="lbox">
+      <i class="ph-duotone ph-lock-key lbox-icon" aria-hidden="true"></i>
       <h2>Sign in</h2>
-      <p class="lbox-sub">Enter your admin password to continue.</p>
+      <p class="lbox-sub">Enter the admin password to open the console.</p>
       <label for="adminPass">Password</label>
       <div class="lbox-pass-wrap">
-        <input type="password" id="adminPass" placeholder="••••••••••••" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"/>
+        <input type="password" id="adminPass" placeholder="Admin password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"/>
         <button class="lbox-toggle" type="button" onclick="togglePassVis()" id="passToggleBtn" title="Show password">
           <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
       </div>
       <button class="lbox-btn" id="loginBtn" onclick="login()">Sign in →</button>
       <div class="lerr" id="err">Incorrect password. Please try again.</div>
-      <p class="lbox-note">BeyondX Admin Console<br>Authorised personnel only</p>
+      <p class="lbox-note"><i class="ph-duotone ph-shield-check" aria-hidden="true"></i> Authorised BeyondX staff only</p>
     </div>
   </div>
 </div>
