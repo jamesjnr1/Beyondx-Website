@@ -3,9 +3,9 @@ import L from 'leaflet'
 import 'leaflet/dist/leaflet.css'
 import { MapPin, ExternalLink, Loader } from 'lucide-react'
 
-// Tile options — Carto Voyager is cleaner and more modern than raw OSM
-const TILE_URL = 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
-const TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
+// OpenStreetMap tiles: no API key or account needed
+const TILE_URL = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+const TILE_ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 
 type Coords = { lat: number; lng: number }
 
@@ -91,7 +91,7 @@ export default function JobLocationMap({ location, heightClass = 'h-44', showOpe
       L.tileLayer(TILE_URL, {
         maxZoom: 19,
         attribution: TILE_ATTR,
-        subdomains: 'abcd',
+        className: 'bx-tiles',
       }).addTo(map)
 
       L.marker([coords.lat, coords.lng], { icon: makePinIcon() })

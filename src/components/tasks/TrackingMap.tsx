@@ -1,8 +1,7 @@
 // Live tracking map for a job: the job site and, once the Xpert shares it, their
 // live position, joined by a dashed line, with distance and a rough arrival time.
 //
-// Leaflet with CARTO's light "Positron" tiles: clean, no API key, works on slow
-// connections. The Xpert's position comes from /api/location (only while they
+// Leaflet with OpenStreetMap tiles: no API key, works on slow connections. The Xpert's position comes from /api/location (only while they
 // choose to share); the site comes from geocoding the job's location text.
 import { useCallback, useEffect, useRef, useState } from 'react'
 import L from 'leaflet'
@@ -10,8 +9,10 @@ import 'leaflet/dist/leaflet.css'
 import { ArrowsOut, Crosshair, MapPin, MapTrifold, NavigationArrow, SpinnerGap } from '@phosphor-icons/react'
 import { geocode } from '../JobLocationMap'
 
-const TILES = 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png'
-const ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>'
+// OpenStreetMap's own tiles: no API key or account. A soft grey wash (see
+// .bx-tiles in index.css) keeps the map calm so the pins stand out.
+const TILES = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png'
+const ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
 const POLL_MS = 20_000
 const CITY_KMH = 22 // typical Accra traffic speed, for a rough arrival time only
 
@@ -116,7 +117,7 @@ export default function TrackingMap({ task, xpertName, live: liveEnabled, compac
     const m = L.map(box.current, { center: [start.lat, start.lng], zoom: 15, zoomControl: false, scrollWheelZoom: false, attributionControl: true })
     L.control.zoom({ position: 'bottomright' }).addTo(m)
     let loaded = false
-    L.tileLayer(TILES, { maxZoom: 19, subdomains: 'abcd', attribution: ATTR, detectRetina: true })
+    L.tileLayer(TILES, { maxZoom: 19, attribution: ATTR, className: 'bx-tiles' })
       .on('tileload', () => { loaded = true }).addTo(m)
     window.setTimeout(() => { if (!loaded) setTilesFailed(true) }, 7000)
     m.on('click', () => m.scrollWheelZoom.enable())

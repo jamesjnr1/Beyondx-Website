@@ -1,16 +1,15 @@
-import { useCallback, useEffect, useState } from 'react'
-import { ChevronRight, Star, ShieldCheck, AlertCircle, Map, Clock, Repeat, Flag } from 'lucide-react'
-import JobLocationMap from '../components/JobLocationMap'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { ShieldCheck, AlertCircle, Repeat, Flag } from 'lucide-react'
 import DashboardHeader from './DashboardHeader'
 import DashboardSidebar, { DashboardMobileNav, type DashboardNavItem } from '../components/DashboardSidebar'
 import ActivityFeed, { type ActivityItem } from '../components/ActivityFeed'
 import {
   SquaresFour, FilePlus as FilePlusP, Receipt, ClipboardText, Repeat as RepeatP, Lifebuoy, Briefcase as BriefcaseP,
   UsersThree, Wallet as WalletP, ArrowsClockwise, Plus, WarningCircle, MapPin as MapPinP, CalendarBlank, UserCircle,
-  Buildings, Star as StarP, ShieldCheck as ShieldCheckP, Tray, HardHat, Hourglass,
+  Buildings, Star as StarP, ShieldCheck as ShieldCheckP, Tray, HardHat, Hourglass, CheckCircle as CheckCircleP, CaretRight, Flag as FlagP,
 } from '@phosphor-icons/react'
 import {
-  PageHeader, KpiTile, Panel, Status, toneFromClass, InfoRow, ListRow, AlertBanner, EmptyState, SkeletonRows,
+  PageHeader, KpiTile, Panel, Status, toneFromClass, InfoRow, ListRow, AlertBanner, EmptyState, SkeletonRows, TextTabs,
   btnPrimary, btnSecondary, btnGhost, type IconType,
 } from '../components/dash/kit'
 import ProfileModal from '../components/ProfileModal'
@@ -76,9 +75,6 @@ function dispatchDetails(t: Task) {
   }
 }
 
-function Stars({ n }: { n: number }) {
-  return <span className="inline-flex" role="img" aria-label={`${n} out of 5 stars`}>{[1, 2, 3, 4, 5].map((i) => <Star key={i} size={14} aria-hidden="true" className={i <= n ? 'fill-forest-600 text-forest-600' : 'text-ink-900/20'} />)}</span>
-}
 function Empty({ text, icon }: { text: string; icon: IconType }) {
   return <Panel bodyClassName=""><EmptyState icon={icon} text={text} /></Panel>
 }
@@ -96,6 +92,7 @@ export default function EmployerDashboard() {
   const [editing, setEditing] = useState(false)
   const [submitted, setSubmitted] = useState<SubmittedTask | null>(null)
   const [trackingId, setTrackingId] = useState<string | number | null>(null)
+  const [selectedJobId, setSelectedJobId] = useState<string | number | null>(null)
   const goTab = (id: string) => { setTab(id as typeof tab); setTrackingId(null); setSubmitted(null) }
   const trackTask = (id: string | number) => { setTab('history'); setTrackingId(id); setSubmitted(null) }
   // The task screens carry their own heading, so the welcome header is hidden on them.
@@ -403,231 +400,21 @@ export default function EmployerDashboard() {
         })()}
 
         {tab === 'history' && trackingId == null && (
-          <div>
-            {loading ? <Skeleton /> : taskList.length ? (() => {
-              const today = new Date().toISOString().slice(0, 10)
-              const urgent = taskList.filter(needsConfirmation)
-              const inFlight = (t: Task) => !needsConfirmation(t) && ['awaiting_invoice', 'invoice_sent', 'open', 'payment_pending', 'offered', 'accepted', 'expired'].includes(String(t.status))
-              const isActiveNow = (t: Task) => t.status === 'accepted' || (String(t.scheduledDate || '') <= today && ['open', 'offered', 'expired'].includes(String(t.status)) && !!t.scheduledDate)
-              const active = taskList.filter((t) => inFlight(t) && isActiveNow(t))
-              const upcoming = taskList.filter((t) => inFlight(t) && !isActiveNow(t))
-              const done = taskList.filter((t) => ['employer_confirmed', 'completed', 'payment_rejected', 'cancelled'].includes(String(t.status)))
-
-              const TaskItem = ({ t }: { t: Task }) => {
-                const s = st(t.status)
-                const { name: workerName, rating: xpertRating } = assignedXpert(t)
-                const rev = t.reviews?.[0]?.rating
-                const slots = Number(t.slotsNeeded) || 1
-                const isUrgent = t.status === 'pending_confirmation' && slots <= 1
-                const filled = Number(t.filledSlots) || 0
-                const acceptedWorkers = (t as unknown as { acceptedWorkers?: XpertSlot[] }).acceptedWorkers
-                const [showMap, setShowMap] = useState(false)
-                const currentStep = currentStepIndex(t.status as string)
-                const isTerminal = ['completed', 'employer_confirmed', 'payment_rejected', 'cancelled'].includes(t.status as string)
-                const myReview = t.reviews?.find((r) => r.fromRole === 'employer')
-                const theirReview = t.reviews?.find((r) => r.fromRole === 'worker')
-
-                return (
-                  <div className="rounded-2xl border border-ink-900/[0.08] bg-white shadow-[0_1px_2px_rgba(18,24,14,0.04)] transition-shadow hover:shadow-md">
-                    <div className="p-5 sm:p-6">
-                      {/* Header */}
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="font-display text-lg font-semibold text-ink-900">{t.taskType || 'Task'}</p>
-                          <p className="mt-0.5 text-sm text-ink-700">
-                            {slots > 1
-                              ? <span className="font-medium text-ink-800">{filled}/{slots} Xperts confirmed</span>
-                              : workerName && isTerminal && <span className="font-medium text-ink-800">{workerName}{xpertRating > 0 ? ` ★ ${xpertRating.toFixed(1)}` : ''}</span>}
-                            {((workerName && isTerminal) || slots > 1) && t.location ? ' · ' : ''}{t.location || ''}
-                            {t.duration ? ` · ${t.duration}` : ''}
-                          </p>
-                          {(t.scheduledDate as string) && (
-                            <p className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-forest-700">
-                              <Clock size={11} aria-hidden="true" />
-                              {new Date(`${t.scheduledDate as string}T${(t.scheduledTime as string) || '08:00'}:00`).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                            </p>
-                          )}
-                        </div>
-                        <div className="shrink-0 text-right">
-                          <Status tone={toneFromClass(s.color)}>{s.label}</Status>
-                          {rev && <div className="mt-1 flex items-center justify-end gap-1"><Stars n={Number(rev)} /></div>}
-                          {t.invoiceAmount != null && Number(t.invoiceAmount) > 0 && <p className="mt-1 text-xs text-ink-700/70">{cedis(t.invoiceAmount ?? undefined)}</p>}
-                        </div>
-                      </div>
-
-                      {/* Multi-worker: show list of accepted workers */}
-                      {slots > 1 && acceptedWorkers && acceptedWorkers.length > 0 && (
-                        <div className="mt-3 space-y-1">
-                          {acceptedWorkers.map((w, i) => (
-                            <div key={w.id} className="flex items-center gap-2 text-xs text-ink-700">
-                              <span className="h-1.5 w-1.5 rounded-[9999px] bg-forest-600" />
-                              <span className="font-medium">{w.acceptedBy?.fullName || `Xpert ${i + 1}`}</span>
-                              {w.acceptedBy?.verified && <span className="text-forest-700">· Verified</span>}
-                              {typeof w.acceptedBy?.relevantJobs === 'number' && <span className="text-ink-700/60">· {w.acceptedBy.relevantJobs} similar jobs</span>}
-                              {w.status === 'pending_confirmation' ? (
-                                <button onClick={() => setRating({ ...t, id: w.id, status: w.status, acceptedBy: w.acceptedBy } as Task)}
-                                  className="ml-auto rounded-lg bg-forest-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-forest-500">
-                                  Confirm work & rate
-                                </button>
-                              ) : (
-                                <span className="ml-auto font-medium text-ink-700/60">{st(w.status).label}</span>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Progress stepper — only for active (non-terminal) jobs */}
-                      {!isTerminal && currentStep >= 0 && (
-                        <div className="mt-4 flex items-center gap-0">
-                          {PROGRESS_STEPS.map(({ label }, i) => {
-                            const active = i === currentStep
-                            const done = i < currentStep
-                            const last = i === PROGRESS_STEPS.length - 1
-                            return (
-                              <div key={label} className="flex flex-1 flex-col items-center">
-                                <div className="flex w-full items-center">
-                                  <div className={`h-0.5 flex-1 ${i === 0 ? 'invisible' : done || active ? 'bg-forest-600' : 'bg-ink-900/10'}`} />
-                                  <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[0.6875rem] font-bold transition-colors ${
-                                    done || active ? 'bg-forest-600 text-cream-50' : 'bg-gray-100 text-ink-700/50'
-                                  }`}>
-                                    {done ? '✓' : i + 1}
-                                  </div>
-                                  <div className={`h-0.5 flex-1 ${last ? 'invisible' : done ? 'bg-forest-600' : 'bg-ink-900/10'}`} />
-                                </div>
-                                <span className={`mt-1 px-1 text-center text-[0.6875rem] font-medium leading-tight ${active ? 'text-forest-700' : done ? 'text-ink-700/60' : 'text-ink-700/40'}`}>
-                                  {label}
-                                </span>
-                              </div>
-                            )
-                          })}
-                        </div>
-                      )}
-
-                      {/* Status note */}
-                      {s.note && !isUrgent && (
-                        <p className="mt-2.5 text-xs leading-relaxed text-ink-700/70">{s.note}</p>
-                      )}
-
-                      {/* The job, not the whole Xpert: who is assigned and how it's going */}
-                      {slots <= 1 && !isTerminal && ['offered', 'accepted', 'pending_confirmation'].includes(String(t.status)) && !t.replacementInProgress && (
-                        <XpertSummary xpert={t.acceptedBy as AssignedXpert | undefined} taskType={t.taskType} />
-                      )}
-                      {['accepted', 'pending_confirmation'].includes(String(t.status)) && <LiveJobSteps task={t} />}
-                      <JobNotices task={t} />
-
-                      {/* Past job record: amount paid, payment reference and feedback */}
-                      {isTerminal && (
-                        <div className="mt-3 grid gap-2 rounded-xl bg-forest-50 px-4 py-3 text-xs text-ink-700 sm:grid-cols-3">
-                          <div><span className="block text-ink-700/60">Amount</span>{t.invoiceAmount != null ? cedis(t.invoiceAmount ?? undefined) : '—'}</div>
-                          <div><span className="block text-ink-700/60">Payment reference</span>{String(t.paymentRef || '—')}</div>
-                          <div><span className="block text-ink-700/60">Feedback</span>{myReview ? `You rated ${myReview.rating}/5` : 'Not given'}{theirReview ? ` · Xpert rated you ${theirReview.rating}/5` : ''}</div>
-                        </div>
-                      )}
-                      {['employer_confirmed', 'completed'].includes(String(t.status)) && (
-                        <button onClick={() => setFlagging(t)} className="mt-3 mr-4 inline-flex items-center gap-1 text-xs font-medium text-ink-700 hover:underline">
-                          <Flag size={12} aria-hidden="true" /> Report an incident
-                        </button>
-                      )}
-
-                      {t.status === 'invoice_sent' && (
-                        <button onClick={() => goTab('invoices')}
-                          className="mt-3 mr-4 rounded-lg bg-forest-600 px-4 py-2 text-sm font-semibold text-white hover:bg-forest-500">
-                          Review quote ({cedis(t.invoiceAmount ?? undefined)})
-                        </button>
-                      )}
-                      <button
-                        onClick={() => trackTask(t.id)}
-                        className="mt-3 mr-4 inline-flex items-center gap-1 text-sm font-semibold text-forest-700 hover:underline"
-                      >
-                        Track task <ChevronRight size={14} aria-hidden="true" />
-                      </button>
-
-                      {/* Cancel — only while still searching, before anyone has committed */}
-                      {['awaiting_invoice', 'invoice_sent', 'open', 'payment_pending'].includes(String(t.status)) && (
-                        <button
-                          onClick={() => cancelTask(t)}
-                          className="mt-3 mr-4 text-xs font-medium text-red-600/80 underline decoration-red-600/30 underline-offset-2 transition-colors hover:text-red-700"
-                        >
-                          Cancel this job
-                        </button>
-                      )}
-
-                      {/* Urgent confirm action */}
-                      {isUrgent && (
-                        <div className="mt-4 border-t border-amber-100 pt-4">
-                          <p className="text-sm text-ink-700">The Xpert has marked this job as complete.</p>
-                          <button
-                            onClick={() => setRating(t)}
-                            className="mt-3 flex w-full items-center justify-center gap-2 rounded-xl bg-forest-600 px-5 py-3 text-sm font-semibold text-cream-50 transition-all hover:bg-forest-500 active:scale-[0.98] focus:outline-none"
-                          >
-                            <ShieldCheck size={15} aria-hidden="true" /> Confirm work & release payment
-                          </button>
-                        </div>
-                      )}
-
-                      {/* Job location map (an accepted job shows the live tracking map instead) */}
-                      {t.location && t.location !== 'Remote' && t.status !== 'accepted' && (
-                        <button
-                          onClick={() => setShowMap((v) => !v)}
-                          className="mt-3 inline-flex items-center gap-1.5 text-xs font-medium text-forest-700 hover:underline"
-                        >
-                          <Map size={12} aria-hidden="true" />
-                          {showMap ? 'Hide map' : 'View job location on map'}
-                        </button>
-                      )}
-                      {showMap && t.location && t.location !== 'Remote' && (
-                        <div className="mt-2">
-                          <JobLocationMap location={t.location as string} heightClass="h-48" showOpenLink />
-                        </div>
-                      )}
-
-                      {/* Live tracking for jobs under way */}
-                      {t.status === 'accepted' && t.location && t.location !== 'Remote' && (
-                        <div className="mt-4"><TrackingMap task={t} xpertName={workerName || assignedXpert(t).name || undefined} live compact /></div>
-                      )}
-                    </div>
-                  </div>
-                )
-              }
-
-              return (
-                <div className="space-y-6">
-                  {urgent.length > 0 && (
-                    <section>
-                      <h2 className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-amber-800">
-                        <WarningCircle size={22} weight="duotone" /> Need your confirmation <span className="text-amber-700/70">{urgent.length}</span>
-                      </h2>
-                      <div className="space-y-3">{urgent.map((t) => <TaskItem key={String(t.id)} t={t} />)}</div>
-                    </section>
-                  )}
-
-                  {invoicesDue.length > 0 && (
-                    <button onClick={() => goTab('invoices')} className="flex w-full items-center justify-between rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-left text-sm font-medium text-amber-900">
-                      {invoicesDue.length} quote{invoicesDue.length === 1 ? '' : 's'} awaiting your response <ChevronRight size={16} aria-hidden="true" />
-                    </button>
-                  )}
-
-                  {[
-                    { title: 'Active jobs', list: active, empty: 'No jobs on site right now.' },
-                    { title: 'Upcoming', list: upcoming, empty: 'Nothing upcoming.' },
-                    { title: 'Past jobs', list: done, empty: 'No past jobs yet.' },
-                  ].map((g) => (
-                    <section key={g.title}>
-                      <h2 className="mb-3 font-display text-lg font-semibold text-ink-900">{g.title} <span className="text-ink-700/45">{g.list.length}</span></h2>
-                      {g.list.length
-                        ? <div className="space-y-3">{g.list.map((t) => <TaskItem key={String(t.id)} t={t} />)}</div>
-                        : <p className="rounded-2xl border border-dashed border-ink-900/15 px-5 py-6 text-center text-sm text-ink-700/60">{g.empty}</p>}
-                    </section>
-                  ))}
-                </div>
-              )
-            })() : (
-              <Empty icon={BriefcaseP} text="No jobs yet. Request an Xpert and BeyondX will send you a quote." />
-            )}
-          </div>
+          loading ? <Skeleton /> : taskList.length ? (
+            <JobsConsole
+              tasks={taskList}
+              selectedId={selectedJobId}
+              onSelect={setSelectedJobId}
+              onTrack={trackTask}
+              onConfirm={(t) => setRating(t)}
+              onReviewQuote={() => goTab('invoices')}
+              onCancel={cancelTask}
+              onFlag={(t) => setFlagging(t)}
+            />
+          ) : (
+            <Empty icon={BriefcaseP} text="No jobs yet. Request an Xpert and BeyondX will send you a quote." />
+          )
         )}
-
           </div>
         </div>
       </main>
@@ -659,6 +446,224 @@ export default function EmployerDashboard() {
           }}
         />
       )}
+    </div>
+  )
+}
+
+/* ------------------------------ My Jobs console ----------------------------- */
+
+const isTerminalStatus = (s?: string) => ['completed', 'employer_confirmed', 'payment_rejected', 'cancelled'].includes(String(s))
+const jobWhen = (t: Task) => t.scheduledDate
+  ? new Date(`${t.scheduledDate as string}T${(t.scheduledTime as string) || '08:00'}:00`).toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })
+  : undefined
+const onSite = (t: Task) => !!t.location && String(t.location).toLowerCase() !== 'remote'
+
+type JobGroup = 'action' | 'active' | 'upcoming' | 'past'
+function groupOf(t: Task): JobGroup {
+  const today = new Date().toISOString().slice(0, 10)
+  if (needsConfirmation(t) || t.status === 'invoice_sent') return 'action'
+  if (isTerminalStatus(t.status)) return 'past'
+  const activeNow = t.status === 'accepted' || (!!t.scheduledDate && String(t.scheduledDate) <= today && ['open', 'offered', 'expired'].includes(String(t.status)))
+  return activeNow ? 'active' : 'upcoming'
+}
+
+/** My Jobs as a two-pane console: a compact list grouped by what each job needs,
+ *  and the selected job in full (map first, then progress, the Xpert and every
+ *  action). On phones the detail sits under the list. */
+function JobsConsole({ tasks, selectedId, onSelect, onTrack, onConfirm, onReviewQuote, onCancel, onFlag }: {
+  tasks: Task[]
+  selectedId: string | number | null
+  onSelect: (id: string | number) => void
+  onTrack: (id: string | number) => void
+  onConfirm: (t: Task) => void
+  onReviewQuote: () => void
+  onCancel: (t: Task) => void
+  onFlag: (t: Task) => void
+}) {
+  const groups: { id: JobGroup; label: string }[] = [
+    { id: 'action', label: 'Needs you' }, { id: 'active', label: 'Active' }, { id: 'upcoming', label: 'Upcoming' }, { id: 'past', label: 'Past' },
+  ]
+  const byGroup = (g: JobGroup) => tasks.filter((t) => groupOf(t) === g)
+  const firstNonEmpty = groups.find((g) => byGroup(g.id).length)?.id || 'active'
+  const [group, setGroup] = useState<JobGroup>(firstNonEmpty)
+  const list = byGroup(group)
+  const selected = tasks.find((t) => String(t.id) === String(selectedId)) || list[0] || tasks[0]
+  const detailRef = useRef<HTMLDivElement | null>(null)
+
+  const pick = (t: Task) => {
+    onSelect(t.id)
+    if (window.innerWidth < 1024) window.setTimeout(() => detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50)
+  }
+
+  return (
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[25rem_minmax(0,1fr)] lg:items-start">
+      {/* List */}
+      <Panel bodyClassName="" className="lg:sticky lg:top-24">
+        <div className="border-b border-ink-900/[0.06] px-5 pt-4">
+          <TextTabs label="Job groups" active={group} onChange={(g) => { setGroup(g); const first = byGroup(g)[0]; if (first) onSelect(first.id) }}
+            tabs={groups.map((g) => ({ id: g.id, label: g.label, count: byGroup(g.id).length }))} />
+        </div>
+        {list.length ? (
+          <ul className="max-h-[32rem] divide-y divide-ink-900/[0.06] overflow-y-auto">
+            {list.map((t) => {
+              const s = st(t.status)
+              const on = selected && String(selected.id) === String(t.id)
+              return (
+                <li key={String(t.id)}>
+                  <button onClick={() => pick(t)} aria-current={on ? 'true' : undefined}
+                    className={`flex w-full items-start gap-3 px-5 py-4 text-left transition-colors ${on ? 'bg-forest-50' : 'hover:bg-cream-50'}`}>
+                    <span className={`mt-1.5 h-2 w-2 shrink-0 rounded-full ${on ? 'bg-forest-600' : 'bg-transparent'}`} aria-hidden="true" />
+                    <span className="min-w-0 flex-1">
+                      <span className="flex items-start justify-between gap-2">
+                        <span className="truncate font-display text-[0.9375rem] font-semibold text-ink-900">{t.taskType || 'Task'}</span>
+                        {Number(t.invoiceAmount) > 0 && <span className="shrink-0 text-sm font-semibold text-ink-900">{cedis(t.invoiceAmount ?? undefined)}</span>}
+                      </span>
+                      <span className="mt-0.5 block truncate text-xs text-ink-700/60">{[t.location, jobWhen(t)].filter(Boolean).join(' · ')}</span>
+                      <span className="mt-1.5 block"><Status tone={toneFromClass(s.color)}>{s.label}</Status></span>
+                    </span>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        ) : (
+          <EmptyState icon={Tray} text={group === 'action' ? "Nothing needs you right now." : group === 'past' ? 'No past jobs yet.' : 'No jobs here yet.'} />
+        )}
+      </Panel>
+
+      {/* Detail */}
+      <div ref={detailRef} className="scroll-mt-24">
+        {selected ? <JobDetail key={String(selected.id)} t={selected} onTrack={onTrack} onConfirm={onConfirm} onReviewQuote={onReviewQuote} onCancel={onCancel} onFlag={onFlag} /> : null}
+      </div>
+    </div>
+  )
+}
+
+function JobDetail({ t, onTrack, onConfirm, onReviewQuote, onCancel, onFlag }: {
+  t: Task; onTrack: (id: string | number) => void; onConfirm: (t: Task) => void; onReviewQuote: () => void; onCancel: (t: Task) => void; onFlag: (t: Task) => void
+}) {
+  const s = st(t.status)
+  const slots = Number(t.slotsNeeded) || 1
+  const filled = Number(t.filledSlots) || 0
+  const xpert = assignedXpert(t)
+  const terminal = isTerminalStatus(t.status)
+  const step = currentStepIndex(t.status as string)
+  const acceptedWorkers = (t as unknown as { acceptedWorkers?: XpertSlot[] }).acceptedWorkers
+  const myReview = t.reviews?.find((r) => r.fromRole === 'employer')
+  const theirReview = t.reviews?.find((r) => r.fromRole === 'worker')
+  const urgentConfirm = t.status === 'pending_confirmation' && slots <= 1
+  const cancellable = ['awaiting_invoice', 'invoice_sent', 'open', 'payment_pending'].includes(String(t.status))
+  const live = ['accepted', 'pending_confirmation'].includes(String(t.status))
+
+  return (
+    <div className="space-y-6">
+      <Panel bodyClassName="">
+        {/* Header */}
+        <div className="flex flex-wrap items-start justify-between gap-4 px-5 pt-5 sm:px-6 sm:pt-6">
+          <div className="min-w-0">
+            <p className="font-display text-xl font-semibold text-ink-900 sm:text-2xl">{t.taskType || 'Task'}</p>
+            <p className="mt-1 text-sm text-ink-700/65">{[t.location, jobWhen(t), `${slots} Xpert${slots > 1 ? 's' : ''}`, t.duration].filter(Boolean).join(' · ')}</p>
+          </div>
+          <div className="text-right">
+            <Status tone={toneFromClass(s.color)}>{s.label}</Status>
+            {Number(t.invoiceAmount) > 0 && <p className="mt-1 font-display text-xl font-bold text-forest-800">{cedis(t.invoiceAmount ?? undefined)}</p>}
+          </div>
+        </div>
+
+        {/* Needs-you call to action */}
+        {(urgentConfirm || t.status === 'invoice_sent') && (
+          <div className="mx-5 mt-5 flex flex-col gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3.5 sm:mx-6 sm:flex-row sm:items-center">
+            <WarningCircle size={22} weight="duotone" className="shrink-0 text-amber-700" />
+            <p className="flex-1 text-sm text-amber-900">
+              {urgentConfirm ? 'The Xpert has marked this job as done. Confirm to release their payment.' : 'Your quote is ready. Accept and pay to have an Xpert assigned, or decline it.'}
+            </p>
+            {urgentConfirm
+              ? <button onClick={() => onConfirm(t)} className={btnPrimary}><ShieldCheckP size={16} weight="bold" /> Confirm & release payment</button>
+              : <button onClick={onReviewQuote} className={btnPrimary}>Review quote</button>}
+          </div>
+        )}
+
+        {/* Map */}
+        {onSite(t) && (
+          <div className="px-5 pt-5 sm:px-6">
+            <TrackingMap task={t} xpertName={xpert.name || undefined} live={live} compact />
+          </div>
+        )}
+
+        {/* Progress */}
+        {!terminal && step >= 0 && (
+          <div className="px-5 pt-6 sm:px-6">
+            <ol className="flex items-start">
+              {PROGRESS_STEPS.map(({ label }, i) => {
+                const done = i < step, active = i === step, last = i === PROGRESS_STEPS.length - 1
+                return (
+                  <li key={label} className="flex flex-1 flex-col items-center">
+                    <div className="flex w-full items-center">
+                      <div className={`h-0.5 flex-1 ${i === 0 ? 'invisible' : done || active ? 'bg-forest-600' : 'bg-ink-900/10'}`} />
+                      <div className={`grid h-6 w-6 shrink-0 place-items-center rounded-full text-[0.6875rem] font-bold ${done || active ? 'bg-forest-600 text-white' : 'bg-ink-900/[0.06] text-ink-700/50'} ${active ? 'ring-4 ring-forest-600/15' : ''}`}>
+                        {done ? <CheckCircleP size={14} weight="bold" /> : i + 1}
+                      </div>
+                      <div className={`h-0.5 flex-1 ${last ? 'invisible' : done ? 'bg-forest-600' : 'bg-ink-900/10'}`} />
+                    </div>
+                    <span className={`mt-1.5 hidden px-1 text-center text-[0.6875rem] font-medium leading-tight sm:block ${active ? 'text-forest-700' : done ? 'text-ink-700/60' : 'text-ink-700/40'}`}>{label}</span>
+                  </li>
+                )
+              })}
+            </ol>
+            <p className="mt-3 text-sm font-semibold text-forest-800 sm:hidden">{PROGRESS_STEPS[step]?.label}</p>
+            {s.note && !urgentConfirm && <p className="mt-2 text-sm leading-relaxed text-ink-700/70">{s.note}</p>}
+          </div>
+        )}
+
+        {/* Xpert(s) and live job steps */}
+        <div className="px-5 pb-5 pt-2 sm:px-6 sm:pb-6">
+          {slots <= 1 && !terminal && ['offered', 'accepted', 'pending_confirmation'].includes(String(t.status)) && !t.replacementInProgress && (
+            <XpertSummary xpert={t.acceptedBy as AssignedXpert | undefined} taskType={t.taskType} />
+          )}
+          {slots > 1 && (
+            <div className="mt-4">
+              <p className="text-sm font-semibold text-ink-900">{filled}/{slots} Xperts confirmed</p>
+              {acceptedWorkers && acceptedWorkers.length > 0 && (
+                <ul className="mt-2 divide-y divide-ink-900/[0.06] rounded-xl border border-ink-900/[0.08]">
+                  {acceptedWorkers.map((w, i) => (
+                    <li key={w.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                      <UserCircle size={20} weight="duotone" className="shrink-0 text-forest-700" />
+                      <span className="min-w-0 flex-1 truncate font-medium text-ink-900">{w.acceptedBy?.fullName || `Xpert ${i + 1}`}</span>
+                      {w.status === 'pending_confirmation'
+                        ? <button onClick={() => onConfirm({ ...t, id: w.id, status: w.status, acceptedBy: w.acceptedBy } as Task)} className={btnPrimary}>Confirm & rate</button>
+                        : <Status tone={toneFromClass(st(w.status).color)}>{st(w.status).label}</Status>}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+          {live && <LiveJobSteps task={t} />}
+          <JobNotices task={t} />
+
+          {terminal && (
+            <div className="mt-4 grid gap-3 rounded-xl bg-forest-50 px-4 py-3.5 text-sm sm:grid-cols-3">
+              <div><span className="block text-xs text-ink-700/60">Amount</span><span className="font-semibold text-ink-900">{t.invoiceAmount != null ? cedis(t.invoiceAmount ?? undefined) : '—'}</span></div>
+              <div><span className="block text-xs text-ink-700/60">Payment reference</span><span className="font-semibold text-ink-900">{String(t.paymentRef || '—')}</span></div>
+              <div><span className="block text-xs text-ink-700/60">Feedback</span><span className="font-semibold text-ink-900">{myReview ? `You rated ${myReview.rating}/5` : 'Not given'}</span>{theirReview ? <span className="block text-xs text-ink-700/60">Xpert rated you {theirReview.rating}/5</span> : null}</div>
+            </div>
+          )}
+          {terminal && xpert.name && (
+            <p className="mt-3 flex items-center gap-2 text-sm text-ink-700"><UserCircle size={18} weight="duotone" className="text-forest-700" /> {xpert.name}{xpert.rating > 0 ? ` · ${xpert.rating.toFixed(1)} rating` : ''}</p>
+          )}
+        </div>
+
+        {/* Actions */}
+        <div className="flex flex-wrap items-center gap-2 border-t border-ink-900/[0.06] bg-cream-50/60 px-5 py-3.5 sm:px-6">
+          <button onClick={() => onTrack(t.id)} className={btnSecondary}>Full tracking <CaretRight size={14} weight="bold" /></button>
+          {['employer_confirmed', 'completed'].includes(String(t.status)) && (
+            <button onClick={() => onFlag(t)} className={btnGhost}><FlagP size={16} weight="duotone" /> Report an incident</button>
+          )}
+          {cancellable && (
+            <button onClick={() => onCancel(t)} className="ml-auto text-sm font-medium text-red-600 hover:underline">Cancel this job</button>
+          )}
+        </div>
+      </Panel>
     </div>
   )
 }
