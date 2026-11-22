@@ -319,83 +319,96 @@ tr:hover td{background:#f7faf3;}
   .two{grid-template-columns:1fr;}
 }
 
-/* ── Sign-in page, matching the dashboards ── */
-.login{background:#f7f9f4;}
-.login-brand{position:relative;overflow:hidden;isolation:isolate;flex:0 0 460px;padding:44px 48px 44px;background:linear-gradient(160deg,#6bab21 0%,#578c1a 35%,#33520f 100%);}
-.lb-ring{position:absolute;border-radius:50%;border:1px solid rgba(255,255,255,.14);z-index:-1;pointer-events:none;}
-.lb-ring-1{width:420px;height:420px;right:-180px;top:-140px;}
-.lb-ring-2{width:260px;height:260px;right:-100px;top:-60px;}
-.login-brand-logo{display:flex;align-items:center;gap:14px;margin-bottom:72px;}
-.login-brand-logo img{height:34px;}
-.lb-tag{padding-left:14px;border-left:1px solid rgba(255,255,255,.25);font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.8);line-height:1.25;}
-.lb-tag span{display:block;font-weight:400;letter-spacing:0;text-transform:none;color:rgba(255,255,255,.55);}
-.login-brand h1{font-family:var(--d);font-size:40px;font-weight:700;line-height:1.12;letter-spacing:-.03em;color:#fff;}
-.login-brand p{margin-top:18px;max-width:340px;font-size:15px;line-height:1.65;color:rgba(255,255,255,.78);}
-.login-brand-features{gap:20px;}
-.lbf{align-items:center;gap:14px;}
-.lbf i{font-size:26px;color:#fff;flex-shrink:0;}
-.lbf-t{font-size:14px;color:rgba(255,255,255,.9);}
-.login-form-wrap{padding:40px 32px;}
-.lbox{max-width:400px;padding:40px 36px;background:#fff;border:1px solid rgba(18,24,14,.08);border-radius:20px;box-shadow:0 12px 40px rgba(18,24,14,.07);}
-.lbox-icon{display:block;font-size:40px;color:#578c1a;margin-bottom:18px;}
-.lbox h2{font-family:var(--d);font-size:28px;font-weight:700;letter-spacing:-.02em;color:#12180e;}
-.lbox .lbox-sub{margin-bottom:28px;font-size:14px;color:rgba(42,50,38,.65);}
-.lbox label{font-size:12.5px;font-weight:600;letter-spacing:0;text-transform:none;color:#2a3226;margin-bottom:8px;}
-.lbox input[type=password],.lbox input[type=text]{padding:13px 44px 13px 14px;border:1px solid rgba(18,24,14,.14);border-radius:12px;font-size:14px;background:#fff;}
-.lbox input:focus{border-color:#6bab21;box-shadow:0 0 0 3px rgba(107,171,33,.18);}
-.lbox button.lbox-btn{padding:14px;border-radius:12px;font-size:14.5px;background:linear-gradient(180deg,#6bab21,#578c1a);box-shadow:inset 0 1px 0 rgba(255,255,255,.2),0 6px 16px rgba(87,140,26,.28);}
+/* Sub-tabs for grouped menu items */
+.subnav-wrap{display:none;position:sticky;top:77px;z-index:15;background:rgba(255,255,255,.92);backdrop-filter:blur(8px);border-bottom:1px solid rgba(18,24,14,.08);padding:0 36px;}
+.subnav-wrap.on{display:block;}
+.subnav{display:flex;gap:26px;overflow-x:auto;scrollbar-width:none;}
+.subnav[hidden]{display:none;}
+.sub-a{position:relative;flex-shrink:0;display:inline-flex;align-items:center;gap:7px;padding:13px 0 15px;background:none;border:0;cursor:pointer;font-family:var(--f);font-size:13.5px;font-weight:500;color:rgba(42,50,38,.65);transition:color .15s;}
+.sub-a:hover{color:#12180e;}
+.sub-a.on{font-weight:600;color:#446d14;}
+.sub-a.on::after{content:"";position:absolute;left:50%;bottom:5px;width:6px;height:6px;margin-left:-3px;border-radius:50%;background:#6bab21;}
+.sub-bdg{min-width:18px;height:18px;display:inline-grid;place-items:center;padding:0 5px;border-radius:999px;background:#ef4444;color:#fff;font-size:10.5px;font-weight:600;}
+@media(max-width:900px){.subnav-wrap{position:static;padding:0 16px;}}
+
+/* ── Sign-in page ── */
+.login{background:#fff;}
+.login-brand{position:relative;flex:1 1 56%;display:flex;flex-direction:column;justify-content:space-between;padding:40px 56px 56px;overflow:hidden;isolation:isolate;
+  background:linear-gradient(180deg,rgba(68,109,20,.55) 0%,rgba(28,44,9,.78) 45%,rgba(10,15,6,.94) 100%),linear-gradient(90deg,rgba(51,82,15,.35),rgba(51,82,15,0)),url('/hero.jpg') center/cover no-repeat;}
+.lb-logo{height:36px;width:auto;display:block;}
+.lb-copy{max-width:540px;}
+.login-brand .lb-eyebrow{font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;color:#b7e07a;margin-bottom:16px;}
+.login-brand h1{font-family:var(--d);font-size:46px;font-weight:700;line-height:1.08;letter-spacing:-.03em;color:#fff;margin:0;}
+.login-brand .lb-lead{margin-top:18px;max-width:440px;font-size:16px;line-height:1.65;color:rgba(255,255,255,.8);}
+.lb-feats{display:flex;flex-wrap:wrap;gap:28px;margin-top:36px;padding-top:28px;border-top:1px solid rgba(255,255,255,.16);}
+.lbf{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:500;color:rgba(255,255,255,.9);}
+.lbf i{font-size:24px;color:#b7e07a;}
+.login-form-wrap{flex:0 0 44%;display:flex;align-items:center;justify-content:center;padding:48px 40px;background:#fff;}
+.lbox{width:100%;max-width:380px;padding:0;background:none;border:0;box-shadow:none;}
+.lbox-logo{height:34px;width:auto;display:block;margin-bottom:44px;}
+.lbox h2{font-family:var(--d);font-size:32px;font-weight:700;letter-spacing:-.025em;color:#12180e;margin:0 0 8px;}
+.lbox .lbox-sub{font-size:15px;line-height:1.55;color:rgba(42,50,38,.65);margin-bottom:32px;}
+.lbox label{display:block;font-size:13px;font-weight:600;letter-spacing:0;text-transform:none;color:#2a3226;margin-bottom:8px;}
+.lbox-pass-wrap{position:relative;margin-bottom:14px;}
+.lbox-lock{position:absolute;left:15px;top:50%;transform:translateY(-50%);font-size:20px;color:#578c1a;pointer-events:none;}
+.lbox input[type=password],.lbox input[type=text]{width:100%;height:52px;padding:0 48px 0 46px;border:1px solid rgba(18,24,14,.15);border-radius:14px;font-size:15px;background:#f8faf5;color:#12180e;transition:border-color .15s,box-shadow .15s,background .15s;}
+.lbox input:focus{background:#fff;border-color:#6bab21;box-shadow:0 0 0 4px rgba(107,171,33,.16);}
+.lbox-toggle{right:16px;}
+.lerr{display:none;align-items:center;gap:8px;margin:0 0 14px;padding:11px 14px;border-radius:12px;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;font-size:13.5px;}
+.lerr[style*="block"]{display:flex!important;}
+.lerr i{font-size:18px;}
+.lbox button.lbox-btn{width:100%;height:52px;padding:0;border:0;border-radius:14px;font-size:15px;font-weight:600;color:#fff;cursor:pointer;background:linear-gradient(180deg,#6bab21,#578c1a);box-shadow:inset 0 1px 0 rgba(255,255,255,.22),0 8px 20px rgba(87,140,26,.28);transition:transform .15s,background .15s;}
 .lbox button.lbox-btn:hover{background:linear-gradient(180deg,#578c1a,#446d14);}
-.lerr{font-size:13px;}
-.lbox-note{display:flex;align-items:center;justify-content:center;gap:7px;margin-top:24px;font-size:12.5px;color:rgba(42,50,38,.55);}
-.lbox-note i{font-size:16px;color:#578c1a;}
+.lbox button.lbox-btn:active{transform:scale(.99);}
+.lbox-note{display:flex;align-items:center;gap:8px;margin-top:28px;padding-top:22px;border-top:1px solid rgba(18,24,14,.08);font-size:13px;color:rgba(42,50,38,.55);}
+.lbox-note i{font-size:17px;color:#578c1a;}
 @media(max-width:900px){
   .login{flex-direction:column;}
-  .login-brand{display:flex!important;flex:none;padding:28px 24px 30px;}
-  .login-brand-logo{margin-bottom:28px;}
-  .login-brand h1{font-size:28px;}
-  .login-brand-features{display:none;}
-  .login-form-wrap{padding:24px 16px 40px;align-items:flex-start;}
-  .lbox{padding:28px 22px;}
+  .login-brand{display:flex!important;flex:none;min-height:300px;padding:24px 22px 28px;}
+  .login-brand h1{font-size:30px;}
+  .login-brand .lb-lead{font-size:14.5px;}
+  .lb-feats{display:none;}
+  .login-form-wrap{flex:1;padding:32px 22px 48px;align-items:flex-start;}
+  .lbox-logo{display:none;}
+  .lbox h2{font-size:26px;}
 }
 </style>
 </head>
 <body>
 <div class="login" id="loginScreen">
-  <!-- Brand panel -->
+  <!-- Photo panel -->
   <div class="login-brand">
-    <span class="lb-ring lb-ring-1" aria-hidden="true"></span>
-    <span class="lb-ring lb-ring-2" aria-hidden="true"></span>
-    <div class="login-brand-top">
-      <div class="login-brand-logo">
-        <img src="/beyondx-logo-light.png" alt="BeyondX" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"/>
-        <span style="display:none;font-family:var(--d);font-size:20px;font-weight:700;color:#fff">BeyondX</span>
-        <span class="lb-tag">Admin<span>Console</span></span>
-      </div>
-      <h1>Run every job<br>from one place.</h1>
-      <p>Review requests, verify payments, dispatch Xperts and keep every job on track across Greater Accra.</p>
+    <div class="lb-top">
+      <img src="/beyondx-logo-light.png" alt="BeyondX" class="lb-logo"/>
     </div>
-    <div class="login-brand-features">
-      <div class="lbf"><i class="ph-duotone ph-receipt" aria-hidden="true"></i><span class="lbf-t">Quote requests and verify payments before work starts</span></div>
-      <div class="lbf"><i class="ph-duotone ph-path" aria-hidden="true"></i><span class="lbf-t">Track every job from request to payout</span></div>
-      <div class="lbf"><i class="ph-duotone ph-shield-check" aria-hidden="true"></i><span class="lbf-t">Check, approve and manage every Xpert</span></div>
+    <div class="lb-copy">
+      <p class="lb-eyebrow">Admin Console</p>
+      <h1>Every job, every Xpert,<br>one place.</h1>
+      <p class="lb-lead">Review requests, verify payments, dispatch Xperts and keep every job on track across Greater Accra.</p>
+      <div class="lb-feats">
+        <div class="lbf"><i class="ph-duotone ph-receipt" aria-hidden="true"></i><span>Quotes &amp; payments</span></div>
+        <div class="lbf"><i class="ph-duotone ph-path" aria-hidden="true"></i><span>Live job tracking</span></div>
+        <div class="lbf"><i class="ph-duotone ph-shield-check" aria-hidden="true"></i><span>Xpert checks</span></div>
+      </div>
     </div>
   </div>
-  <!-- Form panel -->
+  <!-- Form -->
   <div class="login-form-wrap">
     <div class="lbox">
-      <i class="ph-duotone ph-lock-key lbox-icon" aria-hidden="true"></i>
-      <h2>Sign in</h2>
-      <p class="lbox-sub">Enter the admin password to open the console.</p>
+      <img src="/beyondx-logo.png" alt="BeyondX" class="lbox-logo"/>
+      <h2>Welcome back</h2>
+      <p class="lbox-sub">Sign in with the admin password to open the console.</p>
       <label for="adminPass">Password</label>
       <div class="lbox-pass-wrap">
-        <input type="password" id="adminPass" placeholder="Admin password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"/>
+        <i class="ph-duotone ph-lock-key lbox-lock" aria-hidden="true"></i>
+        <input type="password" id="adminPass" placeholder="Enter admin password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"/>
         <button class="lbox-toggle" type="button" onclick="togglePassVis()" id="passToggleBtn" title="Show password">
           <svg id="eyeIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
       </div>
+      <div class="lerr" id="err"><i class="ph-duotone ph-warning-circle" aria-hidden="true"></i> Incorrect password. Please try again.</div>
       <button class="lbox-btn" id="loginBtn" onclick="login()">Sign in →</button>
-      <div class="lerr" id="err">Incorrect password. Please try again.</div>
-      <p class="lbox-note"><i class="ph-duotone ph-shield-check" aria-hidden="true"></i> Authorised BeyondX staff only</p>
+      <p class="lbox-note"><i class="ph-duotone ph-shield-check" aria-hidden="true"></i> For authorised BeyondX staff only</p>
     </div>
   </div>
 </div>
@@ -404,65 +417,38 @@ tr:hover td{background:#f7faf3;}
     <div class="sb-brand"><img src="/beyondx-logo-light.png" alt="BeyondX" class="sb-logo"/><div class="sb-tag">Admin<span>Console</span></div></div>
     <div class="sb-nav">
       <div class="sb-group">
-        <div class="sb-grp">Dashboard</div>
-        <div class="sb-a on" onclick="nav('overview',this)"><i class="ph-duotone ph-squares-four" aria-hidden="true"></i><span class="sb-l">Overview</span></div>
-        <div class="sb-a" onclick="nav('payouts',this)"><i class="ph-duotone ph-hand-coins" aria-hidden="true"></i><span class="sb-l">Pay Now</span> <span class="sb-bdg" id="payBadge" style="display:none">0</span></div>
+        <div class="sb-grp">Main</div>
+        <div class="sb-a on" data-nav="overview" onclick="go('overview')"><i class="ph-duotone ph-squares-four" aria-hidden="true"></i><span class="sb-l">Overview</span></div>
+        <div class="sb-a" data-nav="analytics" onclick="go('analytics')"><i class="ph-duotone ph-chart-line-up" aria-hidden="true"></i><span class="sb-l">Site analytics</span></div>
       </div>
       <div class="sb-group">
-        <div class="sb-grp">Site</div>
-        <div class="sb-a" onclick="nav('analytics',this)"><i class="ph-duotone ph-chart-line-up" aria-hidden="true"></i><span class="sb-l">Site Analytics</span></div>
+        <div class="sb-grp">Work</div>
+        <div class="sb-a" data-nav="requests" onclick="go('invoices')"><i class="ph-duotone ph-tray" aria-hidden="true"></i><span class="sb-l">Requests & quotes</span> <span class="sb-bdg" data-sum="invoicesBadge,signoffBadge" style="display:none">0</span></div>
+        <div class="sb-a" data-nav="verify" onclick="go('verify')"><i class="ph-duotone ph-receipt" aria-hidden="true"></i><span class="sb-l">Verify payments</span> <span class="sb-bdg" id="verifyBadge" style="display:none">0</span></div>
+        <div class="sb-a" data-nav="jobboard" onclick="go('jobboard')"><i class="ph-duotone ph-kanban" aria-hidden="true"></i><span class="sb-l">Dispatch</span></div>
+        <div class="sb-a" data-nav="jobs" onclick="go('active')"><i class="ph-duotone ph-briefcase" aria-hidden="true"></i><span class="sb-l">Jobs</span></div>
       </div>
       <div class="sb-group">
-        <div class="sb-grp">Tasks</div>
-        <div class="sb-a" onclick="nav('invoices',this)"><i class="ph-duotone ph-tray" aria-hidden="true"></i><span class="sb-l">Request Inbox &amp; Quotes</span> <span class="sb-bdg" id="invoicesBadge" style="display:none">0</span></div>
-        <div class="sb-a" onclick="nav('signoff',this)"><i class="ph-duotone ph-seal-check" aria-hidden="true"></i><span class="sb-l">Pricing Sign-off</span> <span class="sb-bdg" id="signoffBadge" style="display:none">0</span></div>
-        <div class="sb-a" onclick="nav('verify',this)"><i class="ph-duotone ph-receipt" aria-hidden="true"></i><span class="sb-l">Verify Payments</span> <span class="sb-bdg" id="verifyBadge" style="display:none">0</span></div>
-        <div class="sb-a" onclick="nav('jobboard',this)"><i class="ph-duotone ph-kanban" aria-hidden="true"></i><span class="sb-l">Job Board &amp; Dispatch</span></div>
-        <div class="sb-a" onclick="nav('recurring',this)"><i class="ph-duotone ph-repeat" aria-hidden="true"></i><span class="sb-l">Recurring Services</span></div>
-        <div class="sb-a" onclick="nav('changeorders',this)"><i class="ph-duotone ph-arrows-left-right" aria-hidden="true"></i><span class="sb-l">Change Orders</span></div>
-        <div class="sb-a" onclick="nav('active',this)"><i class="ph-duotone ph-hourglass-medium" aria-hidden="true"></i><span class="sb-l">In Progress</span></div>
-        <div class="sb-a" onclick="nav('open',this)"><i class="ph-duotone ph-folder-open" aria-hidden="true"></i><span class="sb-l">Open Tasks</span></div>
-        <div class="sb-a" onclick="nav('completed',this)"><i class="ph-duotone ph-check-circle" aria-hidden="true"></i><span class="sb-l">Completed</span></div>
-        <div class="sb-a" onclick="nav('all',this)"><i class="ph-duotone ph-list-bullets" aria-hidden="true"></i><span class="sb-l">All Tasks</span></div>
+        <div class="sb-grp">Money</div>
+        <div class="sb-a" data-nav="payouts" onclick="go('payouts')"><i class="ph-duotone ph-hand-coins" aria-hidden="true"></i><span class="sb-l">Pay Xperts</span> <span class="sb-bdg" id="payBadge" style="display:none">0</span></div>
+        <div class="sb-a" data-nav="records" onclick="go('payconfirm')"><i class="ph-duotone ph-wallet" aria-hidden="true"></i><span class="sb-l">Payment records</span></div>
       </div>
       <div class="sb-group">
         <div class="sb-grp">People</div>
-        <div class="sb-a" onclick="nav('applications',this)"><i class="ph-duotone ph-identification-card" aria-hidden="true"></i><span class="sb-l">Xpert Applications</span> <span class="sb-bdg" id="applicationsBadge" style="display:none">0</span></div>
-        <div class="sb-a" onclick="nav('xstatus',this)"><i class="ph-duotone ph-user-switch" aria-hidden="true"></i><span class="sb-l">Xpert Status Queue</span></div>
-        <div class="sb-a" onclick="nav('qguarantor',this)"><i class="ph-duotone ph-phone-call" aria-hidden="true"></i><span class="sb-l">Guarantor Calls</span> <span class="sb-bdg" id="qguarantorBadge" style="display:none">0</span></div>
-        <div class="sb-a" onclick="nav('qevidence',this)"><i class="ph-duotone ph-images" aria-hidden="true"></i><span class="sb-l">Evidence Review</span> <span class="sb-bdg" id="qevidenceBadge" style="display:none">0</span></div>
-        <div class="sb-a" onclick="nav('qreference',this)"><i class="ph-duotone ph-address-book" aria-hidden="true"></i><span class="sb-l">Reference Calls</span> <span class="sb-bdg" id="qreferenceBadge" style="display:none">0</span></div>
-        <div class="sb-a" onclick="nav('bands',this)"><i class="ph-duotone ph-currency-circle-dollar" aria-hidden="true"></i><span class="sb-l">Price Bands</span></div>
-        <div class="sb-a" onclick="nav('workers',this)"><i class="ph-duotone ph-hard-hat" aria-hidden="true"></i><span class="sb-l">Xperts</span></div>
-        <div class="sb-a" onclick="nav('employers',this)"><i class="ph-duotone ph-buildings" aria-hidden="true"></i><span class="sb-l">Employers</span></div>
+        <div class="sb-a" data-nav="xperts" onclick="go('workers')"><i class="ph-duotone ph-hard-hat" aria-hidden="true"></i><span class="sb-l">Xperts</span> <span class="sb-bdg" data-sum="applicationsBadge" style="display:none">0</span></div>
+        <div class="sb-a" data-nav="checks" onclick="go('qguarantor')"><i class="ph-duotone ph-shield-check" aria-hidden="true"></i><span class="sb-l">Xpert checks</span> <span class="sb-bdg" data-sum="qguarantorBadge,qevidenceBadge,qreferenceBadge" style="display:none">0</span></div>
+        <div class="sb-a" data-nav="employers" onclick="go('employers')"><i class="ph-duotone ph-buildings" aria-hidden="true"></i><span class="sb-l">Employers</span></div>
+        <div class="sb-a" data-nav="coordinators" onclick="go('coordapps')"><i class="ph-duotone ph-users-three" aria-hidden="true"></i><span class="sb-l">Coordinators</span> <span class="sb-bdg" data-sum="coordAppsBadge,coordReqsBadge,coordTeamsBadge" style="display:none">0</span></div>
       </div>
       <div class="sb-group">
-        <div class="sb-grp">History</div>
-        <div class="sb-a" onclick="nav('history',this)"><i class="ph-duotone ph-clock-counter-clockwise" aria-hidden="true"></i><span class="sb-l">Work History</span></div>
-        <div class="sb-a" onclick="nav('transactions',this)"><i class="ph-duotone ph-arrows-down-up" aria-hidden="true"></i><span class="sb-l">Transactions</span></div>
+        <div class="sb-grp">Support</div>
+        <div class="sb-a" data-nav="inbox" onclick="go('inbox')"><i class="ph-duotone ph-lifebuoy" aria-hidden="true"></i><span class="sb-l">Support inbox</span> <span class="sb-bdg" id="inboxBadge" style="display:none">0</span></div>
+        <div class="sb-a" data-nav="issues" onclick="go('sitereports')"><i class="ph-duotone ph-warning-circle" aria-hidden="true"></i><span class="sb-l">Reports & disputes</span> <span class="sb-bdg" data-sum="siteReportsBadge,flagsBadge,disputesBadge" style="display:none">0</span></div>
+        <div class="sb-a" data-nav="messages" onclick="go('notify')"><i class="ph-duotone ph-bell-ringing" aria-hidden="true"></i><span class="sb-l">Notifications & SMS</span> <span class="sb-bdg" data-sum="smsBadge" style="display:none">0</span></div>
       </div>
       <div class="sb-group">
-        <div class="sb-grp">Payments</div>
-        <div class="sb-a" onclick="nav('payconfirm',this)"><i class="ph-duotone ph-wallet" aria-hidden="true"></i><span class="sb-l">Payment Confirmations</span></div>
-      </div>
-      <div class="sb-group">
-        <div class="sb-grp">Operations</div>
-        <div class="sb-a" onclick="nav('sitereports',this)"><i class="ph-duotone ph-map-pin-line" aria-hidden="true"></i><span class="sb-l">Site Reports</span> <span class="sb-bdg" id="siteReportsBadge" style="display:none;">0</span></div>
-        <div class="sb-a" onclick="nav('flags',this)"><i class="ph-duotone ph-flag" aria-hidden="true"></i><span class="sb-l">Flags</span> <span class="sb-bdg" id="flagsBadge" style="display:none;">0</span></div>
-        <div class="sb-a" onclick="nav('feedback',this)"><i class="ph-duotone ph-chat-circle-text" aria-hidden="true"></i><span class="sb-l">Feedback</span></div>
-        <div class="sb-a" onclick="nav('disputes',this)"><i class="ph-duotone ph-scales" aria-hidden="true"></i><span class="sb-l">Scope Disputes</span> <span class="sb-bdg" id="disputesBadge" style="display:none;">0</span></div>
-        <div class="sb-a" onclick="nav('coordapps',this)"><i class="ph-duotone ph-user-plus" aria-hidden="true"></i><span class="sb-l">Coordinator Applications</span> <span class="sb-bdg" id="coordAppsBadge" style="display:none;">0</span></div>
-        <div class="sb-a" onclick="nav('coordreqs',this)"><i class="ph-duotone ph-clipboard-text" aria-hidden="true"></i><span class="sb-l">Coordinator Job Requests</span> <span class="sb-bdg" id="coordReqsBadge" style="display:none;">0</span></div>
-        <div class="sb-a" onclick="nav('coordteams',this)"><i class="ph-duotone ph-users-three" aria-hidden="true"></i><span class="sb-l">Coordinator Teams</span> <span class="sb-bdg" id="coordTeamsBadge" style="display:none;">0</span></div>
-        <div class="sb-a" onclick="nav('coordmetrics',this)"><i class="ph-duotone ph-chart-bar" aria-hidden="true"></i><span class="sb-l">Coordinator Metrics</span></div>
-        <div class="sb-a" onclick="nav('coordinators',this)"><i class="ph-duotone ph-megaphone" aria-hidden="true"></i><span class="sb-l">Coordinator Channel</span></div>
-        <div class="sb-a" onclick="nav('benchmarks',this)"><i class="ph-duotone ph-gauge" aria-hidden="true"></i><span class="sb-l">Benchmark Rates</span></div>
-      </div>
-      <div class="sb-group">
-        <div class="sb-grp">Messages</div>
-        <div class="sb-a" onclick="nav('inbox',this)"><i class="ph-duotone ph-lifebuoy" aria-hidden="true"></i><span class="sb-l">Support &amp; Reports</span> <span class="sb-bdg" id="inboxBadge" style="display:none;">0</span></div>
-        <div class="sb-a" onclick="nav('notify',this)"><i class="ph-duotone ph-bell-ringing" aria-hidden="true"></i><span class="sb-l">Send Notification</span></div>
-        <div class="sb-a" onclick="nav('messages',this)"><i class="ph-duotone ph-chat-teardrop-dots" aria-hidden="true"></i><span class="sb-l">SMS Log</span> <span class="sb-bdg" id="smsBadge" style="display:none;background:#dc2626;">!</span></div>
+        <div class="sb-grp">Settings</div>
+        <div class="sb-a" data-nav="pricing" onclick="go('bands')"><i class="ph-duotone ph-currency-circle-dollar" aria-hidden="true"></i><span class="sb-l">Pricing</span></div>
       </div>
     </div>
     <div class="sb-general">
@@ -499,6 +485,17 @@ tr:hover td{background:#f7faf3;}
           </div>
         </div>
       </div>
+    </div>
+    <div class="subnav-wrap">
+      <div class="subnav" data-group="requests" role="tablist" hidden><button class="sub-a" role="tab" data-sub="invoices" onclick="go('invoices')">Requests & quotes <span class="sub-bdg" id="invoicesBadge" style="display:none">0</span></button><button class="sub-a" role="tab" data-sub="signoff" onclick="go('signoff')">Pricing sign-off <span class="sub-bdg" id="signoffBadge" style="display:none">0</span></button></div>
+      <div class="subnav" data-group="jobs" role="tablist" hidden><button class="sub-a" role="tab" data-sub="active" onclick="go('active')">In progress</button><button class="sub-a" role="tab" data-sub="open" onclick="go('open')">Open</button><button class="sub-a" role="tab" data-sub="completed" onclick="go('completed')">Completed</button><button class="sub-a" role="tab" data-sub="all" onclick="go('all')">All jobs</button><button class="sub-a" role="tab" data-sub="recurring" onclick="go('recurring')">Recurring</button><button class="sub-a" role="tab" data-sub="changeorders" onclick="go('changeorders')">Change orders</button></div>
+      <div class="subnav" data-group="records" role="tablist" hidden><button class="sub-a" role="tab" data-sub="payconfirm" onclick="go('payconfirm')">Payment confirmations</button><button class="sub-a" role="tab" data-sub="transactions" onclick="go('transactions')">Transactions</button><button class="sub-a" role="tab" data-sub="history" onclick="go('history')">Work history</button></div>
+      <div class="subnav" data-group="xperts" role="tablist" hidden><button class="sub-a" role="tab" data-sub="workers" onclick="go('workers')">All Xperts</button><button class="sub-a" role="tab" data-sub="applications" onclick="go('applications')">Applications <span class="sub-bdg" id="applicationsBadge" style="display:none">0</span></button><button class="sub-a" role="tab" data-sub="xstatus" onclick="go('xstatus')">Status queue</button></div>
+      <div class="subnav" data-group="checks" role="tablist" hidden><button class="sub-a" role="tab" data-sub="qguarantor" onclick="go('qguarantor')">Guarantor calls <span class="sub-bdg" id="qguarantorBadge" style="display:none">0</span></button><button class="sub-a" role="tab" data-sub="qevidence" onclick="go('qevidence')">Evidence review <span class="sub-bdg" id="qevidenceBadge" style="display:none">0</span></button><button class="sub-a" role="tab" data-sub="qreference" onclick="go('qreference')">Reference calls <span class="sub-bdg" id="qreferenceBadge" style="display:none">0</span></button></div>
+      <div class="subnav" data-group="coordinators" role="tablist" hidden><button class="sub-a" role="tab" data-sub="coordapps" onclick="go('coordapps')">Applications <span class="sub-bdg" id="coordAppsBadge" style="display:none">0</span></button><button class="sub-a" role="tab" data-sub="coordreqs" onclick="go('coordreqs')">Job requests <span class="sub-bdg" id="coordReqsBadge" style="display:none">0</span></button><button class="sub-a" role="tab" data-sub="coordteams" onclick="go('coordteams')">Teams <span class="sub-bdg" id="coordTeamsBadge" style="display:none">0</span></button><button class="sub-a" role="tab" data-sub="coordmetrics" onclick="go('coordmetrics')">Metrics</button><button class="sub-a" role="tab" data-sub="coordinators" onclick="go('coordinators')">Channel</button></div>
+      <div class="subnav" data-group="issues" role="tablist" hidden><button class="sub-a" role="tab" data-sub="sitereports" onclick="go('sitereports')">Site reports <span class="sub-bdg" id="siteReportsBadge" style="display:none">0</span></button><button class="sub-a" role="tab" data-sub="flags" onclick="go('flags')">Flags <span class="sub-bdg" id="flagsBadge" style="display:none">0</span></button><button class="sub-a" role="tab" data-sub="disputes" onclick="go('disputes')">Scope disputes <span class="sub-bdg" id="disputesBadge" style="display:none">0</span></button><button class="sub-a" role="tab" data-sub="feedback" onclick="go('feedback')">Feedback</button></div>
+      <div class="subnav" data-group="messages" role="tablist" hidden><button class="sub-a" role="tab" data-sub="notify" onclick="go('notify')">Send notification</button><button class="sub-a" role="tab" data-sub="messages" onclick="go('messages')">SMS log <span class="sub-bdg" id="smsBadge" style="display:none">0</span></button></div>
+      <div class="subnav" data-group="pricing" role="tablist" hidden><button class="sub-a" role="tab" data-sub="bands" onclick="go('bands')">Price bands</button><button class="sub-a" role="tab" data-sub="benchmarks" onclick="go('benchmarks')">Benchmark rates</button></div>
     </div>
     <div class="body">
       <div class="sec on" id="sec-overview">
@@ -1520,7 +1517,7 @@ function ro(){
     <div class="sc-mini"><div class="sc-l">Avg Task Value</div><div class="sc-v">GH&#8373; ${avgVal.toFixed(0)}</div></div>
     <div class="sc-mini"><div class="sc-l">In Progress</div><div class="sc-v">${ac.length}</div></div>
     <div class="sc-mini"><div class="sc-l">Avg Worker Rating</div><div class="sc-v">${avgRating>0?avgRating.toFixed(1)+' \u2605':'\u2014'}</div></div>`;
-  document.getElementById('aa').innerHTML=pend>0?`<div class="alrt"><div><div class="alrt-t">${py.length} worker${py.length!==1?'s':''} waiting for payment &mdash; GH&#8373; ${pend.toFixed(2)}</div><div class="alrt-s">Go to Pay Now to send these payments</div></div><button class="alrt-btn" onclick="nav('payouts',document.querySelectorAll('.sb-a')[1])">Pay Now</button></div>`:'';
+  document.getElementById('aa').innerHTML=pend>0?`<div class="alrt"><div><div class="alrt-t">${py.length} worker${py.length!==1?'s':''} waiting for payment &mdash; GH&#8373; ${pend.toFixed(2)}</div><div class="alrt-s">Go to Pay Now to send these payments</div></div><button class="alrt-btn" onclick="go('payouts')">Pay Now</button></div>`:'';
   const days=[];
   for(let i=13;i>=0;i--){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-i);days.push(d);}
   const dayRev=days.map(d=>{const next=new Date(d);next.setDate(d.getDate()+1);return co.filter(t=>{const c=new Date(t.createdAt);return c>=d&&c<next;}).reduce((s,t)=>s+parseFloat(t.pay),0);});
@@ -3149,6 +3146,28 @@ function togglePassVis(){
     btn.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:16px;height:16px"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
   }
 }
+
+
+// Menu groups: one sidebar item opens a group; tabs under the top bar switch pages in it.
+const NAV_GROUPS={requests:['invoices','signoff'],jobs:['active','open','completed','all','recurring','changeorders'],records:['payconfirm','transactions','history'],xperts:['workers','applications','xstatus'],checks:['qguarantor','qevidence','qreference'],coordinators:['coordapps','coordreqs','coordteams','coordmetrics','coordinators'],issues:['sitereports','flags','disputes','feedback'],messages:['notify','messages'],pricing:['bands','benchmarks']};
+function navGroupOf(id){for(const g in NAV_GROUPS){if(NAV_GROUPS[g].includes(id))return g;}return null;}
+window.go=function(id){
+  const g=navGroupOf(id);
+  const sb=document.querySelector('.sb-a[data-nav="'+(g||id)+'"]');
+  nav(id,sb||document.querySelector('.sb-a'));
+  document.querySelectorAll('.subnav').forEach(x=>{x.hidden=x.dataset.group!==g;});
+  document.querySelectorAll('.sub-a').forEach(a=>a.classList.toggle('on',a.dataset.sub===id));
+  const wrap=document.querySelector('.subnav-wrap'); if(wrap) wrap.classList.toggle('on',!!g);
+};
+// Sidebar items for a group show the total of their pages' counts.
+function sumGroupBadges(){
+  document.querySelectorAll('.sb-bdg[data-sum]').forEach(el=>{
+    let n=0,flag=false;
+    el.dataset.sum.split(',').forEach(id=>{const b=document.getElementById(id);if(!b||b.style.display==='none')return;const v=parseInt(b.textContent,10);if(isNaN(v))flag=true;else n+=v;});
+    if(n>0||flag){el.textContent=n>0?n:'!';el.style.display='';}else el.style.display='none';
+  });
+}
+setInterval(sumGroupBadges,1500);
 
 window.adminSignOut=function(){ if(confirm('Sign out of the admin console?')) location.reload(); };
 
