@@ -132,10 +132,10 @@ function LocationMap({ lat, lng, accuracy, stale }: { lat: number; lng: number; 
       // A single dropped tile is normal on a patchy connection — only give up
       // if nothing loads at all within a few seconds.
       let loadedAny = false
-      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+      L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 19,
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        className: 'bx-tiles',
       })
         .on('tileload', () => { loadedAny = true })
         .addTo(map)

@@ -188,3 +188,5 @@ html.a11y-contrast :focus-visible { outline: 3px solid #000000; outline-offset: 
 .leaflet-tooltip.bx-map-tip::before { border-top-color: #12180e; }
 .leaflet-container .leaflet-control-zoom { border: 0; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 12px rgba(18, 24, 14, 0.12); }
 .leaflet-container .leaflet-control-zoom a { width: 36px; height: 36px; line-height: 36px; color: #1e2419; }
+/* Soften OpenStreetMap tiles into a calm, light base map */
+.leaflet-container .bx-tiles { filter: saturate(0.35) brightness(1.06) contrast(0.92); }
