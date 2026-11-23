@@ -204,20 +204,21 @@ export function SkeletonRows({ rows = 3 }: { rows?: number }) {
   )
 }
 
-/** Text tabs for switching lists within a section; the current one is bold
- *  and green with a small dot, matching the site navigation. */
+/** Tabs for switching lists within a section: a segmented control. The tabs
+ *  sit in a soft grey track and the current one is a raised white segment. */
 export function TextTabs<T extends string>({ tabs, active, onChange, label }: {
   tabs: readonly { id: T; label: string; count?: number }[]; active: T; onChange: (id: T) => void; label: string
 }) {
   return (
-    <div role="tablist" aria-label={label} className="flex min-w-0 items-center gap-6 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div role="tablist" aria-label={label} className="inline-flex max-w-full gap-1 overflow-x-auto rounded-xl bg-ink-900/[0.05] p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {tabs.map((t) => {
         const on = t.id === active
         return (
           <button key={t.id} role="tab" aria-selected={on} onClick={() => onChange(t.id)}
-            className={`relative shrink-0 py-1.5 text-sm transition-colors focus:outline-none ${on ? 'font-semibold text-forest-700' : 'font-medium text-ink-700/70 hover:text-ink-900'}`}>
-            {t.label}{typeof t.count === 'number' ? <span className={`ml-1.5 ${on ? 'text-forest-700' : 'text-ink-700/45'}`}>{t.count}</span> : null}
-            {on && <span aria-hidden="true" className="absolute -bottom-1 left-1/2 h-1.5 w-1.5 -translate-x-1/2 rounded-full bg-forest-600" />}
+            className={`inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-sm transition-colors focus:outline-none ${
+              on ? 'bg-white font-semibold text-forest-800 shadow-sm ring-1 ring-ink-900/5' : 'font-medium text-ink-700/70 hover:bg-white/60 hover:text-ink-900'
+            }`}>
+            {t.label}{typeof t.count === 'number' ? <span className={on ? 'text-forest-700/70' : 'text-ink-700/45'}>{t.count}</span> : null}
           </button>
         )
       })}

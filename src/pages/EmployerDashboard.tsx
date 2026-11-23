@@ -496,10 +496,10 @@ function JobsConsole({ tasks, selectedId, onSelect, onTrack, onConfirm, onReview
   }
 
   return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[25rem_minmax(0,1fr)] lg:items-start">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[27rem_minmax(0,1fr)] lg:items-start">
       {/* List */}
       <Panel bodyClassName="" className="lg:sticky lg:top-24">
-        <div className="border-b border-ink-900/[0.06] px-5 pt-4">
+        <div className="border-b border-ink-900/[0.06] px-3 py-3">
           <TextTabs label="Job groups" active={group} onChange={(g) => { setGroup(g); const first = byGroup(g)[0]; if (first) onSelect(first.id) }}
             tabs={groups.map((g) => ({ id: g.id, label: g.label, count: byGroup(g.id).length }))} />
         </div>
